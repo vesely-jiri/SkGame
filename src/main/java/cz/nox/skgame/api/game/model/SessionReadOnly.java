@@ -4,7 +4,6 @@ import cz.nox.skgame.api.game.model.type.SessionState;
 import org.bukkit.entity.Player;
 
 import java.util.HashSet;
-import java.util.List;
 
 public interface SessionReadOnly {
     String getId();
