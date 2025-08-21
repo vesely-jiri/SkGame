@@ -1,0 +1,4 @@
+gamemodes:
+  {id}:
+    display_name: {gamemode_name}
+    script_path: {script_path}
