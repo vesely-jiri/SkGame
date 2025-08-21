@@ -3,10 +3,7 @@ package cz.nox.skgame.api.game.model;
 import cz.nox.skgame.api.game.model.type.SessionState;
 import org.bukkit.entity.Player;
 
-import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 public class Session implements SessionReadOnly {
     private String id;
@@ -19,7 +16,7 @@ public class Session implements SessionReadOnly {
     private HashSet<Player> spectators;
 
     public Session(String id, String name, Player host, GameMode gameMode,
-                   SessionState state, GameMap map, Collection<Player> players, Collection<Player> spectators) {
+                   SessionState state, GameMap map, HashSet<Player> players, HashSet<Player> spectators) {
         this.id = id;
         this.name = name;
         this.host = host;
@@ -32,7 +29,7 @@ public class Session implements SessionReadOnly {
 
     public Session(String id) {
         this(id,null,null,null,SessionState.STOPPED,null,
-                Set.of(),Set.of());
+                new HashSet<>(),new HashSet<>());
     }
 
     public String getId() {
