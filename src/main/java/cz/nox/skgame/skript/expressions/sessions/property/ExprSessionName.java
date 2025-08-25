@@ -3,15 +3,12 @@ package cz.nox.skgame.skript.expressions.sessions.property;
 import ch.njol.skript.classes.Changer;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.util.coll.CollectionUtils;
-import cz.nox.skgame.api.game.model.SessionReadOnly;
-import cz.nox.skgame.core.game.SessionManager;
+import cz.nox.skgame.api.game.model.Session;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
-public class ExprSessionName extends SimplePropertyExpression<SessionReadOnly, String> {
-
-    private static final SessionManager sessionManager = SessionManager.getInstance();
+public class ExprSessionName extends SimplePropertyExpression<Session, String> {
 
     static {
         register(ExprSessionName.class, String.class,
@@ -19,7 +16,7 @@ public class ExprSessionName extends SimplePropertyExpression<SessionReadOnly, S
     }
 
     @Override
-    public @Nullable String convert(SessionReadOnly session) {
+    public @Nullable String convert(Session session) {
         return session.getName();
     }
 
@@ -34,15 +31,15 @@ public class ExprSessionName extends SimplePropertyExpression<SessionReadOnly, S
 
     @Override
     public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
-        SessionReadOnly session = getExpr().getSingle(event);
+        Session session = getExpr().getSingle(event);
         if (session == null) return;
         switch (mode) {
             case SET -> {
                 if (delta == null || delta[0] == null) return;
                 String name = (String) delta[0];
-                sessionManager.setSessionName(session.getId(),name);
+                session.setName(name);
             }
-            case RESET -> sessionManager.setSessionName(session.getId(),null);
+            case RESET -> session.setName(null);
         }
     }
 

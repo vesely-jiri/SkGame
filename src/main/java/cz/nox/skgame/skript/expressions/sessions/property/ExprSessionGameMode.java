@@ -4,15 +4,12 @@ import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.util.coll.CollectionUtils;
 import cz.nox.skgame.api.game.model.GameMode;
-import cz.nox.skgame.api.game.model.SessionReadOnly;
-import cz.nox.skgame.core.game.SessionManager;
+import cz.nox.skgame.api.game.model.Session;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
-public class ExprSessionGameMode extends SimplePropertyExpression<SessionReadOnly, GameMode> {
-
-    private static final SessionManager sessionManager = SessionManager.getInstance();
+public class ExprSessionGameMode extends SimplePropertyExpression<Session, GameMode> {
 
     static {
         register(ExprSessionGameMode.class, GameMode.class,
@@ -20,7 +17,7 @@ public class ExprSessionGameMode extends SimplePropertyExpression<SessionReadOnl
     }
 
     @Override
-    public @Nullable GameMode convert(SessionReadOnly session) {
+    public @Nullable GameMode convert(Session session) {
         return session.getGameMode();
     }
 
@@ -35,15 +32,15 @@ public class ExprSessionGameMode extends SimplePropertyExpression<SessionReadOnl
 
     @Override
     public void change(Event event, Object @Nullable [] delta, ChangeMode mode) {
-        SessionReadOnly session = getExpr().getSingle(event);
+        Session session = getExpr().getSingle(event);
         if (session == null) return;
         switch (mode) {
             case ChangeMode.SET -> {
                 if (delta == null || delta[0] == null) return;
                 GameMode gameMode = (GameMode) delta[0];
-                sessionManager.setSessionGameMode(session.getId(),gameMode);
+                session.setGameMode(gameMode);
             }
-            case ChangeMode.RESET -> sessionManager.setSessionGameMode(session.getId(),null);
+            case ChangeMode.RESET -> session.setGameMode(null);
         }
     }
 

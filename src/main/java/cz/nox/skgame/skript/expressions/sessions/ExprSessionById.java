@@ -9,7 +9,7 @@ import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
-import cz.nox.skgame.api.game.model.SessionReadOnly;
+import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.core.game.SessionManager;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
@@ -22,13 +22,13 @@ import java.util.Arrays;
         "ex2",
         "ex3"})
 @SuppressWarnings("unused")
-public class ExprSessionById extends SimpleExpression<SessionReadOnly> {
+public class ExprSessionById extends SimpleExpression<Session> {
 
     private static final SessionManager sessionManager = SessionManager.getInstance();
     private Expression<String> uuids;
 
     static {
-        Skript.registerExpression(ExprSessionById.class, SessionReadOnly.class, ExpressionType.COMBINED,
+        Skript.registerExpression(ExprSessionById.class, Session.class, ExpressionType.COMBINED,
                 "session[s] (with|from) [[uu]id] %strings%");
     }
 
@@ -40,10 +40,10 @@ public class ExprSessionById extends SimpleExpression<SessionReadOnly> {
     }
 
     @Override
-    protected @Nullable SessionReadOnly[] get(Event event) {
+    protected @Nullable Session[] get(Event event) {
         return Arrays.stream(this.uuids.getAll(event))
                 .map(sessionManager::getSessionById)
-                .toArray(SessionReadOnly[]::new);
+                .toArray(Session[]::new);
     }
 
 
@@ -53,8 +53,8 @@ public class ExprSessionById extends SimpleExpression<SessionReadOnly> {
     }
 
     @Override
-    public Class<? extends SessionReadOnly> getReturnType() {
-        return SessionReadOnly.class;
+    public Class<? extends Session> getReturnType() {
+        return Session.class;
     }
 
     @Override

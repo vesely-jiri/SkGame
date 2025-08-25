@@ -6,21 +6,28 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class GameMode {
+    private boolean enabled;
     private String id;
     private String name;
     private Script script;
-    private Map<String, Object> info;
+    private Map<String, Object> values;
 
-    public GameMode(String id, String name, Script script, Map<String, Object> info) {
+    public GameMode(String id, String name, Script script, Map<String, Object> values) {
         this.id = id;
         this.name = name;
         this.script = script;
-        this.info = info;
+        this.values = values;
     }
     public GameMode(String id) {
         this(id,null,null,new HashMap<>());
     }
 
+    public boolean isEnabled() {
+        return enabled;
+    }
+    public void setEnabled(boolean b) {
+        this.enabled = b;
+    }
     public String getId() {
         return id;
     }
@@ -40,9 +47,9 @@ public class GameMode {
         this.script = script;
     }
     public Map<String, Object> getInfo() {
-        return info;
+        return values;
     }
-    public void setInfo(Map<String, Object> info) {
-        this.info = info;
+    public void setInfo(Map<String, Object> values) {
+        this.values = values;
     }
 }

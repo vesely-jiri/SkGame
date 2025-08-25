@@ -15,7 +15,7 @@ public class GameModeManager {
         return gameModeManager;
     }
 
-    public void createGameMode(String id) {
+    public void registerGameMode(String id) {
         if (gameModes.containsKey(id)) return;
         GameMode gameMode = new GameMode(id);
         gameModes.put(id,gameMode);

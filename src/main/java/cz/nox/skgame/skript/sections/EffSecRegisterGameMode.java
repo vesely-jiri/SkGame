@@ -11,14 +11,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 @SuppressWarnings("unused")
-public class EffSecCreateGameMode extends EffectSection {
+public class EffSecRegisterGameMode extends EffectSection {
 
     private static final GameModeManager gameModeManager = GameModeManager.getInstance();
     private Expression<String> id;
 
     static {
-        Skript.registerSection(EffSecCreateGameMode.class,
-                "register [new] game[mode] (with|from) id %string%"
+        Skript.registerSection(EffSecRegisterGameMode.class,
+                "(register|create) [new] game[mode] (with|from) id %string%"
         );
     }
 
@@ -32,12 +32,12 @@ public class EffSecCreateGameMode extends EffectSection {
     @Override
     protected @Nullable TriggerItem walk(Event event) {
         String id = this.id.getSingle(event);
-        gameModeManager.createGameMode(id);
+        gameModeManager.registerGameMode(id);
         return super.walk(event,false);
     }
 
     @Override
     public String toString(@Nullable Event event, boolean b) {
-        return "create gamemode with id " + id.getSingle(event);
+        return "register gamemode with id " + id.getSingle(event);
     }
 }

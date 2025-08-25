@@ -11,6 +11,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+
+@SuppressWarnings("unused")
 public class CondIsInSession extends Condition {
     private static final SessionManager sessionManager = SessionManager.getInstance();
     private Expression<Player> player;
@@ -40,6 +43,6 @@ public class CondIsInSession extends Condition {
 
     @Override
     public String toString(@Nullable Event event, boolean b) {
-        return "Player " + player + " is in session " + session;
+        return "Player " + player + " is " + (b ? "" : "not ") + "in session " + session;
     }
 }

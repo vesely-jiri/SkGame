@@ -4,15 +4,12 @@ import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.util.coll.CollectionUtils;
 import cz.nox.skgame.api.game.model.GameMap;
-import cz.nox.skgame.api.game.model.SessionReadOnly;
-import cz.nox.skgame.core.game.SessionManager;
+import cz.nox.skgame.api.game.model.Session;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
-public class ExprSessionMap extends SimplePropertyExpression<SessionReadOnly, GameMap> {
-
-    private static final SessionManager sessionManager = SessionManager.getInstance();
+public class ExprSessionMap extends SimplePropertyExpression<Session, GameMap> {
 
     static {
         register(ExprSessionMap.class, GameMap.class,
@@ -20,7 +17,7 @@ public class ExprSessionMap extends SimplePropertyExpression<SessionReadOnly, Ga
     }
 
     @Override
-    public @Nullable GameMap convert(SessionReadOnly session) {
+    public @Nullable GameMap convert(Session session) {
         return session.getGameMap();
     }
 
@@ -36,16 +33,16 @@ public class ExprSessionMap extends SimplePropertyExpression<SessionReadOnly, Ga
 
     @Override
     public void change(Event event, Object @Nullable [] delta, ChangeMode mode) {
-        SessionReadOnly session = getExpr().getSingle(event);
+        Session session = getExpr().getSingle(event);
         if (session == null) return;
         switch (mode) {
             case SET -> {
                 if (delta == null || delta[0] == null) return;
                 GameMap map = (GameMap) delta[0];
-                sessionManager.setSessionMap(session.getId(),map);
+                session.setGameMap(map);
             }
-            case RESET -> sessionManager.setSessionMap(session.getId(),null);
-    }
+            case RESET -> session.setGameMap(null);
+        }
     }
 
     @Override

@@ -8,17 +8,16 @@ import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
-import cz.nox.skgame.api.game.model.SessionReadOnly;
-import cz.nox.skgame.core.game.SessionManager;
+import cz.nox.skgame.api.game.model.Session;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.*;
+
 @SuppressWarnings("unused")
 public class ExprSessionSpectators extends SimpleExpression<Object> {
-
-    private static final SessionManager sessionManager = SessionManager.getInstance();
-    private Expression<SessionReadOnly> session;
+    private Expression<Session> session;
 
     static {
         Skript.registerExpression(ExprSessionSpectators.class, Object.class, ExpressionType.PROPERTY,
@@ -29,13 +28,13 @@ public class ExprSessionSpectators extends SimpleExpression<Object> {
     @SuppressWarnings("unchecked")
     @Override
     public boolean init(Expression<?>[] exprs, int i, Kleenean kleenean, SkriptParser.ParseResult parseResult) {
-        this.session = (Expression<SessionReadOnly>) exprs[0];
+        this.session = (Expression<Session>) exprs[0];
         return true;
     }
 
     @Override
     protected @Nullable Object[] get(Event event) {
-        SessionReadOnly session = this.session.getSingle(event);
+        Session session = this.session.getSingle(event);
         if (session != null) return session.getSpectators().toArray(new Object[0]);
         return null;
     }
@@ -50,20 +49,23 @@ public class ExprSessionSpectators extends SimpleExpression<Object> {
 
     @Override
     public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
-        SessionReadOnly session = this.session.getSingle(event);
+        Session session = this.session.getSingle(event);
 
         if (session == null) return;
         if (delta == null || delta[0] == null &&
                 mode != Changer.ChangeMode.RESET) return;
 
-        String id = session.getId();
         Player[] spectators = (Player[]) delta[0];
 
         switch (mode) {
-            case SET -> sessionManager.setSessionSpectators(id,spectators);
-            case ADD -> sessionManager.addSessionSpectators(id,spectators);
-            case REMOVE -> sessionManager.removeSessionSpectators(id,spectators);
-            case RESET -> sessionManager.clearSessionSpectators(id);
+            case SET, RESET -> {
+                Player[] sessionSpectators = session.getSpectators().toArray(new Player[0]);
+                session.removeSpectators(sessionSpectators);
+                if (mode == Changer.ChangeMode.SET)
+                    session.addSpectators(spectators);
+            }
+            case ADD -> session.addSpectators(spectators);
+            case REMOVE -> session.removeSpectators(spectators);
         }
     }
 

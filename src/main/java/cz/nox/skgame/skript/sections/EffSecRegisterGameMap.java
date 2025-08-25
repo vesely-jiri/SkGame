@@ -11,14 +11,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 @SuppressWarnings("unused")
-public class EffSecCreateGameMap extends EffectSection {
+public class EffSecRegisterGameMap extends EffectSection {
 
     private static final GameMapManager mapManager = GameMapManager.getInstance();
     private Expression<String> id;
 
     static {
-        Skript.registerSection(EffSecCreateGameMap.class,
-                "register [new] [game] map (with|from) id %string%"
+        Skript.registerSection(EffSecRegisterGameMap.class,
+                "(register|create) [new] [game] map (with|from) id %string%"
         );
     }
 

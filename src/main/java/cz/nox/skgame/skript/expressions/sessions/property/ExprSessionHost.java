@@ -3,16 +3,13 @@ package cz.nox.skgame.skript.expressions.sessions.property;
 import ch.njol.skript.classes.Changer;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.util.coll.CollectionUtils;
-import cz.nox.skgame.api.game.model.SessionReadOnly;
-import cz.nox.skgame.core.game.SessionManager;
+import cz.nox.skgame.api.game.model.Session;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
-public class ExprSessionHost extends SimplePropertyExpression<SessionReadOnly, Player> {
-
-    private static final SessionManager sessionManager = SessionManager.getInstance();
+public class ExprSessionHost extends SimplePropertyExpression<Session, Player> {
 
     static {
         register(ExprSessionHost.class, Player.class,
@@ -20,7 +17,7 @@ public class ExprSessionHost extends SimplePropertyExpression<SessionReadOnly, P
     }
 
     @Override
-    public @Nullable Player convert(SessionReadOnly session) {
+    public @Nullable Player convert(Session session) {
         return session.getHost();
     }
 
@@ -28,23 +25,23 @@ public class ExprSessionHost extends SimplePropertyExpression<SessionReadOnly, P
     public Class<? extends Player> @Nullable [] acceptChange(Changer.ChangeMode mode) {
         return switch (mode) {
             case SET   -> CollectionUtils.array(Player.class);
-            case RESET -> CollectionUtils.array();
+            case RESET, DELETE -> CollectionUtils.array();
             default    -> null;
         };
     }
 
     @Override
     public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
-        SessionReadOnly session = getExpr().getSingle(event);
+        Session session = getExpr().getSingle(event);
         if (session == null) return;
         switch (mode) {
             case SET -> {
                 if (delta == null) return;
                 Player host = (Player) delta[0];
                 if (host == null || !host.isOnline()) return;
-                sessionManager.setSessionHost(session.getId(), host);
+                session.setHost(host);
             }
-            case RESET -> sessionManager.setSessionHost(session.getId(),null);
+            case RESET, DELETE -> session.setHost(null);
         }
     }
 

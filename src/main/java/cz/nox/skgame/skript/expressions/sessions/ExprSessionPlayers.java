@@ -8,7 +8,7 @@ import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
-import cz.nox.skgame.api.game.model.SessionReadOnly;
+import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.core.game.SessionManager;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExprSessionPlayers extends SimpleExpression<Object> {
 
     private static final SessionManager sessionManager = SessionManager.getInstance();
-    private Expression<SessionReadOnly> session;
+    private Expression<Session> session;
 
     static {
         Skript.registerExpression(ExprSessionPlayers.class, Object.class, ExpressionType.PROPERTY,
@@ -29,13 +29,13 @@ public class ExprSessionPlayers extends SimpleExpression<Object> {
     @SuppressWarnings("unchecked")
     @Override
     public boolean init(Expression<?>[] exprs, int i, Kleenean kleenean, SkriptParser.ParseResult parseResult) {
-        this.session = (Expression<SessionReadOnly>) exprs[0];
+        this.session = (Expression<Session>) exprs[0];
         return true;
     }
 
     @Override
     protected @Nullable Object[] get(Event event) {
-        SessionReadOnly session = this.session.getSingle(event);
+        Session session = this.session.getSingle(event);
         if (session != null) {
             return session.getPlayers().toArray(new Object[0]);
         }
@@ -52,19 +52,22 @@ public class ExprSessionPlayers extends SimpleExpression<Object> {
 
     @Override
     public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
-        SessionReadOnly session = this.session.getSingle(event);
+        Session session = this.session.getSingle(event);
         if (session == null) return;
         if (delta == null || delta[0] == null &&
                 mode != Changer.ChangeMode.RESET) return;
 
-        String id = session.getId();
         Player[] players = (Player[]) delta[0];
 
         switch (mode) {
-            case SET -> sessionManager.setSessionPlayers(id, players);
-            case ADD -> sessionManager.addSessionPlayers(id, players);
-            case REMOVE -> sessionManager.removeSessionPlayers(id, players);
-            case RESET -> sessionManager.clearSessionPlayers(id);
+            case SET, RESET -> {
+                Player[] sessionPlayers = session.getPlayers().toArray(new Player[0]);
+                session.removePlayers(sessionPlayers);
+                if (mode == Changer.ChangeMode.SET)
+                    session.addPlayers(players);
+            }
+            case ADD -> session.addPlayers(players);
+            case REMOVE -> session.removePlayers(players);
         }
     }
 
