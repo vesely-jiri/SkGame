@@ -1,4 +1,4 @@
-package cz.nox.skgame.skript.expressions.sessions.property;
+package cz.nox.skgame.skript.expressions.sessions;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer;
@@ -23,7 +23,7 @@ public class ExprSessionValue extends SimpleExpression<Object> {
     static {
         Skript.registerExpression(ExprSessionValue.class, Object.class, ExpressionType.COMBINED,
                 "[session] value[s] %string% of %session%",
-                "all [session] (0:keys|1:values) of %session%"
+                "all [session] (keys|1:values) of %session%"
         );
     }
 
@@ -60,9 +60,11 @@ public class ExprSessionValue extends SimpleExpression<Object> {
     @Override
     public Class<?> @Nullable [] acceptChange(Changer.ChangeMode mode) {
         switch (mode) {
-            case SET, DELETE -> CollectionUtils.array(Object.class);
+            case SET, DELETE -> {
+                return CollectionUtils.array(Object.class);
+            }
         }
-        return super.acceptChange(mode);
+        return null;
     }
 
     @Override
@@ -95,6 +97,7 @@ public class ExprSessionValue extends SimpleExpression<Object> {
 
     @Override
     public String toString(@Nullable Event event, boolean b) {
-        return "";
+        return "session value " + this.key.toString(event,b)
+                + "of session " + this.session.toString(event,b);
     }
 }
