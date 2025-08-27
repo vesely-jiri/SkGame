@@ -1,12 +1,16 @@
 package cz.nox.skgame.api.game.model;
 
+import ch.njol.skript.ScriptLoader;
+import ch.njol.skript.Skript;
+import org.bukkit.configuration.serialization.ConfigurationSerializable;
+import org.jetbrains.annotations.NotNull;
 import org.skriptlang.skript.lang.script.Script;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-public class GameMode {
-    private boolean enabled;
+public class GameMode implements ConfigurationSerializable {
     private String id;
     private String name;
     private Script script;
@@ -22,12 +26,6 @@ public class GameMode {
         this(id,null,null,new HashMap<>());
     }
 
-    public boolean isEnabled() {
-        return enabled;
-    }
-    public void setEnabled(boolean b) {
-        this.enabled = b;
-    }
     public String getId() {
         return id;
     }
@@ -49,7 +47,31 @@ public class GameMode {
     public Map<String, Object> getInfo() {
         return values;
     }
-    public void setInfo(Map<String, Object> values) {
+    public void setValues(Map<String, Object> values) {
         this.values = values;
+    }
+
+    @Override
+    public @NotNull Map<String, Object> serialize() {
+        Map<String, Object> gm = new HashMap<>();
+        gm.put("id", this.id);
+        gm.put("name", this.name);
+        gm.put("script", this.script.nameAndPath());
+        gm.put("values", this.values);
+        return gm;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static GameMode deserialize(Map<String, Object> gm) {
+        GameMode newGm = new GameMode((String) gm.get("id"));
+        newGm.setName((String) gm.get("name"));
+        newGm.setValues((Map<String, Object>) gm.get("values"));
+
+        String scriptPath = (String) gm.get("script");
+        File scriptFile = new File(Skript.getInstance().getScriptsFolder(), scriptPath + ".sk");
+        Script gmScript = ScriptLoader.getScript(scriptFile);
+        newGm.setScript(gmScript);
+
+        return newGm;
     }
 }
