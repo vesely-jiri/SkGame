@@ -7,6 +7,7 @@ import ch.njol.skript.lang.SkriptParser;
 import ch.njol.util.Kleenean;
 import cz.nox.skgame.api.game.model.GameMode;
 import cz.nox.skgame.api.game.model.Session;
+import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.core.game.SessionManager;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -39,16 +40,15 @@ public class CondIsPlaying extends Condition {
             Session session = sessionManager.getSession(player);
             if (session == null) return false;
             if (session.getGameMode() != gameMode) return false;
+            if (session.getState() != SessionState.STARTED) return false;
         }
         return true;
     }
 
     @Override
     public String toString(@Nullable Event event, boolean b) {
-        return "Player[s] " + players.getSingle(event)
-                + "are" + (b ? "" : "not ") + "playing "
+        return players.getSingle(event)
+                + "(is|are)" + (b ? " " : " not ") + "playing "
                 + gameMode.getSingle(event);
     }
-
-    // TODO - is isSingle required here?
 }
