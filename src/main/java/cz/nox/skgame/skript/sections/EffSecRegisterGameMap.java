@@ -32,7 +32,7 @@ public class EffSecRegisterGameMap extends EffectSection {
     @Override
     protected @Nullable TriggerItem walk(Event event) {
         String id = this.id.getSingle(event);
-        mapManager.createGameMap(id);
+        mapManager.registerGameMap(id);
         return super.walk(event,false);
     }
 

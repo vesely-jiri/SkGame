@@ -32,6 +32,9 @@ public class EffSecRegisterGameMode extends EffectSection {
     @Override
     protected @Nullable TriggerItem walk(Event event) {
         String id = this.id.getSingle(event);
+
+        // TODO - Check if script file contains required events
+
         gameModeManager.registerGameMode(id);
         return super.walk(event,false);
     }
