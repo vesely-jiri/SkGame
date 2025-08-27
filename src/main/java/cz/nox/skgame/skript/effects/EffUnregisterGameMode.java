@@ -30,12 +30,17 @@ public class EffUnregisterGameMode extends Effect {
 
     @Override
     protected void execute(Event event) {
-        // TODO - if gamemode is registered
-        // TODO - unregister gamemode
+        GameMode[] gameModes = this.gameMode.getArray(event);
+        for (GameMode gm : gameModes) {
+            if (gm == null) continue;
+            if (gameModeManager.isRegistered(gm.getId())) {
+                gameModeManager.unregisterGameMode(gm.getId());
+            }
+        }
     }
 
     @Override
     public String toString(@Nullable Event event, boolean b) {
-        return "";
+        return "unregister gamemode " + gameMode.toString(event,b);
     }
 }
