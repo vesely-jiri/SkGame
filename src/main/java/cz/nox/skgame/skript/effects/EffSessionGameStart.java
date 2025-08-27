@@ -5,11 +5,13 @@ import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.util.Kleenean;
+import cz.nox.skgame.api.game.event.GameStartEvent;
 import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.game.model.GameMode;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.core.game.GameMapManager;
+import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +21,7 @@ public class EffSessionGameStart extends Effect {
     private Expression<Session> session;
 
     static {
-        Skript.registerEffect(EffSessionGameStop.class,
+        Skript.registerEffect(EffSessionGameStart.class,
                 "start game of %session%"
         );
     }
@@ -46,11 +48,10 @@ public class EffSessionGameStart extends Effect {
         if (session.getGameMap() == null) return;
         if (mapManager.isMapClaimed(session.getGameMap().getId())) return;
 
-        // TODO - If GameMap is not taken
-        // TODO - If GameMap is in good condition(all map/gamemode values are properly set)
         // TODO - If other things?
 
-        // TODO - Trigger event that is tied up with gamemode script
+        GameStartEvent newEvent = new GameStartEvent(session,gameMode);
+        Bukkit.getPluginManager().callEvent(newEvent);
 
         System.out.println("End of trigger " + this.getClass());
     }
@@ -60,6 +61,6 @@ public class EffSessionGameStart extends Effect {
         Session session = this.session.getSingle(event);
         if (session == null) return "Session does not exist";
         GameMode gameMode = session.getGameMode();
-        return "start game " + gameMode ;
+        return "start game " + gameMode + " of session with id " + session.getId() ;
     }
 }
