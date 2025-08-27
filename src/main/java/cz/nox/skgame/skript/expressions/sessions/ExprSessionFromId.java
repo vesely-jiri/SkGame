@@ -22,14 +22,14 @@ import java.util.Arrays;
         "ex2",
         "ex3"})
 @SuppressWarnings("unused")
-public class ExprSessionById extends SimpleExpression<Session> {
+public class ExprSessionFromId extends SimpleExpression<Session> {
 
     private static final SessionManager sessionManager = SessionManager.getInstance();
     private Expression<String> uuids;
 
     static {
-        Skript.registerExpression(ExprSessionById.class, Session.class, ExpressionType.COMBINED,
-                "session[s] (with|from) [[uu]id] %strings%");
+        Skript.registerExpression(ExprSessionFromId.class, Session.class, ExpressionType.COMBINED,
+                "session[s] (with|from) [[uu]id][s] %strings%");
     }
 
     @SuppressWarnings("unchecked")
@@ -41,21 +41,21 @@ public class ExprSessionById extends SimpleExpression<Session> {
 
     @Override
     protected @Nullable Session[] get(Event event) {
-        return Arrays.stream(this.uuids.getAll(event))
+        return Arrays.stream(this.uuids.getArray(event))
                 .map(sessionManager::getSessionById)
                 .toArray(Session[]::new);
-    }
-
-
-    @Override
-    public boolean isSingle() {
-        return this.uuids.isSingle();
     }
 
     @Override
     public Class<? extends Session> getReturnType() {
         return Session.class;
     }
+
+    @Override
+    public boolean isSingle() {
+        return this.uuids.isSingle();
+    }
+
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
