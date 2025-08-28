@@ -16,11 +16,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 @SuppressWarnings("unused")
-public class ExprSessionSpectators extends SimpleExpression<Object> {
+public class ExprSessionSpectators extends SimpleExpression<Player> {
     private Expression<Session> session;
 
     static {
-        Skript.registerExpression(ExprSessionSpectators.class, Object.class, ExpressionType.PROPERTY,
+        Skript.registerExpression(ExprSessionSpectators.class, Player.class, ExpressionType.PROPERTY,
                 "[all] [session] spectators of %session%"
         );
     }
@@ -33,16 +33,17 @@ public class ExprSessionSpectators extends SimpleExpression<Object> {
     }
 
     @Override
-    protected @Nullable Object[] get(Event event) {
+    protected @Nullable Player[] get(Event event) {
         Session session = this.session.getSingle(event);
-        if (session != null) return session.getSpectators().toArray(new Object[0]);
+        if (session != null) return session.getSpectators().toArray(new Player[0]);
         return null;
     }
 
     @Override
     public Class<?> @Nullable [] acceptChange(Changer.ChangeMode mode) {
         return switch (mode) {
-            case SET, ADD, REMOVE, RESET -> CollectionUtils.array(Object.class);
+            case SET, ADD, REMOVE -> CollectionUtils.array(Player[].class);
+            case RESET -> CollectionUtils.array();
             default -> null;
         };
     }
@@ -50,13 +51,10 @@ public class ExprSessionSpectators extends SimpleExpression<Object> {
     @Override
     public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
         Session session = this.session.getSingle(event);
-
         if (session == null) return;
         if (delta == null || delta[0] == null &&
                 mode != Changer.ChangeMode.RESET) return;
-
         Player[] spectators = (Player[]) delta[0];
-
         switch (mode) {
             case SET, RESET -> {
                 Player[] sessionSpectators = session.getSpectators().toArray(new Player[0]);
@@ -81,6 +79,6 @@ public class ExprSessionSpectators extends SimpleExpression<Object> {
 
     @Override
     public String toString(@Nullable Event event, boolean b) {
-        return "spectators of session " + session.toString();
+        return "spectators of session " + session.toString(event,b);
     }
 }

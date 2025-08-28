@@ -14,14 +14,16 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+
 @SuppressWarnings("unused")
-public class ExprSessionPlayers extends SimpleExpression<Object> {
+public class ExprSessionPlayers extends SimpleExpression<Player> {
 
     private static final SessionManager sessionManager = SessionManager.getInstance();
     private Expression<Session> session;
 
     static {
-        Skript.registerExpression(ExprSessionPlayers.class, Object.class, ExpressionType.PROPERTY,
+        Skript.registerExpression(ExprSessionPlayers.class, Player.class, ExpressionType.PROPERTY,
                 "[all] [session] players of %session%"
         );
     }
@@ -34,10 +36,10 @@ public class ExprSessionPlayers extends SimpleExpression<Object> {
     }
 
     @Override
-    protected @Nullable Object[] get(Event event) {
+    protected @Nullable Player[] get(Event event) {
         Session session = this.session.getSingle(event);
         if (session != null) {
-            return session.getPlayers().toArray(new Object[0]);
+            return session.getPlayers().toArray(new Player[0]);
         }
         return null;
     }
@@ -45,7 +47,8 @@ public class ExprSessionPlayers extends SimpleExpression<Object> {
     @Override
     public Class<?> @Nullable [] acceptChange(Changer.ChangeMode mode) {
         return switch (mode) {
-            case SET, ADD, REMOVE, RESET -> CollectionUtils.array(Player[].class);
+            case SET, ADD, REMOVE -> CollectionUtils.array(Player[].class);
+            case RESET -> CollectionUtils.array();
             default -> null;
         };
     }
@@ -57,7 +60,10 @@ public class ExprSessionPlayers extends SimpleExpression<Object> {
         if (delta == null || delta[0] == null &&
                 mode != Changer.ChangeMode.RESET) return;
 
-        Player[] players = (Player[]) delta[0];
+        Player[] players = Arrays.stream(delta)
+                .filter(obj -> obj instanceof Player)
+                .map(obj -> (Player) obj)
+                .toArray(Player[]::new);
 
         switch (mode) {
             case SET, RESET -> {
@@ -83,6 +89,8 @@ public class ExprSessionPlayers extends SimpleExpression<Object> {
 
     @Override
     public String toString(@Nullable Event event, boolean b) {
-        return "players of session " + session.toString();
+        Session s = this.session.getSingle(event);
+        if (s == null) return null;
+        return "players " + s.getPlayers() + " of  session with id " + s.getId();
     }
 }
