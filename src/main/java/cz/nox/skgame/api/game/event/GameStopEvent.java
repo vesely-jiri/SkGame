@@ -1,6 +1,6 @@
 package cz.nox.skgame.api.game.event;
 
-import cz.nox.skgame.api.game.model.GameMode;
+import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
@@ -10,14 +10,14 @@ public class GameStopEvent extends Event {
 
     private static final HandlerList handlers = new HandlerList();
 
-    public GameMode getGameMode() {
-        return gameMode;
+    public MiniGame getGameMode() {
+        return miniGame;
     }
     public Session getSession() {
         return session;
     }
 
-    private GameMode gameMode;
+    private MiniGame miniGame;
     private Session session;
 
     @Override

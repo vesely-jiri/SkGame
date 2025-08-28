@@ -6,7 +6,7 @@ import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.registrations.Classes;
 import cz.nox.skgame.api.game.model.GameMap;
-import cz.nox.skgame.api.game.model.GameMode;
+import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
 
 @SuppressWarnings("unused")
@@ -56,11 +56,11 @@ public class Types {
                 })
         );
 
-        Classes.registerClass(new ClassInfo<>(GameMode.class, "gamemode")
-                .user("gamemode")
-                .name("GameMode")
-                .description("Represents gamemode of SkGame addon")
-                .defaultExpression(new EventValueExpression<>(GameMode.class))
+        Classes.registerClass(new ClassInfo<>(MiniGame.class, "minigame")
+                .user("minigame")
+                .name("MiniGame")
+                .description("Represents minigame of SkGame addon")
+                .defaultExpression(new EventValueExpression<>(MiniGame.class))
                 .since("1.0.0")
                 .parser(new Parser<>() {
                     @Override
@@ -68,12 +68,12 @@ public class Types {
                         return false;
                     }
                     @Override
-                    public String toString(GameMode gameMode, int i) {
-                        return "gamemode with id " + gameMode.getId();
+                    public String toString(MiniGame miniGame, int i) {
+                        return "minigame with id " + miniGame.getId();
                     }
                     @Override
-                    public String toVariableNameString(GameMode gameMode) {
-                        return "gamemode:" + gameMode.getId();
+                    public String toVariableNameString(MiniGame miniGame) {
+                        return "minigame:" + miniGame.getId();
                     }
                 })
         );

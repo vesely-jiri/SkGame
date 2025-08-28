@@ -1,6 +1,6 @@
 package cz.nox.skgame.api.game.event;
 
-import cz.nox.skgame.api.game.model.GameMode;
+import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
@@ -10,20 +10,20 @@ public class GameStartEvent extends Event {
 
     private static final HandlerList handlers = new HandlerList();
 
-    private GameMode gameMode;
+    private MiniGame miniGame;
     private Session session;
 
-    public GameStartEvent(Session session, GameMode gameMode) {
+    public GameStartEvent(Session session, MiniGame miniGame) {
         this.session = session;
-        this.gameMode = gameMode;
+        this.miniGame = miniGame;
     }
 
     public Session getSession() {
         return this.session;
     }
 
-    public GameMode getGameMode() {
-        return this.gameMode;
+    public MiniGame getGameMode() {
+        return this.miniGame;
     }
 
     @Override

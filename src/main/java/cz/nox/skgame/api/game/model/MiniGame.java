@@ -10,19 +10,19 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-public class GameMode implements ConfigurationSerializable {
+public class MiniGame implements ConfigurationSerializable {
     private String id;
     private String name;
     private Script script;
     private Map<String, Object> values;
 
-    public GameMode(String id, String name, Script script, Map<String, Object> values) {
+    public MiniGame(String id, String name, Script script, Map<String, Object> values) {
         this.id = id;
         this.name = name;
         this.script = script;
         this.values = values;
     }
-    public GameMode(String id) {
+    public MiniGame(String id) {
         this(id,null,null,new HashMap<>());
     }
 
@@ -62,8 +62,8 @@ public class GameMode implements ConfigurationSerializable {
     }
 
     @SuppressWarnings("unchecked")
-    public static GameMode deserialize(Map<String, Object> gm) {
-        GameMode newGm = new GameMode((String) gm.get("id"));
+    public static MiniGame deserialize(Map<String, Object> gm) {
+        MiniGame newGm = new MiniGame((String) gm.get("id"));
         newGm.setName((String) gm.get("name"));
         newGm.setValues((Map<String, Object>) gm.get("values"));
 

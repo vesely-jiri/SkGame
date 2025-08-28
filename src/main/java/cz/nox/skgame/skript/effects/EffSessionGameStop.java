@@ -6,10 +6,8 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.util.Kleenean;
 import cz.nox.skgame.api.game.event.GameStartEvent;
-import cz.nox.skgame.api.game.model.GameMap;
-import cz.nox.skgame.api.game.model.GameMode;
+import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
-import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.core.game.GameMapManager;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
@@ -39,10 +37,10 @@ public class EffSessionGameStop extends Effect {
         Session session = this.session.getSingle(event);
         if (session == null) return;
 
-        GameMode gameMode = session.getGameMode();
-        if (gameMode == null) return;
+        MiniGame miniGame = session.getMiniGame();
+        if (miniGame == null) return;
 
-        GameStartEvent newEvent = new GameStartEvent(session,gameMode);
+        GameStartEvent newEvent = new GameStartEvent(session, miniGame);
         Bukkit.getPluginManager().callEvent(newEvent);
 
         System.out.println("End of trigger " + this.getClass());
@@ -52,7 +50,7 @@ public class EffSessionGameStop extends Effect {
     public String toString(@Nullable Event event, boolean b) {
         Session session = this.session.getSingle(event);
         if (session == null) return "Session does not exist";
-        GameMode gameMode = session.getGameMode();
-        return "start game " + gameMode + " of session with id " + session.getId() ;
+        MiniGame miniGame = session.getMiniGame();
+        return "start game " + miniGame + " of session with id " + session.getId() ;
     }
 }

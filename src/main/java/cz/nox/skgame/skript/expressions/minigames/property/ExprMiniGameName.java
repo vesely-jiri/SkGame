@@ -1,23 +1,23 @@
-package cz.nox.skgame.skript.expressions.gamemodes;
+package cz.nox.skgame.skript.expressions.minigames.property;
 
 import ch.njol.skript.classes.Changer;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.util.coll.CollectionUtils;
-import cz.nox.skgame.api.game.model.GameMode;
+import cz.nox.skgame.api.game.model.MiniGame;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
-public class ExprGameModeValue extends SimplePropertyExpression<GameMode, String> {
+public class ExprMiniGameName extends SimplePropertyExpression<MiniGame, String> {
 
     static {
-        register(ExprGameModeValue.class, String.class,
-                "name","gamemode");
+        register(ExprMiniGameName.class, String.class,
+                "name","minigame");
     }
 
     @Override
-    public @Nullable String convert(GameMode gameMode) {
-        return gameMode.getName();
+    public @Nullable String convert(MiniGame miniGame) {
+        return miniGame.getName();
     }
 
     @Override
@@ -31,15 +31,15 @@ public class ExprGameModeValue extends SimplePropertyExpression<GameMode, String
 
     @Override
     public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
-        GameMode gameMode = getExpr().getSingle(event);
-        if (gameMode == null) return;
+        MiniGame miniGame = getExpr().getSingle(event);
+        if (miniGame == null) return;
         switch (mode) {
             case SET -> {
                 if (delta == null || delta[0] == null) return;
                 String name = (String) delta[0];
-                gameMode.setName(name);
+                miniGame.setName(name);
             }
-            case RESET -> gameMode.setName(null);
+            case RESET -> miniGame.setName(null);
         }
     }
 

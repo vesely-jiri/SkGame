@@ -1,9 +1,8 @@
 package cz.nox.skgame.core.game;
 
 import cz.nox.skgame.SkGame;
-import cz.nox.skgame.api.game.model.GameMode;
+import cz.nox.skgame.api.game.model.MiniGame;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
@@ -11,19 +10,19 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class GameModeManager {
+public class MiniGameManager {
 
-    private static GameModeManager gameModeManager;
-    private Map<String, GameMode> gameModes = new HashMap<>();
-    private GameMode lastCreatedGameMode;
+    private static MiniGameManager miniGameManager;
+    private Map<String, MiniGame> miniGames = new HashMap<>();
+    private MiniGame lastCreatedMiniGame;
 
-    public static GameModeManager getInstance() {
-        if (gameModeManager == null) gameModeManager = new GameModeManager();
-        return gameModeManager;
+    public static MiniGameManager getInstance() {
+        if (miniGameManager == null) miniGameManager = new MiniGameManager();
+        return miniGameManager;
     }
 
-    public GameMode getGameModeById(String id) {
-        return gameModes.get(id);
+    public MiniGame getMiniGameById(String id) {
+        return miniGames.get(id);
     }
 
     public void loadFromFile(File file) {
@@ -35,14 +34,14 @@ public class GameModeManager {
             ConfigurationSection section = config.getConfigurationSection("gamemodes." + key);
             if (section == null) continue;
             Map<String, Object> gmData = section.getValues(true);
-            GameMode gm = GameMode.deserialize(gmData);
-            gameModes.put(gm.getId(),gm);
+            MiniGame gm = MiniGame.deserialize(gmData);
+            miniGames.put(gm.getId(),gm);
         }
     }
     public void saveToFile(File file) {
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
         config.set("gamemodes",null);
-        for (GameMode gm : gameModes.values()) {
+        for (MiniGame gm : miniGames.values()) {
             config.createSection("gamemodes." + gm.getId(), gm.serialize());
         }
         try {
@@ -52,23 +51,23 @@ public class GameModeManager {
         }
     }
 
-    public void registerGameMode(String id) {
-        if (gameModes.containsKey(id)) return;
-        GameMode gameMode = new GameMode(id);
-        gameModes.put(id,gameMode);
-        lastCreatedGameMode = gameMode;
+    public void registerMiniGame(String id) {
+        if (miniGames.containsKey(id)) return;
+        MiniGame miniGame = new MiniGame(id);
+        miniGames.put(id, miniGame);
+        lastCreatedMiniGame = miniGame;
     }
-    public void unregisterGameMode(String id) {
-        gameModes.remove(id);
+    public void unregisterMiniGame(String id) {
+        miniGames.remove(id);
     }
     public boolean isRegistered(String id) {
-        return gameModes.containsKey(id);
+        return miniGames.containsKey(id);
     }
 
-    public GameMode getLastCreatedGameMode() {
-        return lastCreatedGameMode;
+    public MiniGame getLastCreatedGameMode() {
+        return lastCreatedMiniGame;
     }
-    public void setLastCreatedGameMode(GameMode gameMode) {
-        this.lastCreatedGameMode = gameMode;
+    public void setLastCreatedGameMode(MiniGame miniGame) {
+        this.lastCreatedMiniGame = miniGame;
     }
 }

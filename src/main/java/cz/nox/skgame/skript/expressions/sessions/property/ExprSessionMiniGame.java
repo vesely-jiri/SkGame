@@ -3,28 +3,28 @@ package cz.nox.skgame.skript.expressions.sessions.property;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.util.coll.CollectionUtils;
-import cz.nox.skgame.api.game.model.GameMode;
+import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
-public class ExprSessionGameMode extends SimplePropertyExpression<Session, GameMode> {
+public class ExprSessionMiniGame extends SimplePropertyExpression<Session, MiniGame> {
 
     static {
-        register(ExprSessionGameMode.class, GameMode.class,
+        register(ExprSessionMiniGame.class, MiniGame.class,
                 "gamemode","session");
     }
 
     @Override
-    public @Nullable GameMode convert(Session session) {
-        return session.getGameMode();
+    public @Nullable MiniGame convert(Session session) {
+        return session.getMiniGame();
     }
 
     @Override
-    public Class<? extends GameMode> @Nullable [] acceptChange(ChangeMode mode) {
+    public Class<? extends MiniGame> @Nullable [] acceptChange(ChangeMode mode) {
         return switch (mode) {
-            case SET   -> CollectionUtils.array(GameMode.class);
+            case SET   -> CollectionUtils.array(MiniGame.class);
             case RESET -> CollectionUtils.array();
             default    -> null;
         };
@@ -37,10 +37,10 @@ public class ExprSessionGameMode extends SimplePropertyExpression<Session, GameM
         switch (mode) {
             case ChangeMode.SET -> {
                 if (delta == null || delta[0] == null) return;
-                GameMode gameMode = (GameMode) delta[0];
-                session.setGameMode(gameMode);
+                MiniGame miniGame = (MiniGame) delta[0];
+                session.setMiniGame(miniGame);
             }
-            case ChangeMode.RESET -> session.setGameMode(null);
+            case ChangeMode.RESET -> session.setMiniGame(null);
         }
     }
 
@@ -50,7 +50,7 @@ public class ExprSessionGameMode extends SimplePropertyExpression<Session, GameM
     }
 
     @Override
-    public Class<? extends GameMode> getReturnType() {
-        return GameMode.class;
+    public Class<? extends MiniGame> getReturnType() {
+        return MiniGame.class;
     }
 }

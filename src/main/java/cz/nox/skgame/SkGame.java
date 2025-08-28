@@ -3,7 +3,7 @@ package cz.nox.skgame;
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAddon;
 import cz.nox.skgame.core.game.GameMapManager;
-import cz.nox.skgame.core.game.GameModeManager;
+import cz.nox.skgame.core.game.MiniGameManager;
 import cz.nox.skgame.util.LogUtil;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -17,7 +17,7 @@ public class SkGame extends JavaPlugin {
     private LogUtil logUtil;
 
     private final File dataFolder = new File(getDataFolder(),"storage");
-    private final File gameModesDataFile = new File(dataFolder, "gamemodes.yml");
+    private final File miniGamesDataFile = new File(dataFolder, "minigames.yml");
     private final File mapsDataFile = new File(dataFolder, "maps.yml");
 
 
@@ -37,7 +37,7 @@ public class SkGame extends JavaPlugin {
 
         this.addon = Skript.registerAddon(instance);
 
-        GameModeManager.getInstance().loadFromFile(gameModesDataFile);
+        MiniGameManager.getInstance().loadFromFile(miniGamesDataFile);
         GameMapManager.getInstance().loadFromFile(mapsDataFile);
 
         try {
@@ -53,7 +53,7 @@ public class SkGame extends JavaPlugin {
         long s = System.currentTimeMillis();
         logUtil.info("SkGame disabling");
 
-        GameModeManager.getInstance().saveToFile(gameModesDataFile);
+        MiniGameManager.getInstance().saveToFile(miniGamesDataFile);
         GameMapManager.getInstance().saveToFile(mapsDataFile);
 
         logUtil.info("SkGame disabled in " + (System.currentTimeMillis() - s) + "ms");

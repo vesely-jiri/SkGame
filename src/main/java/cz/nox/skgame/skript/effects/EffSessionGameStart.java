@@ -7,7 +7,7 @@ import ch.njol.skript.lang.SkriptParser;
 import ch.njol.util.Kleenean;
 import cz.nox.skgame.api.game.event.GameStartEvent;
 import cz.nox.skgame.api.game.model.GameMap;
-import cz.nox.skgame.api.game.model.GameMode;
+import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.core.game.GameMapManager;
@@ -39,18 +39,18 @@ public class EffSessionGameStart extends Effect {
         Session session = this.session.getSingle(event);
         if (session == null) return;
 
-        GameMode gameMode = session.getGameMode();
+        MiniGame miniGame = session.getMiniGame();
         GameMap gameMap = session.getGameMap();
-        if (gameMode == null || gameMap == null) return;
+        if (miniGame == null || gameMap == null) return;
 
         if (session.getState() != SessionState.STOPPED) return;
-        if (session.getGameMode() == null) return;
+        if (session.getMiniGame() == null) return;
         if (session.getGameMap() == null) return;
         if (mapManager.isMapClaimed(session.getGameMap().getId())) return;
 
         // TODO - If other things?
 
-        GameStartEvent newEvent = new GameStartEvent(session,gameMode);
+        GameStartEvent newEvent = new GameStartEvent(session, miniGame);
         Bukkit.getPluginManager().callEvent(newEvent);
 
         System.out.println("End of trigger " + this.getClass());
@@ -60,7 +60,7 @@ public class EffSessionGameStart extends Effect {
     public String toString(@Nullable Event event, boolean b) {
         Session session = this.session.getSingle(event);
         if (session == null) return "Session does not exist";
-        GameMode gameMode = session.getGameMode();
-        return "start game " + gameMode + " of session with id " + session.getId() ;
+        MiniGame miniGame = session.getMiniGame();
+        return "start game " + miniGame + " of session with id " + session.getId() ;
     }
 }

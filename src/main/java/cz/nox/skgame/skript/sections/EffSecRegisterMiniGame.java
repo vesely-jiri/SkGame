@@ -4,20 +4,20 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.lang.*;
 import ch.njol.util.Kleenean;
-import cz.nox.skgame.core.game.GameModeManager;
+import cz.nox.skgame.core.game.MiniGameManager;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 @SuppressWarnings("unused")
-public class EffSecRegisterGameMode extends EffectSection {
+public class EffSecRegisterMiniGame extends EffectSection {
 
-    private static final GameModeManager gameModeManager = GameModeManager.getInstance();
+    private static final MiniGameManager MINI_GAME_MANAGER = MiniGameManager.getInstance();
     private Expression<String> id;
 
     static {
-        Skript.registerSection(EffSecRegisterGameMode.class,
+        Skript.registerSection(EffSecRegisterMiniGame.class,
                 "(register|create) [new] game[mode] (with|from) id %string%"
         );
     }
@@ -35,12 +35,12 @@ public class EffSecRegisterGameMode extends EffectSection {
 
         // TODO - Check if script file contains required events
 
-        gameModeManager.registerGameMode(id);
+        MINI_GAME_MANAGER.registerMiniGame(id);
         return super.walk(event,false);
     }
 
     @Override
     public String toString(@Nullable Event event, boolean b) {
-        return "register gamemode with id " + id.getSingle(event);
+        return "register minigame with id " + id.getSingle(event);
     }
 }

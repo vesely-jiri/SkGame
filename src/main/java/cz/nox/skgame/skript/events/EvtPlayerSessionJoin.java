@@ -6,6 +6,7 @@ import ch.njol.skript.lang.SkriptParser;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings("unused")
 public class EvtPlayerSessionJoin extends SkriptEvent {
     @Override
     public boolean init(Literal<?>[] literals, int i, SkriptParser.ParseResult parseResult) {

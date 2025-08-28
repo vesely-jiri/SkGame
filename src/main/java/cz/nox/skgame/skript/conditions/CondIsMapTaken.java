@@ -17,7 +17,7 @@ public class CondIsMapTaken extends Condition {
 
     static {
         Skript.registerCondition(CondIsMapTaken.class,
-                "%GameMap% is (taken|claimed|being used)"
+                "%gamemap% is (taken|claimed|being used)"
         );
     }
 

@@ -49,6 +49,7 @@ public class EffSecCreateSession extends EffectSection {
         if (sessionManager.getSessionById(id) == null) {
             sessionManager.createSession(id);
         }
+        // TODO - fire session create event here, or in sessionManager?
         return super.walk(event,false);
     }
 

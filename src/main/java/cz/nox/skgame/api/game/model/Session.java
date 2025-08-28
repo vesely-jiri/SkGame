@@ -16,11 +16,11 @@ public class Session {
     private HashSet<Player> players;
     private HashSet<Player> spectators;
     private SessionState state;
-    private GameMode gameMode;
+    private MiniGame miniGame;
     private GameMap gameMap;
     private HashMap<String, Object> values;
 
-    public Session(String id, String name, Player host, GameMode gameMode,
+    public Session(String id, String name, Player host, MiniGame miniGame,
                    SessionState state, GameMap map, HashSet<Player> players, HashSet<Player> spectators,
                    HashMap<String, Object> values) {
         this.id = id;
@@ -29,7 +29,7 @@ public class Session {
         this.players = new HashSet<>(players);
         this.spectators = new HashSet<>(spectators);
         this.state = state;
-        this.gameMode = gameMode;
+        this.miniGame = miniGame;
         this.gameMap = map;
         this.values = new HashMap<>(values);
     }
@@ -86,11 +86,11 @@ public class Session {
     public void setState(SessionState state) {
         this.state = state;
     }
-    public GameMode getGameMode() {
-        return gameMode;
+    public MiniGame getMiniGame() {
+        return miniGame;
     }
-    public void setGameMode(GameMode gameMode) {
-        this.gameMode = gameMode;
+    public void setMiniGame(MiniGame miniGame) {
+        this.miniGame = miniGame;
     }
     public GameMap getGameMap() {
         return gameMap;

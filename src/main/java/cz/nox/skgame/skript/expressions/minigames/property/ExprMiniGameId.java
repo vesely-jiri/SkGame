@@ -1,20 +1,20 @@
-package cz.nox.skgame.skript.expressions.gamemodes.property;
+package cz.nox.skgame.skript.expressions.minigames.property;
 
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
-import cz.nox.skgame.api.game.model.GameMode;
+import cz.nox.skgame.api.game.model.MiniGame;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
-public class ExprGameModeId extends SimplePropertyExpression<GameMode, String> {
+public class ExprMiniGameId extends SimplePropertyExpression<MiniGame, String> {
 
     static {
-        register(ExprGameModeId.class, String.class,
+        register(ExprMiniGameId.class, String.class,
                 "id","gamemode");
     }
 
     @Override
-    public @Nullable String convert(GameMode gameMode) {
-        return gameMode.getId();
+    public @Nullable String convert(MiniGame miniGame) {
+        return miniGame.getId();
     }
 
     @Override
