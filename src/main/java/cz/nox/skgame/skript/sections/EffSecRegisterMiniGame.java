@@ -33,7 +33,7 @@ public class EffSecRegisterMiniGame extends EffectSection {
     protected @Nullable TriggerItem walk(Event event) {
         String id = this.id.getSingle(event);
 
-        // TODO - Check if script file contains required events
+        // TODO - Check if script file contains required events (and effects?)
 
         MINI_GAME_MANAGER.registerMiniGame(id);
         return super.walk(event,false);
