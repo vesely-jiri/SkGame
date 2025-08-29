@@ -24,6 +24,9 @@ public class MiniGameManager {
     public MiniGame getMiniGameById(String id) {
         return miniGames.get(id);
     }
+    public MiniGame[] getAllMiniGames() {
+        return miniGames.values().toArray(new MiniGame[0]);
+    }
 
     public void loadFromFile(File file) {
         if (!file.exists()) return;
