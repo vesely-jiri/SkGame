@@ -7,8 +7,17 @@ import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 
 public class GameStopEvent extends Event {
-
     private static final HandlerList handlers = new HandlerList();
+
+    private MiniGame miniGame;
+    private Session session;
+    private String reason;
+
+    public GameStopEvent(MiniGame miniGame, Session session, String reason) {
+        this.miniGame = miniGame;
+        this.session = session;
+        this.reason = reason;
+    }
 
     public MiniGame getMiniGame() {
         return miniGame;
@@ -16,12 +25,15 @@ public class GameStopEvent extends Event {
     public Session getSession() {
         return session;
     }
-
-    private MiniGame miniGame;
-    private Session session;
+    public String getReason() {
+        return reason;
+    }
 
     @Override
     public @NotNull HandlerList getHandlers() {
+        return handlers;
+    }
+    public static HandlerList getHandlerList() {
         return handlers;
     }
 }
