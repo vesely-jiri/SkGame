@@ -15,9 +15,8 @@ import org.jetbrains.annotations.Nullable;
  * Called when minigame of session starts
  */
 @SuppressWarnings("unused")
-public class    EvtGameStart extends SkriptEvent {
-    private Session session;
-    private Literal<MiniGame> miniGame;
+public class EvtGameStart extends SkriptEvent {
+    private Literal<String> miniGameId;
 
     static {
         Skript.registerEvent("GameStart", EvtGameStart.class, GameStartEvent.class,
@@ -31,19 +30,28 @@ public class    EvtGameStart extends SkriptEvent {
     @SuppressWarnings("unchecked")
     @Override
     public boolean init(Literal<?>[] args, int i, SkriptParser.ParseResult parseResult) {
-        if (args[0] != null) {
-            this.miniGame = (Literal<MiniGame>) args[0];
+        if (args.length > 0 && args[0] != null) {
+            this.miniGameId = (Literal<String>) args[0];
         }
         return true;
     }
 
     @Override
     public boolean check(Event e) {
-        return this.miniGame.getSingle(e) == ((GameStartEvent) e).getMiniGame();
+        GameStartEvent event = (GameStartEvent) e;
+        if (miniGameId == null) {
+            return true;
+        }
+        String expectedId = miniGameId.getSingle(e);
+        if (expectedId == null) {
+            return true;
+        }
+        return expectedId.equalsIgnoreCase(event.getMiniGame().getId());
     }
 
     @Override
     public String toString(@Nullable Event event, boolean b) {
-        return "on game " + miniGame.getSingle(event) + " start of session " + session;
+        String id = (miniGameId == null || event == null) ? "any" : miniGameId.toString(event, b);
+        return "on game " + id + " start";
     }
 }

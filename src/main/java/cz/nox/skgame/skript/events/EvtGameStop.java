@@ -1,10 +1,10 @@
 package cz.nox.skgame.skript.events;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.lang.Literal;
-import ch.njol.skript.lang.SkriptEvent;
-import ch.njol.skript.lang.SkriptParser;
+import ch.njol.skript.lang.*;
+import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.registrations.EventValues;
+import ch.njol.util.Kleenean;
 import cz.nox.skgame.api.game.event.GameStopEvent;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
@@ -16,8 +16,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @SuppressWarnings("unused")
 public class EvtGameStop extends SkriptEvent {
-    private Session session;
-    private Literal<MiniGame> miniGame;
+    private Literal<String> miniGameId;
 
     static {
         Skript.registerEvent("GameStop", EvtGameStop.class, GameStopEvent.class,
@@ -26,24 +25,34 @@ public class EvtGameStop extends SkriptEvent {
         );
         EventValues.registerEventValue(GameStopEvent.class, Session.class, GameStopEvent::getSession, EventValues.TIME_NOW);
         EventValues.registerEventValue(GameStopEvent.class, MiniGame.class, GameStopEvent::getMiniGame, EventValues.TIME_NOW);
+        EventValues.registerEventValue(GameStopEvent.class, String.class, GameStopEvent::getReason, EventValues.TIME_NOW);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public boolean init(Literal<?>[] args, int i, SkriptParser.ParseResult parseResult) {
-        if (args[0] != null) {
-            this.miniGame = (Literal<MiniGame>) args[0];
+        if (args.length > 0 && args[0] != null) {
+            this.miniGameId = (Literal<String>) args[0];
         }
         return true;
     }
 
     @Override
     public boolean check(Event e) {
-        return this.miniGame.getSingle(e) == ((GameStopEvent) e).getMiniGame();
+        GameStopEvent event = (GameStopEvent) e;
+        if (miniGameId == null) {
+            return true;
+        }
+        String expected = miniGameId.getSingle(e);
+        if (expected == null) {
+            return true;
+        }
+        return expected.equalsIgnoreCase(event.getMiniGame().getId());
     }
 
     @Override
     public String toString(@Nullable Event event, boolean b) {
-        return null;
+        String id = (miniGameId == null || event == null) ? "any" : miniGameId.toString(event, b);
+        return "on " + id + " game stop";
     }
 }
