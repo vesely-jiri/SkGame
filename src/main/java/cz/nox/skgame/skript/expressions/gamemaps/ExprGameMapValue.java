@@ -35,13 +35,17 @@ public class ExprGameMapValue extends SimpleExpression<Object> {
     }
 
     @Override
-    protected @Nullable Object [] get(Event event) {
+    protected @Nullable Object[] get(Event event) {
         GameMap map = this.gameMap.getSingle(event);
         MiniGame gm = this.miniGame.getSingle(event);
         String k = this.key.getSingle(event);
         if (map == null || gm == null || k == null) return null;
-        Object o = map.getMiniGameValue(gm.getId(),key.getSingle(event));
-        return CollectionUtils.array(o);
+        Object o = map.getMiniGameValue(gm.getId(), this.key.getSingle(event));
+        if (o instanceof Object[]) {
+            return (Object[]) o;
+        } else {
+            return CollectionUtils.array(o);
+        }
     }
 
     @Override
@@ -78,7 +82,7 @@ public class ExprGameMapValue extends SimpleExpression<Object> {
 
     @Override
     public boolean isSingle() {
-        return true;
+        return false;
     }
 
     @Override
