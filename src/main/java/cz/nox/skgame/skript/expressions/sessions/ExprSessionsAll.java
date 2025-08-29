@@ -1,0 +1,48 @@
+package cz.nox.skgame.skript.expressions.sessions;
+
+import ch.njol.skript.Skript;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
+import ch.njol.skript.lang.SkriptParser;
+import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.util.Kleenean;
+import cz.nox.skgame.api.game.model.Session;
+import cz.nox.skgame.core.game.SessionManager;
+import org.bukkit.event.Event;
+import org.jetbrains.annotations.Nullable;
+
+@SuppressWarnings("unused")
+public class ExprSessionsAll extends SimpleExpression<Session> {
+    private static final SessionManager sessionManager = SessionManager.getInstance();
+
+    static {
+        Skript.registerExpression(ExprSessionsAll.class, Session.class, ExpressionType.SIMPLE,
+                "[all] [game] sessions"
+        );
+    }
+
+    @Override
+    public boolean init(Expression<?>[] expressions, int i, Kleenean kleenean, SkriptParser.ParseResult parse) {
+        return true;
+    }
+
+    @Override
+    protected Session @Nullable [] get(Event event) {
+        return sessionManager.getAllSessions();
+    }
+
+    @Override
+    public boolean isSingle() {
+        return false;
+    }
+
+    @Override
+    public Class<? extends Session> getReturnType() {
+        return Session.class;
+    }
+
+    @Override
+    public String toString(@Nullable Event event, boolean b) {
+        return "all sessions";
+    }
+}
