@@ -15,12 +15,12 @@ import java.util.Arrays;
 
 @SuppressWarnings("unused")
 public class ExprMiniGameFromId extends SimpleExpression<MiniGame> {
-    private static final MiniGameManager MINI_GAME_MANAGER = MiniGameManager.getInstance();
+    private static final MiniGameManager miniGameManager = MiniGameManager.getInstance();
     private Expression<String> uuids;
 
     static {
         Skript.registerExpression(ExprMiniGameFromId.class, MiniGame.class, ExpressionType.COMBINED,
-                "minigame[s] from [[uu]id][s] %strings%"
+                "minigame[s] (with|from) [[uu]id][s] %strings%"
         );
     }
 
@@ -34,7 +34,7 @@ public class ExprMiniGameFromId extends SimpleExpression<MiniGame> {
     @Override
     protected @Nullable MiniGame[] get(Event event) {
         return Arrays.stream(this.uuids.getArray(event))
-                .map(MINI_GAME_MANAGER::getMiniGameById)
+                .map(miniGameManager::getMiniGameById)
                 .toArray(MiniGame[]::new);
     }
 
