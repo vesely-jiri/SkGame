@@ -1,13 +1,17 @@
 package cz.nox.skgame.skript;
 
 import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.classes.EnumClassInfo;
 import ch.njol.skript.classes.Parser;
 import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.lang.ParseContext;
+import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.registrations.Classes;
 import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
+import cz.nox.skgame.api.game.model.type.SessionState;
+import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
 public class Types {
@@ -74,6 +78,39 @@ public class Types {
                     @Override
                     public String toVariableNameString(MiniGame miniGame) {
                         return "minigame:" + miniGame.getId();
+                    }
+                })
+        );
+
+        Classes.registerClass(new EnumClassInfo<>(SessionState.class,"sessionstate","session states", new SimpleLiteral<>(SessionState.STOPPED, true))
+                .user("session ?states?")
+                .name("Session State")
+                .description("Represents states of session")
+                .since("1.0.0")
+                .parser(new Parser<SessionState>() {
+
+                    @Override
+                    public SessionState parse(String input, ParseContext context) {
+                        try {
+                            return SessionState.valueOf(input.trim().toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            return null;
+                        }
+                    }
+
+                    @Override
+                    public boolean canParse(ParseContext context) {
+                        return true;
+                    }
+
+                    @Override
+                    public String toString(SessionState sessionState, int i) {
+                        return "";
+                    }
+
+                    @Override
+                    public String toVariableNameString(SessionState sessionState) {
+                        return "";
                     }
                 })
         );
