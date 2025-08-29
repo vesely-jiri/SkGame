@@ -18,7 +18,7 @@ public class EffSecRegisterMiniGame extends EffectSection {
 
     static {
         Skript.registerSection(EffSecRegisterMiniGame.class,
-                "(register|create) [new] game[mode] (with|from) id %string%"
+                "(register|create) [new] minigame (with|from) id %string%"
         );
     }
 
