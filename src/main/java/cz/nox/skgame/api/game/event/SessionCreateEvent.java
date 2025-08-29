@@ -1,29 +1,20 @@
 package cz.nox.skgame.api.game.event;
 
-import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 
-public class GameStartEvent extends Event {
-
+public class SessionCreateEvent extends Event {
     private static final HandlerList handlers = new HandlerList();
+    private final Session session;
 
-    private MiniGame miniGame;
-    private Session session;
-
-    public GameStartEvent(Session session, MiniGame miniGame) {
+    public SessionCreateEvent(Session session) {
         this.session = session;
-        this.miniGame = miniGame;
     }
 
     public Session getSession() {
         return this.session;
-    }
-
-    public MiniGame getMiniGame() {
-        return this.miniGame;
     }
 
     @Override

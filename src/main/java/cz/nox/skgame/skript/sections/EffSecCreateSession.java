@@ -9,8 +9,13 @@ import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.EffectSection;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.Trigger;
 import ch.njol.skript.lang.TriggerItem;
+import ch.njol.skript.lang.util.SectionUtils;
+import ch.njol.skript.registrations.EventValues;
 import ch.njol.util.Kleenean;
+import cz.nox.skgame.api.game.event.SessionCreateEvent;
+import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.core.game.SessionManager;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +38,7 @@ public class EffSecCreateSession extends EffectSection {
     static {
         Skript.registerSection(EffSecCreateSession.class,
                 "create [new] [game] session (with|from) id %string%");
+//        EventValues.registerEventValue(SessionCreateEvent.class, Session.class, SessionCreateEvent::getSession);
     }
 
     @SuppressWarnings("unchecked")
@@ -49,7 +55,6 @@ public class EffSecCreateSession extends EffectSection {
         if (sessionManager.getSessionById(id) == null) {
             sessionManager.createSession(id);
         }
-        // TODO - fire session create event here, or in sessionManager?
         return super.walk(event,false);
     }
 

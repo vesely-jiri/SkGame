@@ -28,10 +28,10 @@ public class MiniGameManager {
     public void loadFromFile(File file) {
         if (!file.exists()) return;
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
-        ConfigurationSection baseSection = config.getConfigurationSection("gamemodes");
+        ConfigurationSection baseSection = config.getConfigurationSection("minigames");
         if (baseSection == null) return;
         for (String key : baseSection.getKeys(false)) {
-            ConfigurationSection section = config.getConfigurationSection("gamemodes." + key);
+            ConfigurationSection section = config.getConfigurationSection("minigames." + key);
             if (section == null) continue;
             Map<String, Object> gmData = section.getValues(true);
             MiniGame gm = MiniGame.deserialize(gmData);
@@ -40,14 +40,14 @@ public class MiniGameManager {
     }
     public void saveToFile(File file) {
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
-        config.set("gamemodes",null);
+        config.set("minigames",null);
         for (MiniGame gm : miniGames.values()) {
-            config.createSection("gamemodes." + gm.getId(), gm.serialize());
+            config.createSection("minigames." + gm.getId(), gm.serialize());
         }
         try {
             config.save(file);
         } catch (IOException e) {
-            SkGame.getInstance().getLogger().severe("Error while saving GameModes: " + e.getMessage());
+            SkGame.getInstance().getLogger().severe("Error while saving MiniGames: " + e.getMessage());
         }
     }
 
@@ -64,10 +64,10 @@ public class MiniGameManager {
         return miniGames.containsKey(id);
     }
 
-    public MiniGame getLastCreatedGameMode() {
+    public MiniGame getLastCreatedMiniGame() {
         return lastCreatedMiniGame;
     }
-    public void setLastCreatedGameMode(MiniGame miniGame) {
+    public void setLastCreatedMiniGame(MiniGame miniGame) {
         this.lastCreatedMiniGame = miniGame;
     }
 }

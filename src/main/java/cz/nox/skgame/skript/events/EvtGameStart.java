@@ -12,7 +12,7 @@ import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Called when gamemode of session starts
+ * Called when minigame of session starts
  */
 @SuppressWarnings("unused")
 public class    EvtGameStart extends SkriptEvent {
@@ -25,7 +25,7 @@ public class    EvtGameStart extends SkriptEvent {
                 "game [%string%] start"
         );
         EventValues.registerEventValue(GameStartEvent.class, Session.class, GameStartEvent::getSession, EventValues.TIME_NOW);
-        EventValues.registerEventValue(GameStartEvent.class, MiniGame.class, GameStartEvent::getGameMode, EventValues.TIME_NOW);
+        EventValues.registerEventValue(GameStartEvent.class, MiniGame.class, GameStartEvent::getMiniGame, EventValues.TIME_NOW);
     }
 
     @SuppressWarnings("unchecked")
@@ -39,7 +39,7 @@ public class    EvtGameStart extends SkriptEvent {
 
     @Override
     public boolean check(Event e) {
-        return this.miniGame.getSingle(e) == ((GameStartEvent) e).getGameMode();
+        return this.miniGame.getSingle(e) == ((GameStartEvent) e).getMiniGame();
     }
 
     @Override

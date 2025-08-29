@@ -11,26 +11,26 @@ import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
-public class EffUnregisterGameMode extends Effect {
+public class EffUnregisterMiniGame extends Effect {
     private static final MiniGameManager MINI_GAME_MANAGER = MiniGameManager.getInstance();
-    private Expression<MiniGame> gameMode;
+    private Expression<MiniGame> miniGame;
 
     static {
-        Skript.registerEffect(EffUnregisterGameMode.class,
-                "unregister %gamemode%"
+        Skript.registerEffect(EffUnregisterMiniGame.class,
+                "unregister %minigame%"
         );
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public boolean init(Expression<?>[] exprs, int i, Kleenean kleenean, SkriptParser.ParseResult parseResult) {
-        gameMode = (Expression<MiniGame>) exprs[0];
+        miniGame = (Expression<MiniGame>) exprs[0];
         return true;
     }
 
     @Override
     protected void execute(Event event) {
-        MiniGame[] miniGames = this.gameMode.getArray(event);
+        MiniGame[] miniGames = this.miniGame.getArray(event);
         for (MiniGame gm : miniGames) {
             if (gm == null) continue;
             if (MINI_GAME_MANAGER.isRegistered(gm.getId())) {
@@ -41,6 +41,6 @@ public class EffUnregisterGameMode extends Effect {
 
     @Override
     public String toString(@Nullable Event event, boolean b) {
-        return "unregister gamemode " + gameMode.toString(event,b);
+        return "unregister minigame " + miniGame.toString(event,b);
     }
 }

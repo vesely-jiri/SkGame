@@ -10,7 +10,7 @@ public class GameStopEvent extends Event {
 
     private static final HandlerList handlers = new HandlerList();
 
-    public MiniGame getGameMode() {
+    public MiniGame getMiniGame() {
         return miniGame;
     }
     public Session getSession() {

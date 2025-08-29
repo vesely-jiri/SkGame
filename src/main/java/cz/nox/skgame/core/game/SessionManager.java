@@ -1,7 +1,10 @@
 package cz.nox.skgame.core.game;
 
+import cz.nox.skgame.api.game.event.SessionCreateEvent;
 import cz.nox.skgame.api.game.model.Session;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -25,6 +28,9 @@ public class SessionManager {
             Session session = new Session(id);
             sessions.put(id,session);
             setLastCreatedSession(session);
+
+            Event e = new SessionCreateEvent(session);
+            Bukkit.getPluginManager().callEvent(e);
         }
     }
     public void deleteSession(String id) {
@@ -35,6 +41,9 @@ public class SessionManager {
     public Session getSession(Player player) {
         String id = playerToSession.get(player.getUniqueId());
         return getSessionById(id);
+    }
+    public Session[] getAllSessions() {
+        return sessions.values().toArray(new Session[0]);
     }
 
     public void setSessionId(String oldId, String newId) {

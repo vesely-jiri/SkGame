@@ -21,7 +21,7 @@ public class ExprGameMapValue extends SimpleExpression<Object> {
 
     static {
         Skript.registerExpression(ExprGameMapValue.class, Object.class, ExpressionType.COMBINED,
-                "value %string% of %gamemap% (of|from) %gamemode%"
+                "value %string% of %gamemap% (of|from) %minigame%"
         );
     }
 
@@ -85,6 +85,6 @@ public class ExprGameMapValue extends SimpleExpression<Object> {
     public String toString(@Nullable Event event, boolean b) {
         return "map value " + this.key.toString(event,b)
                 + " of map " + this.gameMap.toString(event,b)
-                + " of gamemode " + this.miniGame.toString(event,b);
+                + " of minigame " + this.miniGame.toString(event,b);
     }
 }

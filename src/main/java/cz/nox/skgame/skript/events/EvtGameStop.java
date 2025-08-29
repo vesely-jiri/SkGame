@@ -12,7 +12,7 @@ import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Called when gamemode of session stops
+ * Called when minigame of session stops
  */
 @SuppressWarnings("unused")
 public class EvtGameStop extends SkriptEvent {
@@ -25,7 +25,7 @@ public class EvtGameStop extends SkriptEvent {
                 "game [%string%] stop"
         );
         EventValues.registerEventValue(GameStopEvent.class, Session.class, GameStopEvent::getSession, EventValues.TIME_NOW);
-        EventValues.registerEventValue(GameStopEvent.class, MiniGame.class, GameStopEvent::getGameMode, EventValues.TIME_NOW);
+        EventValues.registerEventValue(GameStopEvent.class, MiniGame.class, GameStopEvent::getMiniGame, EventValues.TIME_NOW);
     }
 
     @SuppressWarnings("unchecked")
@@ -39,7 +39,7 @@ public class EvtGameStop extends SkriptEvent {
 
     @Override
     public boolean check(Event e) {
-        return this.miniGame.getSingle(e) == ((GameStopEvent) e).getGameMode();
+        return this.miniGame.getSingle(e) == ((GameStopEvent) e).getMiniGame();
     }
 
     @Override

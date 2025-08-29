@@ -9,7 +9,7 @@ public class ExprMiniGameId extends SimplePropertyExpression<MiniGame, String> {
 
     static {
         register(ExprMiniGameId.class, String.class,
-                "id","gamemode");
+                "id","minigame");
     }
 
     @Override

@@ -17,11 +17,11 @@ import org.jetbrains.annotations.Nullable;
 public class CondIsPlaying extends Condition {
     private static final SessionManager sessionManager = SessionManager.getInstance();
     private Expression<Player> players;
-    private Expression<MiniGame> gameMode;
+    private Expression<MiniGame> miniGame;
 
     static {
         Skript.registerCondition(CondIsPlaying.class,
-                "%players% (is|are) playing %gamemode%"
+                "%players% (is|are) playing %minigame%"
         );
     }
 
@@ -29,13 +29,13 @@ public class CondIsPlaying extends Condition {
     @Override
     public boolean init(Expression<?>[] exprs, int i, Kleenean kleenean, SkriptParser.ParseResult parseResult) {
         this.players = (Expression<Player>) exprs[0];
-        this.gameMode = (Expression<MiniGame>) exprs[1];
+        this.miniGame = (Expression<MiniGame>) exprs[1];
         return true;
     }
 
     @Override
     public boolean check(Event event) {
-        MiniGame miniGame = this.gameMode.getSingle(event);
+        MiniGame miniGame = this.miniGame.getSingle(event);
         for (Player player : this.players.getAll(event)) {
             Session session = sessionManager.getSession(player);
             if (session == null) return false;
@@ -49,6 +49,6 @@ public class CondIsPlaying extends Condition {
     public String toString(@Nullable Event event, boolean b) {
         return players.getSingle(event)
                 + "(is|are)" + (b ? " " : " not ") + "playing "
-                + gameMode.getSingle(event);
+                + miniGame.getSingle(event);
     }
 }
