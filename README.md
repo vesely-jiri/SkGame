@@ -1,12 +1,12 @@
 # SkGame
 
-**SkGame** is a Skript addon that provides support for managing game modes, maps, and player sessions on a Minecraft server.
+**SkGame** is a Skript addon that provides support for managing minigames, maps, and player sessions on a Minecraft server.
 
 ## Features
-- Manage **GameModes** - register/unregister your game mode(minigame) and let 
-- Manage **GameMaps** - register/unregister your game map that can support multiple gamemodes
+- Manage **MiniGames** - register/unregister your game mode(minigame) and let 
+- Manage **GameMaps** - register/unregister your game map that can support multiple minigames
 - Manage player **Sessions** - Create session that can hold players, spectators, and more
-- Automatic serialization and deserialization of GameModes and GameMaps into YAML files
+- Automatic serialization and deserialization of MiniGames and GameMaps into YAML files
 
 ## Installation
 1. Make sure you have the [Skript](https://github.com/SkriptLang/Skript) plugin installed.
@@ -21,7 +21,7 @@
 
 ## Configuration
 - All plugin data is stored in `plugins/SkGame/storage/` by default.
-- `gamemodes.yml` – contains all registered game modes.
+- `minigames.yml` – contains all registered game modes.
 - `maps.yml` – contains all registered maps.
 
 ## Support
