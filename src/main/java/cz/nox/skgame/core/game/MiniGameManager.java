@@ -34,11 +34,12 @@ public class MiniGameManager {
         ConfigurationSection baseSection = config.getConfigurationSection("minigames");
         if (baseSection == null) return;
         for (String key : baseSection.getKeys(false)) {
-            ConfigurationSection section = config.getConfigurationSection("minigames." + key);
+            ConfigurationSection section = baseSection.getConfigurationSection(key);
             if (section == null) continue;
-            Map<String, Object> gmData = section.getValues(true);
-            MiniGame gm = MiniGame.deserialize(gmData);
-            miniGames.put(gm.getId(),gm);
+            MiniGame gm = MiniGame.deserialize(section.getValues(true));
+            if (gm != null) {
+                miniGames.put(gm.getId(), gm);
+            }
         }
     }
     public void saveToFile(File file) {
