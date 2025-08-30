@@ -20,7 +20,7 @@ public class ExprGameMapFromId extends SimpleExpression<GameMap> {
 
     static {
         Skript.registerExpression(ExprGameMapFromId.class, GameMap.class, ExpressionType.COMBINED,
-                "[game]map (with|from) [[uu]id] %strings%"
+                "[game]map[s] (with|from) [[uu]id[s]] %strings%"
         );
     }
 
@@ -45,11 +45,11 @@ public class ExprGameMapFromId extends SimpleExpression<GameMap> {
 
     @Override
     public boolean isSingle() {
-        return false;
+        return true;
     }
 
     @Override
     public String toString(@Nullable Event event, boolean b) {
-        return "gamemap[s] with id[s] " + this.uuids.toString(event,b);
+        return "gamemap[s] with id " + this.uuids.toString(event,b);
     }
 }
