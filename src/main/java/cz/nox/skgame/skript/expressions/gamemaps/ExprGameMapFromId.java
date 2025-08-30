@@ -45,11 +45,11 @@ public class ExprGameMapFromId extends SimpleExpression<GameMap> {
 
     @Override
     public boolean isSingle() {
-        return true;
+        return uuids.isSingle();
     }
 
     @Override
     public String toString(@Nullable Event event, boolean b) {
-        return "gamemap[s] with id " + this.uuids.toString(event,b);
+        return "gamemap[s] with id[s] " + this.uuids.toString(event,b);
     }
 }
