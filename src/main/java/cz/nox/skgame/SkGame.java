@@ -28,12 +28,14 @@ public class SkGame extends JavaPlugin {
     public void onEnable() {
         long s = System.currentTimeMillis();
 
-        this.instance = this;
+        instance = this;
         this.logUtil = new LogUtil(instance);
 
         logUtil.info("SkGame enabling");
 
-        if (!getDataFolder().exists()) getDataFolder().mkdirs();
+        if (getDataFolder().mkdirs()) {
+            logUtil.info("Creating plugin folder");
+        }
 
         this.addon = Skript.registerAddon(instance);
 
