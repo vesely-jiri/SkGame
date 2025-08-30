@@ -22,7 +22,6 @@ public class GameStartEvent extends Event {
     public Session getSession() {
         return this.session;
     }
-
     public MiniGame getMiniGame() {
         return this.miniGame;
     }
@@ -31,7 +30,6 @@ public class GameStartEvent extends Event {
     public @NotNull HandlerList getHandlers() {
         return handlers;
     }
-
     public static HandlerList getHandlerList() {
         return handlers;
     }
