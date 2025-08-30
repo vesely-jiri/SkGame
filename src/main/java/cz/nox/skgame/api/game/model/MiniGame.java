@@ -1,29 +1,22 @@
 package cz.nox.skgame.api.game.model;
 
-import ch.njol.skript.ScriptLoader;
-import ch.njol.skript.Skript;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.jetbrains.annotations.NotNull;
-import org.skriptlang.skript.lang.script.Script;
-
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
 public class MiniGame implements ConfigurationSerializable {
     private String id;
     private String name;
-    private Script script;
     private Map<String, Object> values;
 
-    public MiniGame(String id, String name, Script script, Map<String, Object> values) {
+    public MiniGame(String id, String name, Map<String, Object> values) {
         this.id = id;
         this.name = name;
-        this.script = script;
         this.values = values;
     }
     public MiniGame(String id) {
-        this(id,null,null,new HashMap<>());
+        this(id,null,new HashMap<>());
     }
 
     public String getId() {
@@ -38,14 +31,12 @@ public class MiniGame implements ConfigurationSerializable {
     public void setName(String name) {
         this.name = name;
     }
-    public Script getScript() {
-        return script;
+
+    public Object getValue(String key) {
+        return values.get(key);
     }
-    public void setScript(Script script) {
-        this.script = script;
-    }
-    public Map<String, Object> getInfo() {
-        return values;
+    public Object[] getAllValues() {
+        return values.values().toArray();
     }
     public void setValues(Map<String, Object> values) {
         this.values = values;
@@ -56,22 +47,25 @@ public class MiniGame implements ConfigurationSerializable {
         Map<String, Object> gm = new HashMap<>();
         gm.put("id", this.id);
         gm.put("name", this.name);
-        gm.put("script", this.script.nameAndPath());
         gm.put("values", this.values);
         return gm;
     }
 
     @SuppressWarnings("unchecked")
     public static MiniGame deserialize(Map<String, Object> gm) {
-        MiniGame newGm = new MiniGame((String) gm.get("id"));
-        newGm.setName((String) gm.get("name"));
-        newGm.setValues((Map<String, Object>) gm.get("values"));
-
-        String scriptPath = (String) gm.get("script");
-        File scriptFile = new File(Skript.getInstance().getScriptsFolder(), scriptPath + ".sk");
-        Script gmScript = ScriptLoader.getScript(scriptFile);
-        newGm.setScript(gmScript);
-
+        if (gm == null) return null;
+        String id = (String) gm.get("id");
+        String name = (String) gm.get("name");
+        Map<String, Object> values = new HashMap<>();
+        Object rawValues = gm.get("values");
+        if (rawValues instanceof Map) {
+            values = (Map<String, Object>) rawValues;
+        } else if (rawValues instanceof org.bukkit.configuration.MemorySection) {
+            values = ((org.bukkit.configuration.MemorySection) rawValues).getValues(false);
+        }
+        MiniGame newGm = new MiniGame(id);
+        newGm.setName(name);
+        newGm.setValues(values);
         return newGm;
     }
 }
