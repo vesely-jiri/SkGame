@@ -11,7 +11,6 @@ import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.type.SessionState;
-import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
 public class Types {
@@ -105,12 +104,12 @@ public class Types {
 
                     @Override
                     public String toString(SessionState sessionState, int i) {
-                        return "";
+                        return sessionState.name();
                     }
 
                     @Override
                     public String toVariableNameString(SessionState sessionState) {
-                        return "";
+                        return "sessionState:" + sessionState.toString();
                     }
                 })
         );
