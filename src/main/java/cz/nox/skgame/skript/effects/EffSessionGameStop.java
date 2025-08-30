@@ -8,6 +8,7 @@ import ch.njol.util.Kleenean;
 import cz.nox.skgame.api.game.event.GameStopEvent;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
+import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.core.game.GameMapManager;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
@@ -41,13 +42,14 @@ public class EffSessionGameStop extends Effect {
         if (session == null) return;
         MiniGame miniGame = session.getMiniGame();
         if (miniGame == null) return;
-        String reason = this.reason.getSingle(event);
         GameStopEvent newEvent;
-        if (reason != null) {
-            newEvent = new GameStopEvent(miniGame, session, reason);
+        if (this.reason != null) {
+            String re = this.reason.getSingle(event);
+            newEvent = new GameStopEvent(miniGame, session, re);
         } else {
             newEvent = new GameStopEvent(miniGame, session, "default");
         }
+        session.setState(SessionState.STOPPED);
         Bukkit.getPluginManager().callEvent(newEvent);
     }
 
