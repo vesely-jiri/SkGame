@@ -35,25 +35,17 @@ public class EffSessionGameStart extends Effect {
 
     @Override
     protected void execute(Event event) {
-        System.out.println("Start of trigger " + this.getClass());
         Session session = this.session.getSingle(event);
         if (session == null) return;
-
         MiniGame miniGame = session.getMiniGame();
         GameMap gameMap = session.getGameMap();
         if (miniGame == null || gameMap == null) return;
-
         if (session.getState() != SessionState.STOPPED) return;
         if (session.getMiniGame() == null) return;
         if (session.getGameMap() == null) return;
-        if (mapManager.isMapClaimed(session.getGameMap().getId())) return;
-
-        // TODO - If other things?
-
+        session.setState(SessionState.STARTED);
         GameStartEvent newEvent = new GameStartEvent(session, miniGame);
         Bukkit.getPluginManager().callEvent(newEvent);
-
-        System.out.println("End of trigger " + this.getClass());
     }
 
     @Override
