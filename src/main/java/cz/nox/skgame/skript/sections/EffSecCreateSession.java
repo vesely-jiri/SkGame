@@ -34,17 +34,23 @@ public class EffSecCreateSession extends EffectSection {
 
     private static final SessionManager sessionManager = SessionManager.getInstance();
     private Expression<String> id;
+    private Trigger trigger;
 
     static {
         Skript.registerSection(EffSecCreateSession.class,
                 "create [new] [game] session (with|from) id %string%");
-//        EventValues.registerEventValue(SessionCreateEvent.class, Session.class, SessionCreateEvent::getSession);
+        EventValues.registerEventValue(SessionCreateEvent.class, Session.class, SessionCreateEvent::getSession);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public boolean init(Expression<?>[] exprs, int i, Kleenean isDelayed, ParseResult parseResult,
-                        @Nullable SectionNode sectionNode, @Nullable List<TriggerItem> triggerItems) {
+                        SectionNode sectionNode, @Nullable List<TriggerItem> triggerItems) {
+
+        if (hasSection()) {
+            trigger = loadCode(sectionNode, "session create", SessionCreateEvent.class);
+        }
+
         this.id = (Expression<String>) exprs[0];
         return true;
     }
@@ -52,8 +58,12 @@ public class EffSecCreateSession extends EffectSection {
     @Override
     protected @Nullable TriggerItem walk(Event event) {
         String id = this.id.getSingle(event);
-        if (sessionManager.getSessionById(id) == null) {
-            sessionManager.createSession(id);
+        Session session = sessionManager.getSessionById(id);
+        if (session == null) {
+            session = sessionManager.createSession(id);
+        }
+        if (trigger != null) {
+            TriggerItem.walk(trigger,new SessionCreateEvent(session));
         }
         return super.walk(event,false);
     }

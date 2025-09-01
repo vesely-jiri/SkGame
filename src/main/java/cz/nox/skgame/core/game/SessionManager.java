@@ -23,15 +23,20 @@ public class SessionManager {
         return manager;
     }
 
-    public void createSession(String id) {
+    public Session createSession(String id) {
+        Session session;
         if (!sessions.containsKey(id)) {
-            Session session = new Session(id);
+            session = new Session(id);
             sessions.put(id,session);
             setLastCreatedSession(session);
 
             Event e = new SessionCreateEvent(session);
             Bukkit.getPluginManager().callEvent(e);
+
+        } else {
+            session = sessions.get(id);
         }
+        return session;
     }
     public void deleteSession(String id) {
         if (!sessions.containsKey(id)) return;
