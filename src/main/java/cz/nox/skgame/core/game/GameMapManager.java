@@ -24,39 +24,42 @@ public class GameMapManager {
     public void loadFromFile(File file) {
         if (!file.exists()) return;
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
-        ConfigurationSection baseSection = config.getConfigurationSection("gamemaps");
+        ConfigurationSection baseSection = config.getConfigurationSection("maps");
         if (baseSection == null) return;
         for (String key : baseSection.getKeys(false)) {
-            ConfigurationSection section = config.getConfigurationSection("gamemaps." + key);
+            ConfigurationSection section = baseSection.getConfigurationSection(key);
             if (section == null) continue;
-            Map<String, Object> mapData = section.getValues(true);
-            GameMap map = GameMap.deserialize(mapData);
-            maps.put(map.getId(),map);
+            GameMap gameMap = GameMap.deserialize(section.getValues(true));
+            maps.put(gameMap.getId(), gameMap);
         }
     }
     public void saveToFile(File file) {
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
         config.set("maps",null);
-        for (GameMap map : maps.values()) {
-            config.createSection("maps." + map.getId(), map.serialize());
+        for (GameMap gameMap : maps.values()) {
+            config.createSection("maps." + gameMap.getId(), gameMap.serialize());
         }
         try {
             config.save(file);
         } catch (IOException e) {
-            SkGame.getInstance().getLogger().severe("Error while saving map config(" + file.getName() + ":"
-                    + e.getMessage());
+            SkGame.getInstance().getLogger().severe("Error while saving GameMaps: " + e.getMessage());
         }
     }
 
     public GameMap getGameMapById(String id) {
         return maps.get(id);
     }
+    public GameMap[] getAllGameMaps() {
+        return maps.values().toArray(new GameMap[0]);
+    }
 
-    public void registerGameMap(String id) {
-        if (maps.containsKey(id)) return;
-        GameMap map = new GameMap(id);
+    public GameMap registerGameMap(String id) {
+        GameMap map = maps.get(id);
+        if (map != null) return map;
+        map = new GameMap(id);
         maps.put(id,map);
         setLastCreatedGameMap(map);
+        return map;
     }
     public void unregisterGameMap(String id) {
         maps.remove(id);
