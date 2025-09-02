@@ -75,9 +75,7 @@ public class ExprGameMapValue extends SimpleExpression<Object> {
                 Object o = delta[0];
                 map.setMiniGameValue(gm.getId(),k,o);
             }
-            case RESET, DELETE -> {
-                map.setMiniGameValue(gm.getId(),k,null);
-            }
+            case RESET, DELETE -> map.setMiniGameValue(gm.getId(),k,null);
         }
     }
 
