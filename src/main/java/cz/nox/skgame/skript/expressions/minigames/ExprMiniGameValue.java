@@ -9,7 +9,6 @@ import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
 import cz.nox.skgame.api.game.model.MiniGame;
-import cz.nox.skgame.api.game.model.Session;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
