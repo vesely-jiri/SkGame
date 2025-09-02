@@ -6,6 +6,7 @@ import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.registrations.EventValues;
 import cz.nox.skgame.api.game.event.GameStartEvent;
+import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
 import org.bukkit.event.Event;
@@ -25,6 +26,7 @@ public class EvtGameStart extends SkriptEvent {
         );
         EventValues.registerEventValue(GameStartEvent.class, Session.class, GameStartEvent::getSession, EventValues.TIME_NOW);
         EventValues.registerEventValue(GameStartEvent.class, MiniGame.class, GameStartEvent::getMiniGame, EventValues.TIME_NOW);
+        EventValues.registerEventValue(GameStartEvent.class, GameMap.class, GameStartEvent::getGameMap, EventValues.TIME_NOW);
     }
 
     @SuppressWarnings("unchecked")

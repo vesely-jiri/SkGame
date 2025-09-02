@@ -1,5 +1,6 @@
 package cz.nox.skgame.api.game.event;
 
+import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
 import org.bukkit.event.Event;
@@ -11,12 +12,14 @@ public class GameStartEvent extends Event {
 
     private static final HandlerList handlers = new HandlerList();
 
-    private MiniGame miniGame;
     private Session session;
+    private MiniGame miniGame;
+    private GameMap gameMap;
 
-    public GameStartEvent(Session session, MiniGame miniGame) {
+    public GameStartEvent(Session session, MiniGame miniGame, GameMap gameMap) {
         this.session = session;
         this.miniGame = miniGame;
+        this.gameMap = gameMap;
     }
 
     public Session getSession() {
@@ -24,6 +27,9 @@ public class GameStartEvent extends Event {
     }
     public MiniGame getMiniGame() {
         return this.miniGame;
+    }
+    public GameMap getGameMap() {
+        return this.gameMap;
     }
 
     @Override
