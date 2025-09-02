@@ -45,9 +45,7 @@ public class EffSecRegisterMiniGame extends EffectSection {
     protected @Nullable TriggerItem walk(Event event) {
         Object localVars = Variables.copyLocalVariables(event);
         String id = this.id.getSingle(event);
-        if (miniGameManager.getMiniGameById(id) != null) return super.walk(event,false);
-        miniGameManager.registerMiniGame(id);
-        MiniGame mg = miniGameManager.getMiniGameById(id);
+        MiniGame mg = miniGameManager.registerMiniGame(id);
 
         if (hasSection()) {
             MiniGameRegisterEvent registerEvent = new MiniGameRegisterEvent(mg);

@@ -55,11 +55,13 @@ public class MiniGameManager {
         }
     }
 
-    public void registerMiniGame(String id) {
-        if (miniGames.containsKey(id)) return;
-        MiniGame miniGame = new MiniGame(id);
-        miniGames.put(id, miniGame);
-        lastCreatedMiniGame = miniGame;
+    public MiniGame registerMiniGame(String id) {
+        MiniGame mg = miniGames.get(id);
+        if (mg != null) return mg;
+        mg = new MiniGame(id);
+        miniGames.put(id, mg);
+        lastCreatedMiniGame = mg;
+        return mg;
     }
     public void unregisterMiniGame(String id) {
         miniGames.remove(id);
