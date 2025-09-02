@@ -41,10 +41,8 @@ public class EffSessionGameStart extends Effect {
         GameMap gameMap = session.getGameMap();
         if (miniGame == null || gameMap == null) return;
         if (session.getState() != SessionState.STOPPED) return;
-        if (session.getMiniGame() == null) return;
-        if (session.getGameMap() == null) return;
         session.setState(SessionState.STARTED);
-        GameStartEvent newEvent = new GameStartEvent(session, miniGame);
+        GameStartEvent newEvent = new GameStartEvent(session, miniGame, gameMap);
         Bukkit.getPluginManager().callEvent(newEvent);
     }
 
