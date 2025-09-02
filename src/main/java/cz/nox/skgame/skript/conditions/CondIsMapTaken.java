@@ -32,8 +32,7 @@ public class CondIsMapTaken extends Condition {
     public boolean check(Event event) {
         GameMap map = gameMap.getSingle(event);
         if (map == null) return false;
-        mapManager.isMapClaimed(map.getId());
-        return true;
+        return mapManager.isMapClaimed(map.getId());
     }
 
     @Override
