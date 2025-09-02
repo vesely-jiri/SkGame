@@ -4,6 +4,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.lang.*;
 import ch.njol.skript.registrations.EventValues;
+import ch.njol.skript.variables.Variables;
 import ch.njol.util.Kleenean;
 import cz.nox.skgame.api.game.event.MiniGameRegisterEvent;
 import cz.nox.skgame.api.game.model.MiniGame;
@@ -42,16 +43,20 @@ public class EffSecRegisterMiniGame extends EffectSection {
 
     @Override
     protected @Nullable TriggerItem walk(Event event) {
+        Object localVars = Variables.copyLocalVariables(event);
         String id = this.id.getSingle(event);
-
         if (miniGameManager.getMiniGameById(id) != null) return super.walk(event,false);
         miniGameManager.registerMiniGame(id);
-
         MiniGame mg = miniGameManager.getMiniGameById(id);
 
-        if (trigger != null) {
-            TriggerItem.walk(trigger, new MiniGameRegisterEvent(mg));
+        if (hasSection()) {
+            MiniGameRegisterEvent registerEvent = new MiniGameRegisterEvent(mg);
+            Variables.setLocalVariables(registerEvent,localVars);
+            TriggerItem.walk(trigger, registerEvent);
+            Variables.setLocalVariables(event,Variables.copyLocalVariables(registerEvent));
+            Variables.removeLocals(registerEvent);
         }
+
         return super.walk(event,false);
     }
 

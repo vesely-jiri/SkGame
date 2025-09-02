@@ -1,15 +1,17 @@
 package cz.nox.skgame.api.game.model;
 
+import ch.njol.skript.lang.util.common.AnyNamed;
 import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.core.game.GameMapManager;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.UnknownNullability;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 
-public class Session {
+public class Session implements AnyNamed {
     private String id;
     private String name;
     private Player host;
@@ -39,28 +41,40 @@ public class Session {
                 new HashSet<>(),new HashSet<>(),new HashMap<>());
     }
 
+    @Override
+    public @UnknownNullability String name() {
+        return this.name;
+    }
+
+    @Override
+    public boolean supportsNameChange() {
+        return true;
+    }
+
     public String getId() {
         return id;
     }
     public void setId(String id) {
         this.id = id;
     }
+
     public String getName() {
         return name;
     }
     public void setName(String name) {
         this.name = name;
     }
+
     public Player getHost() {
         return host;
     }
     public void setHost(Player host) {
         this.host = host;
     }
+
     public HashSet<Player> getPlayers() {
         return new HashSet<>(players);
     }
-
     public void addPlayers(Player... players) {
         this.players.addAll(Arrays.asList(players));
     }
@@ -86,12 +100,14 @@ public class Session {
     public void setState(SessionState state) {
         this.state = state;
     }
+
     public MiniGame getMiniGame() {
         return miniGame;
     }
     public void setMiniGame(MiniGame miniGame) {
         this.miniGame = miniGame;
     }
+
     public GameMap getGameMap() {
         return gameMap;
     }

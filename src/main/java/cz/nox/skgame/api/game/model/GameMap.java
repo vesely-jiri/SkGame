@@ -1,13 +1,15 @@
 package cz.nox.skgame.api.game.model;
 
+import ch.njol.skript.lang.util.common.AnyNamed;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.UnknownNullability;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @SuppressWarnings("unused")
-public class GameMap implements ConfigurationSerializable {
+public class GameMap implements ConfigurationSerializable, AnyNamed {
     private String id;
     private String name;
     private Object arena;
@@ -24,19 +26,49 @@ public class GameMap implements ConfigurationSerializable {
         this.arena = arena;
     }
 
-    public String getId() { return this.id; }
-    public void setId(String id) { this.id = id; }
+    @Override
+    public @UnknownNullability String name() {
+        return this.name;
+    }
 
-    public String getName() { return this.name; }
-    public void setName(String name) { this.name = name; }
+    @Override
+    public boolean supportsNameChange() {
+        return true;
+    }
 
-    public Object getArena() { return this.arena; }
-    public void setArena(Object arena) { this.arena = arena; }
+    public String getId() {
+        return this.id;
+    }
+    public void setId(String id) {
+        this.id = id;
+    }
 
-    public Object getInfo(String key) { return info.get(key); }
-    public void setInfo(Map<String, Object> info) { this.info = info; }
-    public void addInfo(String key, Object value) { info.put(key, value); }
-    public void removeInfo(String key) { info.remove(key); }
+    public String getName() {
+        return this.name;
+    }
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Object getArena() {
+        return this.arena;
+    }
+    public void setArena(Object arena) {
+        this.arena = arena;
+    }
+
+    public Object getInfo(String key) {
+        return info.get(key);
+    }
+    public void setInfo(Map<String, Object> info) {
+        this.info = info;
+    }
+    public void addInfo(String key, Object value) {
+        info.put(key, value);
+    }
+    public void removeInfo(String key) {
+        info.remove(key);
+    }
 
     public Object getMiniGameValue(String miniGameId, String key) {
         Map<String, Object> inner = miniGameValues.get(miniGameId);
@@ -73,11 +105,32 @@ public class GameMap implements ConfigurationSerializable {
 
     @SuppressWarnings("unchecked")
     public static GameMap deserialize(Map<String, Object> map) {
-        GameMap newMap = new GameMap((String) map.get("id"));
-        newMap.setName((String) map.get("name"));
-        newMap.setArena(map.get("arena"));
-        newMap.setInfo((Map<String, Object>) map.getOrDefault("info", new HashMap<>()));
-        newMap.miniGameValues = (Map<String, Map<String, Object>>) map.getOrDefault("miniGameValues", new HashMap<>());
+        if (map == null) return null;
+        String id = (String) map.get("id");
+        String name = (String) map.get("name");
+        Object arena = map.get("arena");
+        GameMap newMap = new GameMap(id, name, arena);
+
+        Object rawInfo = map.get("info");
+        if (rawInfo instanceof Map<?, ?> rawInfoMap) {
+            Map<String, Object> info = new HashMap<>();
+            rawInfoMap.forEach((k, v) -> info.put(String.valueOf(k), v));
+            newMap.setInfo(info);
+        }
+
+        Object rawMiniGameValues = map.get("miniGameValues");
+        if (rawMiniGameValues instanceof Map<?, ?> outerMap) {
+            for (Map.Entry<?, ?> entry : outerMap.entrySet()) {
+                String miniGameId = String.valueOf(entry.getKey());
+                Object inner = entry.getValue();
+                if (inner instanceof Map<?, ?> innerMap) {
+                    Map<String, Object> values = new HashMap<>();
+                    innerMap.forEach((k, v) -> values.put(String.valueOf(k), v));
+                    newMap.setMiniGame(miniGameId, values);
+                }
+            }
+        }
         return newMap;
     }
 }
+

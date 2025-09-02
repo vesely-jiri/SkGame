@@ -13,6 +13,7 @@ import ch.njol.skript.lang.Trigger;
 import ch.njol.skript.lang.TriggerItem;
 import ch.njol.skript.lang.util.SectionUtils;
 import ch.njol.skript.registrations.EventValues;
+import ch.njol.skript.variables.Variables;
 import ch.njol.util.Kleenean;
 import cz.nox.skgame.api.game.event.SessionCreateEvent;
 import cz.nox.skgame.api.game.model.Session;
@@ -48,7 +49,7 @@ public class EffSecCreateSession extends EffectSection {
                         SectionNode sectionNode, @Nullable List<TriggerItem> triggerItems) {
 
         if (hasSection()) {
-            trigger = loadCode(sectionNode, "session create", SessionCreateEvent.class);
+            this.trigger = loadCode(sectionNode, "session create", SessionCreateEvent.class);
         }
 
         this.id = (Expression<String>) exprs[0];
@@ -57,19 +58,24 @@ public class EffSecCreateSession extends EffectSection {
 
     @Override
     protected @Nullable TriggerItem walk(Event event) {
+        Object localVars = Variables.copyLocalVariables(event);
         String id = this.id.getSingle(event);
         Session session = sessionManager.getSessionById(id);
         if (session == null) {
             session = sessionManager.createSession(id);
         }
-        if (trigger != null) {
-            TriggerItem.walk(trigger,new SessionCreateEvent(session));
+        if (hasSection()) {
+            SessionCreateEvent createEvent = new SessionCreateEvent(session);
+            Variables.setLocalVariables(createEvent,localVars);
+            TriggerItem.walk(this.trigger,createEvent);
+            Variables.setLocalVariables(event,Variables.copyLocalVariables(createEvent));
+            Variables.removeLocals(createEvent);
         }
         return super.walk(event,false);
     }
 
     @Override
     public String toString(@Nullable Event event, boolean b) {
-        return "create session with id " + id;
+        return "create session with id " + this.id;
     }
 }

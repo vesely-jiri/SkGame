@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
 public class EffUnregisterMiniGame extends Effect {
-    private static final MiniGameManager MINI_GAME_MANAGER = MiniGameManager.getInstance();
+    private static final MiniGameManager miniGameManager = MiniGameManager.getInstance();
     private Expression<MiniGame> miniGame;
 
     static {
@@ -33,8 +33,8 @@ public class EffUnregisterMiniGame extends Effect {
         MiniGame[] miniGames = this.miniGame.getArray(event);
         for (MiniGame gm : miniGames) {
             if (gm == null) continue;
-            if (MINI_GAME_MANAGER.isRegistered(gm.getId())) {
-                MINI_GAME_MANAGER.unregisterMiniGame(gm.getId());
+            if (miniGameManager.isRegistered(gm.getId())) {
+                miniGameManager.unregisterMiniGame(gm.getId());
             }
         }
     }
