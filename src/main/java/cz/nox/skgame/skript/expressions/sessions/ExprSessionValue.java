@@ -23,7 +23,7 @@ public class ExprSessionValue extends SimpleExpression<Object> {
     static {
         Skript.registerExpression(ExprSessionValue.class, Object.class, ExpressionType.COMBINED,
                 "[session] value[s] %string% of %session%",
-                "all [session] (keys|1:values) of %session%"
+                "[all] [session] (keys|1:values) of %session%"
         );
     }
 
@@ -59,12 +59,10 @@ public class ExprSessionValue extends SimpleExpression<Object> {
 
     @Override
     public Class<?> @Nullable [] acceptChange(Changer.ChangeMode mode) {
-        switch (mode) {
-            case SET, DELETE -> {
-                return CollectionUtils.array(Object.class);
-            }
-        }
-        return null;
+        return switch (mode) {
+            case SET, DELETE -> CollectionUtils.array(Object.class);
+            default          -> null;
+        };
     }
 
     @Override
