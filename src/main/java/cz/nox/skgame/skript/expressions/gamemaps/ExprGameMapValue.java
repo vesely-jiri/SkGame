@@ -18,35 +18,27 @@ public class ExprGameMapValue extends SimpleExpression<Object> {
     private Expression<String> key;
     private Expression<GameMap> gameMap;
     private Expression<MiniGame> miniGame;
+    private int pattern;
+    private int mark;
 
     static {
         Skript.registerExpression(ExprGameMapValue.class, Object.class, ExpressionType.COMBINED,
-                "value %string% of %gamemap% (of|from) %minigame%"
+                "[[game]map] value %string% of %gamemap% (of|from|and) %minigame%",
+                "[all] (keys|1:values) of %gamemap% (of|from|and) %minigame%"
         );
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public boolean init(Expression<?>[] exprs, int i, Kleenean kleenean, SkriptParser.ParseResult parseResult) {
+    public boolean init(Expression<?>[] exprs, int pattern, Kleenean kleenean, SkriptParser.ParseResult parseResult) {
         this.key = (Expression<String>) exprs[0];
         this.gameMap = (Expression<GameMap>) exprs[1];
         this.miniGame = (Expression<MiniGame>) exprs[2];
+        this.pattern = pattern;
+        this.mark = parseResult.mark;
         return true;
     }
 
-    @Override
-    protected @Nullable Object[] get(Event event) {
-        GameMap map = this.gameMap.getSingle(event);
-        MiniGame gm = this.miniGame.getSingle(event);
-        String k = this.key.getSingle(event);
-        if (map == null || gm == null || k == null) return null;
-        Object o = map.getMiniGameValue(gm.getId(), this.key.getSingle(event));
-        if (o instanceof Object[]) {
-            return (Object[]) o;
-        } else {
-            return CollectionUtils.array(o);
-        }
-    }
 
     @Override
     public Class<?> @Nullable [] acceptChange(Changer.ChangeMode mode) {
@@ -58,11 +50,25 @@ public class ExprGameMapValue extends SimpleExpression<Object> {
     }
 
     @Override
+    protected @Nullable Object[] get(Event event) {
+        String k = this.key.getSingle(event);
+        GameMap map = this.gameMap.getSingle(event);
+        MiniGame gm = this.miniGame.getSingle(event);
+        if (k == null || map == null || gm == null) return null;
+        Object o = map.getMiniGameValue(gm.getId(), this.key.getSingle(event));
+        if (o instanceof Object[]) {
+            return (Object[]) o;
+        } else {
+            return CollectionUtils.array(o);
+        }
+    }
+
+    @Override
     public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
         GameMap map = this.gameMap.getSingle(event);
         MiniGame gm = this.miniGame.getSingle(event);
         String k = this.key.getSingle(event);
-        if (map == null || gm == null || key == null) return;
+        if (map == null || gm == null || k == null) return;
         switch (mode) {
             case SET -> {
                 if (delta == null || delta[0] == null) return;
@@ -82,7 +88,7 @@ public class ExprGameMapValue extends SimpleExpression<Object> {
 
     @Override
     public boolean isSingle() {
-        return false;
+        return this.pattern == 0;
     }
 
     @Override
