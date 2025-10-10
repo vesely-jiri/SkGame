@@ -3,19 +3,30 @@ package cz.nox.skgame.skript;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.EnumClassInfo;
 import ch.njol.skript.classes.Parser;
+import ch.njol.skript.classes.Serializer;
 import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.registrations.Classes;
+import ch.njol.yggdrasil.Fields;
 import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.type.SessionState;
+import cz.nox.skgame.core.game.GameMapManager;
+import cz.nox.skgame.core.game.MiniGameManager;
+import cz.nox.skgame.core.game.SessionManager;
+
+import java.io.NotSerializableException;
+import java.io.StreamCorruptedException;
 
 @SuppressWarnings("unused")
 public class Types {
+    private static final SessionManager sessionManager = SessionManager.getInstance();
+    private static final GameMapManager gameMapManager = GameMapManager.getInstance();
+    private static final MiniGameManager miniGameManager = MiniGameManager.getInstance();
     static {
-        Classes.registerClass(new ClassInfo<>(Session.class,"session")
+        Classes.registerClass(new ClassInfo<>(Session.class, "session")
                 .user("session")
                 .name("Session")
                 .description("Represents a game session")
@@ -26,13 +37,46 @@ public class Types {
                     public boolean canParse(ParseContext context) {
                         return false;
                     }
+
                     @Override
-                    public String toString(Session session, int i) {
-                        return "session with id " + session.getId();
+                    public String toString(Session session, int flags) {
+                        return "session with id '" + session.getId() + "'";
                     }
+
                     @Override
                     public String toVariableNameString(Session session) {
-                        return "session:" + session.getId();
+                        return String.format("session:%s", session.getId());
+                    }
+                })
+                .serializer(new Serializer<>() {
+                    @Override
+                    public Fields serialize(Session session) throws NotSerializableException {
+                        Fields fields = new Fields();
+                        fields.putObject("sessionId", session);
+                        return fields;
+                    }
+
+                    @Override
+                    protected Session deserialize(Fields fields) throws StreamCorruptedException, NotSerializableException {
+                        String id = fields.getObject("sessionId", String.class);
+                        Session session = SessionManager.getInstance().getSessionById(id);
+                        if (session == null) throw new StreamCorruptedException("Unknown session ID");
+                        return session;
+                    }
+
+                    @Override
+                    public void deserialize(Session session, Fields fields) throws StreamCorruptedException, NotSerializableException {
+                        assert false;
+                    }
+
+                    @Override
+                    public boolean mustSyncDeserialization() {
+                        return true;
+                    }
+
+                    @Override
+                    protected boolean canBeInstantiated() {
+                        return false;
                     }
                 })
         );
@@ -50,7 +94,7 @@ public class Types {
                     }
                     @Override
                     public String toString(GameMap gameMap, int i) {
-                        return "gamemap with id " + gameMap.getId();
+                        return "gamemap with id '" + gameMap.getId() + "'";
                     }
                     @Override
                     public String toVariableNameString(GameMap gameMap) {
@@ -72,7 +116,7 @@ public class Types {
                     }
                     @Override
                     public String toString(MiniGame miniGame, int i) {
-                        return "minigame with id " + miniGame.getId();
+                        return "minigame with id '" + miniGame.getId() + "'";
                     }
                     @Override
                     public String toVariableNameString(MiniGame miniGame) {
@@ -86,7 +130,7 @@ public class Types {
                 .name("Session State")
                 .description("Represents states of session")
                 .since("1.0.0")
-                .parser(new Parser<SessionState>() {
+                .parser(new Parser<>() {
 
                     @Override
                     public SessionState parse(String input, ParseContext context) {
