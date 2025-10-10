@@ -10,13 +10,13 @@ import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
-public class EvtSessionCreateDisband extends SkriptEvent {
+public class EvtSessionCreate extends SkriptEvent {
 
     private static final SessionManager sessionManager = SessionManager.getInstance();
 
     static {
-        Skript.registerEvent("sessionCreate", EvtSessionCreateDisband.class, SessionCreateEvent.class,
-                "session (create|1:(disband|delete))"
+        Skript.registerEvent("SessionCreateDisband", EvtSessionCreate.class, SessionCreateEvent.class,
+                "session create"
         );
     }
 
@@ -27,11 +27,11 @@ public class EvtSessionCreateDisband extends SkriptEvent {
 
     @Override
     public boolean check(Event event) {
-        return false;
+        return true;
     }
 
     @Override
     public String toString(@Nullable Event event, boolean b) {
-        return null;
+        return "on session create";
     }
 }
