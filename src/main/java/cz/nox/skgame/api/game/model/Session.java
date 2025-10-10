@@ -1,15 +1,15 @@
 package cz.nox.skgame.api.game.model;
 
 import ch.njol.skript.lang.util.common.AnyNamed;
+import cz.nox.skgame.api.game.event.GamePlayerSessionJoin;
+import cz.nox.skgame.api.game.event.GamePlayerSessionLeave;
 import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.core.game.GameMapManager;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.UnknownNullability;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 
 public class Session implements AnyNamed {
     private String id;
@@ -20,11 +20,12 @@ public class Session implements AnyNamed {
     private SessionState state;
     private MiniGame miniGame;
     private GameMap gameMap;
-    private HashMap<String, Object> values;
+    private Map<String, Object> values;
+    private Map<String, Object> tempValues;
 
     public Session(String id, String name, Player host, MiniGame miniGame,
-                   SessionState state, GameMap map, HashSet<Player> players, HashSet<Player> spectators,
-                   HashMap<String, Object> values) {
+                   SessionState state, GameMap map, Set<Player> players, Set<Player> spectators,
+                   Map<String, Object> values, Map<String, Object> tempValues) {
         this.id = id;
         this.name = name;
         this.host = host;
@@ -34,11 +35,12 @@ public class Session implements AnyNamed {
         this.miniGame = miniGame;
         this.gameMap = map;
         this.values = new HashMap<>(values);
+        this.tempValues = new HashMap<>(tempValues);
     }
 
     public Session(String id) {
         this(id,null,null,null,SessionState.STOPPED,null,
-                new HashSet<>(),new HashSet<>(),new HashMap<>());
+                new HashSet<>(),new HashSet<>(),new HashMap<>(),new HashMap<>());
     }
 
     @Override
@@ -76,11 +78,17 @@ public class Session implements AnyNamed {
         return new HashSet<>(players);
     }
     public void addPlayers(Player... players) {
-        this.players.addAll(Arrays.asList(players));
+        for (Player player : players) {
+            if (this.players.add(player)) {
+                Bukkit.getPluginManager().callEvent(new GamePlayerSessionJoin(player,this));
+            }
+        }
     }
     public void removePlayers(Player... players) {
         for (Player player : players) {
-            this.players.remove(player);
+            if (this.players.remove(player)) {
+                Bukkit.getPluginManager().callEvent(new GamePlayerSessionLeave(player, this));
+            }
         }
     }
     public HashSet<Player> getSpectators() {
@@ -94,6 +102,7 @@ public class Session implements AnyNamed {
             this.spectators.remove(spectator);
         }
     }
+
     public SessionState getState() {
         return state;
     }
@@ -121,20 +130,26 @@ public class Session implements AnyNamed {
         this.gameMap = gameMap;
     }
 
-    public Object getValue(String key) {
-        return values.get(key);
+    public Object getValue(String key, boolean isTemporary) {
+        return getMap(isTemporary).get(key);
     }
-    public Collection<Object> getValues() {
-        return values.values();
+    public Collection<Object> getValues(boolean isTemporary) {
+        return getMap(isTemporary).values();
     }
-    public Collection<String> getKeys() {
-        return values.keySet();
+    public Collection<String> getKeys(boolean isTemporary) {
+        return getMap(isTemporary).keySet();
     }
-    public void setValue(String key, Object o) {
-        if (o == null) {
-            values.remove(key);
-        } else {
-            values.put(key, o);
-        }
+    public void setValue(String key, Object o, boolean isTemporary) {
+        getMap(isTemporary).put(key,o);
+    }
+    public void removeValue(String key, boolean isTemporary) {
+        getMap(isTemporary).remove(key);
+    }
+    public void removeValues(boolean isTemporary) {
+        getMap(isTemporary).clear();
+    }
+
+    private Map<String, Object> getMap(boolean isTemporary) {
+        return isTemporary ? tempValues : values;
     }
 }
