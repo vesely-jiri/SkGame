@@ -19,21 +19,27 @@ public class ExprSessionValue extends SimpleExpression<Object> {
 
     private int pattern;
     private int mark;
+    private boolean isTemporary;
 
     static {
         Skript.registerExpression(ExprSessionValue.class, Object.class, ExpressionType.COMBINED,
-                "[session] value[s] %string% of %session%",
-                "[all] [session] (keys|1:values) of %session%"
+                "[temp:temp[orary]] [session] value[s] %string% of %session%",
+                "[all] [temp:temp[orary]] [session] (keys|1:values) of %session%"
         );
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public boolean init(Expression<?>[] exprs, int pattern, Kleenean kleenean, SkriptParser.ParseResult parseResult) {
-        this.key = (Expression<String>) exprs[0];
-        this.session = (Expression<Session>) exprs[1];
         this.pattern = pattern;
+        if (pattern == 0) {
+            this.key = (Expression<String>) exprs[0];
+            this.session = (Expression<Session>) exprs[1];
+        } else {
+            this.session = (Expression<Session>) exprs[0];
+        }
         this.mark = parseResult.mark;
+        this.isTemporary = parseResult.hasTag("temp");
         return true;
     }
 
@@ -43,14 +49,14 @@ public class ExprSessionValue extends SimpleExpression<Object> {
         if (session == null) return null;
         switch (pattern) {
             case 0 -> { //single
-                Object object = session.getValue(key.getSingle(event));
+                Object object = session.getValue(key.getSingle(event),isTemporary);
                 return CollectionUtils.array(object);
             }
             case 1 -> { //all
                 if (this.mark == 0) { // keys
-                    return CollectionUtils.array(session.getKeys());
+                    return CollectionUtils.array(session.getKeys(isTemporary));
                 } else { // values
-                    return CollectionUtils.array(session.getValues());
+                    return CollectionUtils.array(session.getValues(isTemporary));
                 }
             }
         }
@@ -60,8 +66,8 @@ public class ExprSessionValue extends SimpleExpression<Object> {
     @Override
     public Class<?> @Nullable [] acceptChange(Changer.ChangeMode mode) {
         return switch (mode) {
-            case SET, DELETE -> CollectionUtils.array(Object.class);
-            default          -> null;
+            case SET, DELETE, RESET -> CollectionUtils.array(Object.class);
+            default                 -> null;
         };
     }
 
@@ -73,11 +79,13 @@ public class ExprSessionValue extends SimpleExpression<Object> {
         switch (mode) {
             case SET -> {
                 if (delta == null || delta[0] == null) return;
-                session.setValue(key,delta[0]);
+                session.setValue(key,delta[0],isTemporary);
             }
             case DELETE, RESET -> {
-                if (session.getKeys().contains(key)) {
-                    session.setValue(key,null);
+                if (mark == 0) {
+                    session.removeValue(key, isTemporary);
+                } else {
+                    session.removeValues(isTemporary);
                 }
             }
         }
@@ -95,7 +103,11 @@ public class ExprSessionValue extends SimpleExpression<Object> {
 
     @Override
     public String toString(@Nullable Event event, boolean b) {
-        return "session value " + this.key.toString(event,b)
+        if (pattern == 0) {
+            return "session value " + this.key.toString(event,b)
                 + "of session " + this.session.toString(event,b);
+        } else {
+            return "";
+        }
     }
 }
