@@ -33,7 +33,8 @@ tasks {
         archiveBaseName.set("SkGame")
         archiveClassifier.set("")
         archiveVersion.set("")
-        //finalizedBy("copyToPlugins")
+        //Comment/uncomment this to copy the jar to the plugins folder
+        finalizedBy("copyToPlugins")
     }
 
     register<Copy>("copyToPlugins") {
