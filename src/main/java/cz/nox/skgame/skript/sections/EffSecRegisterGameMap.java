@@ -7,9 +7,7 @@ import ch.njol.skript.registrations.EventValues;
 import ch.njol.skript.variables.Variables;
 import ch.njol.util.Kleenean;
 import cz.nox.skgame.api.game.event.GameMapRegisterEvent;
-import cz.nox.skgame.api.game.event.MiniGameRegisterEvent;
 import cz.nox.skgame.api.game.model.GameMap;
-import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.core.game.GameMapManager;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +23,7 @@ public class EffSecRegisterGameMap extends EffectSection {
 
     static {
         Skript.registerSection(EffSecRegisterGameMap.class,
-                "(register|create) [new] [game] map (with|from) id %string%"
+                "(register|create) [new] [game[ ]]map (with|from) id %string%"
         );
         EventValues.registerEventValue(GameMapRegisterEvent.class, GameMap.class,
                 GameMapRegisterEvent::getGameMap);
