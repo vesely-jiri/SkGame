@@ -10,13 +10,16 @@ import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.core.game.GameMapManager;
+import cz.nox.skgame.core.game.PlayerManager;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
 public class EffSessionGameStop extends Effect {
     private static final GameMapManager mapManager = GameMapManager.getInstance();
+    private static final PlayerManager playerManager = PlayerManager.getInstance();
     private Expression<Session> session;
     private Expression<String> reason;
 
@@ -50,6 +53,10 @@ public class EffSessionGameStop extends Effect {
             newEvent = new GameStopEvent(miniGame, session, "default");
         }
         session.setState(SessionState.STOPPED);
+        session.removeValues(true);
+        for (Player player : session.getPlayers()) {
+            playerManager.getPlayer(player).removeValues(true);
+        }
         Bukkit.getPluginManager().callEvent(newEvent);
     }
 
