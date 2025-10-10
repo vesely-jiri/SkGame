@@ -4,7 +4,9 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAddon;
 import cz.nox.skgame.core.game.GameMapManager;
 import cz.nox.skgame.core.game.MiniGameManager;
+import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.util.LogUtil;
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -39,13 +41,15 @@ public class SkGame extends JavaPlugin {
 
         this.addon = Skript.registerAddon(instance);
 
+        Bukkit.getPluginManager().registerEvents(SessionManager.getInstance(), instance);
+
         MiniGameManager.getInstance().loadFromFile(miniGamesDataFile);
         GameMapManager.getInstance().loadFromFile(mapsDataFile);
 
         try {
             this.addon.loadClasses("cz.nox.skgame.skript");
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            logUtil.error("Failed to load Skript classes");
         }
 
         logUtil.info("SkGame enabled in " + (System.currentTimeMillis() - s) + "ms");
