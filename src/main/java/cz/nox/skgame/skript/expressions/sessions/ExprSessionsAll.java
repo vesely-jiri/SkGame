@@ -1,11 +1,13 @@
 package cz.nox.skgame.skript.expressions.sessions;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.classes.Changer;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
+import ch.njol.util.coll.CollectionUtils;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.core.game.SessionManager;
 import org.bukkit.event.Event;
@@ -29,6 +31,22 @@ public class ExprSessionsAll extends SimpleExpression<Session> {
     @Override
     protected Session @Nullable [] get(Event event) {
         return sessionManager.getAllSessions();
+    }
+
+    @Override
+    public Class<?> @Nullable [] acceptChange(Changer.ChangeMode mode) {
+        if (mode == Changer.ChangeMode.RESET || mode == Changer.ChangeMode.DELETE)
+            return CollectionUtils.array(Session.class);
+        return null;
+    }
+
+    @Override
+    public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
+        if (mode == Changer.ChangeMode.RESET || mode == Changer.ChangeMode.DELETE) {
+            for (Session session : sessionManager.getAllSessions()) {
+                sessionManager.deleteSession(session.getId());
+            }
+        }
     }
 
     @Override
