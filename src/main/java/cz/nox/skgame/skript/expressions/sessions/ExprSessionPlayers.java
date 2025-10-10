@@ -9,7 +9,6 @@ import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
 import cz.nox.skgame.api.game.model.Session;
-import cz.nox.skgame.core.game.SessionManager;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +18,6 @@ import java.util.Arrays;
 @SuppressWarnings("unused")
 public class ExprSessionPlayers extends SimpleExpression<Player> {
 
-    private static final SessionManager sessionManager = SessionManager.getInstance();
     private Expression<Session> session;
 
     static {
@@ -57,20 +55,15 @@ public class ExprSessionPlayers extends SimpleExpression<Player> {
     public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
         Session session = this.session.getSingle(event);
         if (session == null) return;
-        if (delta == null || delta[0] == null &&
-                mode != Changer.ChangeMode.RESET) return;
-
-        Player[] players = Arrays.stream(delta)
-                .filter(obj -> obj instanceof Player)
-                .map(obj -> (Player) obj)
-                .toArray(Player[]::new);
-
+        Player[] players = (delta == null) ? new Player[0] :
+                Arrays.copyOf(delta, delta.length, Player[].class);
         switch (mode) {
             case SET, RESET -> {
                 Player[] sessionPlayers = session.getPlayers().toArray(new Player[0]);
                 session.removePlayers(sessionPlayers);
-                if (mode == Changer.ChangeMode.SET)
+                if (mode == Changer.ChangeMode.SET) {
                     session.addPlayers(players);
+                }
             }
             case ADD -> session.addPlayers(players);
             case REMOVE -> session.removePlayers(players);
@@ -88,9 +81,7 @@ public class ExprSessionPlayers extends SimpleExpression<Player> {
     }
 
     @Override
-    public String toString(@Nullable Event event, boolean b) {
-        Session s = this.session.getSingle(event);
-        if (s == null) return null;
-        return "players " + s.getPlayers() + " of  session with id " + s.getId();
+    public String toString(@Nullable Event e, boolean b) {
+        return "players of " + this.session.toString(e,b);
     }
 }
