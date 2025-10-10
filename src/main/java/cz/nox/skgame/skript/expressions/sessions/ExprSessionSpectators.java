@@ -52,18 +52,19 @@ public class ExprSessionSpectators extends SimpleExpression<Player> {
     public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
         Session session = this.session.getSingle(event);
         if (session == null) return;
-        if (delta == null || delta[0] == null &&
-                mode != Changer.ChangeMode.RESET) return;
-        Player[] spectators = (Player[]) delta[0];
+
+        Player[] spectators = (delta == null) ? new Player[0] :
+                Arrays.copyOf(delta, delta.length, Player[].class);
+
         switch (mode) {
             case SET, RESET -> {
                 Player[] sessionSpectators = session.getSpectators().toArray(new Player[0]);
-                session.removeSpectators(sessionSpectators);
+                session.removePlayers(sessionSpectators);
                 if (mode == Changer.ChangeMode.SET)
-                    session.addSpectators(spectators);
+                    session.addPlayers(spectators);
             }
-            case ADD -> session.addSpectators(spectators);
-            case REMOVE -> session.removeSpectators(spectators);
+            case ADD -> session.addPlayers(spectators);
+            case REMOVE -> session.removePlayers(spectators);
         }
     }
 
