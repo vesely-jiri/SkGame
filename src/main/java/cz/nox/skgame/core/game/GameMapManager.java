@@ -13,7 +13,7 @@ public class GameMapManager {
 
     private static GameMapManager gameMapManager;
     private final Map<String, GameMap> maps = new HashMap<>();
-    private final HashSet<String> claimedMaps = new HashSet<>();
+    private final Set<String> claimedMaps = new HashSet<>();
     private GameMap lastCreatedGameMap;
 
     public static synchronized GameMapManager getInstance() {
