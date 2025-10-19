@@ -3,6 +3,7 @@ package cz.nox.skgame.core.game;
 import cz.nox.skgame.api.game.event.GamePlayerSessionJoin;
 import cz.nox.skgame.api.game.event.GamePlayerSessionLeave;
 import cz.nox.skgame.api.game.event.SessionCreateEvent;
+import cz.nox.skgame.api.game.event.SessionDisbandEvent;
 import cz.nox.skgame.api.game.model.Session;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -31,20 +32,21 @@ public class SessionManager implements Listener {
         Session session;
         if (!sessions.containsKey(id)) {
             session = new Session(id);
-            sessions.put(id,session);
-            setLastCreatedSession(session);
-
             Event e = new SessionCreateEvent(session);
             Bukkit.getPluginManager().callEvent(e);
-
+            sessions.put(id,session);
+            setLastCreatedSession(session);
         } else {
             session = sessions.get(id);
         }
         return session;
     }
     public void deleteSession(String id) {
-        if (!sessions.containsKey(id)) return;
+        Session session = sessions.get(id);
+        if (session == null) return;
         sessions.remove(id);
+        Event e = new SessionDisbandEvent(session);
+        Bukkit.getPluginManager().callEvent(e);
     }
     @Nullable
     public Session getSession(Player player) {
