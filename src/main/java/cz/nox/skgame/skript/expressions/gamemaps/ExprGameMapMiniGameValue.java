@@ -14,7 +14,7 @@ import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
-public class ExprGameMapValue extends SimpleExpression<Object> {
+public class ExprGameMapMiniGameValue extends SimpleExpression<Object> {
     private Expression<String> key;
     private Expression<GameMap> gameMap;
     private Expression<MiniGame> miniGame;
@@ -22,7 +22,7 @@ public class ExprGameMapValue extends SimpleExpression<Object> {
     private int mark;
 
     static {
-        Skript.registerExpression(ExprGameMapValue.class, Object.class, ExpressionType.COMBINED,
+        Skript.registerExpression(ExprGameMapMiniGameValue.class, Object.class, ExpressionType.COMBINED,
                 "[[game]map] value %string% of %gamemap% (of|from|and) %minigame%",
                 "[all] (keys|1:values) of %gamemap% (of|from|and) %minigame%"
         );
@@ -31,11 +31,16 @@ public class ExprGameMapValue extends SimpleExpression<Object> {
     @SuppressWarnings("unchecked")
     @Override
     public boolean init(Expression<?>[] exprs, int pattern, Kleenean kleenean, SkriptParser.ParseResult parseResult) {
-        this.key = (Expression<String>) exprs[0];
-        this.gameMap = (Expression<GameMap>) exprs[1];
-        this.miniGame = (Expression<MiniGame>) exprs[2];
         this.pattern = pattern;
-        this.mark = parseResult.mark;
+        if (pattern == 0) {
+            this.key = (Expression<String>) exprs[0];
+            this.gameMap = (Expression<GameMap>) exprs[1];
+            this.miniGame = (Expression<MiniGame>) exprs[2];
+        } else {
+            this.gameMap = (Expression<GameMap>) exprs[0];
+            this.miniGame = (Expression<MiniGame>) exprs[1];
+            this.mark = parseResult.mark;
+        }
         return true;
     }
 
@@ -51,11 +56,17 @@ public class ExprGameMapValue extends SimpleExpression<Object> {
 
     @Override
     protected @Nullable Object[] get(Event event) {
-        String k = this.key.getSingle(event);
         GameMap map = this.gameMap.getSingle(event);
-        MiniGame gm = this.miniGame.getSingle(event);
-        if (k == null || map == null || gm == null) return null;
-        Object o = map.getMiniGameValue(gm.getId(), this.key.getSingle(event));
+        MiniGame mg = this.miniGame.getSingle(event);
+        if (map == null || mg == null) return null;
+        Object o;
+        if (this.pattern == 0) {
+            String k = this.key.getSingle(event);
+            if (k == null) return null;
+            o = map.getMiniGameValue(mg.getId(), this.key.getSingle(event));
+        } else {
+            o = map.getAllMiniGameValues();
+        }
         if (o instanceof Object[]) {
             return (Object[]) o;
         } else {
@@ -65,17 +76,30 @@ public class ExprGameMapValue extends SimpleExpression<Object> {
 
     @Override
     public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
+
         GameMap map = this.gameMap.getSingle(event);
-        MiniGame gm = this.miniGame.getSingle(event);
-        String k = this.key.getSingle(event);
-        if (map == null || gm == null || k == null) return;
+        MiniGame mg = this.miniGame.getSingle(event);
+        if (map == null || mg == null) return;
+
+        if (this.pattern == 0) {
+            String k = this.key.getSingle(event);
+            if (k == null) return;
+        }
+
         switch (mode) {
             case SET -> {
                 if (delta == null || delta[0] == null) return;
+                if (pattern == 1) return;
                 Object o = delta[0];
-                map.setMiniGameValue(gm.getId(),k,o);
+                map.setMiniGameValue(mg.getId(),this.key.getSingle(event),o);
             }
-            case RESET, DELETE -> map.setMiniGameValue(gm.getId(),k,null);
+            case RESET, DELETE -> {
+                if (pattern == 0) {
+                    map.setMiniGameValue(mg.getId(), this.key.getSingle(event), null);
+                } else {
+                    map.setMiniGameValues(mg.getId(),null);
+                }
+            }
         }
     }
 
