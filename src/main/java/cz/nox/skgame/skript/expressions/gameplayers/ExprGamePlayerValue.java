@@ -79,18 +79,18 @@ public class ExprGamePlayerValue extends SimpleExpression<Object> {
 
     @Override
     public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
-        String key = this.key.getSingle(event);
         Player player = this.players.getSingle(event);
+        if (player == null) return;
         GamePlayer gamePlayer = playerManager.getPlayer(player);
-        if (key == null || player == null) return;
+        if (gamePlayer == null) return;
         switch (mode) {
             case SET -> {
                 if (delta == null || delta[0] == null) return;
-                gamePlayer.setValue(key,delta[0],this.isTemporary);
+                gamePlayer.setValue(this.key.getSingle(event),delta[0],this.isTemporary);
             }
             case DELETE, RESET -> {
-                if (mark == 0) {
-                    gamePlayer.removeValue(key,this.isTemporary);
+                if (pattern == 0) {
+                    gamePlayer.removeValue(this.key.getSingle(event),this.isTemporary);
                 } else {
                     gamePlayer.removeValues(this.isTemporary);
                 }
@@ -117,7 +117,7 @@ public class ExprGamePlayerValue extends SimpleExpression<Object> {
         } else {
             return "player "
                     + (this.mark == 0 ? "keys" : "values")
-                    + " of players[s] " + this.players.toString(e, b);
+                    + " of player[s] " + this.players.toString(e, b);
         }
     }
 }
