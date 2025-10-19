@@ -57,7 +57,7 @@ public class EffSecRegisterGameMap extends EffectSection {
     }
 
     @Override
-    public String toString(@Nullable Event event, boolean b) {
-        return "create gamemap with id " + id.getSingle(event);
+    public String toString(@Nullable Event e, boolean b) {
+        return "create gamemap with id " + this.id.toString(e,b);
     }
 }
