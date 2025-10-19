@@ -4,7 +4,9 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser;
+import ch.njol.skript.registrations.EventValues;
 import cz.nox.skgame.api.game.event.SessionCreateEvent;
+import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.core.game.SessionManager;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
@@ -18,6 +20,7 @@ public class EvtSessionCreate extends SkriptEvent {
         Skript.registerEvent("SessionCreateDisband", EvtSessionCreate.class, SessionCreateEvent.class,
                 "session create"
         );
+        EventValues.registerEventValue(SessionCreateEvent.class, Session.class, SessionCreateEvent::getSession, EventValues.TIME_NOW);
     }
 
     @Override
