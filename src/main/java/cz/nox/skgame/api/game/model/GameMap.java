@@ -7,23 +7,25 @@ import org.jetbrains.annotations.UnknownNullability;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 @SuppressWarnings("unused")
 public class GameMap implements ConfigurationSerializable, AnyNamed {
     private String id;
     private String name;
-    private Object arena;
-    private Map<String, Object> info = new HashMap<>();
+    private Map<String, Object> values = new HashMap<>();
+    /**
+     * Map< MiniGameId , Map< Key , Object> >
+     */
     private Map<String, Map<String, Object>> miniGameValues = new HashMap<>();
 
     public GameMap(String id) {
         this.id = id;
     }
 
-    public GameMap(String id, String name, Object arena) {
+    public GameMap(String id, String name) {
         this.id = id;
         this.name = name;
-        this.arena = arena;
     }
 
     @Override
@@ -50,46 +52,57 @@ public class GameMap implements ConfigurationSerializable, AnyNamed {
         this.name = name;
     }
 
-    public Object getArena() {
-        return this.arena;
-    }
-    public void setArena(Object arena) {
-        this.arena = arena;
-    }
-
     public Object getInfo(String key) {
-        return info.get(key);
+        return this.values.get(key);
     }
-    public void setInfo(Map<String, Object> info) {
-        this.info = info;
+    public void setInfo(Map<String, Object> values) {
+        this.values = values;
     }
     public void addInfo(String key, Object value) {
-        info.put(key, value);
+        this.values.put(key, value);
     }
     public void removeInfo(String key) {
-        info.remove(key);
+        this.values.remove(key);
     }
 
     public Object getMiniGameValue(String miniGameId, String key) {
-        Map<String, Object> inner = miniGameValues.get(miniGameId);
+        Map<String, Object> inner = this.miniGameValues.get(miniGameId);
         return inner == null ? null : inner.get(key);
     }
-
     public void setMiniGameValue(String miniGameId, String key, Object value) {
-        Map<String, Object> map = miniGameValues.computeIfAbsent(miniGameId, k -> new HashMap<>());
+        if (value == null) {
+            Map<String,Object> inner = this.miniGameValues.get(miniGameId);
+            if (inner != null) {
+                inner.remove(key);
+                if (inner.isEmpty()) {
+                    this.miniGameValues.remove(miniGameId);
+                }
+            }
+            return;
+        }
+        Map<String, Object> map = this.miniGameValues.computeIfAbsent(miniGameId, k -> new HashMap<>());
         map.put(key, value);
     }
 
     public Map<String, Object> getMiniGameValues(String miniGameId) {
         return new HashMap<>(miniGameValues.getOrDefault(miniGameId, Map.of()));
     }
-
-    public void setMiniGame(String miniGameId, Map<String, Object> values) {
-        this.miniGameValues.put(miniGameId, values);
+    public void setMiniGameValues(String miniGameId, Map<String, Object> values) {
+        if (values == null) {
+            this.miniGameValues.remove(miniGameId);
+        } else {
+            this.miniGameValues.put(miniGameId, values);
+        }
     }
-
     public Map<String, Map<String, Object>> getAllMiniGameValues() {
         return this.miniGameValues;
+    }
+
+    public Set<String> getSupportedMiniGameIds() {
+        return this.miniGameValues.keySet();
+    }
+    public boolean supportsMiniGame(MiniGame minigame) {
+        return this.miniGameValues.containsKey(minigame.getId());
     }
 
     @Override
@@ -97,21 +110,18 @@ public class GameMap implements ConfigurationSerializable, AnyNamed {
         Map<String, Object> map = new HashMap<>();
         map.put("id", this.id);
         map.put("name", this.name);
-        map.put("arena", this.arena);
-        map.put("info", this.info);
+        map.put("values", this.values);
         map.put("miniGameValues", this.miniGameValues);
         return map;
     }
-
-    @SuppressWarnings("unchecked")
     public static GameMap deserialize(Map<String, Object> map) {
         if (map == null) return null;
         String id = (String) map.get("id");
         String name = (String) map.get("name");
-        Object arena = map.get("arena");
-        GameMap newMap = new GameMap(id, name, arena);
 
-        Object rawInfo = map.get("info");
+        GameMap newMap = new GameMap(id, name);
+
+        Object rawInfo = map.get("values");
         if (rawInfo instanceof Map<?, ?> rawInfoMap) {
             Map<String, Object> info = new HashMap<>();
             rawInfoMap.forEach((k, v) -> info.put(String.valueOf(k), v));
@@ -124,12 +134,13 @@ public class GameMap implements ConfigurationSerializable, AnyNamed {
                 String miniGameId = String.valueOf(entry.getKey());
                 Object inner = entry.getValue();
                 if (inner instanceof Map<?, ?> innerMap) {
-                    Map<String, Object> values = new HashMap<>();
-                    innerMap.forEach((k, v) -> values.put(String.valueOf(k), v));
-                    newMap.setMiniGame(miniGameId, values);
+                    Map<String, Object> innerValues = new HashMap<>();
+                    innerMap.forEach((k, v) -> innerValues.put(String.valueOf(k), v));
+                    newMap.setMiniGameValues(miniGameId, innerValues);
                 }
             }
         }
+
         return newMap;
     }
 }
