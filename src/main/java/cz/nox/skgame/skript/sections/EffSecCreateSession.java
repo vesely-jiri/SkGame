@@ -46,19 +46,17 @@ public class EffSecCreateSession extends EffectSection {
     @Override
     public boolean init(Expression<?>[] exprs, int i, Kleenean isDelayed, ParseResult parseResult,
                         SectionNode sectionNode, @Nullable List<TriggerItem> triggerItems) {
-
         if (hasSection()) {
             this.trigger = loadCode(sectionNode, "session create", SessionCreateEvent.class);
         }
-
         this.id = (Expression<String>) exprs[0];
         return true;
     }
 
     @Override
-    protected @Nullable TriggerItem walk(Event event) {
-        Object localVars = Variables.copyLocalVariables(event);
-        String id = this.id.getSingle(event);
+    protected @Nullable TriggerItem walk(Event e) {
+        Object localVars = Variables.copyLocalVariables(e);
+        String id = this.id.getSingle(e);
         Session session = sessionManager.getSessionById(id);
         if (session == null) {
             session = sessionManager.createSession(id);
@@ -67,14 +65,14 @@ public class EffSecCreateSession extends EffectSection {
             SessionCreateEvent createEvent = new SessionCreateEvent(session);
             Variables.setLocalVariables(createEvent,localVars);
             TriggerItem.walk(this.trigger,createEvent);
-            Variables.setLocalVariables(event,Variables.copyLocalVariables(createEvent));
+            Variables.setLocalVariables(e,Variables.copyLocalVariables(createEvent));
             Variables.removeLocals(createEvent);
         }
-        return super.walk(event,false);
+        return super.walk(e,false);
     }
 
     @Override
-    public String toString(@Nullable Event event, boolean b) {
-        return "create session with id " + this.id;
+    public String toString(@Nullable Event e, boolean b) {
+        return "create session with id " + this.id.toString(e,b);
     }
 }
