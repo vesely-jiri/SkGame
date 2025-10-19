@@ -1,13 +1,11 @@
 package cz.nox.skgame.skript;
 
-import ch.njol.skript.classes.ClassInfo;
-import ch.njol.skript.classes.EnumClassInfo;
-import ch.njol.skript.classes.Parser;
-import ch.njol.skript.classes.Serializer;
+import ch.njol.skript.classes.*;
 import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.registrations.Classes;
+import ch.njol.util.coll.CollectionUtils;
 import ch.njol.yggdrasil.Fields;
 import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.game.model.MiniGame;
@@ -16,6 +14,7 @@ import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.core.game.GameMapManager;
 import cz.nox.skgame.core.game.MiniGameManager;
 import cz.nox.skgame.core.game.SessionManager;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.NotSerializableException;
 import java.io.StreamCorruptedException;
@@ -32,7 +31,7 @@ public class Types {
                 .description("Represents a game session")
                 .defaultExpression(new EventValueExpression<>(Session.class))
                 .since("1.0.0")
-                .parser(new Parser<>() {
+                .parser(new Parser<Session>() {
                     @Override
                     public boolean canParse(ParseContext context) {
                         return false;
@@ -52,8 +51,13 @@ public class Types {
                     @Override
                     public Fields serialize(Session session) throws NotSerializableException {
                         Fields fields = new Fields();
-                        fields.putObject("sessionId", session);
+                        fields.putObject("id", session.getId());
                         return fields;
+                    }
+
+                    @Override
+                    public void deserialize(Session o, Fields f) throws StreamCorruptedException, NotSerializableException {
+                        assert false;
                     }
 
                     @Override
@@ -65,8 +69,8 @@ public class Types {
                     }
 
                     @Override
-                    public void deserialize(Session session, Fields fields) throws StreamCorruptedException, NotSerializableException {
-                        assert false;
+                    public <E extends Session> @Nullable E newInstance(Class<E> c) {
+                        return null;
                     }
 
                     @Override
@@ -77,6 +81,24 @@ public class Types {
                     @Override
                     protected boolean canBeInstantiated() {
                         return false;
+                    }
+                })
+                .changer(new Changer<>() {
+                    @Override
+                    public Class<?> @Nullable [] acceptChange(ChangeMode mode) {
+                        if (mode == ChangeMode.DELETE) {
+                            return CollectionUtils.array();
+                        }
+                        return null;
+                    }
+
+                    @Override
+                    public void change(Session[] sessions, Object @Nullable [] objects, ChangeMode mode) {
+                        if (mode == ChangeMode.DELETE) {
+                            for (Session session : sessions) {
+                                sessionManager.deleteSession(session.getId());
+                            }
+                        }
                     }
                 })
         );
@@ -101,6 +123,24 @@ public class Types {
                         return "gamemap:" + gameMap.getId();
                     }
                 })
+                .changer(new Changer<GameMap>() {
+                    @Override
+                    public Class<?> @Nullable [] acceptChange(ChangeMode mode) {
+                        if (mode == ChangeMode.DELETE) {
+                            return CollectionUtils.array();
+                        }
+                        return null;
+                    }
+
+                    @Override
+                    public void change(GameMap[] gameMaps, Object @Nullable [] delta, ChangeMode mode) {
+                        if (mode == ChangeMode.DELETE) {
+                            for (GameMap map : gameMaps) {
+                                gameMapManager.unregisterGameMap(map.getId());
+                            }
+                        }
+                    }
+                })
         );
 
         Classes.registerClass(new ClassInfo<>(MiniGame.class, "minigame")
@@ -121,6 +161,24 @@ public class Types {
                     @Override
                     public String toVariableNameString(MiniGame miniGame) {
                         return "minigame:" + miniGame.getId();
+                    }
+                })
+                .changer(new Changer<MiniGame>() {
+                    @Override
+                    public Class<?> @Nullable [] acceptChange(ChangeMode mode) {
+                        if (mode == ChangeMode.DELETE) {
+                            return CollectionUtils.array();
+                        }
+                        return null;
+                    }
+
+                    @Override
+                    public void change(MiniGame[] miniGames, Object @Nullable [] delta, ChangeMode mode) {
+                        if (mode == ChangeMode.DELETE) {
+                            for (MiniGame mg : miniGames) {
+                                miniGameManager.unregisterMiniGame(mg.getId());
+                            }
+                        }
                     }
                 })
         );
