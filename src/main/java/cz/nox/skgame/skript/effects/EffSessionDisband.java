@@ -11,13 +11,12 @@ import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
-@Deprecated
-public class EffSessionDelete extends Effect {
+public class EffSessionDisband extends Effect {
     private static final SessionManager sessionManager = SessionManager.getInstance();
     private Expression<Session> session;
 
     static {
-        Skript.registerEffect(EffSessionDelete.class,
+        Skript.registerEffect(EffSessionDisband.class,
                 "(delete|disband) [session] %session%"
         );
     }
