@@ -49,14 +49,14 @@ public class ExprSessionValue extends SimpleExpression<Object> {
         if (session == null) return null;
         switch (pattern) {
             case 0 -> { //single
-                Object object = session.getValue(key.getSingle(event),isTemporary);
+                Object object = session.getValue(this.key.getSingle(event),this.isTemporary);
                 return CollectionUtils.array(object);
             }
             case 1 -> { //all
                 if (this.mark == 0) { // keys
-                    return CollectionUtils.array(session.getKeys(isTemporary));
+                    return CollectionUtils.array(session.getKeys(this.isTemporary));
                 } else { // values
-                    return CollectionUtils.array(session.getValues(isTemporary));
+                    return CollectionUtils.array(session.getValues(this.isTemporary));
                 }
             }
         }
@@ -74,16 +74,15 @@ public class ExprSessionValue extends SimpleExpression<Object> {
     @Override
     public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
         Session session = this.session.getSingle(event);
-        String key = this.key.getSingle(event);
         if (session == null) return;
         switch (mode) {
             case SET -> {
                 if (delta == null || delta[0] == null) return;
-                session.setValue(key,delta[0],isTemporary);
+                session.setValue(this.key.getSingle(event),delta[0],isTemporary);
             }
             case DELETE, RESET -> {
                 if (mark == 0) {
-                    session.removeValue(key, isTemporary);
+                    session.removeValue(this.key.getSingle(event), isTemporary);
                 } else {
                     session.removeValues(isTemporary);
                 }
