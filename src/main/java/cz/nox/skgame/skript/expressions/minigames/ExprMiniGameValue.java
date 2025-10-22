@@ -29,10 +29,14 @@ public class ExprMiniGameValue extends SimpleExpression<Object> {
     @SuppressWarnings("unchecked")
     @Override
     public boolean init(Expression<?>[] exprs, int pattern, Kleenean kleenean, SkriptParser.ParseResult parseResult) {
-        this.key = (Expression<String>) exprs[0];
-        this.miniGame = (Expression<MiniGame>) exprs[1];
         this.pattern = pattern;
-        this.mark = parseResult.mark;
+        if (pattern == 0) {
+            this.key = (Expression<String>) exprs[0];
+            this.miniGame = (Expression<MiniGame>) exprs[1];
+        } else {
+            this.miniGame = (Expression<MiniGame>) exprs[0];
+            this.mark = parseResult.mark;
+        }
         return true;
     }
 
@@ -47,9 +51,9 @@ public class ExprMiniGameValue extends SimpleExpression<Object> {
             }
             case 1 -> { //All
                 if (mark == 0) {
-                    return CollectionUtils.array(miniGame.getKeys());
+                    return miniGame.getKeys().toArray(new String[0]);
                 } else {
-                    return CollectionUtils.array(miniGame.getValues());
+                    return miniGame.getValues();
                 }
             }
         }
