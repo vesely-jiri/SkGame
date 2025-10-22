@@ -17,7 +17,8 @@ public class CondMapSupportsMiniGame extends Condition {
 
     static {
         Skript.registerCondition(CondMapSupportsMiniGame.class,
-                "%gamemap% supports %minigame%"
+                "%gamemap% supports %minigame%",
+                "%minigame% supports %gamemap%"
         );
     }
 
