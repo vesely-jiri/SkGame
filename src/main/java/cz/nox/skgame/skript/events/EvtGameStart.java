@@ -21,8 +21,8 @@ public class EvtGameStart extends SkriptEvent {
 
     static {
         Skript.registerEvent("GameStart", EvtGameStart.class, GameStartEvent.class,
-                "[%string%] game start",
-                "game [%string%] start"
+                "[%string%] [mini]game start",
+                "[mini]game [%string%] start"
         );
         EventValues.registerEventValue(GameStartEvent.class, Session.class, GameStartEvent::getSession, EventValues.TIME_NOW);
         EventValues.registerEventValue(GameStartEvent.class, MiniGame.class, GameStartEvent::getMiniGame, EventValues.TIME_NOW);
