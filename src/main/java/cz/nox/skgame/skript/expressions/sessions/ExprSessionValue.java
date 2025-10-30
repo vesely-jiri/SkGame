@@ -112,13 +112,13 @@ public class ExprSessionValue extends SimpleExpression<Object> {
         switch (mode) {
             case SET -> {
                 if (delta == null || delta[0] == null) return;
-                session.setValue(this.key.getSingle(event),delta[0],isTemporary);
+                session.setValue(this.key.getSingle(event),delta[0],this.isTemporary);
             }
             case DELETE, RESET -> {
-                if (mark == 0) {
-                    session.removeValue(this.key.getSingle(event), isTemporary);
+                if (this.mark == 0) {
+                    session.removeValue(this.key.getSingle(event), this.isTemporary);
                 } else {
-                    session.removeValues(isTemporary);
+                    session.removeValues(this.isTemporary);
                 }
             }
         }
