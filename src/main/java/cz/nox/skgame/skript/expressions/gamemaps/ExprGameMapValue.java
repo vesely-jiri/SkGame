@@ -9,7 +9,6 @@ import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
 import cz.nox.skgame.api.game.model.GameMap;
-import cz.nox.skgame.api.game.model.MiniGame;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +16,6 @@ import org.jetbrains.annotations.Nullable;
 public class ExprGameMapValue extends SimpleExpression<Object> {
     private Expression<String> key;
     private Expression<GameMap> gameMap;
-    private Expression<MiniGame> miniGame;
     private int pattern;
     private int mark;
 
@@ -54,11 +52,18 @@ public class ExprGameMapValue extends SimpleExpression<Object> {
 
     @Override
     protected @Nullable Object[] get(Event event) {
-        String k = this.key.getSingle(event);
         GameMap map = this.gameMap.getSingle(event);
-        MiniGame mg = this.miniGame.getSingle(event);
-        if (k == null || map == null || mg == null) return null;
-        Object o = map.getMiniGameValue(mg.getId(), this.key.getSingle(event));
+        if (map == null) return null;
+
+        Object o;
+        if (this.pattern == 0) {
+            String k = this.key.getSingle(event);
+            if (k == null) return null;
+            o = map.getValue(k);
+        } else {
+            o = map.getValues();
+        }
+
         if (o instanceof Object[]) {
             return (Object[]) o;
         } else {
@@ -69,16 +74,15 @@ public class ExprGameMapValue extends SimpleExpression<Object> {
     @Override
     public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
         GameMap map = this.gameMap.getSingle(event);
-        MiniGame mg = this.miniGame.getSingle(event);
         String k = this.key.getSingle(event);
-        if (map == null || mg == null || k == null) return;
+        if (map == null || k == null) return;
         switch (mode) {
             case SET -> {
                 if (delta == null || delta[0] == null) return;
                 Object o = delta[0];
-                map.setMiniGameValue(mg.getId(),k,o);
+                map.setValue(k,o);
             }
-            case RESET, DELETE -> map.setMiniGameValue(mg.getId(),k,null);
+            case RESET, DELETE -> map.setValue(k,null);
         }
     }
 
@@ -93,9 +97,15 @@ public class ExprGameMapValue extends SimpleExpression<Object> {
     }
 
     @Override
-    public String toString(@Nullable Event event, boolean b) {
-        return "map value " + this.key.toString(event,b)
-                + " of map " + this.gameMap.toString(event,b)
-                + " of minigame " + this.miniGame.toString(event,b);
+    public String toString(@Nullable Event e, boolean b) {
+        if (this.pattern == 0) {
+            return "map value " + this.key.toString(e, b)
+                    + " of map " + this.gameMap.toString(e, b);
+        } else {
+            return "map "
+                    + ((this.mark == 0) ? "keys" : "values")
+                    + " of map"
+                    + this.gameMap.toString(e,b);
+        }
     }
 }
