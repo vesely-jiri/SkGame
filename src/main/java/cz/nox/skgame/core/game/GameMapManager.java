@@ -30,13 +30,13 @@ public class GameMapManager {
             ConfigurationSection section = baseSection.getConfigurationSection(key);
             if (section == null) continue;
             GameMap gameMap = GameMap.deserialize(section.getValues(true));
-            maps.put(gameMap.getId(), gameMap);
+            this.maps.put(gameMap.getId(), gameMap);
         }
     }
     public void saveToFile(File file) {
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
         config.set("maps",null);
-        for (GameMap gameMap : maps.values()) {
+        for (GameMap gameMap : this.maps.values()) {
             config.createSection("maps." + gameMap.getId(), gameMap.serialize());
         }
         try {
@@ -47,10 +47,10 @@ public class GameMapManager {
     }
 
     public GameMap getGameMapById(String id) {
-        return maps.get(id);
+        return this.maps.get(id);
     }
     public GameMap[] getAllGameMaps() {
-        return maps.values().toArray(new GameMap[0]);
+        return this.maps.values().toArray(new GameMap[0]);
     }
 
     public GameMap registerGameMap(String id) {
@@ -62,24 +62,24 @@ public class GameMapManager {
         return map;
     }
     public void unregisterGameMap(String id) {
-        maps.remove(id);
+        this.maps.remove(id);
     }
     public boolean isMapRegistered(String id) {
-        return maps.containsKey(id);
+        return this.maps.containsKey(id);
     }
 
     public boolean isMapClaimed(String gameMapId) {
-        return claimedMaps.contains(gameMapId);
+        return this.claimedMaps.contains(gameMapId);
     }
     public void addMapToClaimed(GameMap gameMap) {
-        claimedMaps.add(gameMap.getId());
+        this.claimedMaps.add(gameMap.getId());
     }
     public void removeMapFromClaimed(GameMap gameMap) {
-        claimedMaps.remove(gameMap.getId());
+        this.claimedMaps.remove(gameMap.getId());
     }
 
     public GameMap getLastCreatedGameMap() {
-        return lastCreatedGameMap;
+        return this.lastCreatedGameMap;
     }
     public void setLastCreatedGameMap(GameMap lastCreated) {
         this.lastCreatedGameMap = lastCreated;
