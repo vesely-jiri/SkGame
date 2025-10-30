@@ -4,6 +4,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser;
@@ -17,11 +18,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Objects;
 
-@Name("Session by UUID")
-@Description("Get's session by it's UUID")
-@Examples({"broadcast session with uuid {_s}",
-        "ex2",
-        "ex3"})
+@Name("Session - by ID")
+@Description("Get session by it's UUID")
+@Examples({
+        "#Get existing session by it's uuid",
+        "set {_s} to session with id \"my_uuid\"",
+        "",
+        "#Returns new or existing session with specified uuid",
+        "set {_new} to new session with id \"new_uuid\"",
+})
+@Since("1.0.0")
 @SuppressWarnings("unused")
 public class ExprSessionFromId extends SimpleExpression<Session> {
 
