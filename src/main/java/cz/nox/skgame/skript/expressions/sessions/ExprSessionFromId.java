@@ -15,6 +15,7 @@ import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 @Name("Session by UUID")
 @Description("Get's session by it's UUID")
@@ -26,23 +27,32 @@ public class ExprSessionFromId extends SimpleExpression<Session> {
 
     private static final SessionManager sessionManager = SessionManager.getInstance();
     private Expression<String> uuids;
+    private boolean create;
 
     static {
         Skript.registerExpression(ExprSessionFromId.class, Session.class, ExpressionType.COMBINED,
-                "session[s] (with|from) [[uu]id][s] %strings%");
+                "[:new] session[s] (with|from) [[uu]id][s] %strings%");
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public boolean init(Expression<?>[] exprs, int i, Kleenean kleenean, SkriptParser.ParseResult parseResult) {
         this.uuids = (Expression<String>) exprs[0];
+        this.create = parseResult.hasTag("new");
         return true;
     }
 
     @Override
     protected @Nullable Session[] get(Event event) {
         return Arrays.stream(this.uuids.getArray(event))
-                .map(sessionManager::getSessionById)
+                .map(id -> {
+                    Session session = sessionManager.getSessionById(id);
+                    if (session == null && this.create) {
+                        session = sessionManager.createSession(id);
+                    }
+                    return session;
+                })
+                .filter(Objects::nonNull)
                 .toArray(Session[]::new);
     }
 
@@ -55,7 +65,6 @@ public class ExprSessionFromId extends SimpleExpression<Session> {
     public boolean isSingle() {
         return this.uuids.isSingle();
     }
-
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
