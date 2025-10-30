@@ -59,7 +59,7 @@ public class MiniGameManager {
         MiniGame mg = miniGames.get(id);
         if (mg != null) return mg;
         mg = new MiniGame(id);
-        miniGames.put(id, mg);
+        miniGames.put(mg.getId(), mg);
         lastCreatedMiniGame = mg;
         return mg;
     }
