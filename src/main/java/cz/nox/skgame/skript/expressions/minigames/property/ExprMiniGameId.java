@@ -1,9 +1,25 @@
 package cz.nox.skgame.skript.expressions.minigames.property;
 
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import cz.nox.skgame.api.game.model.MiniGame;
 import org.jetbrains.annotations.Nullable;
 
+@Name("MiniGame - ID")
+@Description({
+        "Represents the unique ID of a MiniGame.",
+        "You can retrieve this value to identify or reference the MiniGame.",
+        "",
+        "Supports: GET only."
+})
+@Examples({
+        "set {_minigame} to minigame with id \"bomberman\"",
+        "broadcast id of {_minigame}"
+})
+@Since("1.0.0")
 @SuppressWarnings("unused")
 public class ExprMiniGameId extends SimplePropertyExpression<MiniGame, String> {
 

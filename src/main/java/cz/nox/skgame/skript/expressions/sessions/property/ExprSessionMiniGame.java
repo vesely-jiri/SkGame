@@ -1,6 +1,10 @@
 package cz.nox.skgame.skript.expressions.sessions.property;
 
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.util.coll.CollectionUtils;
 import cz.nox.skgame.api.game.model.MiniGame;
@@ -9,6 +13,26 @@ import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
+@Name("Session - MiniGame")
+@Description({
+        "Represents the MiniGame assigned to a specific session.",
+        "You can get or set which MiniGame the session is currently running.",
+        "",
+        "Setting this value assigns a new MiniGame to the session.",
+        "Resetting this value removes the MiniGame from the session (sets it to none).",
+        "",
+        "Supports: GET / SET / RESET."
+})
+@Examples({
+        "set {_session} to session with id \"the_session_id\"",
+        "set minigame of {_session} to minigame with id \"bomberman\"",
+        "",
+        "broadcast minigame of {_session}",
+        "",
+        "reset minigame of {_session}"
+})
+@Since("1.0.0")
+
 public class ExprSessionMiniGame extends SimplePropertyExpression<Session, MiniGame> {
 
     static {

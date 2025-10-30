@@ -1,6 +1,10 @@
 package cz.nox.skgame.skript.conditions;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
@@ -10,6 +14,17 @@ import cz.nox.skgame.core.game.GameMapManager;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
+@Name("GameMap - Is Map Taken")
+@Description({
+        "Checks if a GameMap is currently taken by other session.",
+        "",
+        "Useful for preventing multiple sessions from trying to use the same map."
+})
+@Examples({
+        "if {_map} is taken:",
+        "\tsend \"This map is currently in use!\" to player"
+})
+@Since("1.0.0")
 @SuppressWarnings("unused")
 public class CondIsMapTaken extends Condition {
     private static final GameMapManager mapManager = GameMapManager.getInstance();

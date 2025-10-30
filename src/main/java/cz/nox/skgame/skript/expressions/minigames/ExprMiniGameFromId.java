@@ -1,6 +1,10 @@
 package cz.nox.skgame.skript.expressions.minigames;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser;
@@ -13,6 +17,19 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
+@Name("MiniGame - by ID")
+@Description({
+        "Retrieves one or more MiniGames by their UUID(s).",
+        "Returns the existing MiniGame instances matching the provided IDs.",
+        "",
+        "Useful for fetching specific MiniGames dynamically by their unique identifiers.",
+        "",
+        "Supports: GET only."
+})
+@Examples({
+        "set {_mg} to minigame with id \"bomberman\""
+})
+@Since("1.0.0")
 @SuppressWarnings("unused")
 public class ExprMiniGameFromId extends SimpleExpression<MiniGame> {
     private static final MiniGameManager miniGameManager = MiniGameManager.getInstance();

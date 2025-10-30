@@ -1,6 +1,10 @@
 package cz.nox.skgame.skript.events;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser;
@@ -12,9 +16,23 @@ import cz.nox.skgame.api.game.model.Session;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Called when minigame of session starts
- */
+@Name("Game Start")
+@Description({
+        "Fires when a minigame in a session starts.",
+        "",
+        "You can use this event to prepare the map, initialize player states, or trigger announcements.",
+        "",
+        "Provides the session, the minigame that started, and the map it uses.",
+        "",
+        "Supports: Event trigger only (GET session, GET minigame, GET map)."
+})
+@Examples({
+        "on game start:",
+        "    broadcast \"%id of event-minigame% in session %id of event-session% has started\"",
+        "on \"Bomberman\" game start:",
+        "    broadcast \"Bomberman minigame started on map %id of event-gamemap%\""
+})
+@Since("1.0.0")
 @SuppressWarnings("unused")
 public class EvtGameStart extends SkriptEvent {
     private Literal<String> miniGameId;

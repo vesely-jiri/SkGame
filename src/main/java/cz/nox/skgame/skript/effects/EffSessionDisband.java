@@ -1,6 +1,10 @@
 package cz.nox.skgame.skript.effects;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
@@ -10,6 +14,14 @@ import cz.nox.skgame.core.game.SessionManager;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
+@Name("Session - Disband Session")
+@Description({
+        "Deletes a session.",
+})
+@Examples({
+        "delete session {_session}",
+})
+@Since("1.0.0")
 @SuppressWarnings("unused")
 public class EffSessionDisband extends Effect {
     private static final SessionManager sessionManager = SessionManager.getInstance();

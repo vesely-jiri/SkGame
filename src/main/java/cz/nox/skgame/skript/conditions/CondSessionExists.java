@@ -1,6 +1,10 @@
 package cz.nox.skgame.skript.conditions;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
@@ -10,6 +14,17 @@ import cz.nox.skgame.core.game.SessionManager;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
+@Name("Session - Session Exists")
+@Description({
+        "Checks whether the specified session(s) exist.",
+        "",
+        "Returns true only if all provided sessions exists."
+})
+@Examples({
+        "if {_session} exists:",
+        "\tbroadcast \"Session is active!\""
+})
+@Since("1.0.0")
 @SuppressWarnings("unused")
 public class CondSessionExists extends Condition {
     private static final SessionManager sessionManager = SessionManager.getInstance();

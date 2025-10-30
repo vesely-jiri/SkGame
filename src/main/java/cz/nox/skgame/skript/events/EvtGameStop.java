@@ -1,6 +1,10 @@
 package cz.nox.skgame.skript.events;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.*;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.registrations.EventValues;
@@ -11,9 +15,23 @@ import cz.nox.skgame.api.game.model.Session;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Called when minigame of session stops
- */
+@Name("Game Stop")
+@Description({
+        "Fires when a minigame in a session stops.",
+        "",
+        "You can use this event to handle scoring, cleanup, rewards, or notifications when a minigame ends.",
+        "",
+        "Provides the session, the minigame that stopped, and the reason for stopping.",
+        "",
+        "Supports: Event trigger only (GET session, GET minigame, GET reason)."
+})
+@Examples({
+        "on game stop:",
+        "    broadcast \"%id of event-minigame% in session %id of event-session% has ended\"",
+        "on \"Bomberman\" game stop:",
+        "    broadcast \"Bomberman minigame stopped in session %id of event-session%\""
+})
+@Since("1.0.0")
 @SuppressWarnings("unused")
 public class EvtGameStop extends SkriptEvent {
     private Literal<String> miniGameId;

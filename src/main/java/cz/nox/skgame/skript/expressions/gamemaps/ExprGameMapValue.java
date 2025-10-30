@@ -2,6 +2,10 @@ package cz.nox.skgame.skript.expressions.gamemaps;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser;
@@ -12,6 +16,28 @@ import cz.nox.skgame.api.game.model.GameMap;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
+@Name("GameMap - Value")
+@Description({
+        "Represents a custom key-value pair stored in a GameMap.",
+        "",
+        "You can retrieve, set, reset, or delete values associated with a specific key in a GameMap.",
+        "Supports fetching all keys or all values of a GameMap.",
+        "",
+        "Supports: GET / SET / RESET / DELETE."
+})
+@Examples({
+        "set {_map} to gamemap with id \"arena_battle\"",
+        "set value \"author\" of {_map} to name of player",
+        "broadcast value \"author\" of {_map}",
+        "",
+        "loop values of {_map}:",
+        "    broadcast \"key: %loop-key% or index: %loop-index%\"",
+        "    broadcast \"value: %loop-value%\"",
+        "",
+        "reset value \"author\" of {_map}",
+        "delete values of {_map}"
+})
+@Since("1.0.0")
 @SuppressWarnings("unused")
 public class ExprGameMapValue extends SimpleExpression<Object> {
     private Expression<String> key;

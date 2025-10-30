@@ -1,6 +1,10 @@
 package cz.nox.skgame.skript.effects;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
@@ -10,6 +14,15 @@ import cz.nox.skgame.core.game.GameMapManager;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
+@Name("GameMap - Unregister GameMap")
+@Description({
+        "Unregisters a specific GameMap.",
+})
+@Examples({
+        "unregister {_gamemap}",
+        "unregister gamemap with id \"the_map_id\""
+})
+@Since("1.0.0")
 @SuppressWarnings("unused")
 public class EffUnregisterMap extends Effect {
 

@@ -2,6 +2,10 @@ package cz.nox.skgame.skript.expressions.sessions;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser;
@@ -14,6 +18,24 @@ import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
+@Name("Session - All Sessions")
+@Description({
+        "Returns a list of all currently active game sessions.",
+        "Can also be used to delete or reset all sessions at once.",
+        "",
+        "Useful for administrative scripts that need to manage or clear all running sessions.",
+        "",
+        "Supports: GET / RESET / DELETE."
+})
+@Examples({
+        "loop all sessions:",
+        "    broadcast \"Session ID: %id of loop-value%\"",
+        "",
+        "delete all sessions",
+        "reset all sessions"
+})
+@Since("1.0.0")
+
 public class ExprSessionsAll extends SimpleExpression<Session> {
     private static final SessionManager sessionManager = SessionManager.getInstance();
 

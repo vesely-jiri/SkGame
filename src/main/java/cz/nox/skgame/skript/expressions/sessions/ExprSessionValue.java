@@ -2,6 +2,10 @@ package cz.nox.skgame.skript.expressions.sessions;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser;
@@ -13,6 +17,36 @@ import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
+@Name("Session - Value")
+@Description({
+        "Represents a custom value stored in a session, optionally marked as temporary.",
+        "You can use it to store or retrieve arbitrary key-value pairs tied to a specific session.",
+        "",
+        "Temporary values exist only during the session’s lifetime and are not persisted.",
+        "Supports both individual key access and full listing of keys or values.",
+        "",
+        "Setting this value stores data under a given key.",
+        "Deleting or resetting removes a specific value or all values, depending on the expression.",
+        "",
+        "Supports: GET / SET / RESET / DELETE."
+})
+@Examples({
+        "set {_session} to session with id \"my_custom_session_uuid\"",
+        "",
+        "set value \"max_rounds\" of {_session} to 5",
+        "broadcast value \"max_rounds\" of {_session}",
+        "",
+        "set temporary value \"deaths\" of {_session} to 0",
+        "",
+        "loop values of {_session}:",
+        "    broadcast \"value: %loop-value%\"",
+        "    broadcast \"key: %loop-key% or index: %loop-index%\" ",
+        "",
+        "delete value \"deaths\" of {_session}",
+        "reset all temporary values of {_session}"
+})
+@Since("1.0.0")
+
 public class ExprSessionValue extends SimpleExpression<Object> {
     private Expression<String> key;
     private Expression<Session> session;

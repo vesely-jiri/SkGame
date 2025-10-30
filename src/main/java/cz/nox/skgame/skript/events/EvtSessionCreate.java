@@ -1,6 +1,10 @@
 package cz.nox.skgame.skript.events;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser;
@@ -11,6 +15,22 @@ import cz.nox.skgame.core.game.SessionManager;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
+@Name("Session Create")
+@Description({
+        "Fires when a new game session is created.",
+        "",
+        "You can use this event to initialize session settings, assign a map, or notify players.",
+        "",
+        "Provides the newly created session.",
+        "",
+        "Supports: Event trigger only (GET session)."
+})
+@Examples({
+        "on session create:",
+        "    broadcast \"Session %id of event-session% has been created.\"",
+        "    set map of event-session to gamemap with id \"arena_battle\""
+})
+@Since("1.0.0")
 @SuppressWarnings("unused")
 public class EvtSessionCreate extends SkriptEvent {
 

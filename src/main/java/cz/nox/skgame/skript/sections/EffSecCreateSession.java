@@ -23,12 +23,21 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 @Name("Create Game Session")
-@Description("Creates a game session")
+@Description({
+        "Creates a new game session with a specified ID.",
+        "",
+        "Useful for initializing players, maps, or other session-specific properties upon creation.",
+        "",
+        "Supports: SECTION (code block).",
+        "Supports: event-session"
+})
 @Examples({
-    "create game session with id \"hello\"",
-    "create game session:",
-        "\tset players of event-session to {_players::*}"})
-@Since("3.12")
+        "create game session with id \"hello\"",
+        "create game session:",
+        "\tset players of event-session to {_players::*}",
+        "\tset map of event-session to gamemap with id \"arena\""
+})
+@Since("1.0.0")
 @SuppressWarnings("unused")
 public class EffSecCreateSession extends EffectSection {
 

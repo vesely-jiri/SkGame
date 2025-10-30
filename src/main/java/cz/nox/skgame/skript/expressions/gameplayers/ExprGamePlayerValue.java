@@ -2,6 +2,10 @@ package cz.nox.skgame.skript.expressions.gameplayers;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser;
@@ -14,6 +18,26 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
+@Name("GamePlayer - Value")
+@Description({
+        "Represents a custom value stored for a specific player.",
+        "Supports temporary values if 'temporary' tag is used. When game ends, temporary tagged values are deleted.",
+        "",
+        "Also supports retrieving all keys or all values of a player.",
+        "",
+        "Supports: GET / SET / RESET / DELETE."
+})
+@Examples({
+        "set temporary value \"score\" of player to 10",
+        "broadcast value \"score\" of player",
+        "",
+        "loop keys of player:",
+        "    broadcast \"Key: %loop-value%\"",
+        "",
+        "delete value \"score\" of player",
+        "reset values of player"
+})
+@Since("1.0.0")
 @SuppressWarnings("unused")
 public class ExprGamePlayerValue extends SimpleExpression<Object> {
     private static final PlayerManager playerManager = PlayerManager.getInstance();

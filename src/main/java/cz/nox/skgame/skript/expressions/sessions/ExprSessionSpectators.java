@@ -2,6 +2,10 @@ package cz.nox.skgame.skript.expressions.sessions;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser;
@@ -16,6 +20,30 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 @SuppressWarnings("unused")
+@Name("Session - Spectators")
+@Description({
+        "Represents all spectators of a specific session.",
+        "Allows you to retrieve, add or remove the spectators of a session.",
+        "",
+        "Setting this value replaces the current spectator list.",
+        "Adding or removing spectators modifies the list incrementally.",
+        "Resetting removes all spectators from the session.",
+        "",
+        "Useful for managing non-participating players.",
+        "",
+        "Supports: GET / SET / ADD / REMOVE / RESET."
+})
+@Examples({
+        "set {_session} to session with id \"the_session_id\"",
+        "add player to spectators of {_session}",
+        "",
+        "loop spectators of {_session}:",
+        "    broadcast \"%loop-player% is watching the game!\"",
+        "",
+        "reset spectators of {_session}"
+})
+@Since("1.0.0")
+
 public class ExprSessionSpectators extends SimpleExpression<Player> {
     private Expression<Session> session;
 

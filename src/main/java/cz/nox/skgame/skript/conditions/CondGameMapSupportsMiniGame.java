@@ -1,6 +1,10 @@
 package cz.nox.skgame.skript.conditions;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
@@ -10,13 +14,25 @@ import cz.nox.skgame.api.game.model.MiniGame;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
+@Name("GameMap - Supports MiniGame")
+@Description({
+        "Checks if the specified game map supports the given mini-game.",
+        "",
+        "This is based on the MiniGame compatibility list of the GameMap object.",
+        "Returns true if GameMap shares at least one value between the MiniGame"
+})
+@Examples({
+        "if {_map} supports {_minigame}:",
+        "\tbroadcast \"Map supports the MiniGame with id %{_minigame}%!\""
+})
+@Since("1.0.0")
 @SuppressWarnings("unused")
-public class CondMapSupportsMiniGame extends Condition {
+public class CondGameMapSupportsMiniGame extends Condition {
     private Expression<GameMap> map;
     private Expression<MiniGame> miniGame;
 
     static {
-        Skript.registerCondition(CondMapSupportsMiniGame.class,
+        Skript.registerCondition(CondGameMapSupportsMiniGame.class,
                 "%gamemap% supports %minigame%",
                 "%minigame% supports %gamemap%"
         );

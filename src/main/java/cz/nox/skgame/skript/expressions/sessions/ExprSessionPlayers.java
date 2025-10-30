@@ -2,6 +2,10 @@ package cz.nox.skgame.skript.expressions.sessions;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser;
@@ -16,6 +20,26 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 
 @SuppressWarnings("unused")
+@Name("Session - Players")
+@Description({
+        "Represents all players currently participating in a specific session.",
+        "Allows you to retrieve, add or remove the players in that session.",
+        "",
+        "Setting this value replaces the entire player list with new players.",
+        "",
+        "Supports: GET / SET / ADD / REMOVE / RESET."
+})
+@Examples({
+        "set {_session} to session with id \"session_uuid\"",
+        "add player to players of {_session}",
+        "",
+        "loop players of {_session}:",
+        "    broadcast \"%loop-player% is playing in the session!\"",
+        "",
+        "reset players of {_session}"
+})
+@Since("1.0.0")
+
 public class ExprSessionPlayers extends SimpleExpression<Player> {
 
     private Expression<Session> session;

@@ -1,6 +1,10 @@
 package cz.nox.skgame.skript.effects;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
@@ -16,6 +20,19 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
+@Name("Session - Stop Session Game")
+@Description({
+        "Stops the game running in a specific session.",
+        "",
+        "You can optionally provide a reason for the game stop.",
+        "Removes all session and player-specific values and triggers a GameStop Skript event.",
+        "Can't be cancelled"
+})
+@Examples({
+        "stop game of {_session}",
+        "stop game of {_session} with reason \"no_players\""
+})
+@Since("1.0.0")
 @SuppressWarnings("unused")
 public class EffSessionGameStop extends Effect {
     private static final GameMapManager mapManager = GameMapManager.getInstance();

@@ -2,6 +2,10 @@ package cz.nox.skgame.skript.sections;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.config.SectionNode;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.*;
 import ch.njol.skript.registrations.EventValues;
 import ch.njol.skript.variables.Variables;
@@ -14,6 +18,23 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@Name("Register MiniGame")
+@Description({
+        "Registers a new MiniGame with a specified ID.",
+        "If a section is provided, the code inside it will be executed immediately after the MiniGame is registered, with access to the 'event-minigame'.",
+        "",
+        "Useful for setting up game logic, rewards, or other MiniGame-specific properties upon registration.",
+        "",
+        "Supports: SECTION (code block).",
+        "Supports: event-minigame"
+})
+@Examples({
+        "register minigame with id \"bomberman\"",
+        "register minigame with id \"bomberman\":",
+        "\tset value \"author\" of event-minigame to player",
+        "\tbroadcast \"MiniGame %event-minigame% registered!\""
+})
+@Since("1.0.0")
 @SuppressWarnings("unused")
 public class EffSecRegisterMiniGame extends EffectSection {
 

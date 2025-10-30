@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
-@Name("Gamemap value of minigame")
+@Name("GameMap - value of MiniGame pair")
 @Description({
         "Represents a custom value stored for a specific pair of GameMap and MiniGame.",
         "Use it to store or retrieve MiniGame-specific key-value data that belong to a particular GameMap.",

@@ -2,6 +2,10 @@ package cz.nox.skgame.skript.sections;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.config.SectionNode;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.*;
 import ch.njol.skript.registrations.EventValues;
 import ch.njol.skript.variables.Variables;
@@ -14,6 +18,23 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@Name("Register GameMap")
+@Description({
+        "Registers a new game map with a specified ID.",
+        "If a section is provided, the code inside it will be executed immediately after the map is registered, with access to the 'event-gamemap'.",
+        "",
+        "Useful for initializing spawn points, settings, or other map-specific properties.",
+        "",
+        "Supports: SECTION (code block).",
+        "Supports: event-gamemap"
+})
+@Examples({
+        "register gamemap with id \"arena_battle\"",
+        "register gamemap with id \"arena_battle\":",
+        "\tbroadcast \"GameMap %event-gamemap% registered!\"",
+        "\tset value \"author\" of event-gamemap to player"
+})
+@Since("1.0.0")
 @SuppressWarnings("unused")
 public class EffSecRegisterGameMap extends EffectSection {
 

@@ -1,6 +1,10 @@
 package cz.nox.skgame.skript.effects;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
@@ -15,6 +19,19 @@ import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
+@Name("Session - Start Session Game")
+@Description({
+        "Starts the game assigned to a specific session.",
+        "",
+        "Only works if the session is in STOPPED state and the session's map supports the MiniGame.",
+        "Triggers a GameStartEvent.",
+        "",
+        "Supports: EXECUTE only."
+})
+@Examples({
+        "start game of {_session}"
+})
+@Since("1.0.0")
 @SuppressWarnings("unused")
 public class EffSessionGameStart extends Effect {
     private static final GameMapManager mapManager = GameMapManager.getInstance();

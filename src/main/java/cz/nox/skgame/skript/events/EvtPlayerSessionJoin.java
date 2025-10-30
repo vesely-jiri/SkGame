@@ -1,6 +1,10 @@
 package cz.nox.skgame.skript.events;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser;
@@ -11,6 +15,21 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
+@Name("Player Session Join")
+@Description({
+        "Fires when a player joins a session.",
+        "",
+        "Useful for initializing player data, sending welcome messages, or setting up session-specific properties.",
+        "",
+        "Provides the player who joined and the session they joined.",
+        "",
+        "Supports: Event trigger only (GET player, GET session)."
+})
+@Examples({
+        "on player session join:",
+        "    broadcast \"%name of event-player% joined session %id of event-session%\""
+})
+@Since("1.0.0")
 @SuppressWarnings("unused")
 public class EvtPlayerSessionJoin extends SkriptEvent {
 

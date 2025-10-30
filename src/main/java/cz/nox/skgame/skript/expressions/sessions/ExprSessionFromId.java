@@ -19,13 +19,20 @@ import java.util.Arrays;
 import java.util.Objects;
 
 @Name("Session - by ID")
-@Description("Get session by it's UUID")
+@Description({
+        "Retrieves one or more sessions using their UUID(s).",
+        "Existing sessions are not overwritten.",
+        "If the session does not exist and the 'new' tag is used, a new session with the specified UUID will be created.",
+        "",
+        "Supports: GET only (with optional creation)."
+})
 @Examples({
-        "#Get existing session by it's uuid",
         "set {_s} to session with id \"my_uuid\"",
         "",
-        "#Returns new or existing session with specified uuid",
         "set {_new} to new session with id \"new_uuid\"",
+        "",
+        "loop {_sessions::*}:",
+        "    broadcast \"Session: %id of loop-value%\""
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")

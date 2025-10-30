@@ -2,6 +2,10 @@ package cz.nox.skgame.skript.expressions.minigames;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser;
@@ -12,6 +16,28 @@ import cz.nox.skgame.api.game.model.MiniGame;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
+@Name("MiniGame - Value")
+@Description({
+        "Represents a custom value stored in a specific MiniGame.",
+        "You can retrieve, set, or delete values associated with a MiniGame using a key.",
+        "",
+        "Supports both single key access and retrieving all keys or all values.",
+        "",
+        "Supports: GET / SET / DELETE."
+})
+@Examples({
+        "set {_minigame} to minigame with id \"bomberman\"",
+        "set value \"max_players\" of {_minigame} to 10",
+        "broadcast value \"max_players\" of {_minigame}",
+        "",
+        "loop values of {_minigame}:",
+        "    broadcast \"Key: %loop-key% or index: %loop-index%\"",
+        "    broadcast \"Value: %loop-value%\"",
+        "",
+        "delete value \"maxPlayers\" of {_minigame}",
+        "delete values of {_minigame}"
+})
+@Since("1.0.0")
 @SuppressWarnings("unused")
 public class ExprMiniGameValue extends SimpleExpression<Object> {
     private Expression<String> key;

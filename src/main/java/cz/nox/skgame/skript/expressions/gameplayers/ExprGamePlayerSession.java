@@ -1,6 +1,10 @@
 package cz.nox.skgame.skript.expressions.gameplayers;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser;
@@ -13,6 +17,15 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
+@Name("GamePlayer - Session")
+@Description({
+        "Returns the session in which a given player is currently participating."
+})
+@Examples({
+        "set {_session} to session of player",
+        "broadcast \"Player %player% is in session %{_session}%\""
+})
+@Since("1.0.0")
 @SuppressWarnings("unused")
 public class ExprGamePlayerSession extends SimpleExpression<Session> {
     private static final SessionManager sessionManager = SessionManager.getInstance();

@@ -1,6 +1,10 @@
 package cz.nox.skgame.skript.expressions.gamemaps;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser;
@@ -13,6 +17,19 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
+@Name("GameMap - by ID")
+@Description({
+        "Retrieves one or more GameMaps by their UUID(s).",
+        "",
+        "If a UUID does not correspond to any registered GameMap, it will be ignored.",
+        "",
+        "Supports: GET only."
+})
+@Examples({
+        "set {_map} to gamemap with id \"arena_battle\"",
+        "broadcast id of {_map}"
+})
+@Since("1.0.0")
 @SuppressWarnings("unused")
 public class ExprGameMapFromId extends SimpleExpression<GameMap> {
     private static final GameMapManager gameMapManager = GameMapManager.getInstance();

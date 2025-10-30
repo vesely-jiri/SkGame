@@ -1,6 +1,10 @@
 package cz.nox.skgame.skript.expressions.gamemaps;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser;
@@ -14,6 +18,21 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 
+@Name("GameMap - MiniGames")
+@Description({
+        "Returns all MiniGames supported by a specific GameMap.",
+        "MiniGame is supported by a map, when at least one value of the pair is set",
+        "",
+        "Useful for checking which MiniGames can be played on a certain map or looping over them.",
+        "",
+        "Supports: GET only."
+})
+@Examples({
+        "set {_map} to gamemap with id \"arena_battle\"",
+        "loop supported minigames of {_map}:",
+        "    broadcast id of loop-minigame"
+})
+@Since("1.0.0")
 @SuppressWarnings("unused")
 public class ExprGameMapMiniGames extends SimpleExpression<Object> {
     private static final MiniGameManager miniGameManager = MiniGameManager.getInstance();

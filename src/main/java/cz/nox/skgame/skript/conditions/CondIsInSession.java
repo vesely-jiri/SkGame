@@ -1,6 +1,10 @@
 package cz.nox.skgame.skript.conditions;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
@@ -10,6 +14,17 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
+@Name("Is In Session")
+@Description({
+        "Checks if a player or group of players are currently in a given session.",
+        "",
+        "Returns true only if all players belong to that session."
+})
+@Examples({
+        "if player is in session {_session}:",
+        "\tsend \"You’re already in that session!\""
+})
+@Since("1.0.0")
 @SuppressWarnings("unused")
 public class CondIsInSession extends Condition {
     private Expression<Player> players;

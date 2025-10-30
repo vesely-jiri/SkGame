@@ -1,6 +1,10 @@
 package cz.nox.skgame.skript.conditions;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
@@ -13,6 +17,17 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
+@Name("GamePlayer - Is Playing")
+@Description({
+        "Checks whether a player or players are currently playing a specific MiniGame.",
+        "",
+        "Returns true only if all players are in an active session of that MiniGame."
+})
+@Examples({
+        "if player is playing {_minigame}:",
+        "\tbroadcast \"%player% is playing %{_minigame}%!\""
+})
+@Since("1.0.0")
 @SuppressWarnings("unused")
 public class CondIsPlaying extends Condition {
     private static final SessionManager sessionManager = SessionManager.getInstance();
