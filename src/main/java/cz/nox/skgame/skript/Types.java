@@ -16,7 +16,6 @@ import cz.nox.skgame.core.game.MiniGameManager;
 import cz.nox.skgame.core.game.SessionManager;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.NotSerializableException;
 import java.io.StreamCorruptedException;
 
 @SuppressWarnings("unused")
@@ -24,11 +23,21 @@ public class Types {
     private static final SessionManager sessionManager = SessionManager.getInstance();
     private static final GameMapManager gameMapManager = GameMapManager.getInstance();
     private static final MiniGameManager miniGameManager = MiniGameManager.getInstance();
+
     static {
         Classes.registerClass(new ClassInfo<>(Session.class, "session")
                 .user("session")
                 .name("Session")
-                .description("Represents a game session")
+                .description(
+                        "Represents a game session.",
+                        "Sessions are not persistent against server restart.",
+                        "Can store default values as session properties like host,players,spectators, etc.",
+                        "Can store custom values defined by scripter, that (are/are not) persistent against MiniGame restarts."
+                )
+                .examples(
+                        "set {_session} to session with id \"my_custom_unique_id\"",
+                        "set {_new} to new session with id \"my_new_custom_unique_id\""
+                )
                 .defaultExpression(new EventValueExpression<>(Session.class))
                 .since("1.0.0")
                 .parser(new Parser<Session>() {
@@ -49,19 +58,19 @@ public class Types {
                 })
                 .serializer(new Serializer<>() {
                     @Override
-                    public Fields serialize(Session session) throws NotSerializableException {
+                    public Fields serialize(Session session) {
                         Fields fields = new Fields();
                         fields.putObject("id", session.getId());
                         return fields;
                     }
 
                     @Override
-                    public void deserialize(Session o, Fields f) throws StreamCorruptedException, NotSerializableException {
+                    public void deserialize(Session o, Fields f) {
                         assert false;
                     }
 
                     @Override
-                    protected Session deserialize(Fields fields) throws StreamCorruptedException, NotSerializableException {
+                    protected Session deserialize(Fields fields) throws StreamCorruptedException {
                         String id = fields.getObject("sessionId", String.class);
                         Session session = SessionManager.getInstance().getSessionById(id);
                         if (session == null) throw new StreamCorruptedException("Unknown session ID");
@@ -197,11 +206,6 @@ public class Types {
                         } catch (IllegalArgumentException e) {
                             return null;
                         }
-                    }
-
-                    @Override
-                    public boolean canParse(ParseContext context) {
-                        return true;
                     }
 
                     @Override
