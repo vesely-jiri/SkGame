@@ -2,6 +2,7 @@ package cz.nox.skgame.core.game;
 
 import cz.nox.skgame.SkGame;
 import cz.nox.skgame.api.game.model.GameMap;
+import cz.nox.skgame.api.game.model.type.GameMapFilter;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -49,8 +50,17 @@ public class GameMapManager {
     public GameMap getGameMapById(String id) {
         return this.maps.get(id);
     }
-    public GameMap[] getAllGameMaps() {
+    public GameMap[] getGameMaps() {
         return this.maps.values().toArray(new GameMap[0]);
+    }
+    public GameMap[] getGameMaps(GameMapFilter filter) {
+        if (filter == null || filter == GameMapFilter.ALL) {
+            return this.maps.values().toArray(GameMap[]::new);
+        }
+        final boolean claimed = (filter == GameMapFilter.CLAIMED);
+        return this.maps.values().stream()
+                .filter(map -> isMapClaimed(map.getId()) == claimed)
+                .toArray(GameMap[]::new);
     }
 
     public GameMap registerGameMap(String id) {
