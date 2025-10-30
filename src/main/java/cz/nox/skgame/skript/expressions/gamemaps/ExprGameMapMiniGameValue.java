@@ -2,9 +2,8 @@ package cz.nox.skgame.skript.expressions.gamemaps;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer;
-import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.ExpressionType;
-import ch.njol.skript.lang.SkriptParser;
+import ch.njol.skript.doc.*;
+import ch.njol.skript.lang.*;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
@@ -15,7 +14,33 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
-public class ExprGameMapMiniGameValue extends SimpleExpression<Object> {
+@Name("Gamemap value of minigame")
+@Description({
+        "Represents a custom value stored for a specific pair of GameMap and MiniGame.",
+        "Use it to store or retrieve MiniGame-specific key-value data that belong to a particular GameMap.",
+        "",
+        "For example: a MiniGame like \"Bomberman\" may require its GameMap to remember player spawn points or item spawn locations.",
+        "You can save those locations to the GameMap–MiniGame pair and retrieve them later when needed.",
+        "",
+        "Supports: GET / SET / RESET / DELETE.",
+        "Supports: loop-index/loop-key while looping values to get the value key"
+})
+@Examples({
+        "set {_map} to gamemap with id \"my_custom_map_id\"",
+        "set {_minigame} to minigame with id \"my_custom_minigame_id\"",
+        "",
+        "set value \"spawnpoint\" of {_map} of {_minigame} to location of player",
+        "broadcast value \"spawnpoint\" of {_map} of {_minigame}",
+
+        "loop values of {_map} of {_minigame}:",
+        "    broadcast \"key: %loop-key% or index: %loop-index%\" ",
+        "    broadcast \"value: %loop-value%\"",
+
+        "reset map value \"spawnpoint\" of {_map} of {_minigame}",
+        "delete values of {_map} of {_minigame}"
+        })
+@Since("1.0.0")
+public class ExprGameMapMiniGameValue extends SimpleExpression<Object> implements KeyProviderExpression<Object> {
     private Expression<String> key;
     private Expression<GameMap> gameMap;
     private Expression<MiniGame> miniGame;
@@ -44,7 +69,6 @@ public class ExprGameMapMiniGameValue extends SimpleExpression<Object> {
         }
         return true;
     }
-
 
     @Override
     public Class<?> @Nullable [] acceptChange(Changer.ChangeMode mode) {
