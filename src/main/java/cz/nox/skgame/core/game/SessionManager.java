@@ -17,6 +17,7 @@ import java.util.*;
 public class SessionManager implements Listener {
 
     private static SessionManager manager;
+    private static final GameMapManager mapManager = GameMapManager.getInstance();
     private final Map<String,Session> sessions = new HashMap<>();
     private final Map<UUID, String> playerToSession = new HashMap<>();
     private Session lastCreatedSession;
@@ -44,9 +45,11 @@ public class SessionManager implements Listener {
     public void deleteSession(String id) {
         Session session = sessions.get(id);
         if (session == null) return;
-        sessions.remove(id);
         Event e = new SessionDisbandEvent(session);
         Bukkit.getPluginManager().callEvent(e);
+        //if event was not cancelled:
+        mapManager.removeMapFromClaimed(session.getGameMap());
+        sessions.remove(id);
     }
     @Nullable
     public Session getSession(Player player) {
