@@ -1,19 +1,16 @@
 package cz.nox.skgame.api.game.model;
 
-import ch.njol.skript.lang.util.common.AnyNamed;
 import cz.nox.skgame.api.game.event.GamePlayerSessionJoin;
 import cz.nox.skgame.api.game.event.GamePlayerSessionLeave;
 import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.core.game.GameMapManager;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.jetbrains.annotations.UnknownNullability;
 
 import java.util.*;
 
-public class Session implements AnyNamed {
+public class Session {
     private String id;
-    private String name;
     private Player host;
     private HashSet<Player> players;
     private HashSet<Player> spectators;
@@ -23,11 +20,10 @@ public class Session implements AnyNamed {
     private Map<String, Object> values;
     private Map<String, Object> tempValues;
 
-    public Session(String id, String name, Player host, MiniGame miniGame,
+    public Session(String id, Player host, MiniGame miniGame,
                    SessionState state, GameMap map, Set<Player> players, Set<Player> spectators,
                    Map<String, Object> values, Map<String, Object> tempValues) {
         this.id = id;
-        this.name = name;
         this.host = host;
         this.players = new HashSet<>(players);
         this.spectators = new HashSet<>(spectators);
@@ -39,18 +35,8 @@ public class Session implements AnyNamed {
     }
 
     public Session(String id) {
-        this(id,null,null,null,SessionState.STOPPED,null,
+        this(id,null,null,SessionState.STOPPED,null,
                 new HashSet<>(),new HashSet<>(),new HashMap<>(),new HashMap<>());
-    }
-
-    @Override
-    public @UnknownNullability String name() {
-        return this.name;
-    }
-
-    @Override
-    public boolean supportsNameChange() {
-        return true;
     }
 
     public String getId() {
@@ -60,12 +46,6 @@ public class Session implements AnyNamed {
         this.id = id;
     }
 
-    public String getName() {
-        return name;
-    }
-    public void setName(String name) {
-        this.name = name;
-    }
 
     public Player getHost() {
         return host;
