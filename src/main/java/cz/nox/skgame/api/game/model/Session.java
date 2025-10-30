@@ -103,6 +103,7 @@ public class Session {
     public void setGameMap(GameMap gameMap) {
         GameMapManager mapManager = GameMapManager.getInstance();
         if (gameMap != null) {
+            if (mapManager.isMapClaimed(gameMap.getId())) return;
             mapManager.addMapToClaimed(gameMap);
         } else {
             mapManager.removeMapFromClaimed(this.getGameMap());
