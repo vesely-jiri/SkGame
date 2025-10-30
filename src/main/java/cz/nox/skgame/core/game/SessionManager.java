@@ -57,16 +57,10 @@ public class SessionManager implements Listener {
         return sessions.values().toArray(new Session[0]);
     }
 
-    public void setSessionId(String oldId, String newId) {
-        Session session = sessions.remove(oldId);
-        if (session != null) {
-            session.setId(newId);
-            sessions.put(newId, session);
-        }
-    }
     @Nullable
     public Session getSessionById(String id) {
-        return sessions.get(id);
+        if (id == null) return null;
+        return sessions.get(id.toLowerCase());
     }
 
     public void setLastCreatedSession(Session session) {
