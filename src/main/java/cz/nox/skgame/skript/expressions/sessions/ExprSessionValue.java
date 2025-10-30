@@ -135,12 +135,16 @@ public class ExprSessionValue extends SimpleExpression<Object> {
     }
 
     @Override
-    public String toString(@Nullable Event event, boolean b) {
-        if (pattern == 0) {
-            return "session value " + this.key.toString(event,b)
-                + "of session " + this.session.toString(event,b);
+    public String toString(@Nullable Event e, boolean b) {
+        if (this.pattern == 0) {
+            return "session value " + this.key.toString(e,b)
+                + "of session " + this.session.toString(e,b);
         } else {
-            return "";
+            return (this.isTemporary) ? "temporary " : null
+                    + "session "
+                    + ((this.mark == 0) ? "keys" : "values")
+                    + " of session "
+                    + this.session.toString(e,b);
         }
     }
 }
