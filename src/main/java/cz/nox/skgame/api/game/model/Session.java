@@ -114,11 +114,11 @@ public class Session {
     public Object getValue(String key, boolean isTemporary) {
         return getMap(isTemporary).get(key);
     }
-    public Collection<Object> getValues(boolean isTemporary) {
-        return getMap(isTemporary).values();
+    public Object[] getValues(boolean isTemporary) {
+        return getMap(isTemporary).values().toArray();
     }
-    public Collection<String> getKeys(boolean isTemporary) {
-        return getMap(isTemporary).keySet();
+    public String[] getKeys(boolean isTemporary) {
+        return getMap(isTemporary).keySet().toArray(new String[0]);
     }
     public void setValue(String key, Object o, boolean isTemporary) {
         getMap(isTemporary).put(key,o);

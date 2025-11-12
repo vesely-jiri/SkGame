@@ -8,12 +8,14 @@ import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
+import ch.njol.skript.lang.KeyProviderExpression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
 import cz.nox.skgame.api.game.model.Session;
 import org.bukkit.event.Event;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
@@ -47,18 +49,19 @@ import org.jetbrains.annotations.Nullable;
 })
 @Since("1.0.0")
 
-public class ExprSessionValue extends SimpleExpression<Object> {
+public class ExprSessionValue extends SimpleExpression<Object> implements KeyProviderExpression<Object> {
     private Expression<String> key;
     private Expression<Session> session;
 
     private int pattern;
     private int mark;
     private boolean isTemporary;
+    private boolean isList;
 
     static {
         Skript.registerExpression(ExprSessionValue.class, Object.class, ExpressionType.COMBINED,
-                "[temp:temp[orary]] [session] value[s] %string% of %session%",
-                "[all] [temp:temp[orary]] [session] (keys|1:values) of %session%"
+                "[temp:temp[orary]] [session] value[list:s] %string% of %session%",
+                "[all] [temp:temp[orary]] [session] values of %session%"
         );
     }
 
@@ -67,66 +70,100 @@ public class ExprSessionValue extends SimpleExpression<Object> {
     public boolean init(Expression<?>[] exprs, int pattern, Kleenean kleenean, SkriptParser.ParseResult parseResult) {
         this.pattern = pattern;
         if (pattern == 0) {
-            this.key = (Expression<String>) exprs[0];
-            this.session = (Expression<Session>) exprs[1];
+            key = (Expression<String>) exprs[0];
+            session = (Expression<Session>) exprs[1];
         } else {
-            this.session = (Expression<Session>) exprs[0];
+            session = (Expression<Session>) exprs[0];
         }
-        this.mark = parseResult.mark;
-        this.isTemporary = parseResult.hasTag("temp");
+        mark = parseResult.mark;
+        isTemporary = parseResult.hasTag("temp");
+        isList = parseResult.hasTag("list");
         return true;
     }
 
     @Override
-    protected Object @Nullable [] get(Event event) {
-        Session session = this.session.getSingle(event);
-        if (session == null) return null;
+    protected Object @Nullable [] get(Event e) {
+        Session s = session.getSingle(e);
+        if (s == null) return null;
         switch (pattern) {
-            case 0 -> { //single
-                Object object = session.getValue(this.key.getSingle(event),this.isTemporary);
-                return CollectionUtils.array(object);
-            }
-            case 1 -> { //all
-                if (this.mark == 0) { // keys
-                    return CollectionUtils.array(session.getKeys(this.isTemporary));
-                } else { // values
-                    return CollectionUtils.array(session.getValues(this.isTemporary));
+            case 0:
+                String k = key.getSingle(e);
+                if (k == null) return null;
+                Object o = s.getValue(k,isTemporary);
+                if (o == null) return null;
+                if (o.getClass().isArray()) {
+                    return (Object[]) o;
+                } else {
+                    return CollectionUtils.array(o);
                 }
-            }
+            case 1:  return s.getValues(isTemporary);
+            default: return null;
         }
-        return null;
     }
 
     @Override
     public Class<?> @Nullable [] acceptChange(Changer.ChangeMode mode) {
         return switch (mode) {
-            case SET, DELETE, RESET -> CollectionUtils.array(Object.class);
-            default                 -> null;
+            case SET -> {
+                if (isList) yield CollectionUtils.array(Object[].class);
+                yield CollectionUtils.array(Object.class);
+            }
+            case DELETE, RESET -> CollectionUtils.array();
+            default            -> null;
         };
     }
 
     @Override
-    public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
-        Session session = this.session.getSingle(event);
-        if (session == null) return;
+    public void change(Event e, Object @Nullable [] delta, Changer.ChangeMode mode) {
+        Session s = session.getSingle(e);
+        if (s == null) return;
         switch (mode) {
             case SET -> {
-                if (delta == null || delta[0] == null) return;
-                session.setValue(this.key.getSingle(event),delta[0],this.isTemporary);
+                String k = key.getSingle(e);
+                if (delta == null || delta[0] == null || k == null) return;
+                if (isList) {
+                    s.setValue(k, delta, isTemporary);
+                } else {
+                    s.setValue(k, delta[0], isTemporary);
+                }
             }
             case DELETE, RESET -> {
-                if (this.mark == 0) {
-                    session.removeValue(this.key.getSingle(event), this.isTemporary);
+                if (pattern == 0) {
+                    String k = key.getSingle(e);
+                    if (k == null) return;
+                    s.removeValue(k, isTemporary);
                 } else {
-                    session.removeValues(this.isTemporary);
+                    s.removeValues(isTemporary);
                 }
             }
         }
     }
 
     @Override
+    public @NotNull String @NotNull [] getArrayKeys(Event e) throws IllegalStateException {
+        Session s = session.getSingle(e);
+        assert s != null;
+        return s.getKeys(isTemporary);
+    }
+
+    @Override
+    public boolean canReturnKeys() {
+        return (pattern == 1);
+    }
+
+    @Override
+    public boolean isLoopOf(String input) {
+        return (input.matches("key|index") && pattern == 1);
+    }
+
+    @Override
+    public boolean isIndexLoop(String input) {
+        return (input.matches("key|index") && pattern == 1);
+    }
+
+    @Override
     public boolean isSingle() {
-        return this.pattern == 0;
+        return (!isList) && (pattern == 0);
     }
 
     @Override
@@ -136,15 +173,18 @@ public class ExprSessionValue extends SimpleExpression<Object> {
 
     @Override
     public String toString(@Nullable Event e, boolean b) {
-        if (this.pattern == 0) {
-            return "session value " + this.key.toString(e,b)
-                + "of session " + this.session.toString(e,b);
+        if (pattern == 0) {
+            return (isTemporary) ? "temporary " : null
+                    + "session value"
+                    + ((isList) ? "s " : " ")
+                    + key.toString(e,b)
+                    + " of session " + session.toString(e,b);
         } else {
-            return (this.isTemporary) ? "temporary " : null
+            return (isTemporary) ? "temporary " : null
                     + "session "
-                    + ((this.mark == 0) ? "keys" : "values")
+                    + ((mark == 0) ? "keys" : "values")
                     + " of session "
-                    + this.session.toString(e,b);
+                    + session.toString(e,b);
         }
     }
 }

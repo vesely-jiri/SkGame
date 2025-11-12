@@ -8,12 +8,14 @@ import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
+import ch.njol.skript.lang.KeyProviderExpression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
 import cz.nox.skgame.api.game.model.MiniGame;
 import org.bukkit.event.Event;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @Name("MiniGame - Value")
@@ -39,16 +41,17 @@ import org.jetbrains.annotations.Nullable;
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")
-public class ExprMiniGameValue extends SimpleExpression<Object> {
+public class ExprMiniGameValue extends SimpleExpression<Object> implements KeyProviderExpression<Object> {
     private Expression<String> key;
     private Expression<MiniGame> miniGame;
     private int pattern;
     private int mark;
+    private boolean isList;
 
     static {
         Skript.registerExpression(ExprMiniGameValue.class, Object.class, ExpressionType.COMBINED,
-                "[[mini]game] value %string% of %minigame%",
-                "[all] [[mini]game] (keys|1:values) of %minigame%"
+                "[[mini]game] value[list:s] %string% of %minigame%",
+                "[all] [[mini]game] values of %minigame%"
         );
     }
 
@@ -57,64 +60,97 @@ public class ExprMiniGameValue extends SimpleExpression<Object> {
     public boolean init(Expression<?>[] exprs, int pattern, Kleenean kleenean, SkriptParser.ParseResult parseResult) {
         this.pattern = pattern;
         if (pattern == 0) {
-            this.key = (Expression<String>) exprs[0];
-            this.miniGame = (Expression<MiniGame>) exprs[1];
+            key = (Expression<String>) exprs[0];
+            miniGame = (Expression<MiniGame>) exprs[1];
         } else {
-            this.miniGame = (Expression<MiniGame>) exprs[0];
-            this.mark = parseResult.mark;
+            miniGame = (Expression<MiniGame>) exprs[0];
         }
+        isList = parseResult.hasTag("list");
         return true;
     }
 
     @Override
-    protected Object @Nullable [] get(Event event) {
-        MiniGame miniGame = this.miniGame.getSingle(event);
-        if (miniGame == null) return null;
+    protected Object @Nullable [] get(Event e) {
+        MiniGame mg = miniGame.getSingle(e);
+        String k = key.getSingle(e);
+        if (mg == null) return null;
         switch (pattern) {
-            case 0 -> { //Single
-                Object o = miniGame.getValue(key.getSingle(event));
-                return CollectionUtils.array(o);
-            }
-            case 1 -> { //All
-                if (mark == 0) {
-                    return miniGame.getKeys().toArray(new String[0]);
+            case 0:
+                if (k == null) return null;
+                Object o = mg.getValue(k);
+                if (o == null) return null;
+                if (o.getClass().isArray()) {
+                    return (Object[]) o;
                 } else {
-                    return miniGame.getValues();
+                    return CollectionUtils.array(o);
                 }
-            }
+            case 1:  return mg.getValues();
+            default: return null;
         }
-        return null;
     }
 
     @Override
     public Class<?> @Nullable [] acceptChange(Changer.ChangeMode mode) {
         return switch (mode) {
-            case SET, DELETE -> CollectionUtils.array(Object.class);
-            default          -> null;
+            case SET           -> {
+                if (isList) yield CollectionUtils.array(Object[].class);
+                yield CollectionUtils.array(Object.class);
+            }
+            case DELETE, RESET -> CollectionUtils.array();
+            default            -> null;
         };
     }
 
     @Override
     public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
-        MiniGame mg = this.miniGame.getSingle(event);
-        String key = this.key.getSingle(event);
+        MiniGame mg = miniGame.getSingle(event);
+        String k = key.getSingle(event);
         if (mg == null) return;
         switch (mode) {
             case SET -> {
-                if (delta == null || delta[0] == null) return;
-                mg.setValue(key,delta[0]);
+                if (delta == null || delta[0] == null || k == null) return;
+                if (isList) {
+                    mg.setValue(k, delta);
+                } else {
+                    mg.setValue(k,delta[0]);
+                }
             }
             case DELETE, RESET -> {
-                if (mg.getKeys().contains(key)) {
-                    mg.setValue(key,null);
+                if (pattern == 0) {
+                    if (k == null) return;
+                    mg.removeValue(k);
+                } else {
+                    mg.removeValues();
                 }
             }
         }
     }
 
     @Override
+    public @NotNull String @NotNull [] getArrayKeys(Event e) throws IllegalStateException {
+        MiniGame mg = miniGame.getSingle(e);
+        assert mg != null;
+        return mg.getKeys();
+    }
+
+    @Override
+    public boolean canReturnKeys() {
+        return (pattern == 1);
+    }
+
+    @Override
+    public boolean isLoopOf(String input) {
+        return (input.matches("key|index") && pattern == 1);
+    }
+
+    @Override
+    public boolean isIndexLoop(String input) {
+        return (input.matches("key|index") && pattern == 1);
+    }
+
+    @Override
     public boolean isSingle() {
-        return this.pattern == 0;
+        return (!isList) && (pattern == 0);
     }
 
     @Override
@@ -124,7 +160,13 @@ public class ExprMiniGameValue extends SimpleExpression<Object> {
 
     @Override
     public String toString(@Nullable Event e, boolean b) {
-        return "minigame value " + this.key.toString(e,b)
-                + " of minigame " + this.miniGame.toString(e,b);
+        if (pattern == 1) {
+            return "minigame value"
+                    + ((isList) ? "s " : " ")
+                    + key.toString(e, b)
+                    + " of minigame " + miniGame.toString(e, b);
+        } else {
+            return "all minigame values of minigame " + miniGame.toString(e,b);
+        }
     }
 }

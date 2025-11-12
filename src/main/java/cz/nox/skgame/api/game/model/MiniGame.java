@@ -3,7 +3,6 @@ package cz.nox.skgame.api.game.model;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,21 +28,23 @@ public class MiniGame implements ConfigurationSerializable {
     public Object getValue(String key) {
         return values.get(key);
     }
-    public Collection<String> getKeys() {
-        return values.keySet();
+    public String[] getKeys() {
+        return values.keySet().toArray(new String[0]);
     }
     public Object[] getValues() {
         return values.values().toArray();
     }
     public void setValue(String key, Object o) {
-        if (o == null) {
-            values.remove(key);
-        } else {
-            values.put(key,o);
-        }
+        values.put(key,o);
     }
     public void setValues(Map<String, Object> values) {
         this.values = values;
+    }
+    public void removeValue(String key) {
+        this.values.remove(key);
+    }
+    public void removeValues() {
+        this.values.clear();
     }
 
     @Override

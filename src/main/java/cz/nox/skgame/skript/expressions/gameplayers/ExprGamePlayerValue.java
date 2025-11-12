@@ -8,6 +8,7 @@ import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
+import ch.njol.skript.lang.KeyProviderExpression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
@@ -16,6 +17,7 @@ import cz.nox.skgame.api.game.model.GamePlayer;
 import cz.nox.skgame.core.game.PlayerManager;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @Name("GamePlayer - Value")
@@ -39,19 +41,20 @@ import org.jetbrains.annotations.Nullable;
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")
-public class ExprGamePlayerValue extends SimpleExpression<Object> {
+public class ExprGamePlayerValue extends SimpleExpression<Object> implements KeyProviderExpression<Object> {
     private static final PlayerManager playerManager = PlayerManager.getInstance();
     private Expression<String> key;
-    private Expression<Player> players;
+    private Expression<Player> player;
 
     private int pattern;
     private int mark;
     private boolean isTemporary;
+    private boolean isList;
 
     static {
         Skript.registerExpression(ExprGamePlayerValue.class, Object.class, ExpressionType.COMBINED,
-                "[temp:temp[orary]] [player] value %string% of %players%",
-                "[all] [temp:temp[orary]] [player] (keys|1:values) of %players%"
+                "[temp:temp[orary]] [player] value[list:s] %string% of %player%",
+                "[all] [temp:temp[orary]] [player] values of %player%"
         );
     }
 
@@ -60,71 +63,105 @@ public class ExprGamePlayerValue extends SimpleExpression<Object> {
     public boolean init(Expression<?>[] exprs, int pattern, Kleenean kleenean, SkriptParser.ParseResult parseResult) {
         this.pattern = pattern;
         if (pattern == 0) {
-            this.key = (Expression<String>) exprs[0];
-            this.players = (Expression<Player>) exprs[1];
+            key = (Expression<String>) exprs[0];
+            player = (Expression<Player>) exprs[1];
         } else {
-            this.players = (Expression<Player>) exprs[0];
+            player = (Expression<Player>) exprs[0];
         }
-        this.mark = parseResult.mark;
-        this.isTemporary = parseResult.hasTag("temp");
+        isTemporary = parseResult.hasTag("temp");
+        isList = parseResult.hasTag("list");
         return true;
     }
 
     @Override
-    protected Object @Nullable [] get(Event event) {
-        Player player = this.players.getSingle(event);
-        String key = this.key.getSingle(event);
+    protected Object @Nullable [] get(Event e) {
         if (player == null) return null;
-        GamePlayer gamePlayer = playerManager.getPlayer(player);
-        if (gamePlayer == null || key == null) return null;
+        Player p = player.getSingle(e);
+        if (p == null) return null;
+        GamePlayer gamePlayer = playerManager.getPlayer(p);
+        if (gamePlayer == null) return null;
         switch (pattern) {
-            case 0 -> { //Single
-                return CollectionUtils.array(gamePlayer.getValue(key,this.isTemporary));
-            }
-            case 1 -> { //all
-                if (this.mark == 0) { //keys
-                    return CollectionUtils.array(gamePlayer.getKeys(this.isTemporary));
-                } else { //values
-                    return CollectionUtils.array(gamePlayer.getValues(this.isTemporary));
+            case 0:
+                String k = key.getSingle(e);
+                if (k == null) return null;
+                Object o = gamePlayer.getValue(k,isTemporary);
+                if (o == null) return null;
+                if (o.getClass().isArray()) {
+                    return (Object[]) o;
+                } else {
+                    return CollectionUtils.array(o);
                 }
+            case 1: return gamePlayer.getValues(isTemporary);
+            default: return null;
             }
-        }
-        return null;
     }
 
     @Override
     public Class<?> @Nullable [] acceptChange(Changer.ChangeMode mode) {
         return switch (mode) {
-            case SET/*, ADD, REMOVE*/ -> CollectionUtils.array(Object.class);
-            case DELETE, RESET    -> CollectionUtils.array();
-            default -> null;
+            case SET -> {
+                if (isList) yield CollectionUtils.array(Object[].class);
+                yield CollectionUtils.array(Object.class);
+            }
+            case DELETE, RESET        -> CollectionUtils.array();
+            default                   -> null;
         };
     }
 
     @Override
-    public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
-        Player player = this.players.getSingle(event);
+    public void change(Event e, Object @Nullable [] delta, Changer.ChangeMode mode) {
         if (player == null) return;
-        GamePlayer gamePlayer = playerManager.getPlayer(player);
+        Player p = player.getSingle(e);
+        if (p == null) return;
+        GamePlayer gamePlayer = playerManager.getPlayer(p);
         if (gamePlayer == null) return;
         switch (mode) {
             case SET -> {
-                if (delta == null || delta[0] == null) return;
-                gamePlayer.setValue(this.key.getSingle(event),delta[0],this.isTemporary);
+                String k = key.getSingle(e);
+                if (delta == null || delta[0] == null || k == null) return;
+                if (isList) {
+                    gamePlayer.setValue(k, delta, isTemporary);
+                } else {
+                    gamePlayer.setValue(k, delta[0], isTemporary);
+                }
             }
             case DELETE, RESET -> {
                 if (pattern == 0) {
-                    gamePlayer.removeValue(this.key.getSingle(event),this.isTemporary);
+                    String k = key.getSingle(e);
+                    if (k == null) return;
+                    gamePlayer.removeValue(k,isTemporary);
                 } else {
-                    gamePlayer.removeValues(this.isTemporary);
+                    gamePlayer.removeValues(isTemporary);
                 }
             }
         }
     }
 
     @Override
+    public @NotNull String @NotNull [] getArrayKeys(Event e) throws IllegalStateException {
+        Player p = player.getSingle(e);
+        assert p != null;
+        return playerManager.getPlayer(p).getKeys(isTemporary);
+    }
+
+    @Override
+    public boolean canReturnKeys() {
+        return (pattern == 1);
+    }
+
+    @Override
+    public boolean isLoopOf(String input) {
+        return (input.matches("key|index") && pattern == 1);
+    }
+
+    @Override
+    public boolean isIndexLoop(String input) {
+        return (input.matches("key|index") && pattern == 1);
+    }
+
+    @Override
     public boolean isSingle() {
-        return this.pattern == 0;
+        return !isList && pattern == 0;
     }
 
     @Override
@@ -135,13 +172,14 @@ public class ExprGamePlayerValue extends SimpleExpression<Object> {
     @Override
     public String toString(@Nullable Event e, boolean b) {
         if (pattern == 0) {
-            return "player value "
-                    + this.key.toString(e, b)
-                    + " of player[s] " + this.players.toString(e, b);
+            return "player value"
+                    + ((isList) ? "s " : " ")
+                    + key.toString(e, b)
+                    + " of player " + player.toString(e, b);
         } else {
             return "player "
-                    + (this.mark == 0 ? "keys" : "values")
-                    + " of player[s] " + this.players.toString(e, b);
+                    + (mark == 0 ? "keys" : "values")
+                    + " of player " + player.toString(e, b);
         }
     }
 }
