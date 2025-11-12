@@ -16,6 +16,7 @@ import cz.nox.skgame.core.game.MiniGameManager;
 import cz.nox.skgame.core.game.SessionManager;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.NotSerializableException;
 import java.io.StreamCorruptedException;
 
 @SuppressWarnings("unused")
@@ -132,6 +133,37 @@ public class Types {
                         return "gamemap:" + gameMap.getId();
                     }
                 })
+                .serializer(new Serializer<GameMap>() {
+                    @Override
+                    public Fields serialize(GameMap o) throws NotSerializableException {
+                        Fields fields = new Fields();
+                        fields.putObject("id", o.getId());
+                        return fields;
+                    }
+
+                    @Override
+                    public void deserialize(GameMap o, Fields f) throws StreamCorruptedException, NotSerializableException {
+                        assert false;
+                    }
+
+                    @Override
+                    protected GameMap deserialize(Fields fields) throws StreamCorruptedException, NotSerializableException {
+                        String id = fields.getObject("id", String.class);
+                        GameMap gm = gameMapManager.getGameMapById(id);
+                        if (gm == null) throw new StreamCorruptedException("Unknown GameMap ID");
+                        return gm;
+                    }
+
+                    @Override
+                    public boolean mustSyncDeserialization() {
+                        return true;
+                    }
+
+                    @Override
+                    protected boolean canBeInstantiated() {
+                        return false;
+                    }
+                })
                 .changer(new Changer<GameMap>() {
                     @Override
                     public Class<?> @Nullable [] acceptChange(ChangeMode mode) {
@@ -170,6 +202,37 @@ public class Types {
                     @Override
                     public String toVariableNameString(MiniGame miniGame) {
                         return "minigame:" + miniGame.getId();
+                    }
+                })
+                .serializer(new Serializer<MiniGame>() {
+                    @Override
+                    public Fields serialize(MiniGame o) {
+                        Fields fields = new Fields();
+                        fields.putObject("id", o.getId());
+                        return fields;
+                    }
+
+                    @Override
+                    public void deserialize(MiniGame o, Fields f) throws StreamCorruptedException, NotSerializableException {
+                        assert false;
+                    }
+
+                    @Override
+                    protected MiniGame deserialize(Fields fields) throws StreamCorruptedException, NotSerializableException {
+                        String id = fields.getObject("id", String.class);
+                        MiniGame mg = miniGameManager.getMiniGameById(id);
+                        if (mg == null) throw new StreamCorruptedException("Unknown MiniGame ID");
+                        return mg;
+                    }
+
+                    @Override
+                    public boolean mustSyncDeserialization() {
+                        return true;
+                    }
+
+                    @Override
+                    protected boolean canBeInstantiated() {
+                        return false;
                     }
                 })
                 .changer(new Changer<MiniGame>() {
