@@ -19,7 +19,7 @@ public class SessionManager implements Listener {
     private static SessionManager manager;
     private static final GameMapManager mapManager = GameMapManager.getInstance();
     private final Map<String,Session> sessions = new HashMap<>();
-    private final Map<UUID, String> playerToSession = new HashMap<>();
+    private final Map<UUID, LinkedList<String>> playerToSession = new HashMap<>();
     private Session lastCreatedSession;
 
     public static synchronized SessionManager getInstance() {
@@ -53,8 +53,18 @@ public class SessionManager implements Listener {
     }
     @Nullable
     public Session getSession(Player player) {
-        String id = playerToSession.get(player.getUniqueId());
-        return getSessionById(id);
+        LinkedList<String> ids = playerToSession.get(player.getUniqueId());
+        if (ids == null || ids.isEmpty()) return null;
+        String first = ids.iterator().next();
+        return getSessionById(first);
+    }
+    public Session[] getSessions(Player player) {
+        LinkedList<String> ids = playerToSession.get(player.getUniqueId());
+        if (ids == null || ids.isEmpty()) return null;
+        return ids.stream()
+                .map(this::getSessionById)
+                .filter(Objects::nonNull)
+                .toArray(Session[]::new);
     }
     public Session[] getAllSessions() {
         return sessions.values().toArray(new Session[0]);
@@ -76,11 +86,18 @@ public class SessionManager implements Listener {
 
     @EventHandler
     public void onPlayerSessionJoin(GamePlayerSessionJoin e) {
-        playerToSession.put(e.getPlayer().getUniqueId(),e.getSession().getId());
+        UUID uuid = e.getPlayer().getUniqueId();
+        playerToSession
+                .computeIfAbsent(uuid, k -> new LinkedList<>())
+                .addFirst(e.getSession().getId());
     }
 
     @EventHandler
     public void onPlayerSessionLeave(GamePlayerSessionLeave e) {
-        playerToSession.remove(e.getPlayer().getUniqueId());
+        UUID uuid = e.getPlayer().getUniqueId();
+        playerToSession.computeIfPresent(uuid, (k, sessions) -> {
+           sessions.remove(e.getSession().getId());
+           return sessions.isEmpty() ? null : sessions;
+        });
     }
 }

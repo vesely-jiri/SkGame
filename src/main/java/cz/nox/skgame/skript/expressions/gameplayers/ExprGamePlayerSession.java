@@ -29,11 +29,13 @@ import org.jetbrains.annotations.Nullable;
 @SuppressWarnings("unused")
 public class ExprGamePlayerSession extends SimpleExpression<Session> {
     private static final SessionManager sessionManager = SessionManager.getInstance();
+
     private Expression<Player> player;
+    private boolean all;
 
     static {
         Skript.registerExpression(ExprGamePlayerSession.class, Session.class, ExpressionType.SIMPLE,
-                "session of %player%"
+                "session[list:s] of %player%"
         );
     }
 
@@ -41,6 +43,7 @@ public class ExprGamePlayerSession extends SimpleExpression<Session> {
     @Override
     public boolean init(Expression<?>[] exprs, int i, Kleenean kleenean, SkriptParser.ParseResult parseResult) {
         this.player = (Expression<Player>) exprs[0];
+        this.all = parseResult.hasTag("list");
         return true;
     }
 
@@ -48,12 +51,15 @@ public class ExprGamePlayerSession extends SimpleExpression<Session> {
     protected Session @Nullable [] get(Event event) {
         Player player = this.player.getSingle(event);
         if (player == null) return null;
+        if (all) {
+            return sessionManager.getSessions(player);
+        }
         return CollectionUtils.array(sessionManager.getSession(player));
     }
 
     @Override
     public boolean isSingle() {
-        return true;
+        return !all;
     }
 
     @Override
@@ -62,7 +68,10 @@ public class ExprGamePlayerSession extends SimpleExpression<Session> {
     }
 
     @Override
-    public String toString(@Nullable Event event, boolean b) {
-        return "";
+    public String toString(@Nullable Event e, boolean b) {
+        return "session"
+                + (all ? "s " : " ")
+                + "of player "
+                + this.player.toString(e,b);
     }
 }
