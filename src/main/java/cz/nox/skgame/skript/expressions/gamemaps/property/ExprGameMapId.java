@@ -26,7 +26,7 @@ public class ExprGameMapId extends SimplePropertyExpression<GameMap, String> {
 
     static {
         register(ExprGameMapId.class, String.class,
-                "id","gamemap");
+                "[game]map id","gamemap");
     }
 
     @Override
