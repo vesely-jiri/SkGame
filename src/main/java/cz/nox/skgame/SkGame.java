@@ -2,11 +2,13 @@ package cz.nox.skgame;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAddon;
+import cz.nox.skgame.api.game.model.CustomValue;
 import cz.nox.skgame.core.game.GameMapManager;
 import cz.nox.skgame.core.game.MiniGameManager;
 import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.util.LogUtil;
 import org.bukkit.Bukkit;
+import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -33,7 +35,7 @@ public class SkGame extends JavaPlugin {
         instance = this;
         this.logUtil = new LogUtil(instance);
 
-        logUtil.info("SkGame enabling");
+        ConfigurationSerialization.registerClass(CustomValue.class);
 
         if (getDataFolder().mkdirs()) {
             logUtil.info("Creating plugin folder");
@@ -57,7 +59,6 @@ public class SkGame extends JavaPlugin {
 
     public void onDisable() {
         long s = System.currentTimeMillis();
-        logUtil.info("SkGame disabling");
 
         MiniGameManager.getInstance().saveToFile(miniGamesDataFile);
         GameMapManager.getInstance().saveToFile(mapsDataFile);
