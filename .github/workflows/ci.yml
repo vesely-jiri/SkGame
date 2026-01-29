@@ -78,6 +78,9 @@ jobs:
             ~/.gradle/wrapper
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts', '**/gradle-wrapper.properties') }}
 
+      - name: "Gradle chmod"
+        run: chmod +x ./gradlew
+
       - name: "Build"
         run: ./gradlew assemble
 
