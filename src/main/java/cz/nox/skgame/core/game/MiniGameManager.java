@@ -22,7 +22,7 @@ public class MiniGameManager {
     }
 
     public MiniGame getMiniGameById(String id) {
-        return miniGames.get(id);
+        return miniGames.get(id.toLowerCase());
     }
     public MiniGame[] getAllMiniGames() {
         return miniGames.values().toArray(new MiniGame[0]);
@@ -38,7 +38,7 @@ public class MiniGameManager {
             if (section == null) continue;
             MiniGame gm = MiniGame.deserialize(section.getValues(true));
             if (gm != null) {
-                miniGames.put(gm.getId(), gm);
+                miniGames.put(gm.getId().toLowerCase(), gm);
             }
         }
     }
@@ -46,7 +46,7 @@ public class MiniGameManager {
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
         config.set("minigames",null);
         for (MiniGame gm : miniGames.values()) {
-            config.createSection("minigames." + gm.getId(), gm.serialize());
+            config.createSection("minigames." + gm.getId().toLowerCase(), gm.serialize());
         }
         try {
             config.save(file);
@@ -56,18 +56,18 @@ public class MiniGameManager {
     }
 
     public MiniGame registerMiniGame(String id) {
-        MiniGame mg = miniGames.get(id);
+        MiniGame mg = miniGames.get(id.toLowerCase());
         if (mg != null) return mg;
-        mg = new MiniGame(id);
-        miniGames.put(mg.getId(), mg);
+        mg = new MiniGame(id.toLowerCase());
+        miniGames.put(mg.getId().toLowerCase(), mg);
         lastCreatedMiniGame = mg;
         return mg;
     }
     public void unregisterMiniGame(String id) {
-        miniGames.remove(id);
+        miniGames.remove(id.toLowerCase());
     }
     public boolean isRegistered(String id) {
-        return miniGames.containsKey(id);
+        return miniGames.containsKey(id.toLowerCase());
     }
 
     public MiniGame getLastCreatedMiniGame() {

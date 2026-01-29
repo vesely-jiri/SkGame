@@ -11,11 +11,11 @@ public class MiniGame implements ConfigurationSerializable {
     private Map<String, Object> values;
 
     public MiniGame(String id,Map<String, Object> values) {
-        this.id = id.toLowerCase();
+        this.id = id;
         this.values = values;
     }
     public MiniGame(String id) {
-        this(id,new HashMap<>());
+        this(id.toLowerCase(), new HashMap<>());
     }
 
     public String getId() {
