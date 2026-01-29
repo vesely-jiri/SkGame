@@ -45,14 +45,20 @@ public class SkGame extends JavaPlugin {
 
         Bukkit.getPluginManager().registerEvents(SessionManager.getInstance(), instance);
 
-        MiniGameManager.getInstance().loadFromFile(miniGamesDataFile);
-        GameMapManager.getInstance().loadFromFile(mapsDataFile);
-
         try {
             this.addon.loadClasses("cz.nox.skgame.skript");
         } catch (IOException e) {
             logUtil.error("Failed to load Skript classes");
         }
+
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+
+            System.out.println("Running deserialization");
+            MiniGameManager.getInstance().loadFromFile(miniGamesDataFile);
+            GameMapManager.getInstance().loadFromFile(mapsDataFile);
+
+        },1L);
+
 
         logUtil.info("SkGame enabled in " + (System.currentTimeMillis() - s) + "ms");
     }
