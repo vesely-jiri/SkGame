@@ -42,7 +42,7 @@ public class EffSessionGameStop extends Effect {
 
     static {
         Skript.registerEffect(EffSessionGameStop.class,
-                "stop game of %session% [with reason %string%]"
+                "stop game of %session% [with reason %-string%]"
         );
     }
 
@@ -57,24 +57,25 @@ public class EffSessionGameStop extends Effect {
     }
 
     @Override
-    protected void execute(Event event) {
-        Session session = this.session.getSingle(event);
+    protected void execute(Event e) {
+        Session session = this.session.getSingle(e);
         if (session == null) return;
         MiniGame miniGame = session.getMiniGame();
         if (miniGame == null) return;
         GameStopEvent newEvent;
         if (this.reason != null) {
-            String re = this.reason.getSingle(event);
+            String re = this.reason.getSingle(e);
             newEvent = new GameStopEvent(miniGame, session, re);
         } else {
             newEvent = new GameStopEvent(miniGame, session, "default");
         }
+        Bukkit.getPluginManager().callEvent(newEvent);
+
         session.setState(SessionState.STOPPED);
         session.removeValues(true);
         for (Player player : session.getPlayers()) {
             playerManager.getPlayer(player).removeValues(true);
         }
-        Bukkit.getPluginManager().callEvent(newEvent);
     }
 
     @Override
