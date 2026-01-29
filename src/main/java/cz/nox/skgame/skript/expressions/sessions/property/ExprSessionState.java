@@ -9,6 +9,7 @@ import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.util.coll.CollectionUtils;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.type.SessionState;
+import cz.nox.skgame.core.game.SessionManager;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class ExprSessionState extends SimplePropertyExpression<Session, SessionState> {
 
+    private static final SessionManager manager = SessionManager.getInstance();
+
     static {
         register(ExprSessionState.class, SessionState.class,
                 "state","session");
@@ -44,14 +47,16 @@ public class ExprSessionState extends SimplePropertyExpression<Session, SessionS
 
     @Override
     public @Nullable SessionState convert(Session session) {
+         if (manager.getSessionById(session.getId()) == null) return null;
         return session.getState();
     }
 
     @Override
     public Class<? extends SessionState> @Nullable [] acceptChange(ChangeMode mode) {
         return switch (mode) {
-            case SET, RESET   -> CollectionUtils.array(SessionState.class);
-            default -> null;
+            case SET   -> CollectionUtils.array(SessionState.class);
+            case RESET -> CollectionUtils.array();
+            default    -> null;
         };
     }
 
