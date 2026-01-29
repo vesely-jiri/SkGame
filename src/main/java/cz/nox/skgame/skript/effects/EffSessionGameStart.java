@@ -57,7 +57,7 @@ public class EffSessionGameStart extends Effect {
         MiniGame miniGame = session.getMiniGame();
         GameMap gameMap = session.getGameMap();
         if (miniGame == null || gameMap == null) return;
-        if (session.getState() != SessionState.STOPPED) return;
+        if (session.getState() == SessionState.STARTED) return;
         if (!(gameMap.supportsMiniGame(miniGame))) return;
         session.setState(SessionState.STARTED);
         GameStartEvent newEvent = new GameStartEvent(session, miniGame, gameMap);
