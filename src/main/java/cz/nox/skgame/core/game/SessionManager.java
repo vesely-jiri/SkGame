@@ -47,7 +47,6 @@ public class SessionManager implements Listener {
         if (session == null) return;
         Event e = new SessionDisbandEvent(session);
         Bukkit.getPluginManager().callEvent(e);
-        //if event was not cancelled:
         mapManager.removeMapFromClaimed(session.getGameMap());
         sessions.remove(id);
     }
