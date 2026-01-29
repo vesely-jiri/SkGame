@@ -32,8 +32,6 @@ public class SkGame extends JavaPlugin {
     public void onEnable() {
         long s = System.currentTimeMillis();
 
-        // CI test
-
         instance = this;
         this.logUtil = new LogUtil(instance);
 
