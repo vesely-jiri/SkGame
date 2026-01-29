@@ -7,9 +7,11 @@ import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.util.coll.CollectionUtils;
 import ch.njol.yggdrasil.Fields;
+import cz.nox.skgame.api.game.model.CustomValue;
 import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
+import cz.nox.skgame.api.game.model.type.CustomValuePlurality;
 import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.core.game.GameMapManager;
 import cz.nox.skgame.core.game.MiniGameManager;
@@ -149,6 +151,7 @@ public class Types {
                     @Override
                     protected GameMap deserialize(Fields fields) throws StreamCorruptedException, NotSerializableException {
                         String id = fields.getObject("id", String.class);
+                        assert id != null;
                         GameMap gm = gameMapManager.getGameMapById(id);
                         if (gm == null) throw new StreamCorruptedException("Unknown GameMap ID");
                         return gm;
@@ -220,6 +223,7 @@ public class Types {
                     @Override
                     protected MiniGame deserialize(Fields fields) throws StreamCorruptedException, NotSerializableException {
                         String id = fields.getObject("id", String.class);
+                        assert id != null;
                         MiniGame mg = miniGameManager.getMiniGameById(id);
                         if (mg == null) throw new StreamCorruptedException("Unknown MiniGame ID");
                         return mg;
@@ -281,6 +285,97 @@ public class Types {
                         return "sessionState:" + sessionState.toString();
                     }
                 })
+        );
+
+        Classes.registerClass(new EnumClassInfo<>(CustomValuePlurality.class, "customvalueplurality", "value plurality", new SimpleLiteral<>(CustomValuePlurality.SINGULAR, true))
+                .user("value ?plurality?")
+                .name("Custom value plurality")
+                .description("Represents plurality of custom value. Defaults to single/singular")
+                .since("1.0.0")
+                .parser(new Parser<>() {
+
+                    @Override
+                    public @Nullable CustomValuePlurality parse(String s, ParseContext context) {
+                        try {
+                            return CustomValuePlurality.valueOf(s.trim().toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            return null;
+                        }
+                    }
+
+                    @Override
+                    public String toString(CustomValuePlurality plur, int flags) {
+                        return plur.name();
+                    }
+
+                    @Override
+                    public String toVariableNameString(CustomValuePlurality plur) {
+                        return "valuePlurality:" + plur.toString();
+                    }
+                })
+        );
+
+        Classes.registerClass(new ClassInfo<>(CustomValue.class, "customvalue")
+                .user("customValue")
+                .name("Custom value")
+                .description("Represents custom value object of a minigame value")
+                .since("1.0.0")
+                .parser(new Parser<>() {
+
+                    @Override
+                    public boolean canParse(ParseContext context) {
+                        return false;
+                    }
+
+                    @Override
+                    public String toString(CustomValue o, int flags) {
+                        return "a custom value";
+                    }
+
+                    @Override
+                    public String toVariableNameString(CustomValue value) {
+                        return "customValue:" + value.toString();
+                    }
+                })
+                .serializer(new Serializer<CustomValue>() {
+                    @Override
+                    public Fields serialize(CustomValue o) throws NotSerializableException {
+                        Fields fields = new Fields();
+                        fields.putObject("name", o.getName());
+                        fields.putObject("type", o.getType());
+                        fields.putObject("defaultValue", o.getDefaultValue());
+                        fields.putObject("description", o.getDescription());
+                        fields.putObject("plurality", o.getPlurality());
+                        return fields;
+                    }
+
+                    @Override
+                    public CustomValue deserialize(Fields fields) throws StreamCorruptedException, NotSerializableException {
+                        CustomValue v = new CustomValue();
+                        v.setName(fields.getObject("name", String.class));
+                        v.setType(fields.getObject("type", ClassInfo.class));
+                        v.setDefaultValue(fields.getObject("defaultValue", Object.class));
+                        v.setDescription(fields.getObject("description", String.class));
+                        v.setPlurality(fields.getObject("plurality", CustomValuePlurality.class));
+                        return v;
+                    }
+
+                    @Override
+                    public void deserialize(CustomValue o, Fields f) throws StreamCorruptedException, NotSerializableException {
+                        assert false;
+                    }
+
+                    @Override
+                    public boolean mustSyncDeserialization() {
+                        return true;
+                    }
+
+                    @Override
+                    protected boolean canBeInstantiated() {
+                        return false;
+                    }
+                })
+                .defaultExpression(new EventValueExpression<>(CustomValue.class))
         );
     }
 }
