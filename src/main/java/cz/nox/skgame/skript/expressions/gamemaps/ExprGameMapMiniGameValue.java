@@ -44,13 +44,15 @@ public class ExprGameMapMiniGameValue extends SimpleExpression<Object> implement
     private Expression<String> key;
     private Expression<GameMap> gameMap;
     private Expression<MiniGame> miniGame;
+
     private int pattern;
     private int mark;
+    private boolean isList;
 
     static {
         Skript.registerExpression(ExprGameMapMiniGameValue.class, Object.class, ExpressionType.COMBINED,
-                "[[game]map] value %string% of %gamemap% (of|from|and) %minigame%",
-                "[all] (keys|1:values) of %gamemap% (of|from|and) %minigame%"
+                "[pair] value[list:s] %string% of %gamemap% (of|from|and) %minigame%",
+                "[all] [pair] values of %gamemap% (of|from|and) %minigame%"
         );
     }
 
@@ -65,15 +67,18 @@ public class ExprGameMapMiniGameValue extends SimpleExpression<Object> implement
         } else {
             this.gameMap = (Expression<GameMap>) exprs[0];
             this.miniGame = (Expression<MiniGame>) exprs[1];
-            this.mark = parseResult.mark;
         }
+        this.isList = parseResult.hasTag("list");
         return true;
     }
 
     @Override
     public Class<?> @Nullable [] acceptChange(Changer.ChangeMode mode) {
         return switch (mode) {
-            case SET           -> CollectionUtils.array(Object.class);
+            case SET, ADD, REMOVE -> {
+                if (isList) yield CollectionUtils.array(Object[].class);
+                yield CollectionUtils.array(Object.class);
+            }
             case RESET, DELETE -> CollectionUtils.array();
             default            -> null;
         };
@@ -81,51 +86,70 @@ public class ExprGameMapMiniGameValue extends SimpleExpression<Object> implement
 
     @Override
     protected @Nullable Object[] get(Event event) {
-        GameMap map = this.gameMap.getSingle(event);
-        MiniGame mg = this.miniGame.getSingle(event);
+        GameMap map = gameMap.getSingle(event);
+        MiniGame mg = miniGame.getSingle(event);
         if (map == null || mg == null) return null;
         String miniGameId = mg.getId();
-        Object o;
-        if (this.pattern == 0) {
-            String k = this.key.getSingle(event);
-            if (k == null) return null;
-            o = map.getMiniGameValue(miniGameId, this.key.getSingle(event));
-        } else {
-            if (this.mark == 0) {
-                o = map.getMiniGameKeys(miniGameId);
-            } else {
-                o = map.getMiniGameValues(miniGameId);
-            }
-        }
-        if (o instanceof Object[]) {
-            return (Object[]) o;
-        } else {
-            return CollectionUtils.array(o);
+        switch (pattern) {
+            case 0:
+                String k = key.getSingle(event);
+                if (k == null) return null;
+                Object o = map.getMiniGameValue(miniGameId, k);
+                if (o == null) return null;
+                if (o.getClass().isArray()) {
+
+                    return (isList ? (Object[]) o : null);
+                } else {
+                    return (!isList ? CollectionUtils.array(o) : null);
+                }
+            case 1:  return map.getMiniGameValues(miniGameId);
+            default: return null;
         }
     }
 
     @Override
     public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
-
-        GameMap map = this.gameMap.getSingle(event);
-        MiniGame mg = this.miniGame.getSingle(event);
+        GameMap map = gameMap.getSingle(event);
+        MiniGame mg = miniGame.getSingle(event);
         if (map == null || mg == null) return;
-
-        if (this.pattern == 0) {
-            String k = this.key.getSingle(event);
-            if (k == null) return;
-        }
 
         switch (mode) {
             case SET -> {
-                if (delta == null || delta[0] == null) return;
                 if (pattern == 1) return;
-                Object o = delta[0];
-                map.setMiniGameValue(mg.getId(),this.key.getSingle(event),o);
+                String k = key.getSingle(event);
+                if (delta == null || delta[0] == null || k == null) return;
+                map.setMiniGameValue(mg.getId(),k,delta[0]);
             }
+
+            case ADD -> {
+                if (pattern == 1) return;
+                String k = key.getSingle(event);
+                if (k == null || delta == null) return;
+
+                for (Object o : delta) {
+                    if (o != null) {
+                        map.addMiniGameValue(mg.getId(), k, o);
+                    }
+                }
+            }
+
+            case REMOVE -> {
+                if (pattern == 1) return;
+                String k = key.getSingle(event);
+                if (k == null || delta == null) return;
+
+                for (Object o : delta) {
+                    if (o != null) {
+                        map.removeMiniGameValue(mg.getId(), k, o);
+                    }
+                }
+            }
+
             case RESET, DELETE -> {
                 if (pattern == 0) {
-                    map.setMiniGameValue(mg.getId(), this.key.getSingle(event), null);
+                    String k = key.getSingle(event);
+                    if (k == null) return;
+                    map.setMiniGameValue(mg.getId(), k, null);
                 } else {
                     map.setMiniGameValues(mg.getId(),null);
                 }
@@ -158,31 +182,34 @@ public class ExprGameMapMiniGameValue extends SimpleExpression<Object> implement
     public @NotNull String @NotNull [] getArrayKeys(Event e) throws IllegalStateException {
         GameMap gm = this.gameMap.getSingle(e);
         MiniGame mg = this.miniGame.getSingle(e);
-        if (mg == null || gm == null) return new String[0];
+        assert gm != null && mg != null;
         return gm.getMiniGameKeys(mg.getId());
     }
 
     @Override
     public boolean canReturnKeys() {
-        return (this.pattern == 1) && ((this.mark == 1));
+        return (this.pattern == 1);
     }
 
     @Override
     public boolean isSingle() {
-        return (this.pattern == 0);
+        return (!isList) && (pattern == 0);
     }
 
     @Override
     public String toString(@Nullable Event e, boolean b) {
         if (this.pattern == 0) {
-            return "map value " + this.key.toString(e, b) +
-                    " of map " + this.gameMap.toString(e, b) +
-                    " of minigame " + this.miniGame.toString(e, b);
+            return "map value"
+                    + (isList ? "s " : " ")
+                    + key.toString(e, b) +
+                    " of map "
+                    + gameMap.toString(e, b) +
+                    " of minigame "
+                    + miniGame.toString(e, b);
         } else {
-            return "map " +
-                    ((this.mark == 1) ? "values" : "keys") +
-                    " of map " + this.gameMap.toString(e,b) +
-                    " of minigame " + this.miniGame.toString(e,b);
+            return "map "
+                    + " of map " + this.gameMap.toString(e,b)
+                    + " of minigame " + this.miniGame.toString(e,b);
         }
     }
 }
