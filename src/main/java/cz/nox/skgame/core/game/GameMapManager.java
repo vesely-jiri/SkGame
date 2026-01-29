@@ -31,13 +31,13 @@ public class GameMapManager {
             ConfigurationSection section = baseSection.getConfigurationSection(key);
             if (section == null) continue;
             GameMap gameMap = GameMap.deserialize(section.getValues(true));
-            this.maps.put(gameMap.getId(), gameMap);
+            maps.put(gameMap.getId(), gameMap);
         }
     }
     public void saveToFile(File file) {
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
         config.set("maps",null);
-        for (GameMap gameMap : this.maps.values()) {
+        for (GameMap gameMap : maps.values()) {
             config.createSection("maps." + gameMap.getId(), gameMap.serialize());
         }
         try {
@@ -48,50 +48,51 @@ public class GameMapManager {
     }
 
     public GameMap getGameMapById(String id) {
-        return this.maps.get(id);
+        return maps.get(id.toLowerCase());
     }
     public GameMap[] getGameMaps() {
-        return this.maps.values().toArray(new GameMap[0]);
+        return maps.values().toArray(new GameMap[0]);
     }
     public GameMap[] getGameMaps(GameMapFilter filter) {
         if (filter == null || filter == GameMapFilter.ALL) {
-            return this.maps.values().toArray(GameMap[]::new);
+            return maps.values().toArray(GameMap[]::new);
         }
         final boolean claimed = (filter == GameMapFilter.CLAIMED);
-        return this.maps.values().stream()
+        return maps.values().stream()
                 .filter(map -> isMapClaimed(map.getId()) == claimed)
                 .toArray(GameMap[]::new);
     }
 
     public GameMap registerGameMap(String id) {
-        GameMap map = maps.get(id);
+        GameMap map = maps.get(id.toLowerCase());
         if (map != null) return map;
         map = new GameMap(id);
-        maps.put(id,map);
+        maps.put(id.toLowerCase(),map);
         setLastCreatedGameMap(map);
         return map;
     }
     public void unregisterGameMap(String id) {
-        this.maps.remove(id);
+        maps.remove(id.toLowerCase());
     }
     public boolean isMapRegistered(String id) {
-        return this.maps.containsKey(id);
+        return maps.containsKey(id.toLowerCase());
     }
 
-    public boolean isMapClaimed(String gameMapId) {
-        return this.claimedMaps.contains(gameMapId);
+    public boolean isMapClaimed(String id) {
+        return claimedMaps.contains(id.toLowerCase());
     }
     public void addMapToClaimed(GameMap gameMap) {
-        this.claimedMaps.add(gameMap.getId());
+        claimedMaps.add(gameMap.getId().toLowerCase());
     }
     public void removeMapFromClaimed(GameMap gameMap) {
-        this.claimedMaps.remove(gameMap.getId());
+        if (gameMap == null) return;
+        claimedMaps.remove(gameMap.getId().toLowerCase());
     }
 
     public GameMap getLastCreatedGameMap() {
-        return this.lastCreatedGameMap;
+        return lastCreatedGameMap;
     }
     public void setLastCreatedGameMap(GameMap lastCreated) {
-        this.lastCreatedGameMap = lastCreated;
+        lastCreatedGameMap = lastCreated;
     }
 }
