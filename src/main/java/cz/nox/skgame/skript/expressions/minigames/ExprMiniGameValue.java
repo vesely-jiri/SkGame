@@ -46,6 +46,7 @@ public class ExprMiniGameValue extends SimpleExpression<Object> implements KeyPr
     private Expression<MiniGame> miniGame;
     private int pattern;
     private int mark;
+    @Deprecated
     private boolean isList;
 
     static {
@@ -72,10 +73,10 @@ public class ExprMiniGameValue extends SimpleExpression<Object> implements KeyPr
     @Override
     protected Object @Nullable [] get(Event e) {
         MiniGame mg = miniGame.getSingle(e);
-        String k = key.getSingle(e);
         if (mg == null) return null;
         switch (pattern) {
             case 0:
+                String k = key.getSingle(e);
                 if (k == null) return null;
                 Object o = mg.getValue(k);
                 if (o == null) return null;
@@ -104,10 +105,10 @@ public class ExprMiniGameValue extends SimpleExpression<Object> implements KeyPr
     @Override
     public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
         MiniGame mg = miniGame.getSingle(event);
-        String k = key.getSingle(event);
         if (mg == null) return;
         switch (mode) {
             case SET -> {
+                String k = key.getSingle(event);
                 if (delta == null || delta[0] == null || k == null) return;
                 if (isList) {
                     mg.setValue(k, delta);
@@ -117,6 +118,7 @@ public class ExprMiniGameValue extends SimpleExpression<Object> implements KeyPr
             }
             case DELETE, RESET -> {
                 if (pattern == 0) {
+                    String k = key.getSingle(event);
                     if (k == null) return;
                     mg.removeValue(k);
                 } else {
@@ -160,7 +162,7 @@ public class ExprMiniGameValue extends SimpleExpression<Object> implements KeyPr
 
     @Override
     public String toString(@Nullable Event e, boolean b) {
-        if (pattern == 1) {
+        if (pattern == 0) {
             return "minigame value"
                     + ((isList) ? "s " : " ")
                     + key.toString(e, b)
