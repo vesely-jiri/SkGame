@@ -60,7 +60,7 @@ public class CustomValue implements ConfigurationSerializable {
     }
 
     public CustomValuePlurality getPlurality() {
-        return plurality;
+        return (plurality == null) ? CustomValuePlurality.SINGLE : plurality;
     }
     public void setPlurality(CustomValuePlurality plur) {
         this.plurality = plur;
