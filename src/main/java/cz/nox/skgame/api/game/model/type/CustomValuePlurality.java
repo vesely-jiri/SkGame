@@ -5,6 +5,5 @@ package cz.nox.skgame.api.game.model.type;
  */
 public enum CustomValuePlurality {
     PLURAL,
-    SINGULAR,
     SINGLE
 }

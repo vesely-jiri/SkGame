@@ -287,7 +287,7 @@ public class Types {
                 })
         );
 
-        Classes.registerClass(new EnumClassInfo<>(CustomValuePlurality.class, "customvalueplurality", "value plurality", new SimpleLiteral<>(CustomValuePlurality.SINGULAR, true))
+        Classes.registerClass(new EnumClassInfo<>(CustomValuePlurality.class, "customvalueplurality", "value plurality", new SimpleLiteral<>(CustomValuePlurality.SINGLE, true))
                 .user("value ?plurality?")
                 .name("Custom value plurality")
                 .description("Represents plurality of custom value. Defaults to single/singular")
