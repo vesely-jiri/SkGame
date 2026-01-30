@@ -2,6 +2,10 @@ package cz.nox.skgame.skript.sections;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.config.SectionNode;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.SectionExpression;
 import ch.njol.skript.lang.*;
 import ch.njol.skript.lang.util.SectionUtils;
@@ -17,6 +21,25 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@Name("Section - CustomValue")
+@Description({
+        "Represents a section for creating and initializing a CustomValue.",
+        "",
+        "This section allows you to define a CustomValue and perform operations on it",
+        "within the block, such as setting its name, type, default value, or description.",
+        "",
+        "The section automatically fires a CreateCustomValueEvent, which can be used",
+        "internally to access the CustomValue during the execution of the section.",
+        "",
+        "Supports: SECTION ONLY."
+})
+@Examples({
+        "create a custom value:",
+        "    set name of event-value to \"lives\"",
+        "    set default value of event-value to 3",
+        "    set description of event-value to \"Number of lives a player has\""
+})
+@Since("1.0.0")
 @SuppressWarnings("unused")
 public class ExprSecCustomValue extends SectionExpression<CustomValue> {
 

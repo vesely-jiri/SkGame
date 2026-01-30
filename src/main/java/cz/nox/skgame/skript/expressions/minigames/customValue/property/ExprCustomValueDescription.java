@@ -1,12 +1,39 @@
 package cz.nox.skgame.skript.expressions.minigames.customValue.property;
 
 import ch.njol.skript.classes.Changer;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.util.coll.CollectionUtils;
 import cz.nox.skgame.api.game.model.CustomValue;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
+@Name("CustomValue - Description")
+@Description({
+        "Represents the textual description of a CustomValue.",
+        "",
+        "The description is typically used to explain the purpose or meaning",
+        "of a CustomValue in a human-readable form.",
+        "",
+        "This property allows you to retrieve, change, or remove the description.",
+        "",
+        "Resetting or deleting this value clears the description (sets it to none).",
+        "",
+        "Supports: GET / SET / RESET / DELETE."
+})
+@Examples({
+        "set {_cv} to custom value with id \"lives\"",
+        "",
+        "broadcast description of {_cv}",
+        "",
+        "set description of {_cv} to \"Number of lives a player has\"",
+        "",
+        "reset description of {_cv}"
+})
+@Since("1.0.0")
 @SuppressWarnings("unused")
 public class ExprCustomValueDescription extends SimplePropertyExpression<CustomValue, String> {
 
