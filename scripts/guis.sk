@@ -1,0 +1,310 @@
+options:
+    var_prefix: jpscripts::game
+
+    main_gui_name: "&6Main game menu"
+    session_gui_name: "&5Lobby of %{_host}%"
+    minigames_gui_name: "&3Minigames"
+    maps_gui_name: "&2Available maps for the minigame"
+
+    max_rounds: 10
+
+    main_gui_session_slots: 14,15,16,23,24,25,32,33,34,41,42,43
+    session_gui_player_slots: 1,2,10,11,19,20,28,29,37,38,46,47
+    minigames_gui_game_slots: 10,11,12,13,14,15,16,19,20,21,22,23,24,25,28,29,30,31,32,33,34,37,38,39,40,41,42,43
+    maps_gui_map_slots: 10,11,12,13,14,15,16,19,20,21,22,23,24,25,28,29,30,31,32,33,34,37,38,39,40,41,42,43
+
+    session_create_permission: "skript.game.create_session"
+
+#messages
+    prefix: "&6[Game] &r"
+    not_host: "&cOnly host can use this button"
+
+    session_host_description: "&eHost"
+
+    already_in_session: "&cYou are already in a session"
+
+#---------------------------Init-----------------------------------------------
+
+on load:
+    wait 1 tick
+    set {{@var_prefix}::remove::gui::minigames} to G_InitMinigamesGui()
+    G_UpdateMainGui()
+    G_UpdateMinigamesGuis()
+
+function G_InitMainGui() :: inventory:
+    set {_g} to chest inventory named {@main_gui_name} with 6 rows
+    set slots (0,2,8,10,18,20,26,28,36,38,44,46,50,52) of {_g} to (gray stained glass pane) named " "
+    set slots (4,12,22,30,40,48) of {_g} to (red stained glass pane) named " "
+    set slots (1,3,5,7,9,11,13,17,21,27,29,31,35,37,39,47,49,51,53) of {_g} to (black stained glass pane) named " "
+    #set slot 19 of {_g} to barrier named "&cThere is no server event at this moment"
+    set slot 19 of {_g} to barrier named "&cThis function was not implemented yet"
+    set slot 6 of {_g} to (lime stained glass pane) named "&a&lCreate session"
+    set slot 51 of {_g} to book named "&a&lOpen current session"
+    set slot 45 of {_g} to (spruce door) named "&c&lClose"
+    return {_g}
+
+function G_InitSessionGui(host: player) :: inventory:
+    set {_g} to chest inventory named {@session_gui_name} with 6 rows
+    set slots (6,8,15,16,17,42,44,51,52) of {_g} to (gray stained glass pane) named " "
+    set slots (5,13,23,31,41,49) of {_g} to (red stained glass pane) named " "
+    set slots (4,14,22,32,40,50) of {_g} to (white stained glass pane) named " "
+    set slots (0,3,9,12,21,30,36,39,45,48) of {_g} to (black stained glass pane) named " "
+    set slot 7 of {_g} to spyglass named "&7&lSpectators"
+    set slot 24 of {_g} to wind charge named "&7&lShuffle players" with lore "&7True/&cFalse"
+    set slot 25 of {_g} to (light gray bundle) named "&7&lMinigames" with item flags hide additional tooltip
+    set slot 26 of {_g} to (ominous trial key) named "&7&lLobby mode" with lore "&aPublic&7/Private"
+    set slot 33 of {_g} to barrier named "&7&lMaps" with lore "&c- Choose an addon"
+    set slot 34 of {_g} to light gray stained glass pane named " "
+    set slot 35 of {_g} to repeater named "&7&lRounds" with lore "&7- Left click: Add round\n&7- Right click: Remove round"
+    set slot 43 of {_g} to (orange stained glass pane) named "&cNot ready"
+    set slot 53 of {_g} to (spruce door) named "&c&lBack to main menu" with lore "&c- Left click: Back to main menu%nl%&c- Right click: Leave%nl%&c- Shift + Rightclick: Disband session"
+    return {_g}
+
+function G_InitMinigamesGui() :: inventory:
+    set {_g} to chest inventory named {@minigames_gui_name} with 6 rows
+    add (integers from 0 to 8) to {_slots::*}
+    add (9,17,18,26,27,35,36,44) to {_slots::*}
+    add (integers from 45 to 52) to {_slots::*}
+    set slots {_slots::*} of {_g} to black stained glass pane named ""
+    set slot 53 of {_g} to (spruce door) named "&c&lBack to lobby"
+    return {_g}
+
+#------------------------------------------------------------------------------
+function G_OpenMainGui(p: players):
+    open {{@var_prefix}::remove::gui::main} to {_p::*}
+
+function G_OpenSessionGui(p: players):
+    loop players in {_p::*}:
+        open (session value "gui" of (session of loop-player)) to loop-player
+
+function G_UpdateMainGui():
+    set {_g} to {{@var_prefix}::remove::gui::main}
+    #TODO: Update slot 19 after server event implementation
+    set {_session-slots::*} to {@main_gui_session_slots}
+    clear slots {@main_gui_session_slots} of {_g}
+    #TODO: Works only for first 12 sessions for now
+    loop sessions:
+        set {_host} to host of loop-session
+        set {_p::*} to players of loop-session
+        set {_icon} to (skull of {_host}) named "&3%name of {_host}%" with lore {_p::*}
+        set string tag "id" of custom nbt of {_icon} to (id of loop-session)
+        set slot {_session-slots::%loop-iteration%} of {_g} to {_icon}
+
+function G_UpdateSessionGui(session: session):
+    set {_g} to session value "gui" of {_session}
+    set {_s} to size of (spectators of {_session})
+    set {_size} to clamp({_s},1,999)
+    set slot 7 of {_g} to {_size} of spyglass named "&7&lSpectators" with lore "&7%spectators of {_session}%"
+    set {_minigame} to minigame of {_session}
+    set {_icon} to "%minigame value "icon" of {_minigame}%" parsed as itemtype
+    set name of {_icon} to value "name" of {_minigame}
+    set slot 25 of {_g} to {_icon} ? (light gray bundle) named "&7&lMinigames"
+    if (session value "mode" of {_session}) is "public":
+        set {_lore} to "&aPublic&7/Private"
+    else:
+        set {_lore} to "&7Public/&aPrivate"
+    set slot 26 of {_g} to ominous trial key named "&7&lLobby mode" with lore {_lore}
+    set {_map-name} to value "name" of (map of {_session})
+    if {_map-name} is set:
+        set {_item} to paper named "&7&l%{_map-name}%"
+    else:
+        if minigame of {_session} is not set:
+            set {_item} to barrier named "&7&lMaps" with lore "&c- Choose an addon"
+        else:
+            set {_item} to barrier named "&7&lMaps" with lore "&c- Choose a map"
+    set slot 33 of {_g} to {_item}
+    set {_rounds} to (session value "rounds" of {_session}) ? 1
+    set slot 35 of {_g} to {_rounds} of repeater named "&7&lRounds"
+    set {_pl-slots::*} to {@session_gui_player_slots}
+    clear slots {_pl-slots::*} of {_g}
+    loop (players of {_session}):
+        set {_icon} to (skull of loop-player)
+        if (host of {_session} is loop-player):
+            add {@session_host_description} to lore of {_icon}
+        if (temporary player value "ready" of loop-player) is true:
+            set name of {_icon} to "&a%name of loop-player%"
+        else:
+            set name of {_icon} to "&c%name of loop-player%"
+        set slot {_pl-slots::%loop-iteration%} of {_g} to {_icon} with item flags enchants hidden
+
+function G_UpdateMinigamesGuis():
+    set {_g} to {{@var_prefix}::remove::gui::minigames}
+    set {_mg-slots::*} to {@minigames_gui_game_slots}
+    clear slots {_mg-slots::*} of {_g}
+    loop minigames:
+        set {_i} to "%(minigame value "icon" of loop-minigame)%" parsed as itemtype
+        set {_icon} to {_i} named (value "name" of loop-minigame)
+        set string tag "id" of (custom nbt of {_icon}) to minigame id of loop-minigame
+        set slot {_mg-slots::%loop-iteration%} of {_g} to {_icon}
+
+function G_OpenMapsGui(p: player):
+    set {_session} to session of {_p}
+    set {_g} to chest inventory named {@maps_gui_name} with 6 rows
+    add (integers from 0 to 8) to {_slots::*}
+    add (9,17,18,26,27,35,36,44) to {_slots::*}
+    add (integers from 45 to 52) to {_slots::*}
+    set slots {_slots::*} of {_g} to black stained glass pane named ""
+    set {_map-slots::*} to {@maps_gui_map_slots}
+    loop gamemaps:
+        if loop-gamemap supports (minigame of {_session}):
+            add 1 to {_c}
+            set {_icon} to a map
+            #set name of {_icon} to name of loop-gamemap
+            set name of {_icon} to value "name" of loop-gamemap
+            set string tag "id" of (custom nbt of {_icon}) to gamemap id of loop-gamemap
+            set slot {_map-slots::%{_c}%} of {_g} to {_icon}
+
+    set slot 53 of {_g} to (spruce door) named "&c&lBack to lobby"
+    set session value "maps-gui" of {_session} to {_g}
+    open {_g} to {_p}
+
+#-----------------------------Buttons------------------------------------------
+
+function G_ButtonSpectators(p: player):
+    set {_session} to session of {_p}
+    if (spectators of {_session}) contains {_p}:
+        remove {_p} from spectators of {_session}
+        add {_p} to players of {_session}
+    else:
+        add {_p} to spectators of {_session}
+        remove {_p} from players of {_session}
+    G_UpdateSessionGui({_session})
+
+function G_ButtonMinigames(p: player):
+    open {{@var_prefix}::remove::gui::minigames} to {_p}
+
+function G_ButtonSessionMode(p: player):
+    set {_session} to session of {_p}
+    if session value "mode" of {_session} is "public":
+        set session value "mode" of {_session} to "private"
+    else:
+        set session value "mode" of {_session} to "public"
+    G_UpdateSessionGui({_session})
+
+function G_ButtonMaps(p: player):
+    G_OpenMapsGui({_p})
+
+function G_ButtonShuffle(p: player):
+    broadcast "Shuffle function"
+    set {_session} to session of {_p}
+
+
+    G_UpdateSessionGui({_session})
+
+function G_ButtonRounds(p: player, type: click type):
+    set {_session} to session of {_p}
+    set {_rounds} to (session value "rounds" of {_session}) ? 1
+    if {_type} is left mouse button:
+        add 1 to {_rounds}
+    else:
+        remove 1 from {_rounds}
+    set (session value "rounds" of {_session}) to clamp({_rounds},1,{@max_rounds})
+    G_UpdateSessionGui({_session})
+
+function G_ButtonReady(p: player):
+    set {_session} to session of {_p}
+    set {_isReady} to (temporary player value "ready" of {_p}) ? false
+    set {_mg} to minigame of {_session}
+    set {_gm} to gamemap of {_session}
+    if ({_mg} or {_gm}) is not set:
+        stop
+    G_PlayerReady({_p}, {_isReady})
+    G_UpdateSessionGui({_session})
+
+function G_ButtonBack(p: player, click-type: click type):
+    if {_click-type} is left mouse:
+        G_OpenMainGui({_p})
+    else if {_click-type} is right mouse:
+        G_PlayerLeave({_p})
+    else if {_click-type} is right mouse with shift:
+        {_p} is host of (session of {_p})
+        G_SessionDelete(session of {_p})
+
+#------------------------------------------------------------------------------
+
+on inventory click:
+    set {_session} to (session of player)
+    event-inventory is {{@var_prefix}::remove::gui::main}
+    cancel event
+    if (index of event-slot) is 19:
+        #TODO: Implement with server event
+        broadcast "Server event is not implemented yet"
+    else if {@main_gui_session_slots} contains (index of event-slot):
+        event-item is set
+        set {_id} to string tag "id" of (custom nbt of event-item)
+        set {_clicked-session} to session with id {_id}
+
+        if {_session} is not set:
+            G_PlayerJoin(player, {_clicked-session})
+            G_OpenSessionGui(player)
+        else if {_session} is {_clicked-session}:
+            G_OpenSessionGui(player)
+        else if {_session} is not set:
+            G_SessionCreate(player)
+        else:
+            G_SendMessage(player,{@already_in_session})
+    else if (index of event-slot) is 6: 
+        if {_session} is set:
+            G_SendMessage(player,{@already_in_session})
+        else if player has permission {@session_create_permission}: 
+            G_SessionCreate(player)
+            G_OpenSessionGui(player)
+    else if (index of event-slot) is 45:
+        close inventory of player
+    else if (index of event-slot) is 51:
+        {_session} is set
+        G_OpenSessionGui(player)
+
+on inventory click:
+    set {_session} to (session of player)
+    event-inventory is (session value "gui" of {_session})
+    cancel event
+    set {_i} to index of event-slot
+    if {_i} is 53:
+        G_ButtonBack(player,click type)
+    else if {_i} is 43:
+        G_ButtonReady(player)
+    else if {_i} is 7:
+        G_ButtonSpectators(player)
+    else if {_i} is (24 or 25 or 26 or 33 or 35):
+        if (host of {_session}) is not player:
+            G_SendMessage(player,{@not_host})
+        else:
+            if {_i} is 24:
+                G_ButtonShuffle(player)
+            else if {_i} is 25:
+                G_ButtonMinigames(player)
+            else if {_i} is 26:
+                G_ButtonSessionMode(player)
+            else if {_i} is 33:
+                G_ButtonMaps(player)
+            else if {_i} is 35:
+                G_ButtonRounds(player,click type)
+            
+on inventory click:
+    set {_session} to session of player
+    event-inventory is {{@var_prefix}::remove::gui::minigames}
+    cancel event
+    set {_i} to index of event-slot
+    if {_i} is 53:
+        G_OpenSessionGui(player)
+    else if {@minigames_gui_game_slots} contains {_i}:
+        event-item is set
+        set {_id} to string tag "id" of (custom nbt of event-item)
+        set minigame of {_session} to minigame with id {_id}
+        G_UpdateSessionGui({_session})
+        G_OpenSessionGui(player)
+
+on inventory click:
+    set {_session} to session of player
+    event-inventory is (session value "maps-gui" of {_session})
+    cancel event
+    set {_i} to index of event-slot
+    if {_i} is 53:
+        G_OpenSessionGui(player)
+    else if {@maps_gui_map_slots} contains {_i}:
+        event-item is set
+        set {_id} to string tag "id" of (custom nbt of event-item)
+        set map of {_session} to gamemap from id {_id}
+        G_UpdateSessionGui({_session})
+        G_OpenSessionGui(player)

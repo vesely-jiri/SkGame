@@ -1,0 +1,215 @@
+using reflection
+
+options:
+    var_prefix: jpscripts::game
+    version: "v1.0.0"
+    command: game
+
+    permission_admin: skript.game.admin
+
+    start_timer: 5
+    default_gamemode: adventure
+    delimiter: "=="
+
+#messages
+    prefix: "&6[Game] &r"
+    session_created: "&aSession created"
+    session_create_already: "&cYou are already in a session"
+    game_stop_vote: "&aPlayers successfully voted to stop the game"
+    game_stop_noplayers: "&cThere are no players. Stopping game"
+    game_stop_unknown: "&cUnknown error. Stopping game"
+
+#admin messages
+    spawn_set: "&aGame lobby was set to your location"
+
+#------------------------------------------------------------------------------
+
+on load:
+    set {{@var_prefix}::remove::gui::main} to G_InitMainGui()
+    send join "Loaded core Game script " and {@version} to console
+
+command {@command} [<string>]:
+    trigger:
+        if arg-1 is not set:
+            if (session of player) is not set:
+                G_OpenMainGui(player)
+            else:
+                G_OpenSessionGui(player)
+        else if player has permission "{@permission_admin}":
+            if arg-1 is "admin":
+                GA_OpenAdminGui(player)
+
+on tab complete of "{@command}":
+    player has permission "{@permission_admin}"
+    set tab completions for position 1 to "admin"
+
+#------------------------------------------------------------------------------
+
+function G_SessionCreate(host: player):
+    if (session of {_host}) is set:
+        G_SendMessage({_host},{@session_create_already})
+        stop
+    set {_uuid} to random uuid
+    set {_gui} to G_InitSessionGui({_host})
+    create new session with id "%{_uuid}%":
+        set host of event-session to {_host}
+        set players of event-session to {_host}
+        set session value "mode" of event-session to "public"
+        set session value "rounds" of event-session to 1
+        set session value "gui" of event-session to {_gui}
+        G_SendMessageToSession(event-session,{@session_created})
+    G_UpdateSessionGui((session with id {_uuid}))
+    G_UpdateMainGui()
+
+function G_SessionDelete(session: session):
+    loop players of {_session}:
+        G_PlayerLeave(loop-player,"disband")
+    disband {_session}
+
+function G_SessionGameStart(session: session):
+    (state of {_session}) is STOPPED
+    set state of {_session} to STARTING
+    loop reversed {@start_timer} times:
+        if G_SessionGameCanStart({_session}) is not true:
+            set state of {_session} to STOPPED
+            reset level of (players of {_session})
+            stop
+        set level of (players of {_session}) to loop-value
+        if (loop-value) <= 3:
+            play sound "entity.experience_orb.pickup" to players of {_session}
+        wait 1 second
+    G_ResetPlayers(players of {_session})
+    start game of {_session}
+
+function G_SessionGameCanStart(session: session) :: boolean:
+    set {_mg} to minigame of {_session}
+    set {_min} to minigame value "min_players" of {_mg}
+    set {_ready::*} to (players of {_session}) where [temporary player value "ready" of input is true]
+    if any:
+        ({_mg} is not set)
+        (map of {_session}) is not set
+        size of (players of {_session}) < ({_min} ? 2)
+        (size of {_ready::*}) <= ((size of (players of {_session}))/2)
+    then:
+        return false
+    return true
+
+function G_Stopped(session: session, reason: string, additional_info: strings = ""):
+    set {_rounds} to (session value "rounds" of {_session})
+    set (session value "rounds" of {_session}) to {_rounds} - 1
+    set {_p::*} to (players of {_session}) and (spectators of {_session})
+    G_ResetPlayers({_p::*})
+    if {_reason} is "VOTE":
+        G_SendMessageToSession({_session},{@game_stop_vote})
+        G_TeleportPlayersToLobby({_p::*})
+    else if {_reason} is "NO_PLAYERS":
+        G_SendMessageToSession({_session},{@game_stop_noplayers})
+        G_TeleportPlayersToLobby({_p::*})
+    else if {_reason} is "WIN":
+        set {_mg} to minigame value "name" of (minigame of {_session})
+        set {_gm} to gamemap value "name" of (gamemap of {_session})
+        add "&6------------------------------------" to {_m::*}
+        add "&6Game of &e%{_mg}% &6on map &e%{_gm}% &6has finished" to {_m::*}
+        add (join {_additional_info::*} by nl) to {_m::*}
+        add "&6------------------------------------" to {_m::*}
+        G_SendMessageToSession({_session},{_m::*})
+        if ({_rounds} - 1) > 0:
+            start game of {_session}
+        else:
+            G_TeleportPlayersToLobby({_p::*})
+    else:
+        G_SendMessageToSession({_session},{@game_stop_unknown})
+        G_TeleportPlayersToLobby({_p::*})
+
+#------------------------------Player handler----------------------------------
+
+function G_PlayerJoin(p: player, session: session):
+    add {_p} to players of {_session}
+
+function G_PlayerReady(p: player, b: boolean):
+    set {_session} to session of {_p}
+    if {_b} is true:
+        delete (temporary player value "ready" of {_p})
+    else:
+        set (temporary player value "ready" of {_p}) to true
+    if G_SessionGameCanStart({_session}) is true:
+        G_SessionGameStart({_session})
+
+function G_PlayerLeave(p: player, reason: string = ""):
+    set {_session} to session of {_p}
+    set {_g} to session value "gui" of {_session}
+    if current inventory of {_p} is {_g}:
+        close inventory of {_p}
+    if {_p} is host of {_session}:
+        set {_pl::*} to players of {_session}
+        if size of {_pl::*} > 1:
+            set {_h} to random element of {_pl::*}
+            set host of {_session} to {_h}
+        else:
+            disband {_session}
+    remove {_p} from players of {_session}
+    remove {_p} from spectators of {_session}
+    delete temporary player values of {_p}
+    delete player values of {_p}
+    G_UpdateSessionGui({_session})
+
+#------------------------------Utils-------------------------------------------
+function G_TeleportPlayersToLobby(p: players):
+    teleport {_p::*} to {{@var_prefix}::core::spawn}
+
+function G_SendMessageToSession(session: session, message: strings, prefix: boolean = true):
+    set {_p::*} to players of {_session}
+    add ((spectators of {_session}) where [{_p::*} does not contain input]) to {_p::*}
+    G_SendMessage({_p::*},{_message::*},{_prefix})
+
+function G_SendMessage(p: players, message: strings, prefix: boolean = true):
+    set {_pr} to {@prefix} if {_prefix} is true else ""
+    send join {_pr} and {_message::*} by nl to {_p::*}
+
+function G_ResetPlayers(p: players):
+    loop players in {_p::*}:
+        extinguish loop-player
+        delete potion effects of loop-player
+        make loop-player dismount of any vehicles
+        clear inventory of loop-player
+        reset maximum health of loop-player
+        reset level progress of loop-player
+        reset level of loop-player
+        reset walk speed of loop-player
+        reset fly speed of loop-player
+        reset flight mode of loop-player
+        set gamemode of loop-player to {@default_gamemode}
+        make loop-player stop flying
+        make loop-player vulnerable
+        reset food level of loop-player
+        reset health of loop-player
+        reset title of loop-player
+
+function G_GetArena(gm: GameMap) :: bound:
+    set {_n} to gamemap id of {_gm}
+    return bound with id (join "{@var_prefix}" and {_n} by {@delimiter})
+
+#------------------------------------------------------------------------------
+
+on session create:
+    G_UpdateMainGui()
+    G_UpdateSessionGui(event-session)
+
+on session disband:
+    if (state of event-session) is not STOPPED:
+        G_Stopped(event-session,"disband")
+    wait 1 tick
+    G_UpdateMainGui()
+
+on player session join:
+    G_UpdateSessionGui(event-session)
+
+on player session leave:
+    delete temporary player values of player
+    delete player values of player
+    remove player from players of event-session
+    remove player from spectators of event-session
+    G_UpdateSessionGui(event-session)
+
+on leave:
+    G_PlayerLeave(player)

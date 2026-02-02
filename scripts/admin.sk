@@ -1,0 +1,531 @@
+options:
+#basic
+    var_prefix: jpscripts::game
+
+    dynamic_gui_slots: 10,11,12,13,14,15,16,19,20,21,22,23,24,25,28,29,30,31,32,33,34,37,38,39,40,41,42,43
+    wand: golden axe named "&6Map creation wand" with lore "&eLeftclick &7> &eset position 1%nl%&eRightclick &7> &eset position 2%nl%&cDrop the wand to stop edit mode"
+
+    delimiter: "=="
+
+    map_instructions: "&7---------------------------%nl%&7Leftclick > &aOpen addon settings for this map%nl%&7Rightclick + shift > &cDelete map"
+    addon_instructions: "&7-----------------------------------%nl%&7Leftclick > &aOpen addon-map settings%nl%&7Rightclick + shift > &aAssign&7/&cUnassign addon"
+    map_value_instructions: "&7---------------------------%nl%&7Leftclick > &aSet value%nl%&7Rightclick + shift > &cReset value"
+    value_instructions: "&7---------------------------%nl%&7---------------------------%nl%&7Leftclick > %{_action}%%nl%&7Rightclick + shift > &cDelete"
+    value_description: "&eType: %{_type}%%nl%&6Value: %{_value} ? "&cNot set"%%nl%&3Plurality: %{_plur} ? "single"%"
+
+    admin_gui_name: "&cAdmin gui"
+#messages
+    prefix: "&2<Game Admin> &r"
+    map_gui_name: "&9GES"
+    type_map_name: "&aSelect two points and type map name to confirm. Otherwise type 'cancel'"
+    type_value: "&aType required value. Write 'cancel' to cancel the action"
+    addon_gui_name: "&9GES&7-&e%{_map}%"
+    map_values_gui_name: "&9GES%{_name}%"
+    accept_position: "%nl%&eDo you want to set current value to &6%{_t}%?%nl% &a[Accept position] | &c[Back to menu]"
+    indicator: "&9Setup is active"
+    setup_mode: "&aSetup mode enabled"
+    send_point_location: "&eLocation of this point is %{_l}%"
+    stabilize: "&6[&eStabilize&6]"
+    stabilize_hover: "&eStabilize position"
+    multi_menu_add: "&a[&2+&a]"
+    multi_menu_add_hover: "&aAdd new value: &2%{_val_type}%"
+    multi_menu_back: "&a[&2Back&2]"
+    multi_menu_back_hover: "&aBack to main menu"
+    multi_menu_delete: "&4[&cX&4]"
+    multi_menu_delete_hover: "&4Delete value"
+    multi_menu_show: "&9[&bShow&9]"
+    multi_menu_show_hover: "&bMark saved locations"
+    multi_menu_header: "&6List of &7values %{_name}% &6for &7map %{_map}% &6of &7addon %{_addon}%"
+    multi_menu_line: "&e%loop-iteration%) %loop-value%"
+    addon_assigned: "&aAddon assigned to the map"
+    map_name: "&aSelect two points and type map name: "
+    map_created: "&aMap %{_name}% created"
+    map_deleted: "&aMap %{_name}% deleted"
+    map_exists: "&cMap %{_name}% already exists"
+    action_canceled: "&cAction canceled"
+    bound_Set: "&aSelect two points and confirm bound"
+    accept_position: "&eDo you want to set current value to &6%{_t}%?"
+    accept_position_accept: "&a[Accept position]"
+    accept_position_deny: "&c[Back to menu]"
+    setup_mode_disabled: "&cSetup mode disabled"
+    positions_not_set: "&cPositions not set. Use wand to set them"
+    wand_given: "&aMap creation wand given"
+    setup_not_enabled: "&cSetup mode not enabled"
+    spawnpoint_Set: "&aLocation of lobby spawnpoint set"
+    position_set: "&aLocation of position &2%{_pos}% &aset"
+    map_value_set_to: "&aValue of map &7%{_map}% - &7%{_name}% &aset to &7%{_v}%"
+    map_mode_disabled: "&cMap point edit mode is not enabled"
+    map_value_not_set: "&cMap values are not set"
+    map_creationError: "&cSomething went wrong during map creation. Check console"
+    addon_Unassigned: "&cAddon &6%{_addon}% &cunassigned from map &6%{_map}%"
+    addon_Assigned: "&aAddon &6%{_addon}% &aassigned to map &6%{_map}%"
+#----------------------------------------------------------------------------
+
+on load:
+    set {{@var_prefix}::remove::guis::admin} to GA_InitAdminGui()
+    GA_UpdateAdminGui()
+
+#----------------------------------------------------------------------------
+
+function GA_InitBaseGui(name: string, rows: integer = 6) :: inventory:
+    set {_g} to chest inventory named {_name} with {_rows} rows
+    add (integers from 0 to 8) to {_slots::*}
+    add (9,17,18,26,27,35,36,44) to {_slots::*}
+    add (integers from 45 to 52) to {_slots::*}
+    set slots {_slots::*} of {_g} to black stained glass pane named "&f"
+    set slot 53 of {_g} to (spruce door) named "&c&lClose gui"
+    return {_g}
+
+function GA_InitAdminGui() :: inventory:
+    set {_g} to GA_InitBaseGui({@admin_gui_name})
+    set slot 4 of {_g} to stone button named "&eSet lobby location"
+    set slot 45 of {_g} to golden axe named "&6Get wand"
+    set slot 49 of {_g} to (lime stained glass pane) named "&aCreate map"
+    set name of (slot 53 of {_g}) to "&c&lClose gui"
+    return {_g}
+
+function GA_InitMapPropertiesGui() :: inventory:
+    set {_g} to GA_InitBaseGui({@admin_gui_name})
+    set name of (slot 53 of {_g}) to "&c&lBack to admin menu"
+    return {_g}
+
+function GA_InitPluralValueListGui() :: inventory:
+    set {_g} to GA_InitBaseGui({@admin_gui_name})
+    set name of (slot 53 of {_g}) to "&c&lBack to minigame values"
+    return {_g}
+
+function GA_UpdateAdminGui():
+    set {_g} to {{@var_prefix}::remove::guis::admin}
+    set {_map-slots::*} to {@dynamic_gui_slots}
+    clear slots {_map-slots::*} of {_g}
+    loop gamemaps:
+        set {_name} to value "name" of loop-gamemap
+        set {_icon} to filled map named "&6%{_name}%"
+        set string tag "id" of custom nbt of {_icon} to gamemap id of loop-gamemap
+        set lore of {_icon} to {@map_instructions}
+        set slot {_map-slots::%loop-iteration%} of {_g} to {_icon}
+
+#Opens main gui for admins (shows available maps)
+function GA_OpenAdminGui(p: player):
+    GA_UpdateAdminGui()
+    GA_GiveWand({_p})
+    open {{@var_prefix}::remove::guis::admin} to {_p}
+
+#Opens admin gui for clicked map (shows available minigames for the map)
+function GA_OpenMapPropertiesGui(p: player, map: string):
+    set {_g} to GA_InitMapPropertiesGui()
+    set {{@var_prefix}::remove::admins::%{_p}%::guis::property_gui} to {_g}
+    set {_mg-slots::*} to {@dynamic_gui_slots}
+    loop minigames:
+        set {_name} to value "name" of loop-minigame
+        if (gamemap with id {_map}) supports loop-minigame:
+            set {_icon} to lime wool named "&a%{_name}%" with lore "&2Assigned"
+            set {_b} to true
+        else:
+            set {_icon} to gray wool named "&7%{_name}%"
+            set {_b} to false
+        set {_n} to custom nbt of {_icon}
+        set boolean tag "supports" of {_n} to {_b}
+        set string tag "map" of {_n} to {_map}
+        set string tag "minigame" of {_n} to minigame id of loop-minigame
+        add {@addon_instructions} to lore of {_icon}
+        set slot {_mg-slots::%loop-iteration%} of {_g} to {_icon}
+    open {_g} to {_p}
+
+#Opens values gui for choosen map and choosen minigame
+function GA_OpenMinigameValuesGui(p: player, map-id: string, mg-id: string):
+    set {_g} to GA_InitMapPropertiesGui()
+    set {{@var_prefix}::remove::admins::%{_p}%::guis::value_gui} to {_g}
+    
+    set {_n} to custom nbt of (slot 0 of {_g})
+    set string tag "map" of {_n} to {_map-id}
+    set string tag "minigame" of {_n} to {_mg-id}
+
+    set {_minigame} to minigame with id {_mg-id}
+    set {_map} to gamemap with id {_map-id}
+
+    set {_mg-slots::*} to {@dynamic_gui_slots}
+    loop minigame values of {_minigame}:
+        set {_i} to loop-index
+        if {_i} starts with "map;":
+            add 1 to {_iteration}
+            set {_value} to pair value {_i} of {_map} of {_minigame}
+            if {_value} is set:
+                set {_icon} to chest minecart named "&a%{_i}%"
+            else if (pair values loop-index of {_map} of {_minigame}) is set:
+                set {_icon} to chest minecart named "&a%{_i}%"
+                set {_value} to "&6List"
+            else:
+                set {_icon} to minecart named "&c%{_i}%"
+            if loop-value is a custom value:
+                set {_type} to value type of loop-value
+                set {_plur} to plurality of loop-value
+                if {_plur} is SINGLE:
+                    broadcast "&6TRUE"
+                    set {_action} to " &aSet value"
+                else:
+                    broadcast "&6FALSE"
+                    set {_action} to " &aOpen value list"
+            else:
+                set {_type} to loop-value
+                set {_value} to loop-value
+                set {_action} to ""
+            add {@value_description} to lore of {_icon}
+            add {@value_instructions} to lore of {_icon}
+            set {_n} to custom nbt of {_icon}
+            set string tag "key" of {_n} to loop-index
+            set string tag "type" of {_n} to {_type}
+            set string tag "plur" of {_n} to {_plur} ? SINGLE
+            set slot {_mg-slots::%{_iteration}%} of {_g} to {_icon}
+    open {_g} to {_p}
+
+function GA_OpenPluralValueList(p: player, key: string, mg: minigame, map: gamemap):
+    set {_g} to GA_InitPluralValueListGui()
+    set {{@var_prefix}::remove::admins::%{_p}%::guis::plural_gui} to {_g}
+    set {_n} to custom nbt of (slot 0 of {_g})
+    set string tag "key" of {_n} to {_key}
+    set string tag "map" of {_n} to gamemap id of {_map}
+    set string tag "minigame" of {_n} to minigame id of {_mg}
+    set slot 49 of {_g} to lime stained glass pane named "&aAdd new value"
+    set slot 50 of {_g} to ender eye named "&aShow all locations"
+    set {_slots::*} to {@dynamic_gui_slots}
+    loop (pair values {_key} of {_map} of {_mg}):
+        set {_i} to a chest named "&e%loop-value%"
+        set string tag "value" of (custom nbt of {_i}) to "%loop-value%"
+        add "&7Leftclick > &aShow location" to lore of {_i}
+        add "&7Rightclick > &cDelete value" to lore of {_i}
+        set slot {_slots::%loop-iteration%} of {_g} to {_i}
+    open {_g} to {_p}
+
+#----------------------------------------------------------------------------
+
+local function GA_ToggleAssignMiniGame(map: gamemap, mg: minigame):
+    if {_map} supports {_mg}:
+        delete pair values of {_map} of {_mg}
+    else:
+        set pair value "enabled" of {_map} of {_mg} to true
+        loop minigame values of {_mg}:
+            set {_i} to loop-index
+            if {_i} starts with "map;":
+                if loop-value is a custom value:
+                    if default value of loop-value is set:
+                        set {_value} to default value of loop-value
+                else:
+                    set {_value} to loop-value
+                set pair value {_i} of {_map} of {_mg} to {_value}
+            delete {_value}
+
+function GA_ShowLocations(l: locations, t: integer = 200):
+    loop {_l::*}:
+        GA_ShowLocationsBeam(loop-value,{_t})
+
+function GA_ShowLocationsBeam(l: location, t: integer):
+    spawn item display at {_l}:
+        set {_e} to entity
+        set display scale of {_e} to vector(0.25, 25, 0.25)
+        set display transformation translation of {_e} to vector(0,0,0)
+        set interpolation delay of {_e} to 1 tick
+        set teleport duration of {_e} to 1 tick
+        set item of {_e} to red concrete
+        set pitch of {_e} to 0
+        set yaw of {_e} to 0
+        set glowing of {_e} to true
+    loop {_t} times:
+        rotate {_e} around y-axis by 1 degree
+        wait 1 tick
+    kill {_e}
+
+function GA_GiveWand(p: player):
+    set {{@var_prefix}::remove::admins::%{_p}%} to {_p}
+    set {_wand} to {@wand}
+    set boolean tag "jpscripts;wand" of custom nbt of {_wand} to true
+    if {_p} does not have 1 of {_wand}:
+        give {_wand} to {_p}
+        G_SendMessage({_p},{@wand_given})
+
+local function GA_ModeIndicator(p: player):
+    while {{@var_prefix}::remove::admins::%{_p}%} is set:
+        send action bar {@indicator} to {_p}
+        wait 1.5 seconds
+
+local function GA_StopSetupMode(p: player):
+    send action bar {@setup_mode_disabled} to {_p}
+    delete {{@var_prefix}::remove::admins::%{_p}%}
+    delete {{@var_prefix}::remove::admins::%{_p}%::*}
+    loop items in inventory of {_p}:
+        boolean tag "jpscripts;wand" of custom nbt of loop-item is true
+        delete loop-item
+    close inventory of {_p}
+    G_SendMessage({_p},{@setup_mode_disabled})
+
+local function GA_SetSpawnpoint(p: player):
+    set {{@var_prefix}::core::spawn} to location of {_p}
+    send join {@prefix} and {@spawnpoint_Set} to {_p}
+
+local function GA_StartCreationMode(p: player):
+    set {{@var_prefix}::remove::admins::%{_p}%::response} to "map_creation"
+    close inventory of {_p}
+    send join {@prefix} and {@type_map_name} to {_p}
+
+local function GA_StabilizePlayer(p: player):
+    set {_f} to horizontal facing of {_p}
+    set {_l} to location of {_p}
+    set {_b} to location of block at {_p}
+    set x-coord of {_l} to x-coord of {_b}
+    set z-coord of {_l} to z-coord of {_b}
+    set pitch of {_l} to 0
+    if {_f} is south:
+        set yaw of {_l} to 0
+    else if {_f} is west:
+        set yaw of {_l} to 90
+    else if {_f} is north:
+        set yaw of {_l} to 180
+    else:
+        set yaw of {_l} to -90
+    teleport {_p} to {_l}
+
+function GA_ValueType(o: object, tov: text = "type") :: object:
+    if ("%{_o}%" parsed as integer) is an integer:
+        return an integer if {_tov} is "type" else ("%{_o}%" parsed as integer)
+    else if ("%{_o}%" parsed as boolean) is a boolean:
+        return a boolean if {_tov} is "type" else ("%{_o}%" parsed as boolean)
+    else if ("%{_o}%" parsed as number) is a number:
+        return a number if {_tov} is "type" else ("%{_o}%" parsed as number)
+    else if ("%{_o}%" parsed as a timespan) is a timespan:
+        return a timespan if {_tov} is "type" else ("%{_o}%" parsed as a timespan)
+    else if {_o} is a location:
+        return a location if {_tov} is "type" else {_o}         #TODO: ???
+    else if {_o} is a text:
+        return a string if {_tov} is "type" else {_o}
+
+#----------------------------------------------------------------------------
+
+local function GA_CreateMap(p: player, name: string):
+    if {{@var_prefix}::remove::admins::%{_p}%} is not set:
+        G_SendMessage({_p},{@setup_not_enabled})
+        stop
+    if all:
+        {{@var_prefix}::remove::admins::%{_p}%::pos::1} is set
+        {{@var_prefix}::remove::admins::%{_p}%::pos::2} is set
+        {{@var_prefix}::remove::admins::%{_p}%::response} is "map_creation"
+    then:
+        set {_p1} to {{@var_prefix}::remove::admins::%{_p}%::pos::1}
+        set {_p2} to {{@var_prefix}::remove::admins::%{_p}%::pos::2}
+        set {_s} to join ("{@var_prefix}" and {_name}) by {@delimiter}
+        if bound with id {_s} exists:
+            G_SendMessage({_p},{@map_exists})
+            stop
+        create bound with id {_s} between {_p1} and {_p2}
+        delete {{@var_prefix}::remove::admins::%{_p}%::*}
+        if last created bound is not (bound with id {_s}):
+            G_SendMessage({_p},{@map_creationError})
+        else:
+            register gamemap with id {_name}:
+                set value "name" of event-gamemap to {_name}
+             #   set gamemap value "arena" of event-gamemap to {_s}
+            G_SendMessage({_p},{@map_created})
+        GA_OpenAdminGui({_p})
+    else:
+        G_SendMessage({_p},{@positions_not_set})
+
+function GA_SetMapValue(p: player, message: string):
+    set {_g} to {{@var_prefix}::remove::admins::%{_p}%::guis::value_gui}
+
+    set {_slot} to slot 0 of {_g}
+    set {_map-id} to string tag "map" of custom nbt of {_slot}
+    set {_map} to gamemap with id {_map-id}
+    set {_mg-id} to string tag "minigame" of custom nbt of {_slot}
+    set {_minigame} to minigame with id {_mg-id}
+    set {_item} to {{@var_prefix}::remove::admins::%{_p}%::response}
+    set {_key} to string tag "key" of (custom nbt of {_item})
+    set {_value} to minigame value {_key} of {_minigame}
+    if {_value} is a custom value:
+        set {_value-type} to value type of {_value}
+    if GA_ValueType({_message}) is {_value-type}:
+        set pair value {_key} of {_map} of {_minigame} to GA_ValueType({_message},"value")
+    else:
+        broadcast "&cError. Types mismatch"
+    GA_OpenMinigameValuesGui({_p}, {_map-id}, {_mg-id})
+
+local function GA_PositionIndicator(p: player, pos: integer, l: location):
+    set {{@var_prefix}::remove::admins::%{_p}%::pos::%{_pos}%} to {_l}
+    G_SendMessage({_p},{@position_set})
+    set {_bl} to block data of (block at {_l})
+    while {{@var_prefix}::remove::admins::%{_p}%::pos::%{_pos}%} is {_l}:
+        if mod(loop-iteration,2) is 0:
+            set (block at {_l}) to blue concrete
+        else:
+            set (block at {_l}) to {_bl}
+        wait 10 ticks
+    set (block at {_l}) to {_bl}
+
+local function GA_ShowPointAnimation(l: location):
+    loop reversed 10 times:
+        play 100 (yellow coloured dust with speed 0) at {_l} ~ vector(0,loop-value/3,0)
+        wait 1 ticks
+    send {@send_point_location} to (players in radius 1 of {_l})
+    play 100 (blue coloured dust with speed 0) at {_l}
+
+#----------------------------------------------------------------------------
+
+on inventory click:
+    event-inventory is {{@var_prefix}::remove::guis::admin}
+    cancel event
+    event-item is set
+
+    set {_i} to index of event-slot
+    if {_i} is 4:
+        GA_SetSpawnpoint(player)
+    else if {_i} is 45:
+        GA_GiveWand(player)
+    else if {_i} is 49:
+        GA_StartCreationMode(player)
+    else if {_i} is 53:
+        GA_StopSetupMode(player)
+    else if {@dynamic_gui_slots} contains {_i}:
+        set {_id} to string tag "id" of custom nbt of event-item
+        {_id} is set
+        if click type is right mouse with shift:
+            set {_bound-id} to join "{@var_prefix}" and {_id} by {@delimiter}
+            delete bound with id {_bound-id}
+            delete gamemap with id {_id}
+            GA_UpdateAdminGui()
+        else:
+            GA_OpenMapPropertiesGui(player,{_id})
+
+on inventory click:
+    event-inventory is {{@var_prefix}::remove::admins::%player%::guis::property_gui}
+    cancel event
+    event-item is set
+
+    if index of event-slot is 53:
+        GA_OpenAdminGui(player)
+    else if {@dynamic_gui_slots} contains (index of event-slot):
+        set {_map-id} to string tag "map" of (custom nbt of event-item)
+        set {_map} to gamemap with id {_map-id}
+        set {_minigame-id} to string tag "minigame" of (custom nbt of event-item)
+        set {_minigame} to minigame with id {_minigame-id}
+        {_map} and {_minigame} are set
+        if click type is left mouse:
+            GA_OpenMinigameValuesGui(player,{_map-id},{_minigame-id})
+        else if click type is right mouse with shift:
+            GA_ToggleAssignMiniGame({_map},{_minigame})
+            GA_OpenMapPropertiesGui(player,{_map-id})
+
+on inventory click:
+    event-inventory is {{@var_prefix}::remove::admins::%player%::guis::value_gui}
+    cancel event
+    event-item is set
+
+    set {_slot} to slot 0 of event-inventory
+    set {_map-id} to string tag "map" of custom nbt of {_slot}
+    set {_map} to gamemap with id {_map-id}
+    set {_mg-id} to string tag "minigame" of custom nbt of {_slot}
+    set {_minigame} to minigame with id {_mg-id}
+    set {_key} to string tag "key" of custom nbt of event-item
+    set {_value} to minigame value {_key} of {_minigame}
+
+    if (index of event-slot) is 53:
+        GA_OpenMapPropertiesGui(player, {_map-id})
+    else if {@dynamic_gui_slots} contains (index of event-slot):
+        if click type is left mouse:
+            if (plurality of {_value}) is PLURAL:
+                GA_OpenPluralValueList(player, {_key}, {_minigame}, {_map})
+            else if type of {_value} is a location:
+                
+            else:
+                set {{@var_prefix}::remove::admins::%player%::response} to event-item
+                send join {@prefix} and {@type_value} to player
+                close inventory of player
+        else if click type is right mouse with shift:
+            delete value {_key} of {_map} of {_minigame}
+            GA_OpenMinigameValuesGui(player, {_map-id}, {_mg-id})
+
+on inventory click:
+    event-inventory is {{@var_prefix}::remove::admins::%player%::guis::plural_gui}
+    cancel event
+    event-item is set
+    set {_slot} to slot 0 of event-inventory
+    set {_map-id} to string tag "map" of custom nbt of {_slot}
+    set {_map} to gamemap with id {_map-id}
+    set {_mg-id} to string tag "minigame" of custom nbt of {_slot}
+    set {_minigame} to minigame with id {_mg-id}
+    set {_key} to string tag "key" of custom nbt of {_slot}
+    set {_value} to minigame value {_key} of {_minigame}
+    if (index of event-slot) is 53:
+        GA_OpenMinigameValuesGui(player, {_map-id}, {_mg-id})
+    else if (index of event-slot) is 49:
+        set {_c0} to new text component from "&eSave location of:"
+        set {_c1} to new text component from "&aTargeted block"
+        create callback for {_c1} with 1 use:
+            add (location of (targeted block)) to (pair values {_key} of {_map} of {_minigame})
+            GA_OpenPluralValueList(player,{_key},{_minigame},{_map})
+        set {_c2} to new text component from "&5Player"
+        create callback for {_c2} with 1 use:
+            add (location of player) to (pair values {_key} of {_map} of {_minigame})
+            GA_OpenPluralValueList(player,{_key},{_minigame},{_map})
+        set {_c3} to new text component from "&3Stabilize"
+        create callback for {_c3} with -1 uses:
+            GA_StabilizePlayer(player)
+        set {_c4} to new text component from "&7Back to menu"
+        create callback for {_c4} with -1 uses:
+            GA_OpenPluralValueList(player,{_key},{_minigame},{_map})
+        send components ({_c0} and {_c1} and {_c2} and {_c3} and {_c4}) to player
+        close inventory of player
+    else if (index of event-slot) is 50:
+        set {_locations::*} to pair values {_key} of {_map} of {_minigame}
+        GA_ShowLocations({_locations::*})
+        set {_c3} to new text component from "&7Back to menu"
+        create callback for {_c3} with -1 uses:
+            GA_OpenPluralValueList(player,{_key},{_minigame},{_map})
+        send component {_c3} to player
+        close inventory of player
+    else if {@dynamic_gui_slots} contains event-slot:
+        if click type is left mouse:
+            set {_locations::*} to pair values {_key} of {_map} of {_minigame}
+            loop {_locations::*}:
+                set {_v} to string tag "value" of custom nbt of event-item
+                if "%loop-value%" is {_v}:
+                    #Comment to avoid the IDE bug warning
+                    GA_ShowLocations(loop-value)
+                    close inventory of player
+                    stop loop
+        else if click type is right mouse:
+            broadcast "&c???"
+            remove "t"  from pair values {_key} of {_map} of {_minigame} 
+
+on chat:
+    {{@var_prefix}::remove::admins::%player%::response} is set
+    cancel event
+    if message is not "cancel":
+        if {{@var_prefix}::remove::admins::%player%::response} is "map_creation":
+            GA_CreateMap(player,message)
+        else:
+            GA_SetMapValue(player,message)
+    else:
+        delete {{@var_prefix}::remove::admins::%player%::response}
+        delete {{@var_prefix}::remove::admins::%player%::pos::*}
+        G_SendMessage(player,{@action_canceled})
+
+on leftclick:
+    boolean tag "jpscripts;wand" of custom nbt of tool is true
+    cancel event
+    {{@var_prefix}::remove::admins::%player%} is set
+    event-block is set
+    GA_PositionIndicator(player,1,(location of event-block))
+
+on rightclick:
+    boolean tag "jpscripts;wand" of custom nbt of tool is true
+    cancel event
+    {{@var_prefix}::remove::admins::%player%} is set
+    event-block is set
+    GA_PositionIndicator(player,2,(location of event-block))
+
+on leave:
+    {{@var_prefix}::remove::admins::%player%} is set
+    GA_StopSetupMode(player)
+
+on drop:
+    boolean tag "jpscripts;wand" of (custom nbt of event-item stack) is true
+    delete event-dropped item
+    GA_StopSetupMode(player)

@@ -1,0 +1,67 @@
+#----------------------------------------------------------------------------
+options:
+#basic
+    var_prefix: game::koth
+
+#----------------------------------------------------------------------------
+
+on load:
+    register minigame with id "koth":
+        set value "name" of event-minigame to "King of the Hill"
+        set value "icon" of event-minigame to "red banner"
+        set value "author" of event-minigame to "JuraJ_Player"
+        set value "min_players" of event-minigame to 2
+
+on "koth" game start:
+    set {_map} to map of event-session
+    set {_spawnpoints::*} to value "spawnpoints" of {_map} and event-minigame
+    loop (players of event-session):
+        add 1 to {_n}
+        teleport loop-player to {_spawnpoints::%{_n}%}
+        set slot 0 of loop-player to stick
+        reset {_n} if {_n} is (size of {_spawnpoints::*})
+    Koth_StartHillTicking(event-session)
+    Koth_StartShowPoints(event-session)
+
+on "koth" game stop:
+    if event-string is "WIN":
+        set {_winner} to value "WINNER" of event-session
+        add "&7Player &f%{_winner}% &7won the game" to {_info::*}
+    #Some core function that will react to the event and move players to spawn
+
+local function Koth_StartShowPoints(session: session):
+    while (state of {_session}) is STARTED:
+        broadcast loop-iteration
+        loop (players of {_session}):
+            set {_s} to session value "players::%loop-value%::score" of {_session}
+            send action bar "&7Points: %{_s} ? 0%" to loop-player
+        wait 1 second
+
+local function Koth_StartHillTicking(session: session):
+    set {_map} to map of {_session}
+    set {_bound} to value "hill_bound" of {_map} and (minigame of {_session})
+    while (state of {_session}) is started:
+        set {_p::*} to (bound players of {_bound})
+        if (size of {_p::*}) = 1:
+            set {_s} to value "players::%{_p::1}%::score" of {_session}
+            set value "players::%{_p::1}%::score" of {_session} to {_s} + 1
+            if ({_s} + 1) >= value "points_limit" of {_session} :
+                set value "WINNER" of {_session} to {_p::1}
+                stop game of {_session} with reason "WIN"
+        wait 1 second
+
+on damage of player:
+    victim is playing (minigame with id "koth")
+    cancel event
+    attacker is a player
+    set {_sp} to 1
+    if (tool of attacker) is stick:
+        add 0.5 to {_sp}
+    if (attacker is sprinting):
+        add 0.5 to {_sp}
+    push victim (vector from attacker to victim) with speed {_sp}
+    push victim up with speed 0.5
+
+on drop:
+    player is playing (minigame with id "koth")
+    cancel event
