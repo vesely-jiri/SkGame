@@ -34,4 +34,7 @@ public interface SkGameModule {
 
     /** Resource paths inside the JAR (under resources/) installed to plugins/SkGame/ on first run. */
     default List<String> getResourcePaths() { return List.of(); }
+
+    /** Whether this module is enabled when the config key is absent. */
+    default boolean isEnabledByDefault() { return true; }
 }

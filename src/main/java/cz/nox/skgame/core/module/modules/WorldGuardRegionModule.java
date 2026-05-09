@@ -2,6 +2,9 @@ package cz.nox.skgame.core.module.modules;
 
 import cz.nox.skgame.SkGame;
 import cz.nox.skgame.api.module.SkGameModule;
+import cz.nox.skgame.core.region.WorldGuardRegion;
+
+import java.util.List;
 
 public class WorldGuardRegionModule implements SkGameModule {
 
@@ -13,10 +16,22 @@ public class WorldGuardRegionModule implements SkGameModule {
             Class.forName("com.sk89q.worldguard.WorldGuard");
             return true;
         } catch (ClassNotFoundException e) {
-            plugin.getLogger().info("[SkGame] Module region-worldguard disabled: WorldGuard plugin not found");
+            plugin.getLogUtil().info("Module region-worldguard disabled: WorldGuard plugin not found");
             return false;
         }
     }
 
-    @Override public void onEnable(SkGame plugin) {}
+    @Override
+    public void onEnable(SkGame plugin) {
+        if (WorldGuardRegion.init()) {
+            plugin.getLogUtil().info("WorldGuard region adapter registered");
+        } else {
+            plugin.getLogUtil().warning("WorldGuard found but region adapter init failed");
+        }
+    }
+
+    @Override
+    public List<String> getSkriptClasses() {
+        return List.of("cz.nox.skgame.skript.expressions.regions.ExprWorldGuardRegion");
+    }
 }

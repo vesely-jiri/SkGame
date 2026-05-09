@@ -7,6 +7,7 @@ import cz.nox.skgame.api.module.SkGameModule;
 public class DatabaseModule implements SkGameModule {
 
     @Override public String getId() { return "database"; }
+    @Override public boolean isEnabledByDefault() { return false; }
     @Override public boolean canEnable(SkGame plugin) { return true; }
     @Override public void onEnable(SkGame plugin) {}
 }
