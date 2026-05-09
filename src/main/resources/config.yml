@@ -1,8 +1,28 @@
-vanilla-scripts:
-  core: true
-  guis: true
-  admin: true
+# SkGame configuration
 
+# --- Modules ---
+# Enable/disable user-facing components independently.
+# Disabling a module prevents its Skript syntaxes, vanilla scripts, and listeners from loading.
+modules:
+  gui:
+    enabled: true
+  admin:
+    enabled: true
+  default-minigames:
+    enabled: true
+  region-skbee:
+    enabled: true     # auto-skipped if SkBee is not installed
+  region-worldguard:
+    enabled: true     # auto-skipped if WorldGuard is not installed
+  messages:
+    enabled: true
+  database:
+    enabled: false
+  scoreboard:
+    enabled: false
+
+# --- Lobby ---
+# Set via /skgame setlobby or the `set lobby spawn to %location%` effect.
 lobby:
   world: ~
   x: 0.0
@@ -11,9 +31,6 @@ lobby:
   yaw: 0.0
   pitch: 0.0
 
+# --- Defaults ---
 defaults:
   gamemode: adventure
-
-regions:
-  enable-skbee-adapter: true
-  enable-worldguard-adapter: true

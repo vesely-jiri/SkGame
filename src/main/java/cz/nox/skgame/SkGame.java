@@ -143,6 +143,7 @@ public class SkGame extends JavaPlugin {
         }
 
         saveDefaultConfig();
+        migrateConfig();
         loadLobbySpawn();
 
         this.addon = Skript.registerAddon(instance);
@@ -266,6 +267,39 @@ public class SkGame extends JavaPlugin {
         } catch (ClassNotFoundException e) {
             logUtil.error("Skript class not found: " + fqn);
         }
+    }
+
+    private void migrateConfig() {
+        boolean changed = false;
+
+        // vanilla-scripts.* → modules.*.enabled  (phase 1-4 config format)
+        if (getConfig().isSet("vanilla-scripts")) {
+            if (getConfig().isSet("vanilla-scripts.guis")) {
+                getConfig().set("modules.gui.enabled", getConfig().getBoolean("vanilla-scripts.guis", true));
+            }
+            if (getConfig().isSet("vanilla-scripts.admin")) {
+                getConfig().set("modules.admin.enabled", getConfig().getBoolean("vanilla-scripts.admin", true));
+            }
+            // vanilla-scripts.core has no module equivalent — core.sk is always installed.
+            getConfig().set("vanilla-scripts", null);
+            changed = true;
+            logUtil.info("Migrated vanilla-scripts config to modules config");
+        }
+
+        // regions.* → modules.region-*.enabled  (phase 1-4 config format)
+        if (getConfig().isSet("regions")) {
+            if (getConfig().isSet("regions.enable-skbee-adapter")) {
+                getConfig().set("modules.region-skbee.enabled", getConfig().getBoolean("regions.enable-skbee-adapter", true));
+            }
+            if (getConfig().isSet("regions.enable-worldguard-adapter")) {
+                getConfig().set("modules.region-worldguard.enabled", getConfig().getBoolean("regions.enable-worldguard-adapter", true));
+            }
+            getConfig().set("regions", null);
+            changed = true;
+            logUtil.info("Migrated regions config to modules config");
+        }
+
+        if (changed) saveConfig();
     }
 
     private void loadLobbySpawn() {
