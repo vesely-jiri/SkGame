@@ -406,13 +406,6 @@ public class GameMap implements ConfigurationSerializable {
             for (Map.Entry<String, Object> valEntry : innerMap.entrySet()) {
                 String key = valEntry.getKey();
                 Object raw = valEntry.getValue();
-                // Legacy: pre-__plural format stored plural values as a raw List.
-                // New serialize() uses a {__plural:true, values:[...]} Map, so this branch
-                // only fires when loading data written by an older build. Keep for compat.
-                if (raw instanceof List<?> list) {
-                    gameMap.setMiniGameValue(miniGameId, key, list.toArray());
-                    continue;
-                }
                 if (raw instanceof MemorySection rawMap) {
                     Map<String, Object> data = rawMap.getValues(false);
                     if (Boolean.TRUE.equals(data.get("__plural"))) {
