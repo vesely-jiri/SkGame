@@ -28,6 +28,9 @@ tasks {
         filesMatching("plugin.yml") {
             expand("version" to project.version)
         }
+        from("scripts") {
+            into("scripts")
+        }
     }
 
     shadowJar {

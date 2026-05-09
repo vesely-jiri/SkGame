@@ -45,3 +45,4 @@ bin/
 .idea/
 libs/
 *.java~
+/src/main/resources/scripts/
