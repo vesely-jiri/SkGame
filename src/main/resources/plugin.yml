@@ -2,6 +2,6 @@ name: SkGame
 version: ${version}
 main: cz.nox.skgame.SkGame
 description: Skript addon for managing minigames
-api-version: 1.19
+api-version: 1.21
 depend: [ Skript ]
 softdepend: [ SkBee, WorldGuard ]

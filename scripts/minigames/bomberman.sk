@@ -1,4 +1,3 @@
-#----------------------------------------------------------------------------
 options:
 #basic
     var_prefix: game::bomberman
@@ -14,9 +13,6 @@ options:
 
 #----------------------------------------------------------------------
 
-#TODO:
-#   remake mines to variables(or something else?), so it's easier to remove references. Rn metadata are being just stacked in memory until server is restarted
-
 on load:
     register new minigame with id "bomberman":
         set minigame value "name" of event-minigame to "&cBomberMan"
@@ -24,38 +20,39 @@ on load:
         set minigame value "description" of event-minigame to "&7- Pickup your &cTNT &7and fight"
         set minigame value "author" of event-minigame to "JuraJ_Player"
         set minigame value "min_players" of event-minigame to 2
-        set minigame value "session;gamemode" of event-minigame to a custom value:
-            set value name to "Gamemodes"
+        set minigame value "gamemode" of event-minigame to a custom value:
+            set value name to "Gamemode"
             set value type to a text
             set default value to "elimination"
-            set description to "Choose which gamemode you want to play. Elimination with just one life, Score deathmatch or time limited deathmatch"
-        set minigame value "map;respawn_cooldown" of event-minigame to a custom value:
+            set description to "Choose which gamemode to play: elimination (one life) or deathmatch"
+        set minigame value "respawn_cooldown" of event-minigame to a custom value:
             set plurality to single
             set value name to "Respawn cooldown"
             set value type to a timespan
             set default value to 5 seconds
-            set description to "Choose how long it will take player to respawn after death in deathmatch mode"
-        set minigame value "map;spawn_rate" of event-minigame to a custom value:
-            set value name to "Booster spawnpoints"
+            set description to "How long it takes a player to respawn after death in deathmatch mode"
+        set minigame value "spawn_rate" of event-minigame to a custom value:
+            set value name to "Item spawn rate"
             set plurality to single
             set value type to a timespan
             set default value to 5 ticks
-            set description to "Choose how fast are items going to spawn"
-        set minigame value "map;deathmatch_timer" of event-minigame to a custom value:
+            set description to "How fast items are spawned at booster locations"
+        set minigame value "deathmatch_timer" of event-minigame to a custom value:
             set value name to "Deathmatch playtime"
             set plurality to single
             set value type to a timespan
             set default value to 1 minute
-            set description to "Choose how long will players play, if deathmatch mode is set"
-        set minigame value "map;booster_spawnpoints" of event-minigame to a custom value:
+            set description to "How long players play in deathmatch mode before TIMEOUT"
+        set minigame value "booster_spawnpoints" of event-minigame to a custom value:
             set value name to "Booster spawnpoints"
             set plurality to plural
             set value type to a location
-            set description to "Locations on map where items are going to be spawned. Players are also spawned on those locations"
+            set description to "Locations where items spawn; players also start here"
 
 on "bomberman" game start:
-    set {_loc::*} to pair values "map;booster_spawnpoints" of event-gamemap of event-minigame
-    #TODO: teleport (spectators of event-session) to bound center of (arena of event-session)
+    set {_map} to map of event-session
+    set {_mg} to minigame of event-session
+    set {_loc::*} to values "booster_spawnpoints" of {_map} of {_mg}
     loop shuffled (players of event-session):
         add 1 to {_n}
         teleport loop-value to {_loc::%{_n}%}
@@ -66,33 +63,31 @@ on "bomberman" game start:
         if loop-value <= 3:
             play sound "minecraft:entity.experience_orb.pickup" to players of event-session
         wait 1 second
-    set {_rate} to pair value "map;spawn_rate" of event-gamemap of event-minigame
-
-    Bomberman_StartSpawningDrops(event-session,{_rate})
+    set {_rate} to (value "spawn_rate" of {_map} of {_mg}) ? 5 ticks
+    Bomberman_StartSpawningDrops(event-session, {_rate})
     if Bomberman_GetGamemode(event-session) is "deathmatch":
         Bomberman_StartTimer(event-session)
 
 on "bomberman" game stop:
-    #set {_arena} to arena of (map of {_session})
-    delete bound (primed tnt) in {_arena}
-    delete bound (dropped items) in {_arena}
-    set {_mine} to {{@var_prefix}::items::mine}
-    #TODO: refactor: Probably lagging
-    set (bound blocks within {_bound}) where [input is type of {_mine}] to air
+    set {_arena} to arena region of event-session
+    if {_arena} is not set:
+        set {_arena} to region of (map of event-session)
+    if {_arena} is set:
+        clear all entities in region {_arena}
+        loop (blocks in region {_arena}) where [input is polished blackstone pressure plate]:
+            set loop-block to air
     set {_p::*} to Bomberman_GetPlayingPlayers(event-session)
     if event-string is "WIN":
         set {_m} to "&aWinner is %{_p::1}%"
     else if event-string is "TIMEOUT":
         loop {_p::*}:
-            set {_v} to temporary player value "points" of loop-value
+            set {_v} to (session value "players::%loop-value%::points" of event-session) ? 0
             add loop-value to {_player-list::*}
-            set {_players::%loop-value%} to {_v} ? 0
-            broadcast "&5Found value: %{_players::%loop-value%}% for player %loop-value%"
+            set {_players::%loop-value%} to {_v}
         sort {_player-list::*} in descending order based on {_players::%input%}
         set {_kills} to {_players::%{_player-list::1}%}
         set {_m} to "&aWinner is: %{_player-list::1}% with %{_kills}% kills"
         set {_win} to "WIN"
-    broadcast "&cStop reason is: %event-string%"
     G_Stopped(event-session, {_win} ? event-string, ({_m} ? ""))
 
 #----------------------------------------------------------------------
@@ -117,11 +112,10 @@ on script load:
     set {{@var_prefix}::items::legendary_tnt} to 1 of tnt named "&cLegendary TNT"
     set {{@var_prefix}::items::legendary_tnt::chance} to 5
     set {{@var_prefix}::items::legendary_tnt::fuse} to 30
-    # Find lowest chance that will be used to divide all chances(minimize storage usage)
+    # Find lowest chance to use as divisor for probability table
     loop {{@var_prefix}::items::*}:
         set {_v} to {{@var_prefix}::items::%loop-index%::chance}
         set {_s} to {_v} if ({_s} ? infinity value) > {_v}
-    # Add the item as many times as their chance/lowest chance, then keep picking random items from list
     loop {{@var_prefix}::items::*}:
         loop ceil({{@var_prefix}::items::%loop-index%::chance}/{_s}) times:
             add loop-index to {{@var_prefix}::probabilities::*}
@@ -129,14 +123,14 @@ on script load:
 #----------------------------------------------------------------------
 
 local function Bomberman_GetGamemode(session: session) :: string:
-    set {_g} to temporary session value "gamemode" of {_session}
-    return "deathmatch" if {_g} is 1
-    return "elimination"
+    set {_map} to map of {_session}
+    set {_mg} to minigame of {_session}
+    return (value "gamemode" of {_map} of {_mg}) ? "elimination"
 
 local function Bomberman_StartTimer(session: session):
+    set {_map} to map of {_session}
     set {_mg} to minigame of {_session}
-    set {_gm} to gamemap of {_session}
-    set {_timer} to (pair value "map;deathmatch_timer" of {_gm} of {_mg})
+    set {_timer} to (value "deathmatch_timer" of {_map} of {_mg}) ? 1 minute
     while (state of {_session}) is STARTED:
         if {_timer} <= (loop-iteration * 1 second):
             stop game of {_session} with reason "TIMEOUT"
@@ -152,20 +146,19 @@ local function Bomberman_GetRandomItemIndex() :: string:
     return random element of {{@var_prefix}::probabilities::*}
 
 local function Bomberman_RespawnPlayer(session: session, p: player):
-    set {_cd} to pair value "map;respawn_cooldown" of (gamemap of {_session}) of (minigame of {_session})
+    set {_map} to map of {_session}
+    set {_mg} to minigame of {_session}
+    set {_cd} to (value "respawn_cooldown" of {_map} of {_mg}) ? 5 seconds
     wait {_cd}
     if {_p} is playing (minigame with id "bomberman"):
-        set (gamemode of {_p}) to survival
-        set {_map} to map of {_session}
-        set {_mg} to minigame of {_session}
-        set {_l::*} to pair values "map;booster_spawnpoints" of {_map} of {_mg}
+        set {_l::*} to values "booster_spawnpoints" of {_map} of {_mg}
         teleport {_p} to (random element of {_l::*})
         set gamemode of {_p} to survival
 
 local function Bomberman_AddPoint(session: session, p: player):
     play sound "minecraft:entity.experience_orb.pickup" to {_p}
-    set {_v} to temporary player value "points" of {_p}
-    set temporary player value "points" of {_p} to ({_v} + 1)
+    set {_v} to (session value "players::%{_p}%::points" of {_session}) ? 0
+    set session value "players::%{_p}%::points" of {_session} to ({_v} + 1)
     set (level of {_p}) to ({_v} + 1)
 
 local function Bomberman_SpawnDrops(mode: string, l: locations):
@@ -187,10 +180,10 @@ local function Bomberman_SpawnDrops(mode: string, l: locations):
 local function Bomberman_StartSpawningDrops(session: session, rate: timespan):
     set {_map} to map of {_session}
     set {_mg} to minigame of {_session}
-    set {_l::*} to pair values "map;booster_spawnpoints" of {_map} of {_mg}
-    Bomberman_SpawnDrops("charge",{_l::*})
+    set {_l::*} to values "booster_spawnpoints" of {_map} of {_mg}
+    Bomberman_SpawnDrops("charge", {_l::*})
     while state of {_session} is STARTED:
-        Bomberman_SpawnDrops("random",{_l::*})
+        Bomberman_SpawnDrops("random", {_l::*})
         wait {_rate}
 
 local function Bomberman_EliminatePlayer(victim: player, attacker: player):
@@ -200,24 +193,24 @@ local function Bomberman_EliminatePlayer(victim: player, attacker: player):
     set invulnerability time of {_victim} to 2 ticks
     if chestplate of {_victim} is air:
         set (gamemode of {_victim}) to spectator
-        set {_v} to temporary player value "deaths" of {_victim}
-        set temporary player value "deaths" of {_victim} to {_v} + 1
+        set {_v} to (session value "players::%{_victim}%::deaths" of {_session}) ? 0
+        set session value "players::%{_victim}%::deaths" of {_session} to {_v} + 1
         play sound "minecraft:entity.player.hurt" at {_victim}
-        G_SendMessageToSession({_session},{@player_eliminated})
+        G_SendMessageToSession({_session}, {@player_eliminated})
         if {_victim} is not {_attacker}:
-            Bomberman_AddPoint({_session},{_attacker})
+            Bomberman_AddPoint({_session}, {_attacker})
         if Bomberman_GetGamemode({_session}) is "elimination":
             if size of Bomberman_GetPlayingPlayers({_session}) is 1:
                 stop game of {_session} with reason "WIN"
             else if size of Bomberman_GetPlayingPlayers({_session}) is 0:
                 stop game of {_session} with reason "NO_PLAYERS"
         else if Bomberman_GetGamemode({_session}) is "deathmatch":
-            Bomberman_RespawnPlayer({_session},{_victim})
+            Bomberman_RespawnPlayer({_session}, {_victim})
     else:
         send action bar {@shield_destroyed} to {_victim}
         play sound "minecraft:item.shield.break" with pitch 1 at {_victim}
         set chestplate of {_victim} to air
-        
+
 local function Bomberman_CommonExplode(l: location, attacker: player, radius: integer = {@common_radius}):
     loop (blocks in radius {_radius} of {_l}) where [input is not air]:
         add loop-block to {_blocks::*}
@@ -225,7 +218,7 @@ local function Bomberman_CommonExplode(l: location, attacker: player, radius: in
     show 2 poof at {_blocks::*}
     loop players in radius {_radius} of {_l}:
         gamemode of loop-player is not spectator
-        Bomberman_EliminatePlayer(loop-player,{_attacker})
+        Bomberman_EliminatePlayer(loop-player, {_attacker})
 
 local function Bomberman_UncommonExplode(l: location, attacker: player, range: integer = {@uncommon_range}):
     loop vector({_range},0,0) and vector(0,0,{_range}) and vector({_range}*-1,0,0) and vector(0,0,{_range}*-1):
@@ -238,14 +231,14 @@ local function Bomberman_UncommonExplode(l: location, attacker: player, range: i
     show 2 explosion at {_blocks::*}
     show 2 poof at {_blocks::*}
     loop {_players::*}:
-        Bomberman_EliminatePlayer(loop-value,{_attacker})
+        Bomberman_EliminatePlayer(loop-value, {_attacker})
 
 local function Bomberman_RareExplode(l: location, attacker: player):
-    Bomberman_CommonExplode({_l},{_attacker},{@rare_radius})
+    Bomberman_CommonExplode({_l}, {_attacker}, {@rare_radius})
 
 local function Bomberman_LegendaryExplode(l: location, attacker: player):
-    Bomberman_CommonExplode({_l},{_attacker},{@legendary_radius})
-    Bomberman_UncommonExplode({_l},{_attacker},{@legendary_range})
+    Bomberman_CommonExplode({_l}, {_attacker}, {@legendary_radius})
+    Bomberman_UncommonExplode({_l}, {_attacker}, {@legendary_range})
 
 local function Bomberman_ExecuteAbility(e: entity):
     set {_t} to metadata tag "{@var_prefix};type" of {_e}
@@ -254,13 +247,13 @@ local function Bomberman_ExecuteAbility(e: entity):
     play sound "minecraft:entity.generic.explode" at {_e}
     set {_l} to location of (block at {_e})
     if {_t} is "common_tnt":
-        Bomberman_CommonExplode({_l},{_a})
+        Bomberman_CommonExplode({_l}, {_a})
     else if {_t} is "uncommon_tnt":
-        Bomberman_UncommonExplode({_l},{_a})
+        Bomberman_UncommonExplode({_l}, {_a})
     else if {_t} is "rare_tnt":
-        Bomberman_RareExplode({_l},{_a})
+        Bomberman_RareExplode({_l}, {_a})
     else if {_t} is "legendary_tnt":
-        Bomberman_LegendaryExplode({_l},{_a})
+        Bomberman_LegendaryExplode({_l}, {_a})
 
 on explode:
     event-entity is a tnt
@@ -321,4 +314,4 @@ on pressure plate:
         cancel event
         set (block at event-location) to air
         push player (vector from event-block to player) at speed 1
-        Bomberman_EliminatePlayer(player,{_a})
+        Bomberman_EliminatePlayer(player, {_a})

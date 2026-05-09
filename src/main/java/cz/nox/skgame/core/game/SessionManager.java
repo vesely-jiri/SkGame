@@ -10,6 +10,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -18,8 +19,9 @@ public class SessionManager implements Listener {
 
     private static SessionManager manager;
     private static final GameMapManager mapManager = GameMapManager.getInstance();
-    private final Map<String,Session> sessions = new HashMap<>();
+    private final Map<String, Session> sessions = new HashMap<>();
     private final Map<UUID, LinkedList<String>> playerToSession = new HashMap<>();
+    private final Map<String, BukkitTask> countdownTasks = new HashMap<>();
     private Session lastCreatedSession;
 
     public static synchronized SessionManager getInstance() {
@@ -45,10 +47,25 @@ public class SessionManager implements Listener {
     public void deleteSession(String id) {
         Session session = sessions.get(id);
         if (session == null) return;
+        cancelCountdownTask(id);
+        if (session.getClaimedSlot() != null && session.getGameMap() != null) {
+            session.getGameMap().releaseSlot(session.getId());
+            session.setClaimedSlot(null);
+            session.setArenaRegion(null);
+        }
+        mapManager.removeMapFromClaimed(session.getGameMap());
         Event e = new SessionDisbandEvent(session);
         Bukkit.getPluginManager().callEvent(e);
-        mapManager.removeMapFromClaimed(session.getGameMap());
         sessions.remove(id);
+    }
+
+    public void setCountdownTask(String sessionId, BukkitTask task) {
+        countdownTasks.put(sessionId, task);
+    }
+
+    public void cancelCountdownTask(String sessionId) {
+        BukkitTask task = countdownTasks.remove(sessionId);
+        if (task != null) task.cancel();
     }
     @Nullable
     public Session getSession(Player player) {

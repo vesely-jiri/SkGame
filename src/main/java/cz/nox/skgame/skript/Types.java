@@ -13,9 +13,16 @@ import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.type.CustomValuePlurality;
 import cz.nox.skgame.api.game.model.type.SessionState;
+import cz.nox.skgame.api.region.Region;
 import cz.nox.skgame.core.game.GameMapManager;
 import cz.nox.skgame.core.game.MiniGameManager;
 import cz.nox.skgame.core.game.SessionManager;
+import cz.nox.skgame.core.region.CuboidRegion;
+import cz.nox.skgame.core.region.SkBeeBoundRegion;
+import cz.nox.skgame.core.region.WorldGuardRegion;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.NotSerializableException;
@@ -74,7 +81,7 @@ public class Types {
 
                     @Override
                     protected Session deserialize(Fields fields) throws StreamCorruptedException {
-                        String id = fields.getObject("sessionId", String.class);
+                        String id = fields.getObject("id", String.class);
                         Session session = SessionManager.getInstance().getSessionById(id);
                         if (session == null) throw new StreamCorruptedException("Unknown session ID");
                         return session;
@@ -311,6 +318,124 @@ public class Types {
                     @Override
                     public String toVariableNameString(CustomValuePlurality plur) {
                         return "valuePlurality:" + plur.toString();
+                    }
+                })
+        );
+
+        Classes.registerClass(new ClassInfo<>(Region.class, "region")
+                .user("regions?")
+                .name("Region")
+                .description(
+                        "Represents a 3D region in the world.",
+                        "In Phase 1, only CuboidRegion is supported.",
+                        "Can be stored in Skript variables and as a GameMap property."
+                )
+                .examples(
+                        "set region of {_map} to cuboid region from {_pos1} to {_pos2}"
+                )
+                .since("1.0.0")
+                .parser(new Parser<Region>() {
+                    @Override
+                    public boolean canParse(ParseContext context) {
+                        return false;
+                    }
+                    @Override
+                    public String toString(Region region, int flags) {
+                        if (region instanceof CuboidRegion c) {
+                            return "cuboid region in " + c.getWorld().getName()
+                                    + " from " + locStr(c.getMin()) + " to " + locStr(c.getMax());
+                        } else if (region instanceof SkBeeBoundRegion skbee) {
+                            return "skbee bound '" + skbee.getId() + "'";
+                        } else if (region instanceof WorldGuardRegion wg) {
+                            return "worldguard region '" + wg.getRegionId() + "' in " + wg.getWorld().getName();
+                        }
+                        return "region";
+                    }
+                    @Override
+                    public String toVariableNameString(Region region) {
+                        return "region:" + System.identityHashCode(region);
+                    }
+                    private String locStr(Location l) {
+                        return l.getBlockX() + "," + l.getBlockY() + "," + l.getBlockZ();
+                    }
+                })
+                .serializer(new Serializer<>() {
+                    @Override
+                    public Fields serialize(Region region) throws NotSerializableException {
+                        Fields fields = new Fields();
+                        if (region instanceof CuboidRegion c) {
+                            fields.putObject("type", "cuboid");
+                            fields.putObject("world", c.getWorld().getName());
+                            fields.putPrimitive("minX", c.getMinX());
+                            fields.putPrimitive("minY", c.getMinY());
+                            fields.putPrimitive("minZ", c.getMinZ());
+                            fields.putPrimitive("maxX", c.getMaxX());
+                            fields.putPrimitive("maxY", c.getMaxY());
+                            fields.putPrimitive("maxZ", c.getMaxZ());
+                        } else if (region instanceof SkBeeBoundRegion skbee) {
+                            fields.putObject("type", "skbee_bound");
+                            fields.putObject("id", skbee.getId());
+                        } else if (region instanceof WorldGuardRegion wg) {
+                            fields.putObject("type", "worldguard");
+                            fields.putObject("world", wg.getWorld().getName());
+                            fields.putObject("regionId", wg.getRegionId());
+                        } else {
+                            throw new NotSerializableException("Unsupported Region type: " + region.getClass().getName());
+                        }
+                        return fields;
+                    }
+
+                    @Override
+                    public void deserialize(Region o, Fields f) {
+                        assert false;
+                    }
+
+                    @Override
+                    protected Region deserialize(Fields fields) throws StreamCorruptedException {
+                        String type = fields.getObject("type", String.class);
+                        if ("cuboid".equals(type)) {
+                            String worldName = fields.getObject("world", String.class);
+                            World world = Bukkit.getWorld(worldName != null ? worldName : "");
+                            if (world == null) throw new StreamCorruptedException("Unknown world: " + worldName);
+                            int minX = fields.getPrimitive("minX", int.class);
+                            int minY = fields.getPrimitive("minY", int.class);
+                            int minZ = fields.getPrimitive("minZ", int.class);
+                            int maxX = fields.getPrimitive("maxX", int.class);
+                            int maxY = fields.getPrimitive("maxY", int.class);
+                            int maxZ = fields.getPrimitive("maxZ", int.class);
+                            return new CuboidRegion(
+                                    new Location(world, minX, minY, minZ),
+                                    new Location(world, maxX, maxY, maxZ)
+                            );
+                        } else if ("skbee_bound".equals(type)) {
+                            String id = fields.getObject("id", String.class);
+                            SkBeeBoundRegion r = SkBeeBoundRegion.fromId(id);
+                            if (r == null) throw new StreamCorruptedException("SkBee bound not found: " + id);
+                            return r;
+                        } else if ("worldguard".equals(type)) {
+                            String worldName = fields.getObject("world", String.class);
+                            World world = Bukkit.getWorld(worldName != null ? worldName : "");
+                            if (world == null) throw new StreamCorruptedException("Unknown world: " + worldName);
+                            String regionId = fields.getObject("regionId", String.class);
+                            if (regionId == null) throw new StreamCorruptedException("Missing regionId");
+                            return new WorldGuardRegion(world, regionId);
+                        }
+                        throw new StreamCorruptedException("Unknown region type: " + type);
+                    }
+
+                    @Override
+                    public <E extends Region> @Nullable E newInstance(Class<E> c) {
+                        return null;
+                    }
+
+                    @Override
+                    public boolean mustSyncDeserialization() {
+                        return true;
+                    }
+
+                    @Override
+                    protected boolean canBeInstantiated() {
+                        return false;
                     }
                 })
         );

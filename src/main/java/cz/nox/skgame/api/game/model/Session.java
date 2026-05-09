@@ -3,9 +3,12 @@ package cz.nox.skgame.api.game.model;
 import cz.nox.skgame.api.game.event.GamePlayerSessionJoin;
 import cz.nox.skgame.api.game.event.GamePlayerSessionLeave;
 import cz.nox.skgame.api.game.model.type.SessionState;
+import cz.nox.skgame.api.region.Region;
 import cz.nox.skgame.core.game.GameMapManager;
+import cz.nox.skgame.core.region.ArenaSlot;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -19,6 +22,8 @@ public class Session {
     private GameMap gameMap;
     private Map<String, Object> values;
     private Map<String, Object> tempValues;
+    @Nullable private ArenaSlot claimedSlot;
+    @Nullable private Region arenaRegion;
 
     public Session(String id, Player host, MiniGame miniGame,
                    SessionState state, GameMap map, Set<Player> players, Set<Player> spectators,
@@ -103,13 +108,26 @@ public class Session {
     public void setGameMap(GameMap gameMap) {
         GameMapManager mapManager = GameMapManager.getInstance();
         if (gameMap != null) {
-            if (mapManager.isMapClaimed(gameMap.getId())) return;
-            mapManager.addMapToClaimed(gameMap);
+            // Slotted maps allow multiple sessions — slot system handles exclusivity at game start.
+            if (!gameMap.hasArenaSlots()) {
+                if (mapManager.isMapClaimed(gameMap.getId())) return;
+                mapManager.addMapToClaimed(gameMap);
+            }
         } else {
-            mapManager.removeMapFromClaimed(this.getGameMap());
+            if (this.gameMap != null && !this.gameMap.hasArenaSlots()) {
+                mapManager.removeMapFromClaimed(this.gameMap);
+            }
         }
         this.gameMap = gameMap;
     }
+
+    @Nullable
+    public ArenaSlot getClaimedSlot() { return claimedSlot; }
+    public void setClaimedSlot(@Nullable ArenaSlot claimedSlot) { this.claimedSlot = claimedSlot; }
+
+    @Nullable
+    public Region getArenaRegion() { return arenaRegion; }
+    public void setArenaRegion(@Nullable Region arenaRegion) { this.arenaRegion = arenaRegion; }
 
     public Object getValue(String key, boolean isTemporary) {
         return getMap(isTemporary).get(key);

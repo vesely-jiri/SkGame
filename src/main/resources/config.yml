@@ -1,3 +1,19 @@
-#Config
+vanilla-scripts:
+  core: true
+  guis: true
+  admin: true
 
-sessions:
+lobby:
+  world: ~
+  x: 0.0
+  y: 0.0
+  z: 0.0
+  yaw: 0.0
+  pitch: 0.0
+
+defaults:
+  gamemode: adventure
+
+regions:
+  enable-skbee-adapter: true
+  enable-worldguard-adapter: true

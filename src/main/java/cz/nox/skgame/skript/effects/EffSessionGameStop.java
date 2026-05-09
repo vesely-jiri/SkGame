@@ -15,6 +15,7 @@ import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.core.game.GameMapManager;
 import cz.nox.skgame.core.game.PlayerManager;
+import cz.nox.skgame.core.game.SessionManager;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 public class EffSessionGameStop extends Effect {
     private static final GameMapManager mapManager = GameMapManager.getInstance();
     private static final PlayerManager playerManager = PlayerManager.getInstance();
+    private static final SessionManager sessionManager = SessionManager.getInstance();
     private Expression<Session> session;
     private Expression<String> reason;
 
@@ -62,6 +64,7 @@ public class EffSessionGameStop extends Effect {
         if (session == null) return;
         MiniGame miniGame = session.getMiniGame();
         if (miniGame == null) return;
+        sessionManager.cancelCountdownTask(session.getId());
         GameStopEvent newEvent;
         if (this.reason != null) {
             String re = this.reason.getSingle(e);
@@ -69,13 +72,17 @@ public class EffSessionGameStop extends Effect {
         } else {
             newEvent = new GameStopEvent(miniGame, session, "default");
         }
-        Bukkit.getPluginManager().callEvent(newEvent);
-
         session.setState(SessionState.STOPPED);
-        session.removeValues(true);
+        if (session.getClaimedSlot() != null && session.getGameMap() != null) {
+            session.getGameMap().releaseSlot(session.getId());
+            session.setClaimedSlot(null);
+            session.setArenaRegion(null);
+        }
+        Bukkit.getPluginManager().callEvent(newEvent);
         for (Player player : session.getPlayers()) {
             playerManager.getPlayer(player).removeValues(true);
         }
+        session.removeValues(true);
     }
 
     @Override

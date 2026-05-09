@@ -5,6 +5,15 @@ import ch.njol.skript.classes.Serializer;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.variables.SerializedVariable;
 import ch.njol.yggdrasil.YggdrasilSerializable;
+import cz.nox.skgame.api.region.Region;
+import cz.nox.skgame.core.region.ArenaSlot;
+import cz.nox.skgame.core.region.CuboidRegion;
+import cz.nox.skgame.core.region.RegionCopier;
+import cz.nox.skgame.core.region.SkBeeBoundRegion;
+import cz.nox.skgame.core.region.WorldGuardRegion;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +27,13 @@ public class GameMap implements ConfigurationSerializable {
     private Map<String, Object> values = new HashMap<>();
     // Map< MiniGameId , Map< Key , Object> >
     private Map<String, Map<String, Object>> miniGameValues = new HashMap<>();
+    @Nullable
+    private Region region;
+
+    private final List<ArenaSlot> arenaSlots = new ArrayList<>();
+    private int configuredSlotCount = 0;
+    @Nullable private Location arenaBaseLocation;
+    private int arenaPadding = 16;
 
     public GameMap(String id) {
         this.id = id.toLowerCase();
@@ -142,6 +158,100 @@ public class GameMap implements ConfigurationSerializable {
         }
     }
 
+    @Nullable
+    public Region getRegion() {
+        return region;
+    }
+    public void setRegion(@Nullable Region region) {
+        this.region = region;
+    }
+
+    public boolean hasArenaSlots() { return configuredSlotCount > 0; }
+    public int getConfiguredSlotCount() { return configuredSlotCount; }
+    public List<ArenaSlot> getArenaSlots() { return arenaSlots; }
+
+    public void configureArenaSlots(int count, Location base, int padding) {
+        arenaSlots.removeIf(ArenaSlot::isTemporary);
+        this.arenaBaseLocation = base.clone();
+        this.arenaPadding = padding;
+        this.configuredSlotCount = count;
+
+        if (region == null) return;
+        Location sourceMin = region.getMin();
+        Location sourceMax = region.getMax();
+        if (sourceMin == null || sourceMax == null) return;
+        int regionWidth = sourceMax.getBlockX() - sourceMin.getBlockX() + 1;
+        int spacing = regionWidth + padding;
+
+        while (arenaSlots.size() < count) {
+            int i = arenaSlots.size();
+            Location origin = new Location(base.getWorld(),
+                    base.getBlockX() + (long) i * spacing, base.getBlockY(), base.getBlockZ());
+            RegionCopier.copy(region, origin);
+            arenaSlots.add(new ArenaSlot(origin, false));
+        }
+        while (arenaSlots.size() > count) {
+            arenaSlots.remove(arenaSlots.size() - 1);
+        }
+    }
+
+    @Nullable
+    public ArenaSlot claimSlot(String sessionId) {
+        for (ArenaSlot slot : arenaSlots) {
+            if (slot.isFree()) {
+                slot.claim(sessionId);
+                return slot;
+            }
+        }
+        // Overflow — create temporary slot
+        if (region == null || arenaBaseLocation == null) return null;
+        Location sourceMin = region.getMin();
+        Location sourceMax = region.getMax();
+        if (sourceMin == null || sourceMax == null) return null;
+        int regionWidth = sourceMax.getBlockX() - sourceMin.getBlockX() + 1;
+        int spacing = regionWidth + arenaPadding;
+        int index = arenaSlots.size();
+        Location tempOrigin = new Location(arenaBaseLocation.getWorld(),
+                arenaBaseLocation.getBlockX() + (long) index * spacing,
+                arenaBaseLocation.getBlockY(), arenaBaseLocation.getBlockZ());
+        RegionCopier.copy(region, tempOrigin);
+        ArenaSlot tempSlot = new ArenaSlot(tempOrigin, true);
+        tempSlot.claim(sessionId);
+        arenaSlots.add(tempSlot);
+        return tempSlot;
+    }
+
+    public void releaseSlot(String sessionId) {
+        for (int i = 0; i < arenaSlots.size(); i++) {
+            ArenaSlot slot = arenaSlots.get(i);
+            if (sessionId.equals(slot.getClaimedBySessionId())) {
+                if (region != null) {
+                    RegionCopier.copy(region, slot.getPasteOrigin());
+                }
+                slot.release();
+                if (slot.isTemporary()) {
+                    arenaSlots.remove(i);
+                }
+                return;
+            }
+        }
+    }
+
+    @Nullable
+    public CuboidRegion getSlotRegion(ArenaSlot slot) {
+        if (region == null) return null;
+        Location sourceMin = region.getMin();
+        Location sourceMax = region.getMax();
+        if (sourceMin == null || sourceMax == null) return null;
+        Location origin = slot.getPasteOrigin();
+        int dx = sourceMax.getBlockX() - sourceMin.getBlockX();
+        int dy = sourceMax.getBlockY() - sourceMin.getBlockY();
+        int dz = sourceMax.getBlockZ() - sourceMin.getBlockZ();
+        Location slotMax = new Location(origin.getWorld(),
+                origin.getBlockX() + dx, origin.getBlockY() + dy, origin.getBlockZ() + dz);
+        return new CuboidRegion(origin, slotMax);
+    }
+
     public Set<String> getSupportedMiniGameIds() {
         return this.miniGameValues.keySet();
     }
@@ -160,24 +270,126 @@ public class GameMap implements ConfigurationSerializable {
             Map<String, Object> result = new HashMap<>();
 
             v.forEach((innerKey, innerValue) -> {
-                Map<String, Object> inner = new HashMap<>();
-                if (innerValue instanceof YggdrasilSerializable yggSer) {
+                if (innerValue instanceof Object[] arr) {
+                    Map<String, Object> plural = new HashMap<>();
+                    plural.put("__plural", true);
+                    plural.put("values", new ArrayList<>(Arrays.asList(arr)));
+                    result.put(innerKey, plural);
+                } else if (innerValue instanceof YggdrasilSerializable yggSer) {
                     ClassInfo<?> ci = Classes.getExactClassInfo(innerValue.getClass());
                     assert ci != null;
                     SerializedVariable.Value serialized = Classes.serialize(innerValue);
                     assert serialized != null;
                     Map<String, Object> ser = new HashMap<>();
-                    ser.put("type",serialized.type);
+                    ser.put("type", serialized.type);
                     ser.put("data", serialized.data);
                     result.put(innerKey, ser);
                 } else {
-                    result.put(innerKey,innerValue);
+                    result.put(innerKey, innerValue);
                 }
             });
             rawMiniGameValues.put(miniGame, result);
         });
         map.put("miniGameValues", rawMiniGameValues);
+        if (region != null) {
+            map.put("region", serializeRegion(region));
+        }
+        map.put("configuredSlotCount", configuredSlotCount);
+        map.put("arenaPadding", arenaPadding);
+        if (arenaBaseLocation != null && arenaBaseLocation.getWorld() != null) {
+            Map<String, Object> base = new HashMap<>();
+            base.put("world", arenaBaseLocation.getWorld().getName());
+            base.put("x", arenaBaseLocation.getX());
+            base.put("y", arenaBaseLocation.getY());
+            base.put("z", arenaBaseLocation.getZ());
+            map.put("arenaBase", base);
+        }
+        if (!arenaSlots.isEmpty()) {
+            List<Map<String, Object>> slotList = new ArrayList<>();
+            for (ArenaSlot slot : arenaSlots) {
+                if (slot.isTemporary()) continue;
+                Location o = slot.getPasteOrigin();
+                if (o.getWorld() == null) continue;
+                Map<String, Object> slotMap = new HashMap<>();
+                slotMap.put("world", o.getWorld().getName());
+                slotMap.put("x", o.getX());
+                slotMap.put("y", o.getY());
+                slotMap.put("z", o.getZ());
+                slotList.add(slotMap);
+            }
+            map.put("arenaSlots", slotList);
+        }
         return map;
+    }
+
+    private static Map<String, Object> serializeRegion(Region region) {
+        Map<String, Object> r = new HashMap<>();
+        if (region instanceof CuboidRegion cuboid) {
+            r.put("type", "cuboid");
+            r.put("world", cuboid.getWorld().getName());
+            r.put("minX", cuboid.getMinX());
+            r.put("minY", cuboid.getMinY());
+            r.put("minZ", cuboid.getMinZ());
+            r.put("maxX", cuboid.getMaxX());
+            r.put("maxY", cuboid.getMaxY());
+            r.put("maxZ", cuboid.getMaxZ());
+        } else if (region instanceof SkBeeBoundRegion skbee) {
+            r.put("type", "skbee_bound");
+            r.put("id", skbee.getId());
+        } else if (region instanceof WorldGuardRegion wg) {
+            r.put("type", "worldguard");
+            r.put("world", wg.getWorld().getName());
+            r.put("regionId", wg.getRegionId());
+        }
+        return r;
+    }
+
+    @Nullable
+    private static Region deserializeRegion(Object raw) {
+        Map<String, Object> data;
+        if (raw instanceof MemorySection sec) {
+            data = sec.getValues(false);
+        } else if (raw instanceof Map<?, ?> m) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> cast = (Map<String, Object>) m;
+            data = cast;
+        } else {
+            return null;
+        }
+        String type = (String) data.get("type");
+        if ("cuboid".equals(type)) {
+            String worldName = (String) data.get("world");
+            World world = Bukkit.getWorld(worldName != null ? worldName : "");
+            if (world == null) return null;
+            int minX = toInt(data.get("minX"));
+            int minY = toInt(data.get("minY"));
+            int minZ = toInt(data.get("minZ"));
+            int maxX = toInt(data.get("maxX"));
+            int maxY = toInt(data.get("maxY"));
+            int maxZ = toInt(data.get("maxZ"));
+            return new CuboidRegion(new Location(world, minX, minY, minZ), new Location(world, maxX, maxY, maxZ));
+        } else if ("skbee_bound".equals(type)) {
+            String id = (String) data.get("id");
+            return id != null ? SkBeeBoundRegion.fromId(id) : null;
+        } else if ("worldguard".equals(type)) {
+            String worldName = (String) data.get("world");
+            World world = Bukkit.getWorld(worldName != null ? worldName : "");
+            if (world == null) return null;
+            String regionId = (String) data.get("regionId");
+            if (regionId == null) return null;
+            return new WorldGuardRegion(world, regionId);
+        }
+        return null;
+    }
+
+    private static int toInt(Object o) {
+        if (o instanceof Number n) return n.intValue();
+        return 0;
+    }
+
+    private static double toDouble(Object o) {
+        if (o instanceof Number n) return n.doubleValue();
+        return 0.0;
     }
 
     public static GameMap deserialize(Map<String, Object> map) {
@@ -194,12 +406,20 @@ public class GameMap implements ConfigurationSerializable {
             for (Map.Entry<String, Object> valEntry : innerMap.entrySet()) {
                 String key = valEntry.getKey();
                 Object raw = valEntry.getValue();
+                // Legacy: pre-__plural format stored plural values as a raw List.
+                // New serialize() uses a {__plural:true, values:[...]} Map, so this branch
+                // only fires when loading data written by an older build. Keep for compat.
                 if (raw instanceof List<?> list) {
                     gameMap.setMiniGameValue(miniGameId, key, list.toArray());
                     continue;
                 }
                 if (raw instanceof MemorySection rawMap) {
-                    Map<String, Object> data = rawMap.getValues(true);
+                    Map<String, Object> data = rawMap.getValues(false);
+                    if (Boolean.TRUE.equals(data.get("__plural"))) {
+                        List<?> pluralList = rawMap.getList("values");
+                        gameMap.setMiniGameValue(miniGameId, key, pluralList != null ? pluralList.toArray() : new Object[0]);
+                        continue;
+                    }
                     String typeObj = (String) data.get("type");
                     byte[] bytes = (byte[]) data.get("data");
                     if (typeObj != null && bytes != null) {
@@ -217,6 +437,34 @@ public class GameMap implements ConfigurationSerializable {
                     }
                 }
                 gameMap.setMiniGameValue(miniGameId, key, raw);
+            }
+        }
+        Object rawRegion = map.get("region");
+        if (rawRegion != null) {
+            gameMap.setRegion(deserializeRegion(rawRegion));
+        }
+        gameMap.configuredSlotCount = toInt(map.get("configuredSlotCount"));
+        gameMap.arenaPadding = map.containsKey("arenaPadding") ? toInt(map.get("arenaPadding")) : 16;
+        Object rawBase = map.get("arenaBase");
+        if (rawBase != null) {
+            Map<String, Object> baseData = convertToMap(rawBase);
+            String bWorld = (String) baseData.get("world");
+            World bw = Bukkit.getWorld(bWorld != null ? bWorld : "");
+            if (bw != null) {
+                gameMap.arenaBaseLocation = new Location(bw,
+                        toDouble(baseData.get("x")), toDouble(baseData.get("y")), toDouble(baseData.get("z")));
+            }
+        }
+        Object rawSlots = map.get("arenaSlots");
+        if (rawSlots instanceof List<?> slotList) {
+            for (Object slotRaw : slotList) {
+                Map<String, Object> slotData = convertToMap(slotRaw);
+                String sw = (String) slotData.get("world");
+                World slotWorld = Bukkit.getWorld(sw != null ? sw : "");
+                if (slotWorld == null) continue;
+                Location origin = new Location(slotWorld,
+                        toDouble(slotData.get("x")), toDouble(slotData.get("y")), toDouble(slotData.get("z")));
+                gameMap.arenaSlots.add(new ArenaSlot(origin, false));
             }
         }
         return gameMap;
