@@ -19,6 +19,8 @@ import java.util.Set;
 
 public class ResourceInstaller {
 
+    private static final String SCRIPTS_PREFIX = "scripts/";
+
     private final SkGame plugin;
 
     public ResourceInstaller(SkGame plugin) {
@@ -52,9 +54,18 @@ public class ResourceInstaller {
         int count = 0;
 
         for (String resourcePath : unique) {
-            String fileName = resourcePath.substring(resourcePath.lastIndexOf('/') + 1);
-            File dest = new File(skgameDir, fileName);
+            if (!resourcePath.startsWith(SCRIPTS_PREFIX)) {
+                throw new IllegalStateException("Resource path must start with 'scripts/': " + resourcePath);
+            }
+            String relativePath = resourcePath.substring(SCRIPTS_PREFIX.length());
+            File dest = new File(skgameDir, relativePath);
             if (dest.exists()) continue;
+
+            File parent = dest.getParentFile();
+            if (!parent.exists() && !parent.mkdirs()) {
+                plugin.getLogUtil().warning("Failed to create directory " + parent + " — skipping " + resourcePath);
+                continue;
+            }
 
             try (InputStream in = plugin.getResource(resourcePath)) {
                 if (in == null) {
@@ -64,7 +75,7 @@ public class ResourceInstaller {
                 Files.copy(in, dest.toPath());
                 newlyCreated.add(dest);
                 count++;
-                plugin.getLogUtil().info("Installed resource: " + fileName);
+                plugin.getLogUtil().info("Installed resource: " + relativePath);
             } catch (IOException e) {
                 plugin.getLogUtil().error("Failed to install " + resourcePath + ": " + e.getMessage());
             }
