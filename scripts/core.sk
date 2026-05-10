@@ -12,14 +12,6 @@ options:
 
 #messages
     prefix: "&6[Game] &r"
-    session_created: "&aSession created"
-    session_create_already: "&cYou are already in a session"
-    game_stop_vote: "&aPlayers successfully voted to stop the game"
-    game_stop_noplayers: "&cThere are no players. Stopping game"
-    game_stop_unknown: "&cUnknown error. Stopping game"
-
-#admin messages
-    spawn_set: "&aGame lobby was set to your location"
 
 #------------------------------------------------------------------------------
 
@@ -46,7 +38,7 @@ on tab complete of "{@command}":
 
 function G_SessionCreate(host: player):
     if (session of {_host}) is set:
-        G_SendMessage({_host},{@session_create_already})
+        G_SendMessage({_host},"session.error.already-in-session")
         stop
     set {_uuid} to random uuid
     set {_gui} to G_InitSessionGui({_host})
@@ -56,7 +48,7 @@ function G_SessionCreate(host: player):
         set session value "mode" of event-session to "public"
         set session value "rounds" of event-session to 1
         set session value "gui" of event-session to {_gui}
-        G_SendMessageToSession(event-session,{@session_created})
+        G_SendMessageToSession(event-session,"session.created")
     G_UpdateSessionGui((session with id {_uuid}))
     G_UpdateMainGui()
 
@@ -99,25 +91,28 @@ function G_Stopped(session: session, reason: string, additional_info: strings = 
     set {_p::*} to (players of {_session}) and (spectators of {_session})
     G_ResetPlayers({_p::*})
     if {_reason} is "VOTE":
-        G_SendMessageToSession({_session},{@game_stop_vote})
+        G_SendMessageToSession({_session},"session.stop.vote-success")
         teleport {_p::*} to lobby spawn
     else if {_reason} is "NO_PLAYERS":
-        G_SendMessageToSession({_session},{@game_stop_noplayers})
+        G_SendMessageToSession({_session},"session.stop.no-players")
         teleport {_p::*} to lobby spawn
     else if {_reason} is "WIN":
         set {_mg} to minigame value "name" of (minigame of {_session})
         set {_gm} to gamemap value "name" of (gamemap of {_session})
-        add "&6------------------------------------" to {_m::*}
-        add "&6Game of &e%{_mg}% &6on map &e%{_gm}% &6has finished" to {_m::*}
-        add (join {_additional_info::*} by nl) to {_m::*}
-        add "&6------------------------------------" to {_m::*}
-        G_SendMessageToSession({_session},{_m::*})
+        set {_all::*} to players of {_session}
+        add ((spectators of {_session}) where [{_all::*} does not contain input]) to {_all::*}
+        loop {_all::*}:
+            send join {@prefix} and (skgame message "session.stop.summary-separator" for loop-player) to loop-player
+            send join {@prefix} and (skgame message "session.stop.summary-finished" for loop-player with arguments {_mg} and {_gm}) to loop-player
+            if size of {_additional_info::*} > 0:
+                send join {_additional_info::*} by nl to loop-player
+            send join {@prefix} and (skgame message "session.stop.summary-separator" for loop-player) to loop-player
         if ({_rounds} - 1) > 0:
             start game of {_session}
         else:
             teleport {_p::*} to lobby spawn
     else:
-        G_SendMessageToSession({_session},{@game_stop_unknown})
+        G_SendMessageToSession({_session},"session.stop.unknown-error")
         teleport {_p::*} to lobby spawn
 
 #------------------------------Player handler----------------------------------
@@ -153,14 +148,26 @@ function G_PlayerLeave(p: player, reason: string = ""):
     G_UpdateSessionGui({_session})
 
 #------------------------------Utils-------------------------------------------
-function G_SendMessageToSession(session: session, message: strings, prefix: boolean = true):
-    set {_p::*} to players of {_session}
-    add ((spectators of {_session}) where [{_p::*} does not contain input]) to {_p::*}
-    G_SendMessage({_p::*},{_message::*},{_prefix})
-
-function G_SendMessage(p: players, message: strings, prefix: boolean = true):
+function G_SendRaw(p: players, message: strings, prefix: boolean = true):
     set {_pr} to {@prefix} if {_prefix} is true else ""
     send join {_pr} and {_message::*} by nl to {_p::*}
+
+function G_SendRawToSession(session: session, message: strings, prefix: boolean = true):
+    set {_p::*} to players of {_session}
+    add ((spectators of {_session}) where [{_p::*} does not contain input]) to {_p::*}
+    G_SendRaw({_p::*},{_message::*},{_prefix})
+
+function G_SendMessage(p: players, key: string, prefix: boolean = true):
+    loop {_p::*}:
+        if {_prefix} is true:
+            send join {@prefix} and (skgame message {_key} for loop-player) to loop-player
+        else:
+            send (skgame message {_key} for loop-player) to loop-player
+
+function G_SendMessageToSession(session: session, key: string, prefix: boolean = true):
+    set {_p::*} to players of {_session}
+    add ((spectators of {_session}) where [{_p::*} does not contain input]) to {_p::*}
+    G_SendMessage({_p::*},{_key},{_prefix})
 
 function G_ResetPlayers(p: players):
     reset {_p::*} for game

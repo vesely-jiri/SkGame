@@ -15,14 +15,10 @@ options:
 #messages
     prefix: "&2<Game Admin> &r"
     map_gui_name: "&9GES"
-    type_map_name: "&aSelect two points and type map name to confirm. Otherwise type 'cancel'"
-    type_value: "&aType required value. Write 'cancel' to cancel the action"
     addon_gui_name: "&9GES&7-&e%{_map}%"
     map_values_gui_name: "&9GES%{_name}%"
     accept_position: "%nl%&eDo you want to set current value to &6%{_t}%?%nl% &a[Accept position] | &c[Back to menu]"
-    indicator: "&9Setup is active"
     setup_mode: "&aSetup mode enabled"
-    send_point_location: "&eLocation of this point is %{_l}%"
     stabilize: "&6[&eStabilize&6]"
     stabilize_hover: "&eStabilize position"
     multi_menu_add: "&a[&2+&a]"
@@ -37,24 +33,15 @@ options:
     multi_menu_line: "&e%loop-iteration%) %loop-value%"
     addon_assigned: "&aAddon assigned to the map"
     map_name: "&aSelect two points and type map name: "
-    map_created: "&aMap %{_name}% created"
     map_deleted: "&aMap %{_name}% deleted"
-    map_exists: "&cMap %{_name}% already exists"
-    action_canceled: "&cAction canceled"
     accept_position: "&eDo you want to set current value to &6%{_t}%?"
     accept_position_accept: "&a[Accept position]"
     accept_position_deny: "&c[Back to menu]"
-    setup_mode_disabled: "&cSetup mode disabled"
-    positions_not_set: "&cPositions not set. Use wand to set them"
-    wand_given: "&aMap creation wand given"
-    setup_not_enabled: "&cSetup mode not enabled"
-    spawnpoint_Set: "&aLocation of lobby spawnpoint set"
-    position_set: "&aLocation of position &2%{_pos}% &aset"
-    map_value_set_to: "&aValue of map &7%{_map}% - &7%{_name}% &aset to &7%{_v}%"
     map_mode_disabled: "&cMap point edit mode is not enabled"
     map_value_not_set: "&cMap values are not set"
     addon_Unassigned: "&cAddon &6%{_addon}% &cunassigned from map &6%{_map}%"
     addon_Assigned: "&aAddon &6%{_addon}% &aassigned to map &6%{_map}%"
+    map_value_set_to: "&aValue of map &7%{_map}% - &7%{_name}% &aset to &7%{_v}%"
 #----------------------------------------------------------------------------
 
 on load:
@@ -132,7 +119,7 @@ function GA_OpenMapPropertiesGui(p: player, map: string):
 function GA_OpenMinigameValuesGui(p: player, map-id: string, mg-id: string):
     set {_g} to GA_InitMapPropertiesGui()
     set {{@var_prefix}::remove::admins::%{_p}%::guis::value_gui} to {_g}
-    
+
     set {_n} to custom nbt of (slot 0 of {_g})
     set string tag "map" of {_n} to {_map-id}
     set string tag "minigame" of {_n} to {_mg-id}
@@ -237,31 +224,31 @@ function GA_GiveWand(p: player):
     set boolean tag "jpscripts;wand" of custom nbt of {_wand} to true
     if {_p} does not have 1 of {_wand}:
         give {_wand} to {_p}
-        G_SendMessage({_p},{@wand_given})
+        G_SendMessage({_p},"admin.wand.given")
 
 local function GA_ModeIndicator(p: player):
     while {{@var_prefix}::remove::admins::%{_p}%} is set:
-        send action bar {@indicator} to {_p}
+        send action bar (skgame message "admin.setup.indicator" for {_p}) to {_p}
         wait 1.5 seconds
 
 local function GA_StopSetupMode(p: player):
-    send action bar {@setup_mode_disabled} to {_p}
+    send action bar (skgame message "admin.setup.disabled" for {_p}) to {_p}
     delete {{@var_prefix}::remove::admins::%{_p}%}
     delete {{@var_prefix}::remove::admins::%{_p}%::*}
     loop items in inventory of {_p}:
         boolean tag "jpscripts;wand" of custom nbt of loop-item is true
         delete loop-item
     close inventory of {_p}
-    G_SendMessage({_p},{@setup_mode_disabled})
+    G_SendMessage({_p},"admin.setup.disabled")
 
 local function GA_SetSpawnpoint(p: player):
     set lobby spawn to location of {_p}
-    send join {@prefix} and {@spawnpoint_Set} to {_p}
+    send join {@prefix} and (skgame message "lobby.spawn-set" for {_p}) to {_p}
 
 local function GA_StartCreationMode(p: player):
     set {{@var_prefix}::remove::admins::%{_p}%::response} to "map_creation"
     close inventory of {_p}
-    send join {@prefix} and {@type_map_name} to {_p}
+    send join {@prefix} and (skgame message "admin.map.type-name-prompt" for {_p}) to {_p}
 
 local function GA_StabilizePlayer(p: player):
     set {_f} to horizontal facing of {_p}
@@ -298,7 +285,7 @@ function GA_ValueType(o: object, tov: text = "type") :: object:
 
 local function GA_CreateMap(p: player, name: string):
     if {{@var_prefix}::remove::admins::%{_p}%} is not set:
-        G_SendMessage({_p},{@setup_not_enabled})
+        G_SendMessage({_p},"admin.setup.not-enabled")
         stop
     if all:
         {{@var_prefix}::remove::admins::%{_p}%::pos::1} is set
@@ -308,16 +295,16 @@ local function GA_CreateMap(p: player, name: string):
         set {_p1} to {{@var_prefix}::remove::admins::%{_p}%::pos::1}
         set {_p2} to {{@var_prefix}::remove::admins::%{_p}%::pos::2}
         if gamemap with id {_name} is set:
-            G_SendMessage({_p},{@map_exists})
+            send skgame message "admin.map.already-exists" to {_p} with arguments {_name}
             stop
         register gamemap with id {_name}:
             set value "name" of event-gamemap to {_name}
             set region of event-gamemap to cuboid region from {_p1} to {_p2}
         delete {{@var_prefix}::remove::admins::%{_p}%::*}
-        G_SendMessage({_p},{@map_created})
+        send skgame message "admin.map.created" to {_p} with arguments {_name}
         GA_OpenAdminGui({_p})
     else:
-        G_SendMessage({_p},{@positions_not_set})
+        G_SendMessage({_p},"admin.map.positions-not-set")
 
 function GA_SetMapValue(p: player, message: string):
     set {_g} to {{@var_prefix}::remove::admins::%{_p}%::guis::value_gui}
@@ -340,7 +327,7 @@ function GA_SetMapValue(p: player, message: string):
 
 local function GA_PositionIndicator(p: player, pos: integer, l: location):
     set {{@var_prefix}::remove::admins::%{_p}%::pos::%{_pos}%} to {_l}
-    G_SendMessage({_p},{@position_set})
+    send skgame message "admin.map.position-set" to {_p} with arguments {_pos}
     set {_bl} to block data of (block at {_l})
     while {{@var_prefix}::remove::admins::%{_p}%::pos::%{_pos}%} is {_l}:
         if mod(loop-iteration,2) is 0:
@@ -354,7 +341,8 @@ local function GA_ShowPointAnimation(l: location):
     loop reversed 10 times:
         play 100 (yellow coloured dust with speed 0) at {_l} ~ vector(0,loop-value/3,0)
         wait 1 ticks
-    send {@send_point_location} to (players in radius 1 of {_l})
+    loop (players in radius 1 of {_l}):
+        send skgame message "admin.map.point-location" to loop-player with arguments "%{_l}%"
     play 100 (blue coloured dust with speed 0) at {_l}
 
 #----------------------------------------------------------------------------
@@ -421,10 +409,10 @@ on inventory click:
             if (plurality of {_value}) is PLURAL:
                 GA_OpenPluralValueList(player, {_key}, {_minigame}, {_map})
             else if type of {_value} is a location:
-                
+
             else:
                 set {{@var_prefix}::remove::admins::%player%::response} to event-item
-                send join {@prefix} and {@type_value} to player
+                send join {@prefix} and (skgame message "admin.value.type-prompt" for player) to player
                 close inventory of player
         else if click type is right mouse with shift:
             delete value {_key} of {_map} of {_minigame}
@@ -481,7 +469,7 @@ on inventory click:
                     stop loop
         else if click type is right mouse:
             broadcast "&c???"
-            remove "t"  from pair values {_key} of {_map} of {_minigame} 
+            remove "t"  from pair values {_key} of {_map} of {_minigame}
 
 on chat:
     {{@var_prefix}::remove::admins::%player%::response} is set
@@ -494,7 +482,7 @@ on chat:
     else:
         delete {{@var_prefix}::remove::admins::%player%::response}
         delete {{@var_prefix}::remove::admins::%player%::pos::*}
-        G_SendMessage(player,{@action_canceled})
+        G_SendMessage(player,"admin.action.canceled")
 
 on leftclick:
     boolean tag "jpscripts;wand" of custom nbt of tool is true
