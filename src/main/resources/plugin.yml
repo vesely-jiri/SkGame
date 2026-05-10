@@ -5,3 +5,14 @@ description: Skript addon for managing minigames
 api-version: 1.21
 depend: [ Skript ]
 softdepend: [ SkBee, WorldGuard ]
+
+commands:
+  skgame:
+    description: SkGame admin commands
+    usage: /skgame reload messages
+    permission: skgame.admin.reload
+
+permissions:
+  skgame.admin.reload:
+    description: Reload SkGame subsystems
+    default: op

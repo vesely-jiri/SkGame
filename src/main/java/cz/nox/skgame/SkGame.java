@@ -5,6 +5,7 @@ import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.SkriptAddon;
 import ch.njol.util.OpenCloseable;
 import cz.nox.skgame.api.game.model.CustomValue;
+import cz.nox.skgame.api.messages.Messages;
 import cz.nox.skgame.api.module.SkGameModule;
 import cz.nox.skgame.core.game.GameMapManager;
 import cz.nox.skgame.core.game.MiniGameManager;
@@ -13,9 +14,12 @@ import cz.nox.skgame.core.module.ModuleRegistry;
 import cz.nox.skgame.core.module.ResourceInstaller;
 import cz.nox.skgame.util.LogUtil;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
@@ -168,6 +172,9 @@ public class SkGame extends JavaPlugin {
             GameMapManager.getInstance().loadFromFile(mapsDataFile);
         }, 1L);
 
+        var cmd = getCommand("skgame");
+        if (cmd != null) cmd.setExecutor(this);
+
         logUtil.info("SkGame enabled in " + (System.currentTimeMillis() - s) + "ms");
     }
 
@@ -215,6 +222,35 @@ public class SkGame extends JavaPlugin {
         } catch (IllegalArgumentException e) {
             return GameMode.ADVENTURE;
         }
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!sender.hasPermission("skgame.admin.reload")) {
+            sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
+            return true;
+        }
+        if (args.length >= 2 && args[0].equalsIgnoreCase("reload") && args[1].equalsIgnoreCase("messages")) {
+            if (!getConfig().getBoolean("messages.hot-reload", true)) {
+                sender.sendMessage(ChatColor.RED + "Hot-reload is disabled (messages.hot-reload: false in config.yml).");
+                return true;
+            }
+            boolean messagesEnabled = enabledModules != null &&
+                    enabledModules.stream().anyMatch(m -> m.getId().equals("messages"));
+            if (!messagesEnabled) {
+                sender.sendMessage(ChatColor.RED + "Messages module is not enabled.");
+                return true;
+            }
+            File messagesDir = new File(getDataFolder(), "messages");
+            Messages.load(messagesDir, getConfig(), getLogger());
+            int loaded = Messages.getLoadedLocales().size();
+            sender.sendMessage(ChatColor.GREEN + "Messages reloaded — " + loaded
+                    + " locale(s): " + Messages.getLoadedLocales());
+            return true;
+        }
+        sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame reload messages");
+        return true;
     }
 
     private List<SkGameModule> resolveModules() {
