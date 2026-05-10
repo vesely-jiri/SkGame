@@ -34,3 +34,9 @@ lobby:
 # --- Defaults ---
 defaults:
   gamemode: adventure
+
+# --- Messages ---
+messages:
+  forced-locale: ~        # null = use per-player locale
+  fallback-locale: en_US
+  hot-reload: true

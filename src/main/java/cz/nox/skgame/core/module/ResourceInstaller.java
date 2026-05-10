@@ -4,22 +4,20 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.ScriptLoader;
 import ch.njol.util.OpenCloseable;
 import cz.nox.skgame.SkGame;
+import cz.nox.skgame.api.module.ResourceTarget;
 import cz.nox.skgame.api.module.SkGameModule;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
 public class ResourceInstaller {
-
-    private static final String SCRIPTS_PREFIX = "scripts/";
 
     private final SkGame plugin;
 
@@ -29,41 +27,54 @@ public class ResourceInstaller {
 
     /**
      * Install always-on core paths then each enabled module's declared resource paths.
-     * Script resources (paths starting with {@code "scripts/"}) are copied to
-     * Skript's scripts folder under a {@code skgame/} subdirectory.
-     * Files that already exist are skipped. Returns the count of newly installed files.
+     * Destination for each file is determined by the module's {@link SkGameModule#resolveResourceTarget}
+     * (or the built-in scripts-folder logic for core paths). Files that already exist are skipped.
+     * Returns the count of newly installed files.
      */
     public int installAll(List<String> corePaths, Collection<SkGameModule> enabledModules) {
-        List<String> allPaths = new ArrayList<>(corePaths);
-        for (SkGameModule module : enabledModules) {
-            allPaths.addAll(module.getResourcePaths());
-        }
+        // Build ordered work list: path → target (deduplicated, first-wins).
+        LinkedHashMap<String, ResourceTarget> workList = new LinkedHashMap<>();
 
-        // Deduplicate while preserving order; warn on collision.
-        Set<String> unique = new LinkedHashSet<>();
-        for (String path : allPaths) {
-            if (!unique.add(path)) {
-                plugin.getLogUtil().warning("Duplicate resource path declared by modules: " + path);
+        for (String path : corePaths) {
+            try {
+                ResourceTarget target = resolveScriptsTarget(path);
+                if (workList.put(path, target) != null) {
+                    plugin.getLogUtil().warning("Duplicate core resource path: " + path);
+                }
+            } catch (IllegalStateException e) {
+                plugin.getLogUtil().error("Invalid core resource path '" + path + "': " + e.getMessage());
             }
         }
 
-        File skgameDir = new File(Skript.getInstance().getScriptsFolder(), "skgame");
-        skgameDir.mkdirs();
+        for (SkGameModule module : enabledModules) {
+            for (String path : module.getResourcePaths()) {
+                try {
+                    ResourceTarget target = module.resolveResourceTarget(path, plugin);
+                    if (workList.put(path, target) != null) {
+                        plugin.getLogUtil().warning("Duplicate resource path declared by modules: " + path);
+                    }
+                } catch (IllegalStateException e) {
+                    plugin.getLogUtil().error("Module '" + module.getId()
+                            + "' has invalid resource path '" + path + "': " + e.getMessage());
+                }
+            }
+        }
 
-        Set<File> newlyCreated = new HashSet<>();
+        Set<File> newScripts = new HashSet<>();
         int count = 0;
 
-        for (String resourcePath : unique) {
-            if (!resourcePath.startsWith(SCRIPTS_PREFIX)) {
-                throw new IllegalStateException("Resource path must start with 'scripts/': " + resourcePath);
-            }
-            String relativePath = resourcePath.substring(SCRIPTS_PREFIX.length());
-            File dest = new File(skgameDir, relativePath);
+        for (var entry : workList.entrySet()) {
+            String resourcePath = entry.getKey();
+            ResourceTarget target = entry.getValue();
+
+            target.directory().mkdirs();
+            File dest = new File(target.directory(), target.relativePath());
             if (dest.exists()) continue;
 
             File parent = dest.getParentFile();
             if (!parent.exists() && !parent.mkdirs()) {
-                plugin.getLogUtil().warning("Failed to create directory " + parent + " — skipping " + resourcePath);
+                plugin.getLogUtil().warning(
+                        "Failed to create directory " + parent + " — skipping " + resourcePath);
                 continue;
             }
 
@@ -73,18 +84,29 @@ public class ResourceInstaller {
                     continue;
                 }
                 Files.copy(in, dest.toPath());
-                newlyCreated.add(dest);
+                if (dest.getName().endsWith(".sk")) newScripts.add(dest);
                 count++;
-                plugin.getLogUtil().info("Installed resource: " + relativePath);
+                plugin.getLogUtil().info("Installed resource: " + target.relativePath());
             } catch (IOException e) {
                 plugin.getLogUtil().error("Failed to install " + resourcePath + ": " + e.getMessage());
             }
         }
 
-        if (!newlyCreated.isEmpty()) {
-            ScriptLoader.loadScripts(newlyCreated, OpenCloseable.EMPTY);
+        if (!newScripts.isEmpty()) {
+            ScriptLoader.loadScripts(newScripts, OpenCloseable.EMPTY);
         }
 
         return count;
+    }
+
+    /** Handles the built-in "scripts/" prefix for always-on core resources. */
+    private static ResourceTarget resolveScriptsTarget(String resourcePath) {
+        if (resourcePath.startsWith("scripts/")) {
+            return new ResourceTarget(
+                    new File(Skript.getInstance().getScriptsFolder(), "skgame"),
+                    resourcePath.substring("scripts/".length())
+            );
+        }
+        throw new IllegalStateException("Core resource path must start with 'scripts/': " + resourcePath);
     }
 }
