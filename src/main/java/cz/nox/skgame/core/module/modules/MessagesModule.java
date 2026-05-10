@@ -35,6 +35,14 @@ public class MessagesModule implements SkGameModule {
     }
 
     @Override
+    public List<String> getSkriptClasses() {
+        return List.of(
+                "cz.nox.skgame.skript.messages.EffSendMessage",
+                "cz.nox.skgame.skript.messages.ExprMessage"
+        );
+    }
+
+    @Override
     public List<String> getResourcePaths() {
         return List.of(
                 "messages/messages_en_US.yml",
