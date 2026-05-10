@@ -1,0 +1,41 @@
+# SkGame — Čeština (Česká republika)
+# ─────────────────────────────────────────────────────────────────────────────
+# Přeložené klíče (~15). Zbývající klíče nejsou přítomny → fallback na en_US.
+# Technické pojmy: session, host, addon ponechány v angličtině (herní slang).
+# minihra = minigame.
+# ─────────────────────────────────────────────────────────────────────────────
+
+session:
+  created: "&aSession vytvořena"
+  error:
+    already-in-session: "&cJiž jsi v session"
+  stop:
+    vote-success: "&aHráči úspěšně odhlasovali ukončení hry"
+    no-players: "&cŽádní hráči. Ukončuji hru"
+    unknown-error: "&cNeznámá chyba. Ukončuji hru"
+
+lobby:
+  spawn-set: "&aLobby spawn nastaven na tvou pozici"
+
+gui:
+  main:
+    title: "&6Hlavní nabídka her"
+  session:
+    title: "&5Lobby hosta {0}"
+    error:
+      not-host: "&cToto tlačítko může používat pouze host"
+  minigames:
+    title: "&3Minihry"
+  maps:
+    title: "&2Dostupné mapy pro minihru"
+  admin:
+    title: "&cAdmin rozhraní"
+
+admin:
+  setup:
+    enabled: "&aRežim úprav aktivován"
+    disabled: "&cRežim úprav deaktivován"
+  map:
+    created: "&aMapa {0} vytvořena"
+    deleted: "&aMapa {0} odstraněna"
+    already-exists: "&cMapa {0} již existuje"

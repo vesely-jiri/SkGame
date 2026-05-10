@@ -1,0 +1,111 @@
+# SkGame — English (United States)
+# ─────────────────────────────────────────────────────────────────────────────
+# Format: legacy & color codes by default (e.g. &a = green, &c = red).
+# Placeholder syntax: {0}, {1}, … (positional). Never use Skript %var% syntax.
+#
+# NOTE — visual decorations: entries such as separators ("&6---…"), bracket
+# labels ("&a[&2+&a]"), and UI indicators are visual rather than linguistic.
+# Translators may copy these verbatim if no language-specific change is needed.
+#
+# NOTE — item names and lore (admin.wand.*): resolved at server locale
+# (forced-locale or en_US), not per-player, because item metadata is set once.
+# ─────────────────────────────────────────────────────────────────────────────
+
+session:
+  created: "&aSession created"
+  error:
+    already-in-session: "&cYou are already in a session"
+  stop:
+    vote-success: "&aPlayers successfully voted to stop the game"
+    no-players: "&cThere are no players. Stopping game"
+    unknown-error: "&cUnknown error. Stopping game"
+    summary-separator: "&6------------------------------------"
+    summary-finished: "&6Game of &e{0} &6on map &e{1} &6has finished"
+
+lobby:
+  spawn-set: "&aGame lobby was set to your location"
+
+gui:
+  main:
+    title: "&6Main game menu"
+  session:
+    title: "&5Lobby of {0}"
+    host-label: "&eHost"
+    error:
+      not-host: "&cOnly host can use this button"
+  minigames:
+    title: "&3Minigames"
+  maps:
+    title: "&2Available maps for the minigame"
+  admin:
+    title: "&cAdmin gui"
+    map:
+      title: "&9GES"
+      addon-title: "&9GES&7-&e{0}"
+      values-title: "&9GES{0}"
+
+admin:
+  wand:
+    name: "&6Map creation wand"
+    lore: |-
+      &eLeftclick &7> &eset position 1
+      &eRightclick &7> &eset position 2
+      &cDrop the wand to stop edit mode
+    given: "&aMap creation wand given"
+    stabilize: "&6[&eStabilize&6]"
+    stabilize-hover: "&eStabilize position"
+  setup:
+    enabled: "&aSetup mode enabled"
+    disabled: "&cSetup mode disabled"
+    indicator: "&9Setup is active"
+    not-enabled: "&cSetup mode not enabled"
+  map:
+    type-name-prompt: "&aSelect two points and type map name to confirm. Otherwise type 'cancel'"
+    name-prompt: "&aSelect two points and type map name: "
+    created: "&aMap {0} created"
+    deleted: "&aMap {0} deleted"
+    already-exists: "&cMap {0} already exists"
+    position-set: "&aLocation of position &2{0} &aset"
+    point-location: "&eLocation of this point is {0}"
+    positions-not-set: "&cPositions not set. Use wand to set them"
+    mode-disabled: "&cMap point edit mode is not enabled"
+    values-not-set: "&cMap values are not set"
+    accept-position: "&eDo you want to set current value to &6{0}?"
+    accept-position-confirm: "&a[Accept position]"
+    accept-position-deny: "&c[Back to menu]"
+    value-set: "&aValue of map &7{0} - &7{1} &aset to &7{2}"
+    instructions: |-
+      &7---------------------------
+      &7Leftclick > &aOpen addon settings for this map
+      &7Rightclick + shift > &cDelete map
+  addon:
+    assigned: "&aAddon assigned to the map"
+    assigned-to-map: "&aAddon &6{0} &aassigned to map &6{1}"
+    unassigned: "&cAddon &6{0} &cunassigned from map &6{1}"
+    instructions: |-
+      &7-----------------------------------
+      &7Leftclick > &aOpen addon-map settings
+      &7Rightclick + shift > &aAssign&7/&cUnassign addon
+  value:
+    type-prompt: "&aType required value. Write 'cancel' to cancel the action"
+    instructions: |-
+      &7---------------------------
+      &7Leftclick > &aSet value
+      &7Rightclick + shift > &cReset value
+    edit-instructions: |-
+      &7---------------------------
+      &7---------------------------
+      &7Leftclick > {0}
+      &7Rightclick + shift > &cDelete
+    multi:
+      add: "&a[&2+&a]"
+      add-hover: "&aAdd new value: &2{0}"
+      back: "&a[&2Back&2]"
+      back-hover: "&aBack to main menu"
+      delete: "&4[&cX&4]"
+      delete-hover: "&4Delete value"
+      show: "&9[&bShow&9]"
+      show-hover: "&bMark saved locations"
+      header: "&6List of &7values {0} &6for &7map {1} &6of &7addon {2}"
+  action:
+    canceled: "&cAction canceled"

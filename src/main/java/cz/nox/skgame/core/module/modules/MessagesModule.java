@@ -17,7 +17,6 @@ public class MessagesModule implements SkGameModule {
     public void onEnable(SkGame plugin) {
         File messagesDir = new File(plugin.getDataFolder(), "messages");
         messagesDir.mkdirs();
-        // TODO (milestone 4): bundled YAMLs installed by ResourceInstaller before this point
         Messages.load(messagesDir, plugin.getConfig(), plugin.getLogger());
         int loaded = Messages.getLoadedLocales().size();
         if (loaded == 0) {
