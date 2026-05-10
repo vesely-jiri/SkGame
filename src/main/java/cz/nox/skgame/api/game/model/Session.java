@@ -1,7 +1,10 @@
 package cz.nox.skgame.api.game.model;
 
+import cz.nox.skgame.SkGame;
 import cz.nox.skgame.api.game.event.GamePlayerSessionJoin;
 import cz.nox.skgame.api.game.event.GamePlayerSessionLeave;
+import cz.nox.skgame.api.game.event.PlayerRoleChangeEvent;
+import cz.nox.skgame.api.game.model.type.SessionRole;
 import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.api.region.Region;
 import cz.nox.skgame.core.game.GameMapManager;
@@ -150,5 +153,48 @@ public class Session {
 
     private Map<String, Object> getMap(boolean isTemporary) {
         return isTemporary ? tempValues : values;
+    }
+
+    // ─── Role API ─────────────────────────────────────────────────────────────
+
+    /** Returns the player's role in this session, or null if they are not a member. */
+    @Nullable
+    public SessionRole getRole(Player player) {
+        if (players.contains(player)) return SessionRole.PLAYER;
+        if (spectators.contains(player)) return SessionRole.SPECTATOR;
+        return null;
+    }
+
+    /**
+     * Change a session member's role and fire {@link PlayerRoleChangeEvent}.
+     * No-op if the player is not in this session or already has the target role.
+     * MUST be called from the main thread (fires a Bukkit event).
+     */
+    public void setRole(Player player, SessionRole role) {
+        SessionRole current = getRole(player);
+        if (current == null) {
+            SkGame.getInstance().getLogUtil().info(
+                    "setRole called for player not in session: " + player.getName());
+            return;
+        }
+        if (current == role) return;
+        if (role == SessionRole.SPECTATOR) {
+            players.remove(player);
+            spectators.add(player);
+        } else {
+            spectators.remove(player);
+            players.add(player);
+        }
+        Bukkit.getPluginManager().callEvent(new PlayerRoleChangeEvent(player, this, current, role));
+    }
+
+    /**
+     * Returns a mutable snapshot of all session members (players ∪ spectators).
+     * Modifying the returned set does not affect session state.
+     */
+    public Set<Player> getMembers() {
+        Set<Player> all = new HashSet<>(players);
+        all.addAll(spectators);
+        return all;
     }
 }
