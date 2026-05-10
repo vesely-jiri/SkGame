@@ -1,0 +1,229 @@
+package cz.nox.skgame.api.messages;
+
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.bukkit.ChatColor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * Static message service. Initialized by {@code MessagesModule.onEnable()}.
+ * All methods are thread-safe. Static state is reset by {@link #clear()}.
+ */
+public final class Messages {
+
+    private static final MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
+    private static final Pattern PLACEHOLDER = Pattern.compile("\\{(\\d+)\\}");
+
+    private static final Map<String, YamlConfiguration> locales = new ConcurrentHashMap<>();
+    private static final Set<String> warnedKeys = ConcurrentHashMap.newKeySet();
+
+    @Nullable private static String forcedLocale = null;
+    private static String fallbackLocale = "en_US";
+    @Nullable private static Logger logger = null;
+
+    private Messages() {}
+
+    // ─── Init / teardown ─────────────────────────────────────────────────────
+
+    /**
+     * Load all {@code messages_<locale>.yml} files from {@code messagesDir}.
+     * Reads {@code messages.forced-locale} and {@code messages.fallback-locale} from config.
+     * Safe to call multiple times (hot reload); clears previous state first.
+     */
+    public static void load(File messagesDir, FileConfiguration config, Logger log) {
+        logger = log;
+        locales.clear();
+        warnedKeys.clear();
+
+        forcedLocale = config.getString("messages.forced-locale");
+        fallbackLocale = config.getString("messages.fallback-locale", "en_US");
+
+        if (!messagesDir.exists() || !messagesDir.isDirectory()) return;
+
+        File[] files = messagesDir.listFiles((dir, name) ->
+                name.startsWith("messages_") && name.endsWith(".yml"));
+        if (files == null) return;
+
+        for (File file : files) {
+            String name = file.getName();
+            String locale = name.substring("messages_".length(), name.length() - ".yml".length());
+            locales.put(locale, YamlConfiguration.loadConfiguration(file));
+        }
+
+        if (!locales.containsKey("en_US")) {
+            warn("messages_en_US.yml missing — message lookups will return missing placeholders");
+        }
+    }
+
+    /** Clear all loaded locales and the warned-key dedup set. Call on module disable. */
+    public static void clear() {
+        locales.clear();
+        warnedKeys.clear();
+    }
+
+    /** Returns the set of currently loaded locale identifiers (e.g. "en_US", "cs_CZ"). */
+    public static Set<String> getLoadedLocales() {
+        return locales.keySet();
+    }
+
+    // ─── Public API ──────────────────────────────────────────────────────────
+
+    /**
+     * Look up a message for a player's locale with positional args.
+     * Returns a String with legacy § color codes for legacy-format messages,
+     * or a legacy-serialized string for MiniMessage-format messages.
+     * Null args are stringified to "null" via String.valueOf.
+     */
+    public static String get(String key, @Nullable Player player, Object... args) {
+        return getForLocale(key, resolveLocale(player), args);
+    }
+
+    /**
+     * Look up a message for a specific locale string.
+     * Falls back to {@code fallbackLocale} if the key is absent in the requested locale.
+     * Null args are stringified to "null" via String.valueOf.
+     */
+    public static String getForLocale(String key, String locale, Object... args) {
+        Resolved resolved = lookup(key, locale);
+        if (resolved == null) resolved = lookup(key, fallbackLocale);
+        if (resolved == null) return missing(key);
+        return applyAndFormatString(resolved, args);
+    }
+
+    /**
+     * Same as {@link #get} but returns an Adventure Component.
+     * Preferred over {@link #get} when sending via Paper's Component API.
+     * Null args are stringified to "null" via String.valueOf.
+     */
+    public static Component getComponent(String key, @Nullable Player player, Object... args) {
+        Resolved resolved = lookup(key, resolveLocale(player));
+        if (resolved == null) resolved = lookup(key, fallbackLocale);
+        if (resolved == null) return Component.text(missing(key));
+        return applyAndFormatComponent(resolved, args);
+    }
+
+    /** Send a localized message to a player using their own locale. */
+    public static void send(Player player, String key, Object... args) {
+        player.sendMessage(getComponent(key, player, args));
+    }
+
+    /**
+     * Send to any CommandSender.
+     * Players receive their own locale; non-players (console) use the fallback locale.
+     */
+    public static void send(CommandSender target, String key, Object... args) {
+        if (target instanceof Player player) {
+            send(player, key, args);
+        } else {
+            target.sendMessage(getForLocale(key, fallbackLocale, args));
+        }
+    }
+
+    // ─── Locale resolution ───────────────────────────────────────────────────
+
+    static String resolveLocale(@Nullable Player player) {
+        if (forcedLocale != null && locales.containsKey(forcedLocale)) return forcedLocale;
+        if (player == null) return fallbackLocale;
+        String normalized = normalize(player.getLocale());
+        return locales.containsKey(normalized) ? normalized : fallbackLocale;
+    }
+
+    /**
+     * Normalize Bukkit's lowercase locale string to ISO convention.
+     * Examples: "cs_cz" → "cs_CZ", "en_us" → "en_US", "de" → "de".
+     */
+    static String normalize(String locale) {
+        if (locale == null || locale.isEmpty()) return "en_US";
+        int idx = locale.indexOf('_');
+        if (idx < 0) return locale.toLowerCase(Locale.ROOT);
+        String lang    = locale.substring(0, idx).toLowerCase(Locale.ROOT);
+        String country = locale.substring(idx + 1).toUpperCase(Locale.ROOT);
+        return lang + "_" + country;
+    }
+
+    // ─── Internal lookup + formatting ────────────────────────────────────────
+
+    private static @Nullable Resolved lookup(String key, String locale) {
+        YamlConfiguration yaml = locales.get(locale);
+        if (yaml == null) return null;
+
+        String rawString = yaml.getString(key);
+        if (rawString != null) return new Resolved(Format.LEGACY, rawString);
+
+        String format = yaml.getString(key + ".format");
+        String text   = yaml.getString(key + ".text");
+        if ("minimessage".equals(format) && text != null)
+            return new Resolved(Format.MINIMESSAGE, text);
+
+        return null;
+    }
+
+    @SuppressWarnings("deprecation")
+    private static String applyAndFormatString(Resolved resolved, Object[] args) {
+        String processed = applyArgs(resolved.text(), args);
+        return switch (resolved.format()) {
+            case LEGACY -> ChatColor.translateAlternateColorCodes('&', processed);
+            case MINIMESSAGE -> LegacyComponentSerializer.legacySection()
+                    .serialize(MINI_MESSAGE.deserialize(processed));
+        };
+    }
+
+    private static Component applyAndFormatComponent(Resolved resolved, Object[] args) {
+        String processed = applyArgs(resolved.text(), args);
+        return switch (resolved.format()) {
+            case LEGACY -> LegacyComponentSerializer.legacyAmpersand().deserialize(processed);
+            case MINIMESSAGE -> MINI_MESSAGE.deserialize(processed);
+        };
+    }
+
+    /**
+     * Replace {0}, {1}, … placeholders with args in a single regex pass.
+     * Out-of-range indices are left as literal text. Null args → "null".
+     * Single-pass prevents re-substitution when an arg value itself contains {N}.
+     */
+    static String applyArgs(String template, Object[] args) {
+        if (args == null || args.length == 0) return template;
+        Matcher m = PLACEHOLDER.matcher(template);
+        StringBuilder sb = new StringBuilder();
+        while (m.find()) {
+            int idx = Integer.parseInt(m.group(1));
+            String replacement = idx < args.length
+                    ? Matcher.quoteReplacement(String.valueOf(args[idx]))
+                    : m.group(0);
+            m.appendReplacement(sb, replacement);
+        }
+        m.appendTail(sb);
+        return sb.toString();
+    }
+
+    private static String missing(String key) {
+        if (warnedKeys.add(key)) {
+            warn("Missing message key: " + key);
+        }
+        return "<missing: " + key + ">";
+    }
+
+    private static void warn(String message) {
+        if (logger != null) logger.warning("[SkGame/Messages] " + message);
+    }
+
+    // ─── Internal types ───────────────────────────────────────────────────────
+
+    private enum Format { LEGACY, MINIMESSAGE }
+
+    private record Resolved(Format format, String text) {}
+}
