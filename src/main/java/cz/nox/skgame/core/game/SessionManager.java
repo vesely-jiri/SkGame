@@ -1,11 +1,15 @@
 package cz.nox.skgame.core.game;
 
+import cz.nox.skgame.SkGame;
 import cz.nox.skgame.api.game.event.GamePlayerSessionJoin;
 import cz.nox.skgame.api.game.event.GamePlayerSessionLeave;
 import cz.nox.skgame.api.game.event.SessionCreateEvent;
 import cz.nox.skgame.api.game.event.SessionDisbandEvent;
+import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.game.model.Session;
+import cz.nox.skgame.api.region.Region;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
@@ -98,6 +102,25 @@ public class SessionManager implements Listener {
     @Nullable
     public Session getLastCreatedSession() {
         return this.lastCreatedSession;
+    }
+
+    /**
+     * Three-tier spawn resolution for spectators: map value "spectator_spawn" → arena region
+     * center → lobby. Returns null if none is configured.
+     */
+    @Nullable
+    public static Location resolveSpectatorSpawn(Session session) {
+        GameMap map = session.getGameMap();
+        if (map != null) {
+            Object spawn = map.getValue("spectator_spawn");
+            if (spawn instanceof Location loc) return loc;
+        }
+        Region region = session.getArenaRegion();
+        if (region != null) {
+            Location center = region.getCenter();
+            if (center != null) return center;
+        }
+        return SkGame.getInstance().getLobbySpawn();
     }
 
     @EventHandler
