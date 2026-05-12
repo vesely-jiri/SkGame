@@ -22,6 +22,11 @@ session:
     summary-separator: "&6------------------------------------"
     summary-finished: "&6Game of &e{0} &6on map &e{1} &6has finished"
 
+spectator:
+  session-not-found: "&cSession '{0}' not found"
+  already-in-session: "&cYou are already in a session"
+  join-denied: "&cYou cannot spectate this game"
+
 lobby:
   spawn-set: "&aGame lobby was set to your location"
 
