@@ -26,6 +26,10 @@ spectator:
   session-not-found: "&cSession '{0}' not found"
   already-in-session: "&cYou are already in a session"
   join-denied: "&cYou cannot spectate this game"
+  joined: "&7You are now spectating &e{0}"
+  promoted: "&aYou have joined the game!"
+  demoted: "&7You are now a spectator"
+  no-spawn-defined: "&cThis map has no spectator spawn — using lobby"
 
 lobby:
   spawn-set: "&aGame lobby was set to your location"

@@ -18,6 +18,10 @@ spectator:
   session-not-found: "&cSession '{0}' nenalezena"
   already-in-session: "&cJiž jsi v session"
   join-denied: "&cNemůžeš tuto hru sledovat"
+  joined: "&7Nyní sleduješ &e{0}"
+  promoted: "&aPřipojil ses do hry!"
+  demoted: "&7Nyní jsi divák"
+  no-spawn-defined: "&cTato mapa nemá spawn pro diváky — používám lobby"
 
 lobby:
   spawn-set: "&aLobby spawn nastaven na tvou pozici"

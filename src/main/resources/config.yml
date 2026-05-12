@@ -35,6 +35,15 @@ lobby:
 defaults:
   gamemode: adventure
 
+# --- Spectators ---
+spectators:
+  # Gamemode applied when a player becomes a spectator.
+  # Standard SPECTATOR recommended; CREATIVE works for staff-spectate scenarios.
+  gamemode: SPECTATOR
+  # Fallback when no spectator_spawn map value and no arena region center is available.
+  # Only "lobby" is currently implemented. "reject" is not yet supported (see Phase 8 open questions).
+  fallback-when-no-spawn: lobby
+
 # --- Messages ---
 messages:
   forced-locale: ~        # null = use per-player locale
