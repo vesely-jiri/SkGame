@@ -81,6 +81,20 @@ on damage of player:
     push victim (vector from attacker to victim) with speed {_sp}
     push victim up with speed 0.5
 
+on "koth" spectator join:
+    set {_session} to event-session
+    set {_map} to map of {_session}
+    set {_mg} to minigame of {_session}
+    set {_target} to event-player
+    set {_c0} to new text component from "&aYou are spectating King of the Hill. "
+    set {_c1} to new text component from "&e[Click here to join the game]"
+    create callback for {_c1} with 1 use:
+        make {_target} a player in {_session}
+        set {_spawnpoints::*} to values "spawnpoints" of {_map} of {_mg}
+        teleport {_target} to random element out of {_spawnpoints::*}
+        set slot 0 of {_target} to stick
+    send components ({_c0} and {_c1}) to event-player
+
 on drop:
     player is playing (minigame with id "koth")
     cancel event

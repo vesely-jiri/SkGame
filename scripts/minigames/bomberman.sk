@@ -11,6 +11,8 @@ options:
     player_eliminated: "&cPlayer %{_victim}% has been eliminated by %{_attacker}%"
     shield_destroyed: "&cYour shield has been destroyed!"
 
+# Spectators allowed by default. No handler needed.
+
 #----------------------------------------------------------------------
 
 on load:
