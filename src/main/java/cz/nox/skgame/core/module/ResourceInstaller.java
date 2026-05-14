@@ -1,8 +1,6 @@
 package cz.nox.skgame.core.module;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.ScriptLoader;
-import ch.njol.util.OpenCloseable;
 import cz.nox.skgame.SkGame;
 import cz.nox.skgame.api.module.ResourceTarget;
 import cz.nox.skgame.api.module.SkGameModule;
@@ -12,10 +10,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Set;
 
 public class ResourceInstaller {
 
@@ -60,7 +56,6 @@ public class ResourceInstaller {
             }
         }
 
-        Set<File> newScripts = new HashSet<>();
         int count = 0;
 
         for (var entry : workList.entrySet()) {
@@ -84,16 +79,11 @@ public class ResourceInstaller {
                     continue;
                 }
                 Files.copy(in, dest.toPath());
-                if (dest.getName().endsWith(".sk")) newScripts.add(dest);
                 count++;
                 plugin.getLogUtil().info("Installed resource: " + target.relativePath());
             } catch (IOException e) {
                 plugin.getLogUtil().error("Failed to install " + resourcePath + ": " + e.getMessage());
             }
-        }
-
-        if (!newScripts.isEmpty()) {
-            ScriptLoader.loadScripts(newScripts, OpenCloseable.EMPTY);
         }
 
         return count;
