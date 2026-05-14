@@ -34,7 +34,7 @@ public class ExprMessage extends SimpleExpression<String> {
 
     static {
         Skript.registerExpression(ExprMessage.class, String.class, ExpressionType.SIMPLE,
-                "skgame message %string% [for %-player%] [with [arguments] %objects%]"
+                "skgame message %string% [for %-player%] [with [arguments] %-objects%]"
         );
     }
 

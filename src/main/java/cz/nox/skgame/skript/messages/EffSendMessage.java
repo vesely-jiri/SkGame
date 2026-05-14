@@ -33,7 +33,7 @@ public class EffSendMessage extends Effect {
 
     static {
         Skript.registerEffect(EffSendMessage.class,
-                "send skgame message %string% to %players% [with [arguments] %objects%]"
+                "send skgame message %string% to %players% [with [arguments] %-objects%]"
         );
     }
 
