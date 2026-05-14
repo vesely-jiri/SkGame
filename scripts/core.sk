@@ -45,11 +45,10 @@ command {@command} [<string>] [<text>]:
                 GA_OpenAdminGui(player)
 
 on tab complete of "{@command}":
-    if position is 1:
-        set {_completions::*} to "spectate"
-        if player has permission "{@permission_admin}":
-            add "admin" to {_completions::*}
-        set tab completions for position 1 to {_completions::*}
+    set {_completions::*} to "spectate"
+    if player has permission "{@permission_admin}":
+        add "admin" to {_completions::*}
+    set tab completions for position 1 to {_completions::*}
 
 #------------------------------------------------------------------------------
 

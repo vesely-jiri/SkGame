@@ -408,8 +408,6 @@ on inventory click:
         if click type is left mouse:
             if (plurality of {_value}) is PLURAL:
                 GA_OpenPluralValueList(player, {_key}, {_minigame}, {_map})
-            else if type of {_value} is a location:
-
             else:
                 set {{@var_prefix}::remove::admins::%player%::response} to event-item
                 send join {@prefix} and (skgame message "admin.value.type-prompt" for player) to player
