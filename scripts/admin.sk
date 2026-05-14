@@ -339,11 +339,11 @@ local function GA_PositionIndicator(p: player, pos: integer, l: location):
 
 local function GA_ShowPointAnimation(l: location):
     loop reversed 10 times:
-        play 100 (yellow coloured dust with speed 0) at {_l} ~ vector(0,loop-value/3,0)
+        draw 100 yellow dust particles at {_l} ~ vector(0,loop-value/3,0)
         wait 1 ticks
     loop (players in radius 1 of {_l}):
         send skgame message "admin.map.point-location" to loop-player with arguments "%{_l}%"
-    play 100 (blue coloured dust with speed 0) at {_l}
+    draw 100 blue dust particles at {_l}
 
 #----------------------------------------------------------------------------
 

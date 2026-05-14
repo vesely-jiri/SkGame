@@ -6,7 +6,6 @@ options:
     jump_increment: 0.05
     jump_hold_time: 2
     max_points: 5
-    charge_particle: 5 white coloured dust
     teams: "yellow","green"
     team_colors: "&e","&a"
     chestplate_team1: yellow
@@ -90,7 +89,7 @@ on "volleyball" game start:
     loop (players of event-session):
         set {_t} to 1 if mod(loop-iteration,2) is 0 else 2
         teleport loop-value to {_spawn::%{_t}%}
-        apply infinite speed without particles without the icon to loop-value replacing existing effect
+        apply infinite speed 1 to loop-value
         set temporary player value "team" of loop-value to {_teams::%{_t}%}
         set chestplate of loop-value to {_chestplates::%{_t}%}
     set session value "score::yellow" of event-session to 0
@@ -129,7 +128,7 @@ local function Volleyball_ShowChargeParticles(p: player):
     while {_p} is sneaking:
         add 3 to {_charge}
         set {_v2} to (spherical vector radius 0.75, yaw {_charge} * 8, pitch 0)
-        play {@charge_particle} with speed 0 at ({_p} ~ {_v2})
+        draw 5 white dust particles at ({_p} ~ {_v2})
         wait 1 tick
 
 local function Volleyball_TeamPointAdd(team: string, p: player, reason: string = "ground"):

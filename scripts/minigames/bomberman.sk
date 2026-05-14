@@ -216,8 +216,8 @@ local function Bomberman_EliminatePlayer(victim: player, attacker: player):
 local function Bomberman_CommonExplode(l: location, attacker: player, radius: integer = {@common_radius}):
     loop (blocks in radius {_radius} of {_l}) where [input is not air]:
         add loop-block to {_blocks::*}
-    show 2 explosion at {_blocks::*}
-    show 2 poof at {_blocks::*}
+    draw 2 explosion particles at {_blocks::*}
+    draw 2 poof particles at {_blocks::*}
     loop players in radius {_radius} of {_l}:
         gamemode of loop-player is not spectator
         Bomberman_EliminatePlayer(loop-player, {_attacker})
@@ -230,8 +230,8 @@ local function Bomberman_UncommonExplode(l: location, attacker: player, range: i
                 add (players in radius 1 of loop-block) to {_players::*}
             else:
                 stop loop
-    show 2 explosion at {_blocks::*}
-    show 2 poof at {_blocks::*}
+    draw 2 explosion particles at {_blocks::*}
+    draw 2 poof particles at {_blocks::*}
     loop {_players::*}:
         Bomberman_EliminatePlayer(loop-value, {_attacker})
 
@@ -299,7 +299,7 @@ on armor change:
     new armor item is {{@var_prefix}::items::speed_boots}
     while (boots of player) is netherite boots:
         player is playing (minigame with id "bomberman")
-        apply speed without particles without the icon to player for 2 second replacing existing effect
+        apply speed 1 to player for 2 seconds
         wait 1 second
 
 on place:
