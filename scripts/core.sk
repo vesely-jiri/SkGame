@@ -119,11 +119,13 @@ function G_Stopped(session: session, reason: string, additional_info: strings = 
         set {_all::*} to players of {_session}
         add ((spectators of {_session}) where [{_all::*} does not contain input]) to {_all::*}
         loop {_all::*}:
-            send join {@prefix} and (skgame message "session.stop.summary-separator" for loop-player) to loop-player
-            send join {@prefix} and (skgame message "session.stop.summary-finished" for loop-player with arguments {_mg} and {_gm}) to loop-player
-            if size of {_additional_info::*} > 0:
-                send join {_additional_info::*} by nl to loop-player
-            send join {@prefix} and (skgame message "session.stop.summary-separator" for loop-player) to loop-player
+            set {_target} to loop-value
+            if {_target} is a player:
+                send join {@prefix} and (skgame message "session.stop.summary-separator" for {_target}) to {_target}
+                send join {@prefix} and (skgame message "session.stop.summary-finished" for {_target} with arguments {_mg} and {_gm}) to {_target}
+                if size of {_additional_info::*} > 0:
+                    send join {_additional_info::*} by nl to {_target}
+                send join {@prefix} and (skgame message "session.stop.summary-separator" for {_target}) to {_target}
         if ({_rounds} - 1) > 0:
             start game of {_session}
         else:
@@ -176,10 +178,12 @@ function G_SendRawToSession(session: session, message: strings, prefix: boolean 
 
 function G_SendMessage(p: players, key: string, prefix: boolean = true):
     loop {_p::*}:
-        if {_prefix} is true:
-            send join {@prefix} and (skgame message {_key} for loop-player) to loop-player
-        else:
-            send (skgame message {_key} for loop-player) to loop-player
+        set {_target} to loop-value
+        if {_target} is a player:
+            if {_prefix} is true:
+                send join {@prefix} and (skgame message {_key} for {_target}) to {_target}
+            else:
+                send (skgame message {_key} for {_target}) to {_target}
 
 function G_SendMessageToSession(session: session, key: string, prefix: boolean = true):
     set {_p::*} to players of {_session}
