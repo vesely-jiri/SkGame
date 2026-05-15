@@ -18,6 +18,7 @@ import java.util.LinkedHashSet;
 
 public class Session {
     private String id;
+    private final long createdAt = System.currentTimeMillis();
     private Player host;
     private final LinkedHashSet<Player> lobbyMembers = new LinkedHashSet<>();
     private HashSet<Player> players;
@@ -47,6 +48,10 @@ public class Session {
     public Session(String id) {
         this(id,null,null,SessionState.LOBBY,null,
                 new HashSet<>(),new HashSet<>(),new HashMap<>(),new HashMap<>());
+    }
+
+    public long getCreatedAt() {
+        return createdAt;
     }
 
     public String getId() {
