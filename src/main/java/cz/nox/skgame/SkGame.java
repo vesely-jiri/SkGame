@@ -69,6 +69,7 @@ public class SkGame extends JavaPlugin {
             "cz.nox.skgame.skript.events.EvtSpectatorJoin",
             "cz.nox.skgame.skript.events.EvtPlayerPromoted",
             "cz.nox.skgame.skript.events.EvtPlayerDemoted",
+            "cz.nox.skgame.skript.events.EvtLobbyEnter",
             // Sections
             "cz.nox.skgame.skript.sections.EffSecCreateSession",
             "cz.nox.skgame.skript.sections.EffSecRegisterGameMap",

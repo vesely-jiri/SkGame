@@ -11,6 +11,7 @@ import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.registrations.EventValues;
 import cz.nox.skgame.api.game.event.SessionDisbandEvent;
 import cz.nox.skgame.api.game.model.Session;
+import cz.nox.skgame.api.game.model.type.DisbandReason;
 import cz.nox.skgame.core.game.SessionManager;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
@@ -36,9 +37,11 @@ public class EvtSessionDisband extends SkriptEvent {
 
     static {
         Skript.registerEvent("SessionDisband", EvtSessionDisband.class, SessionDisbandEvent.class,
-                "session (disband|delete)"
+                "session (disband|delete)",
+                "party (disband|delete)"
         );
         EventValues.registerEventValue(SessionDisbandEvent.class, Session.class, SessionDisbandEvent::getSession, EventValues.TIME_NOW);
+        EventValues.registerEventValue(SessionDisbandEvent.class, String.class, e -> e.getReason().name(), EventValues.TIME_NOW);
     }
 
     @Override
