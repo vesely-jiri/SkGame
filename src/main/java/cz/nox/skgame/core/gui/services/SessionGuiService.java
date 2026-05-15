@@ -146,12 +146,11 @@ public class SessionGuiService implements Listener {
                     plugin.getLogUtil().info("TODO: shuffle not implemented for session " + session.getId());
                 }));
 
-        // Slot 25 — Minigames (host-only; M8 wires)
+        // Slot 25 — Minigames (host-only)
         builder.slot(25, buildMinigameSlot(session).onClick(e -> {
             Player p = (Player) e.getWhoClicked();
             if (!isHostOnly(p, session)) return;
-            plugin.getLogUtil().info("TODO(M8): open minigames GUI for " + p.getName());
-            p.closeInventory();
+            MinigamesGuiService.getInstance().openFor(p);
         }));
 
         // Slot 26 — Lobby mode toggle (host-only)
@@ -167,12 +166,11 @@ public class SessionGuiService implements Listener {
                     update(session);
                 }));
 
-        // Slot 33 — Maps (host-only; M8 wires)
+        // Slot 33 — Maps (host-only; no-op if minigame not yet selected)
         builder.slot(33, buildMapsSlot(session).onClick(e -> {
             Player p = (Player) e.getWhoClicked();
             if (!isHostOnly(p, session)) return;
-            plugin.getLogUtil().info("TODO(M8): open maps GUI for " + p.getName());
-            p.closeInventory();
+            MapsGuiService.getInstance().openFor(p);
         }));
 
         // Slot 35 — Rounds (host-only; left=+1, right=-1)

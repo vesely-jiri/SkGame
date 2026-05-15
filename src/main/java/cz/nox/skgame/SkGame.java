@@ -177,6 +177,8 @@ public class SkGame extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new cz.nox.skgame.core.gui.GuiClickRouter(), instance);
         Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.gui.services.MainGuiService.getInstance(), instance);
         Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.gui.services.SessionGuiService.getInstance(), instance);
+        Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.gui.services.MinigamesGuiService.getInstance(), instance);
+        Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.gui.services.MapsGuiService.getInstance(), instance);
 
         for (SkGameModule module : enabledModules) {
             module.onEnable(this);
