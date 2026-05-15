@@ -6,7 +6,14 @@
 - Manage **MiniGames** - register/unregister your minigame
 - Manage **GameMaps** - register/unregister your game map that can support multiple minigames
 - Manage player **Sessions** - Create session that can hold players, spectators, and more
+- **Session lifecycle** - lobby, countdown, start, stop, and disband handled in Java with Skript events at every step
+- **Party management** - host promotion, auto-disband on idle, shutdown cleanup
+- **GUI services** - main menu, session lobby, minigame picker, map picker, and admin panel — all in Java, interceptable via Skript events
+- **Spectator mode** - join/leave mid-game, role switching, configurable gamemode
+- **Region API** - CuboidRegion + optional SkBee/WorldGuard adapters
+- **Locale system** - per-player locale, hot-reloadable YAML message files
 - Automatic serialization and deserialization of MiniGames and GameMaps into YAML files
+- Bundled minigames: **Bomberman**, **King of the Hill**, **Volleyball**
 
 ## Installation
 1. Make sure you have the [Skript](https://github.com/SkriptLang/Skript) plugin installed.
