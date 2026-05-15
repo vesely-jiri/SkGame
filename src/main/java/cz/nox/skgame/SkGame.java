@@ -196,6 +196,9 @@ public class SkGame extends JavaPlugin {
         MiniGameManager.getInstance().saveToFile(miniGamesDataFile);
         GameMapManager.getInstance().saveToFile(mapsDataFile);
 
+        // Disband all live sessions before modules unload
+        cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl.getInstance().shutdown();
+
         if (enabledModules != null) {
             List<SkGameModule> reversed = new ArrayList<>(enabledModules);
             Collections.reverse(reversed);

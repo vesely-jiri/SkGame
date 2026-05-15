@@ -40,11 +40,13 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager {
     private final SessionManager sessionManager;
     private final PlayerManager playerManager;
     private final SkGame plugin;
+    private final PartyManager partyManager;
 
     private SessionLifecycleManagerImpl(SkGame plugin) {
         this.sessionManager = SessionManager.getInstance();
         this.playerManager = PlayerManager.getInstance();
         this.plugin = plugin;
+        this.partyManager = new PartyManager(this, sessionManager, plugin);
     }
 
     public static synchronized SessionLifecycleManagerImpl getInstance() {
@@ -66,6 +68,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager {
             disbandSession(session, DisbandReason.EXPLICIT_DISBAND);
             return null;
         }
+        partyManager.registerActivity(session);
         return session;
     }
 
@@ -82,6 +85,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager {
             session.removeLobbyMember(player); // fires GamePlayerSessionLeave
             return false;
         }
+        partyManager.registerActivity(session);
         return true;
     }
 
@@ -102,6 +106,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager {
         player.setGameMode(resolveSpectatorGameMode());
         Location spawn = resolveSpectatorSpawn(session);
         if (spawn != null) player.teleport(spawn);
+        partyManager.registerActivity(session);
         return true;
     }
 
@@ -123,15 +128,11 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager {
             }
         }
 
-        // Auto-promote host if host left and lobby members remain
-        if (player.equals(session.getHost())) {
-            Set<Player> remaining = session.getLobbyMembers();
-            if (!remaining.isEmpty()) {
-                session.setHost(remaining.iterator().next());
-            }
+        if (!partyManager.tryPromoteHost(session, player)) {
+            disbandSession(session, partyManager.disbandReasonForHostLeave());
+            return;
         }
-
-        if (session.getMembers().isEmpty()) {
+        if (partyManager.shouldAutoDisband(session)) {
             disbandSession(session, DisbandReason.EMPTY_PARTY);
         }
     }
@@ -229,12 +230,20 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager {
             LobbyEnterEvent e = new LobbyEnterEvent(p, session);
             Bukkit.getPluginManager().callEvent(e);
         }
+
+        partyManager.registerActivity(session);
     }
 
     @Override
     public void disbandSession(Session session, DisbandReason reason) {
+        partyManager.onSessionDisbanded(session.getId());
         Bukkit.getPluginManager().callEvent(new SessionDisbandEvent(session, reason));
         sessionManager.deleteSession(session.getId());
+    }
+
+    /** Called from SkGame.onDisable — disbands all live sessions with SHUTDOWN reason. */
+    public void shutdown() {
+        partyManager.shutdown();
     }
 
     @Override

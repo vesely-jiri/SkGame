@@ -4,5 +4,6 @@ public enum DisbandReason {
     EMPTY_PARTY,
     HOST_LEAVE,
     EXPLICIT_DISBAND,
-    SHUTDOWN
+    SHUTDOWN,
+    IDLE_TIMEOUT
 }
