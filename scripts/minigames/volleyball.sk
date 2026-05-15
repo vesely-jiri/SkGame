@@ -112,7 +112,11 @@ on "volleyball" game stop:
             set {_t} to temporary player value "team" of loop-value
             if {_t} is {_team}:
                 add "&a%loop-value%" to {_additional::*}
-    G_Stopped(event-session, {_reason::1}, {_additional::*})
+    set {_p::*} to (players of event-session) and (spectators of event-session)
+    reset {_p::*} for game
+    if size of {_additional::*} > 0:
+        send join {_additional::*} to {_p::*}
+    teleport {_p::*} to lobby spawn
 
 #----------------------------------------------------------------------
 
@@ -137,7 +141,7 @@ local function Volleyball_TeamPointAdd(team: string, p: player, reason: string =
     set {_mg} to minigame of {_session}
     set {_score} to (session value "score::%{_team}%" of {_session}) ? 0
     set {_score} to {_score} + 1
-    G_SendMessageToSession({_session}, "&a%{_p}% scored!")
+    send "&a%{_p}% scored!" to (players of {_session}) and (spectators of {_session})
     set {_teams::*} to {@teams}
     set {_color} to "&e" if {_team} is "yellow" else "&a"
     set {_players::*} to (players of {_session}) and (spectators of {_session})
@@ -213,7 +217,7 @@ on rightclick on magma cube:
         set {_session} to session of player
         (size of (players of {_session})) >= 4
         (metadata tag "{@var_prefix}.attacker" of event-entity) is player
-        G_SendMessage(player, {@cant_double_touch})
+        send {@cant_double_touch} to player
         stop
     set {_t} to metadata tag "{@var_prefix}.antispam" of event-entity
     if difference between {_t} and now < 10 ticks:
@@ -233,7 +237,7 @@ on damage of magma cube:
         if (size of (players of {_session})) >= 4:
             set {_a} to metadata tag "{@var_prefix}.attacker" of victim
             if attacker is {_a}:
-                G_SendMessage(attacker, {@cant_double_touch})
+                send {@cant_double_touch} to attacker
                 stop
     set metadata tag "{@var_prefix}.attacker" of victim to attacker
     set (invulnerability time of victim) to 20 ticks
@@ -288,4 +292,4 @@ on rightclick with dragon egg:
         remove (1 of dragon egg) from player
         Volleyball_SpawnBall(player)
     else:
-        G_SendMessage(player, {@not_on_playout_block})
+        send {@not_on_playout_block} to player

@@ -13,6 +13,6 @@ public class AdminModule implements SkGameModule {
 
     @Override
     public List<String> getResourcePaths() {
-        return List.of("scripts/admin.sk");
+        return List.of();
     }
 }

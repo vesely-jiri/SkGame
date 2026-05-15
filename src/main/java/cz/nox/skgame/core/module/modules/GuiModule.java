@@ -13,6 +13,6 @@ public class GuiModule implements SkGameModule {
 
     @Override
     public List<String> getResourcePaths() {
-        return List.of("scripts/guis.sk");
+        return List.of();
     }
 }

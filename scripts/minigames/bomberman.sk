@@ -90,7 +90,11 @@ on "bomberman" game stop:
         set {_kills} to {_players::%{_player-list::1}%}
         set {_m} to "&aWinner is: %{_player-list::1}% with %{_kills}% kills"
         set {_win} to "WIN"
-    G_Stopped(event-session, {_win} ? event-string, ({_m} ? ""))
+    set {_p::*} to (players of event-session) and (spectators of event-session)
+    reset {_p::*} for game
+    if {_m} is set:
+        send {_m} to {_p::*}
+    teleport {_p::*} to lobby spawn
 
 #----------------------------------------------------------------------
 
@@ -198,7 +202,7 @@ local function Bomberman_EliminatePlayer(victim: player, attacker: player):
         set {_v} to (session value "players::%{_victim}%::deaths" of {_session}) ? 0
         set session value "players::%{_victim}%::deaths" of {_session} to {_v} + 1
         play sound "minecraft:entity.player.hurt" at {_victim}
-        G_SendMessageToSession({_session}, {@player_eliminated})
+        send {@player_eliminated} to (players of {_session}) and (spectators of {_session})
         if {_victim} is not {_attacker}:
             Bomberman_AddPoint({_session}, {_attacker})
         if Bomberman_GetGamemode({_session}) is "elimination":

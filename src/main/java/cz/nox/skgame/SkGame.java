@@ -132,8 +132,7 @@ public class SkGame extends JavaPlugin {
             "cz.nox.skgame.skript.expressions.ExprParty"
     );
 
-    // core.sk is always installed — user minigames depend on its helper functions.
-    private static final List<String> CORE_RESOURCE_PATHS = List.of("scripts/core.sk");
+    private static final List<String> CORE_RESOURCE_PATHS = List.of();
 
     private static SkGame instance;
     private SkriptAddon addon;
@@ -176,7 +175,7 @@ public class SkGame extends JavaPlugin {
         // Resolve which modules are enabled based on config and soft-dep availability.
         this.enabledModules = resolveModules();
 
-        // Install core.sk always, then each enabled module's declared resources.
+        cleanupLegacyScripts();
         new ResourceInstaller(this).installAll(CORE_RESOURCE_PATHS, enabledModules);
 
         // Load core Skript classes then each enabled module's declared classes.
@@ -375,6 +374,19 @@ public class SkGame extends JavaPlugin {
         }
 
         if (changed) saveConfig();
+    }
+
+    private void cleanupLegacyScripts() {
+        File skgameScripts = new File(Skript.getInstance().getScriptsFolder(), "skgame");
+        for (String name : new String[]{"core.sk", "guis.sk", "admin.sk"}) {
+            File f = new File(skgameScripts, name);
+            if (!f.exists()) continue;
+            if (f.delete()) {
+                logUtil.warning("Deleted legacy script '" + name + "' — no longer bundled. Update any custom scripts that referenced it.");
+            } else {
+                logUtil.warning("Could not delete legacy script '" + name + "' — delete it manually to avoid Skript parse errors.");
+            }
+        }
     }
 
     private void loadLobbySpawn() {
