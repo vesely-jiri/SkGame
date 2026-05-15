@@ -59,6 +59,11 @@ public class SkGame extends JavaPlugin {
             "cz.nox.skgame.skript.effects.EffSessionGameStart",
             "cz.nox.skgame.skript.effects.EffSessionGameStop",
             "cz.nox.skgame.skript.effects.EffConfigureArenaSlots",
+            "cz.nox.skgame.skript.effects.EffOpenMainGui",
+            "cz.nox.skgame.skript.effects.EffOpenSessionGui",
+            "cz.nox.skgame.skript.effects.EffOpenMinigamesGui",
+            "cz.nox.skgame.skript.effects.EffOpenMapsGui",
+            "cz.nox.skgame.skript.effects.EffOpenAdminGui",
             // Events
             "cz.nox.skgame.skript.events.EvtSessionCreate",
             "cz.nox.skgame.skript.events.EvtPlayerSessionLeave",
@@ -70,6 +75,11 @@ public class SkGame extends JavaPlugin {
             "cz.nox.skgame.skript.events.EvtPlayerPromoted",
             "cz.nox.skgame.skript.events.EvtPlayerDemoted",
             "cz.nox.skgame.skript.events.EvtLobbyEnter",
+            "cz.nox.skgame.skript.events.EvtMainGuiOpen",
+            "cz.nox.skgame.skript.events.EvtSessionGuiOpen",
+            "cz.nox.skgame.skript.events.EvtMinigamesGuiOpen",
+            "cz.nox.skgame.skript.events.EvtMapsGuiOpen",
+            "cz.nox.skgame.skript.events.EvtAdminGuiOpen",
             // Sections
             "cz.nox.skgame.skript.sections.EffSecCreateSession",
             "cz.nox.skgame.skript.sections.EffSecRegisterGameMap",
@@ -118,7 +128,8 @@ public class SkGame extends JavaPlugin {
             "cz.nox.skgame.skript.expressions.regions.ExprRegionCenter",
             "cz.nox.skgame.skript.expressions.regions.ExprCuboidRegion",
             // Expressions — misc
-            "cz.nox.skgame.skript.expressions.ExprLobbySpawn"
+            "cz.nox.skgame.skript.expressions.ExprLobbySpawn",
+            "cz.nox.skgame.skript.expressions.ExprParty"
     );
 
     // core.sk is always installed — user minigames depend on its helper functions.

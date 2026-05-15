@@ -3,6 +3,7 @@ package cz.nox.skgame.core.gui.services;
 import cz.nox.skgame.api.game.event.GamePlayerSessionLeave;
 import cz.nox.skgame.api.game.event.GameStartEvent;
 import cz.nox.skgame.api.game.event.SessionDisbandEvent;
+import cz.nox.skgame.api.gui.event.MinigamesGuiOpenEvent;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.gui.GuiBuilder;
@@ -56,6 +57,9 @@ public class MinigamesGuiService implements Listener {
     public void openFor(Player player) {
         Session session = SessionManager.getInstance().getSession(player);
         if (session == null) return;
+        MinigamesGuiOpenEvent guiEvent = new MinigamesGuiOpenEvent(player, session);
+        Bukkit.getPluginManager().callEvent(guiEvent);
+        if (guiEvent.isCancelled()) return;
         player.openInventory(buildFor(player, session));
         viewers.computeIfAbsent(session.getId(), k -> new HashSet<>()).add(player.getUniqueId());
     }

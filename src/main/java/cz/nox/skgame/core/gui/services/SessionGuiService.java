@@ -5,6 +5,7 @@ import cz.nox.skgame.api.game.event.GamePlayerSessionLeave;
 import cz.nox.skgame.api.game.event.GameStartEvent;
 import cz.nox.skgame.api.game.event.PlayerRoleChangeEvent;
 import cz.nox.skgame.api.game.event.SessionDisbandEvent;
+import cz.nox.skgame.api.gui.event.SessionGuiOpenEvent;
 import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
@@ -64,6 +65,9 @@ public class SessionGuiService implements Listener {
     public void openFor(Player player) {
         Session session = SessionManager.getInstance().getSession(player);
         if (session == null) return;
+        SessionGuiOpenEvent guiEvent = new SessionGuiOpenEvent(player, session);
+        Bukkit.getPluginManager().callEvent(guiEvent);
+        if (guiEvent.isCancelled()) return;
         player.openInventory(buildFor(player, session));
         viewers.computeIfAbsent(session.getId(), k -> new HashSet<>()).add(player.getUniqueId());
     }

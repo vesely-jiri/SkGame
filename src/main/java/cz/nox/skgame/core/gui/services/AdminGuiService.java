@@ -31,6 +31,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import cz.nox.skgame.api.gui.event.AdminGuiOpenEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -74,6 +75,9 @@ public class AdminGuiService implements Listener {
     // ─── Public API ───────────────────────────────────────────────────────────
 
     public void openAdminGui(Player player) {
+        AdminGuiOpenEvent guiEvent = new AdminGuiOpenEvent(player);
+        Bukkit.getPluginManager().callEvent(guiEvent);
+        if (guiEvent.isCancelled()) return;
         GameMapManager gmm = GameMapManager.getInstance();
 
         GuiBuilder builder = new GuiBuilder()

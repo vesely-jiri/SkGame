@@ -1,11 +1,16 @@
 package cz.nox.skgame.core.gui.services;
 
 import cz.nox.skgame.SkGame;
+import cz.nox.skgame.api.game.event.GameStartEvent;
+import cz.nox.skgame.api.game.event.GameStopEvent;
+import cz.nox.skgame.api.game.event.SessionCreateEvent;
+import cz.nox.skgame.api.game.event.SessionDisbandEvent;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.api.gui.GuiBuilder;
 import cz.nox.skgame.api.gui.GuiHolder;
 import cz.nox.skgame.api.gui.GuiItem;
+import cz.nox.skgame.api.gui.event.MainGuiOpenEvent;
 import cz.nox.skgame.api.messages.Messages;
 import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl;
@@ -49,11 +54,13 @@ public class MainGuiService implements Listener {
     }
 
     public void openFor(Player viewer) {
+        MainGuiOpenEvent guiEvent = new MainGuiOpenEvent(viewer);
+        Bukkit.getPluginManager().callEvent(guiEvent);
+        if (guiEvent.isCancelled()) return;
         viewer.openInventory(buildFor(viewer));
         activeViewers.add(viewer.getUniqueId());
     }
 
-    /** Rebuild and reopen for all currently tracked viewers. Wiring deferred to M11. */
     public void update() {
         for (UUID uuid : new HashSet<>(activeViewers)) {
             Player p = Bukkit.getPlayer(uuid);
@@ -75,6 +82,18 @@ public class MainGuiService implements Listener {
             activeViewers.remove(event.getPlayer().getUniqueId());
         }
     }
+
+    @EventHandler
+    public void onSessionCreate(SessionCreateEvent event) { update(); }
+
+    @EventHandler
+    public void onSessionDisband(SessionDisbandEvent event) { update(); }
+
+    @EventHandler
+    public void onGameStart(GameStartEvent event) { update(); }
+
+    @EventHandler
+    public void onGameStop(GameStopEvent event) { update(); }
 
     private Inventory buildFor(Player viewer) {
         SessionLifecycleManagerImpl lifecycle = SessionLifecycleManagerImpl.getInstance();
