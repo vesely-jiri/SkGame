@@ -10,7 +10,7 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.util.Kleenean;
 import cz.nox.skgame.api.game.model.Session;
-import cz.nox.skgame.core.game.SessionManager;
+import cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +53,7 @@ public class EffJoinAsSpectator extends Effect {
         Player player = this.player.getSingle(event);
         Session session = this.session.getSingle(event);
         if (player == null || session == null) return;
-        SessionManager.getInstance().joinAsSpectator(player, session);
+        SessionLifecycleManagerImpl.getInstance().joinAsSpectator(player, session);
     }
 
     @Override

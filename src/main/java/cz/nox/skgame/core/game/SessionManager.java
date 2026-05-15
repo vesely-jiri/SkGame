@@ -1,18 +1,11 @@
 package cz.nox.skgame.core.game;
 
-import cz.nox.skgame.SkGame;
 import cz.nox.skgame.api.game.event.GamePlayerSessionJoin;
 import cz.nox.skgame.api.game.event.GamePlayerSessionLeave;
 import cz.nox.skgame.api.game.event.SessionCreateEvent;
-import cz.nox.skgame.api.game.event.SessionDisbandEvent;
-import cz.nox.skgame.api.game.event.SpectatorJoinEvent;
 import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.game.model.Session;
-import cz.nox.skgame.api.game.model.type.SessionRole;
-import cz.nox.skgame.api.region.Region;
 import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
@@ -61,8 +54,6 @@ public class SessionManager implements Listener {
             session.setArenaRegion(null);
         }
         mapManager.removeMapFromClaimed(session.getGameMap());
-        Event e = new SessionDisbandEvent(session);
-        Bukkit.getPluginManager().callEvent(e);
         sessions.remove(id);
     }
 
@@ -105,64 +96,6 @@ public class SessionManager implements Listener {
     @Nullable
     public Session getLastCreatedSession() {
         return this.lastCreatedSession;
-    }
-
-    /**
-     * Entry point for a non-member joining a session as spectator.
-     * Fires {@link SpectatorJoinEvent} (cancellable). If not cancelled, adds the player to
-     * spectators, fires {@link GamePlayerSessionJoin}, sets gamemode, and teleports.
-     *
-     * <p>Use {@link Session#setRole} for role changes of existing members.
-     * Note: {@link Session#addSpectators} does not fire GamePlayerSessionJoin — this method
-     * does so explicitly after the add.
-     */
-    public void joinAsSpectator(Player player, Session session) {
-        SessionRole current = session.getRole(player);
-        if (current != null) {
-            SkGame.getInstance().getLogUtil().info(
-                    "joinAsSpectator called for member already in session: "
-                            + player.getName() + ", use setRole instead");
-            return;
-        }
-        SpectatorJoinEvent joinEvent = new SpectatorJoinEvent(player, session);
-        Bukkit.getPluginManager().callEvent(joinEvent);
-        if (joinEvent.isCancelled()) return;
-
-        // addSpectators does NOT fire GamePlayerSessionJoin — fire it explicitly here
-        session.addSpectators(player);
-        Bukkit.getPluginManager().callEvent(new GamePlayerSessionJoin(player, session));
-
-        player.setGameMode(resolveSpectatorGameMode());
-        Location spawn = resolveSpectatorSpawn(session);
-        if (spawn != null) player.teleport(spawn);
-    }
-
-    private GameMode resolveSpectatorGameMode() {
-        String raw = SkGame.getInstance().getConfig().getString("spectators.gamemode", "spectator");
-        try {
-            return GameMode.valueOf(raw.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            return GameMode.SPECTATOR;
-        }
-    }
-
-    /**
-     * Three-tier spawn resolution for spectators: map value "spectator_spawn" → arena region
-     * center → lobby. Returns null if none is configured.
-     */
-    @Nullable
-    public static Location resolveSpectatorSpawn(Session session) {
-        GameMap map = session.getGameMap();
-        if (map != null) {
-            Object spawn = map.getValue("spectator_spawn");
-            if (spawn instanceof Location loc) return loc;
-        }
-        Region region = session.getArenaRegion();
-        if (region != null) {
-            Location center = region.getCenter();
-            if (center != null) return center;
-        }
-        return SkGame.getInstance().getLobbySpawn();
     }
 
     @EventHandler

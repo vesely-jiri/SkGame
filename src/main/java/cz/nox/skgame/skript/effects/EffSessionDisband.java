@@ -10,7 +10,8 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.util.Kleenean;
 import cz.nox.skgame.api.game.model.Session;
-import cz.nox.skgame.core.game.SessionManager;
+import cz.nox.skgame.api.game.model.type.DisbandReason;
+import cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 @Since("1.0.0")
 @SuppressWarnings("unused")
 public class EffSessionDisband extends Effect {
-    private static final SessionManager sessionManager = SessionManager.getInstance();
+    private static final SessionLifecycleManagerImpl lifecycle = SessionLifecycleManagerImpl.getInstance();
     private Expression<Session> session;
 
     static {
@@ -44,7 +45,7 @@ public class EffSessionDisband extends Effect {
     protected void execute(Event event) {
         Session session = this.session.getSingle(event);
         if (session == null) return;
-        sessionManager.deleteSession(session.getId());
+        lifecycle.disbandSession(session, DisbandReason.EXPLICIT_DISBAND);
     }
 
     @Override

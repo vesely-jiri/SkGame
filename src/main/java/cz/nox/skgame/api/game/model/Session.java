@@ -14,10 +14,12 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.LinkedHashSet;
 
 public class Session {
     private String id;
     private Player host;
+    private final LinkedHashSet<Player> lobbyMembers = new LinkedHashSet<>();
     private HashSet<Player> players;
     private HashSet<Player> spectators;
     private SessionState state;
@@ -91,6 +93,20 @@ public class Session {
         }
     }
 
+    public Set<Player> getLobbyMembers() {
+        return new LinkedHashSet<>(lobbyMembers);
+    }
+    public void addLobbyMember(Player player) {
+        if (lobbyMembers.add(player)) {
+            Bukkit.getPluginManager().callEvent(new GamePlayerSessionJoin(player, this));
+        }
+    }
+    public void removeLobbyMember(Player player) {
+        if (lobbyMembers.remove(player)) {
+            Bukkit.getPluginManager().callEvent(new GamePlayerSessionLeave(player, this));
+        }
+    }
+
     public SessionState getState() {
         return state;
     }
@@ -160,6 +176,7 @@ public class Session {
     /** Returns the player's role in this session, or null if they are not a member. */
     @Nullable
     public SessionRole getRole(Player player) {
+        if (lobbyMembers.contains(player)) return SessionRole.LOBBY;
         if (players.contains(player)) return SessionRole.PLAYER;
         if (spectators.contains(player)) return SessionRole.SPECTATOR;
         return null;
@@ -178,24 +195,26 @@ public class Session {
             return;
         }
         if (current == role) return;
-        // LOBBY storage added in M3 (SessionLifecycleManager); reject until then.
-        if (role == SessionRole.LOBBY) return;
-        if (role == SessionRole.SPECTATOR) {
-            players.remove(player);
-            spectators.add(player);
-        } else {
-            spectators.remove(player);
-            players.add(player);
+        switch (current) {
+            case LOBBY     -> lobbyMembers.remove(player);
+            case PLAYER    -> players.remove(player);
+            case SPECTATOR -> spectators.remove(player);
+        }
+        switch (role) {
+            case LOBBY     -> lobbyMembers.add(player);
+            case PLAYER    -> players.add(player);
+            case SPECTATOR -> spectators.add(player);
         }
         Bukkit.getPluginManager().callEvent(new PlayerRoleChangeEvent(player, this, current, role));
     }
 
     /**
-     * Returns a mutable snapshot of all session members (players ∪ spectators).
+     * Returns a mutable snapshot of all session members (lobbyMembers ∪ players ∪ spectators).
      * Modifying the returned set does not affect session state.
      */
     public Set<Player> getMembers() {
-        Set<Player> all = new HashSet<>(players);
+        Set<Player> all = new HashSet<>(lobbyMembers);
+        all.addAll(players);
         all.addAll(spectators);
         return all;
     }

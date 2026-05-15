@@ -11,18 +11,10 @@ import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.util.Timespan;
 import ch.njol.skript.util.Timespan.TimePeriod;
 import ch.njol.util.Kleenean;
-import cz.nox.skgame.SkGame;
-import cz.nox.skgame.api.game.event.GameStartEvent;
-import cz.nox.skgame.api.game.model.GameMap;
-import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
-import cz.nox.skgame.api.game.model.type.SessionState;
-import cz.nox.skgame.core.game.SessionManager;
-import cz.nox.skgame.core.region.ArenaSlot;
-import org.bukkit.Bukkit;
+import cz.nox.skgame.api.game.model.type.GameStartReason;
+import cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl;
 import org.bukkit.event.Event;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.Nullable;
 
 @Name("Session - Start Session Game")
@@ -32,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
         "",
         "Only works if the session is in LOBBY state and the session's map supports the MiniGame.",
         "Triggers a GameStartEvent when the game actually begins.",
+        "Transitions all LOBBY members to PLAYER role.",
         "",
         "Supports: EXECUTE only."
 })
@@ -43,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 @SuppressWarnings("unused")
 public class EffSessionGameStart extends Effect {
 
-    private static final SessionManager sessionManager = SessionManager.getInstance();
     private Expression<Session> session;
     private @Nullable Expression<Timespan> delay;
 
@@ -65,51 +57,14 @@ public class EffSessionGameStart extends Effect {
     protected void execute(Event event) {
         Session session = this.session.getSingle(event);
         if (session == null) return;
-        if (session.getState() != SessionState.LOBBY) return;
 
-        MiniGame miniGame = session.getMiniGame();
-        GameMap gameMap = session.getGameMap();
-        if (miniGame == null || gameMap == null) return;
-        if (!gameMap.supportsMiniGame(miniGame)) return;
-
+        Long ticks = null;
         if (this.delay != null) {
             Timespan timespan = this.delay.getSingle(event);
-            if (timespan != null) {
-                startWithCountdown(session, timespan);
-                return;
-            }
+            if (timespan != null) ticks = timespan.getAs(TimePeriod.TICK);
         }
-        startImmediately(session);
-    }
 
-    private void startImmediately(Session session) {
-        session.setState(SessionState.STARTED);
-        GameMap gameMap = session.getGameMap();
-        if (gameMap != null && gameMap.hasArenaSlots()) {
-            ArenaSlot slot = gameMap.claimSlot(session.getId());
-            if (slot != null) {
-                session.setClaimedSlot(slot);
-                session.setArenaRegion(gameMap.getSlotRegion(slot));
-            }
-        }
-        Bukkit.getPluginManager().callEvent(
-                new GameStartEvent(session, session.getMiniGame(), gameMap)
-        );
-    }
-
-    private void startWithCountdown(Session session, Timespan timespan) {
-        session.setState(SessionState.STARTING);
-        String sessionId = session.getId();
-        BukkitTask task = new BukkitRunnable() {
-            @Override
-            public void run() {
-                sessionManager.cancelCountdownTask(sessionId);
-                Session current = sessionManager.getSessionById(sessionId);
-                if (current == null || current.getState() != SessionState.STARTING) return;
-                startImmediately(current);
-            }
-        }.runTaskLater(SkGame.getInstance(), timespan.getAs(TimePeriod.TICK));
-        sessionManager.setCountdownTask(sessionId, task);
+        SessionLifecycleManagerImpl.getInstance().startGame(session, GameStartReason.HOST_START, ticks);
     }
 
     @Override

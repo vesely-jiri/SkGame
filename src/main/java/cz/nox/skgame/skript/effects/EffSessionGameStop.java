@@ -9,15 +9,8 @@ import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.util.Kleenean;
-import cz.nox.skgame.api.game.event.GameStopEvent;
-import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
-import cz.nox.skgame.api.game.model.type.SessionState;
-import cz.nox.skgame.core.game.GameMapManager;
-import cz.nox.skgame.core.game.PlayerManager;
-import cz.nox.skgame.core.game.SessionManager;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
+import cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,8 +19,8 @@ import org.jetbrains.annotations.Nullable;
         "Stops the game running in a specific session.",
         "",
         "You can optionally provide a reason for the game stop.",
-        "Removes all session and player-specific values and triggers a GameStop Skript event.",
-        "Can't be cancelled"
+        "Removes temp session and player values, fires GameStopEvent, then returns all members to LOBBY role.",
+        "Can't be cancelled."
 })
 @Examples({
         "stop game of {_session}",
@@ -36,11 +29,9 @@ import org.jetbrains.annotations.Nullable;
 @Since("1.0.0")
 @SuppressWarnings("unused")
 public class EffSessionGameStop extends Effect {
-    private static final GameMapManager mapManager = GameMapManager.getInstance();
-    private static final PlayerManager playerManager = PlayerManager.getInstance();
-    private static final SessionManager sessionManager = SessionManager.getInstance();
+
     private Expression<Session> session;
-    private Expression<String> reason;
+    private @Nullable Expression<String> reason;
 
     static {
         Skript.registerEffect(EffSessionGameStop.class,
@@ -62,34 +53,12 @@ public class EffSessionGameStop extends Effect {
     protected void execute(Event e) {
         Session session = this.session.getSingle(e);
         if (session == null) return;
-        MiniGame miniGame = session.getMiniGame();
-        if (miniGame == null) return;
-        sessionManager.cancelCountdownTask(session.getId());
-        GameStopEvent newEvent;
-        if (this.reason != null) {
-            String re = this.reason.getSingle(e);
-            newEvent = new GameStopEvent(miniGame, session, re);
-        } else {
-            newEvent = new GameStopEvent(miniGame, session, "default");
-        }
-        session.setState(SessionState.LOBBY);
-        if (session.getClaimedSlot() != null && session.getGameMap() != null) {
-            session.getGameMap().releaseSlot(session.getId());
-            session.setClaimedSlot(null);
-            session.setArenaRegion(null);
-        }
-        Bukkit.getPluginManager().callEvent(newEvent);
-        for (Player player : session.getPlayers()) {
-            playerManager.getPlayer(player).removeValues(true);
-        }
-        session.removeValues(true);
+        String stopReason = (this.reason != null) ? this.reason.getSingle(e) : null;
+        SessionLifecycleManagerImpl.getInstance().endGame(session, stopReason != null ? stopReason : "default");
     }
 
     @Override
     public String toString(@Nullable Event event, boolean b) {
-        Session session = this.session.getSingle(event);
-        if (session == null) return "Session does not exist";
-        MiniGame miniGame = session.getMiniGame();
-        return "start game " + miniGame + " of session with id " + session.getId() ;
+        return "stop game of " + this.session.toString(event, b);
     }
 }

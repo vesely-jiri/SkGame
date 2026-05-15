@@ -13,6 +13,7 @@ import cz.nox.skgame.SkGame;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.type.SessionRole;
 import cz.nox.skgame.core.game.SessionManager;
+import cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -66,7 +67,7 @@ public class EffMakeSpectator extends Effect {
             }
             session.setRole(player, SessionRole.SPECTATOR);
             player.setGameMode(spectatorMode);
-            Location spawn = SessionManager.resolveSpectatorSpawn(session);
+            Location spawn = SessionLifecycleManagerImpl.resolveSpectatorSpawn(session);
             if (spawn != null) player.teleport(spawn);
         }
     }
