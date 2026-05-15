@@ -11,8 +11,17 @@ commands:
     description: SkGame admin commands
     usage: /skgame reload messages
     permission: skgame.admin.reload
+  game:
+    description: Open game menu or manage sessions
+    usage: /game [admin|spectate <session-id>]
 
 permissions:
   skgame.admin.reload:
     description: Reload SkGame subsystems
+    default: op
+  skgame.admin:
+    description: Access the SkGame admin GUI
+    default: op
+  skgame.spectate:
+    description: Join sessions as spectator via /game spectate
     default: op

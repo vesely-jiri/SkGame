@@ -193,6 +193,13 @@ public class SkGame extends JavaPlugin {
         var cmd = getCommand("skgame");
         if (cmd != null) cmd.setExecutor(this);
 
+        cz.nox.skgame.core.command.GameCommand gameCommand = new cz.nox.skgame.core.command.GameCommand();
+        var gameCmd = getCommand("game");
+        if (gameCmd != null) {
+            gameCmd.setExecutor(gameCommand);
+            gameCmd.setTabCompleter(gameCommand);
+        }
+
         logUtil.info("SkGame enabled in " + (System.currentTimeMillis() - s) + "ms");
     }
 

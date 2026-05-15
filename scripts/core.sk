@@ -19,36 +19,37 @@ on load:
     set {{@var_prefix}::remove::gui::main} to G_InitMainGui()
     send join "Loaded core Game script " and {@version} to console
 
-command {@command} [<string>] [<text>]:
-    trigger:
-        if arg-1 is not set:
-            if (session of player) is not set:
-                G_OpenMainGui(player)
-            else:
-                G_OpenSessionGui(player)
-        else if arg-1 is "spectate":
-            if arg-2 is not set:
-                G_SendRaw(player, "Usage: /{@command} spectate <session-id>")
-                stop
-            set {_session} to session with id arg-2
-            if {_session} is not set:
-                send skgame message "spectator.session-not-found" to player with arguments arg-2
-                stop
-            if session of player is set:
-                send skgame message "spectator.already-in-session" to player
-                stop
-            player join {_session} as spectator
-            if player is not a spectator in {_session}:
-                send skgame message "spectator.join-denied" to player
-        else if player has permission "{@permission_admin}":
-            if arg-1 is "admin":
-                GA_OpenAdminGui(player)
-
-on tab complete of "{@command}":
-    set {_completions::*} to "spectate"
-    if player has permission "{@permission_admin}":
-        add "admin" to {_completions::*}
-    set tab completions for position 1 to {_completions::*}
+# M10: Java port — /game command moved to GameCommand.java. M12 deletes this file entirely.
+# command {@command} [<string>] [<text>]:
+#     trigger:
+#         if arg-1 is not set:
+#             if (session of player) is not set:
+#                 G_OpenMainGui(player)
+#             else:
+#                 G_OpenSessionGui(player)
+#         else if arg-1 is "spectate":
+#             if arg-2 is not set:
+#                 G_SendRaw(player, "Usage: /{@command} spectate <session-id>")
+#                 stop
+#             set {_session} to session with id arg-2
+#             if {_session} is not set:
+#                 send skgame message "spectator.session-not-found" to player with arguments arg-2
+#                 stop
+#             if session of player is set:
+#                 send skgame message "spectator.already-in-session" to player
+#                 stop
+#             player join {_session} as spectator
+#             if player is not a spectator in {_session}:
+#                 send skgame message "spectator.join-denied" to player
+#         else if player has permission "{@permission_admin}":
+#             if arg-1 is "admin":
+#                 GA_OpenAdminGui(player)
+#
+# on tab complete of "{@command}":
+#     set {_completions::*} to "spectate"
+#     if player has permission "{@permission_admin}":
+#         add "admin" to {_completions::*}
+#     set tab completions for position 1 to {_completions::*}
 
 #------------------------------------------------------------------------------
 
