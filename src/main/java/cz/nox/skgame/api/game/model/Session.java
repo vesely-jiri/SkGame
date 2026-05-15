@@ -43,7 +43,7 @@ public class Session {
     }
 
     public Session(String id) {
-        this(id,null,null,SessionState.STOPPED,null,
+        this(id,null,null,SessionState.LOBBY,null,
                 new HashSet<>(),new HashSet<>(),new HashMap<>(),new HashMap<>());
     }
 
@@ -178,6 +178,8 @@ public class Session {
             return;
         }
         if (current == role) return;
+        // LOBBY storage added in M3 (SessionLifecycleManager); reject until then.
+        if (role == SessionRole.LOBBY) return;
         if (role == SessionRole.SPECTATOR) {
             players.remove(player);
             spectators.add(player);

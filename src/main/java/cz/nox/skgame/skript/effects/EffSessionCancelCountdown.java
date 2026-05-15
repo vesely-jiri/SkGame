@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 @Description({
         "Cancels an ongoing countdown started by 'start game of %session% in %timespan%'.",
         "Only has effect if the session is in STARTING state.",
-        "Sets the session state back to STOPPED.",
+        "Sets the session state back to LOBBY.",
 })
 @Examples({
         "cancel countdown of {_session}"
@@ -50,7 +50,7 @@ public class EffSessionCancelCountdown extends Effect {
         if (session == null) return;
         if (session.getState() != SessionState.STARTING) return;
         sessionManager.cancelCountdownTask(session.getId());
-        session.setState(SessionState.STOPPED);
+        session.setState(SessionState.LOBBY);
     }
 
     @Override

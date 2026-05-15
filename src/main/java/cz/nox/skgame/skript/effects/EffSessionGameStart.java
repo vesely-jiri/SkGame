@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
         "Starts the game assigned to a specific session.",
         "Optionally provide a countdown delay — the session enters STARTING state during the delay.",
         "",
-        "Only works if the session is in STOPPED state and the session's map supports the MiniGame.",
+        "Only works if the session is in LOBBY state and the session's map supports the MiniGame.",
         "Triggers a GameStartEvent when the game actually begins.",
         "",
         "Supports: EXECUTE only."
@@ -65,7 +65,7 @@ public class EffSessionGameStart extends Effect {
     protected void execute(Event event) {
         Session session = this.session.getSingle(event);
         if (session == null) return;
-        if (session.getState() != SessionState.STOPPED) return;
+        if (session.getState() != SessionState.LOBBY) return;
 
         MiniGame miniGame = session.getMiniGame();
         GameMap gameMap = session.getGameMap();

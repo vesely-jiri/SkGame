@@ -20,9 +20,9 @@ import org.jetbrains.annotations.Nullable;
         "You can retrieve or change the session's state, such as waiting, running, or stopped.",
         "",
         "Setting this value changes the session's active state.",
-        "Resetting this value sets the state back to 'STOPPED'.",
+        "Resetting this value sets the state back to 'LOBBY'.",
         "If state is not STARTED, condition \"%player% is playing\" returns always false",
-        "If state is not STOPPED, effect \"start game\" won't start the game => session must be in STOPPED state to be able to start it's minigame",
+        "If state is not LOBBY, effect \"start game\" won't start the game => session must be in LOBBY state to start its minigame",
         "",
         "Supports: GET / SET / RESET."
 })
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
         "if state of {_session} is RUNNING:",
         "    broadcast \"The session is running!\"",
         "",
-        "set state of {_session} to STOPPED",
+        "set state of {_session} to LOBBY",
         "reset state of {_session}"
 })
 @Since("1.0.0")
@@ -71,7 +71,7 @@ public class ExprSessionState extends SimplePropertyExpression<Session, SessionS
                 if (state == null) return;
                 session.setState(state);
             }
-            case ChangeMode.RESET -> session.setState(SessionState.STOPPED);
+            case ChangeMode.RESET -> session.setState(SessionState.LOBBY);
         }
     }
 

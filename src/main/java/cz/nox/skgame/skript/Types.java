@@ -266,7 +266,7 @@ public class Types {
                 })
         );
 
-        Classes.registerClass(new EnumClassInfo<>(SessionState.class,"sessionstate","session states", new SimpleLiteral<>(SessionState.STOPPED, true))
+        Classes.registerClass(new EnumClassInfo<>(SessionState.class,"sessionstate","session states", new SimpleLiteral<>(SessionState.LOBBY, true))
                 .user("session ?states?")
                 .name("Session State")
                 .description("Represents states of session")

@@ -72,7 +72,7 @@ public class EffSessionGameStop extends Effect {
         } else {
             newEvent = new GameStopEvent(miniGame, session, "default");
         }
-        session.setState(SessionState.STOPPED);
+        session.setState(SessionState.LOBBY);
         if (session.getClaimedSlot() != null && session.getGameMap() != null) {
             session.getGameMap().releaseSlot(session.getId());
             session.setClaimedSlot(null);
