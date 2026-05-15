@@ -105,6 +105,11 @@ public class SessionGuiService implements Listener {
     public void onPlayerLeave(GamePlayerSessionLeave e) {
         Set<UUID> vset = viewers.get(e.getSession().getId());
         if (vset != null) vset.remove(e.getPlayer().getUniqueId());
+        Player leaving = e.getPlayer();
+        if (leaving.isOnline()
+                && leaving.getOpenInventory().getTopInventory().getHolder() instanceof GuiHolder) {
+            leaving.closeInventory();
+        }
     }
 
     @EventHandler
@@ -200,7 +205,14 @@ public class SessionGuiService implements Listener {
                 .name(viewerReady ? "&aReady" : "&cNot ready")
                 .onClick(e -> {
                     Player p = (Player) e.getWhoClicked();
-                    if (session.getMiniGame() == null || session.getGameMap() == null) return;
+                    if (session.getMiniGame() == null) {
+                        Messages.send(p, "gui.session.error.no-minigame");
+                        return;
+                    }
+                    if (session.getGameMap() == null) {
+                        Messages.send(p, "gui.session.error.no-map");
+                        return;
+                    }
                     boolean wasReady = Boolean.TRUE.equals(pm.getPlayer(p).getValue("ready", true));
                     pm.getPlayer(p).setValue("ready", !wasReady, true);
                     update(session);

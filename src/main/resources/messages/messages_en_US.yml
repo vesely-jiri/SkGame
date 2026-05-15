@@ -42,6 +42,8 @@ gui:
     host-label: "&eHost"
     error:
       not-host: "&cOnly host can use this button"
+      no-minigame: "&cChoose a minigame before readying up"
+      no-map: "&cChoose a map before readying up"
   minigames:
     title: "&3Minigames"
   maps:

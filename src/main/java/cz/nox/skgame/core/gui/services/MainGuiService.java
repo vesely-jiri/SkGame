@@ -1,6 +1,5 @@
 package cz.nox.skgame.core.gui.services;
 
-import cz.nox.skgame.SkGame;
 import cz.nox.skgame.api.game.event.GameStartEvent;
 import cz.nox.skgame.api.game.event.GameStopEvent;
 import cz.nox.skgame.api.game.event.SessionCreateEvent;
@@ -14,6 +13,7 @@ import cz.nox.skgame.api.gui.event.MainGuiOpenEvent;
 import cz.nox.skgame.api.messages.Messages;
 import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl;
+import cz.nox.skgame.core.gui.services.SessionGuiService;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
@@ -98,7 +98,6 @@ public class MainGuiService implements Listener {
     private Inventory buildFor(Player viewer) {
         SessionLifecycleManagerImpl lifecycle = SessionLifecycleManagerImpl.getInstance();
         SessionManager sm = SessionManager.getInstance();
-        SkGame plugin = SkGame.getInstance();
 
         GuiItem grayGlass  = GuiItem.of(Material.GRAY_STAINED_GLASS_PANE).name(Component.space());
         GuiItem redGlass   = GuiItem.of(Material.RED_STAINED_GLASS_PANE).name(Component.space());
@@ -124,8 +123,7 @@ public class MainGuiService implements Listener {
                     if (!p.hasPermission(CREATE_PERMISSION)) return;
                     Session created = lifecycle.createSession(p);
                     if (created != null) {
-                        plugin.getLogUtil().info("TODO(M7): open session GUI for " + p.getName());
-                        p.closeInventory();
+                        SessionGuiService.getInstance().openFor(p);
                     }
                 }));
 
@@ -147,8 +145,7 @@ public class MainGuiService implements Listener {
                 .onClick(e -> {
                     Player p = (Player) e.getWhoClicked();
                     if (sm.getSession(p) != null) {
-                        plugin.getLogUtil().info("TODO(M7): open session GUI for " + p.getName());
-                        p.closeInventory();
+                        SessionGuiService.getInstance().openFor(p);
                     }
                     // else: player not in session — no-op (matches .sk implicit stop)
                 }));
@@ -160,14 +157,14 @@ public class MainGuiService implements Listener {
                 .collect(Collectors.toList());
 
         for (int i = 0; i < Math.min(lobbySessions.size(), SESSION_SLOTS.length); i++) {
-            builder.slot(SESSION_SLOTS[i], buildSessionItem(lobbySessions.get(i), lifecycle, sm, plugin));
+            builder.slot(SESSION_SLOTS[i], buildSessionItem(lobbySessions.get(i), lifecycle, sm));
         }
 
         return builder.build();
     }
 
     private GuiItem buildSessionItem(Session session, SessionLifecycleManagerImpl lifecycle,
-                                     SessionManager sm, SkGame plugin) {
+                                     SessionManager sm) {
         Player host = session.getHost();
         String hostName = host != null ? host.getName() : "?";
         String sessionId = session.getId();
@@ -197,12 +194,10 @@ public class MainGuiService implements Listener {
                     if (cur == null) {
                         boolean joined = lifecycle.joinSession(p, clicked);
                         if (joined) {
-                            plugin.getLogUtil().info("TODO(M7): open session GUI for " + p.getName());
-                            p.closeInventory();
+                            SessionGuiService.getInstance().openFor(p);
                         }
                     } else if (cur.getId().equals(sessionId)) {
-                        plugin.getLogUtil().info("TODO(M7): open session GUI for " + p.getName());
-                        p.closeInventory();
+                        SessionGuiService.getInstance().openFor(p);
                     } else {
                         Messages.send(p, "session.error.already-in-session");
                     }

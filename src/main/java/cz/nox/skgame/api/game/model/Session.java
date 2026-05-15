@@ -124,6 +124,9 @@ public class Session {
     }
     public void setMiniGame(MiniGame miniGame) {
         this.miniGame = miniGame;
+        if (miniGame != null && this.gameMap != null && !this.gameMap.supportsMiniGame(miniGame)) {
+            setGameMap(null);
+        }
     }
 
     public GameMap getGameMap() {

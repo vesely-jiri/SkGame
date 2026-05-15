@@ -33,6 +33,8 @@ gui:
     title: "&5Lobby hosta {0}"
     error:
       not-host: "&cToto tlačítko může používat pouze host"
+      no-minigame: "&cNejdříve zvol minihru"
+      no-map: "&cNejdříve zvol mapu"
   minigames:
     title: "&3Minihry"
   maps:
