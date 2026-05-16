@@ -221,7 +221,7 @@ public class AdminGuiService implements Listener {
             } else if (rawMapVal instanceof Object[] arr) {
                 valueDisplay = "&6List (" + arr.length + ")";
             } else {
-                valueDisplay = rawMapVal.toString();
+                valueDisplay = formatValue(rawMapVal);
             }
 
             String action;
@@ -331,7 +331,7 @@ public class AdminGuiService implements Listener {
             for (int i = 0; i < Math.min(arr.length, ITEM_SLOTS.length); i++) {
                 Object valueObj = arr[i];
                 builder.slot(ITEM_SLOTS[i], GuiItem.of(Material.CHEST)
-                        .name("&e" + valueObj)
+                        .name("&e" + formatValue(valueObj))
                         .lore(
                                 legacy("&7Left-click: &aShow location"),
                                 legacy("&7Right-click: &cDelete value")
@@ -575,8 +575,8 @@ public class AdminGuiService implements Listener {
 
     private void stabilizePlayer(Player player) {
         Location loc = player.getLocation();
-        loc.setX(loc.getBlockX());
-        loc.setZ(loc.getBlockZ());
+        loc.setX(loc.getBlockX() + 0.5);
+        loc.setZ(loc.getBlockZ() + 0.5);
         loc.setPitch(0f);
         loc.setYaw(switch (player.getFacing()) {
             case SOUTH -> 0f;
@@ -593,6 +593,14 @@ public class AdminGuiService implements Listener {
         if ("true".equalsIgnoreCase(s)) return Boolean.TRUE;
         if ("false".equalsIgnoreCase(s)) return Boolean.FALSE;
         return s;
+    }
+
+    private String formatValue(Object o) {
+        if (o instanceof Location loc) {
+            String world = loc.getWorld() != null ? loc.getWorld().getName() : "?";
+            return "(" + loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ() + ") in " + world;
+        }
+        return o.toString();
     }
 
     private String formatLoc(Location loc) {

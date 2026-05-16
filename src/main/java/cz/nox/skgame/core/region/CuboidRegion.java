@@ -39,7 +39,9 @@ public class CuboidRegion implements Region {
         int x = location.getBlockX();
         int y = location.getBlockY();
         int z = location.getBlockZ();
-        return x >= minX && x <= maxX && y >= minY && y <= maxY && z >= minZ && z <= maxZ;
+        // +1 on maxY: player/entity feet are 1 block above the surface block they stand on.
+        // Admin wands block coords; include the space players occupy when standing on top.
+        return x >= minX && x <= maxX && y >= minY && y <= maxY + 1 && z >= minZ && z <= maxZ;
     }
 
     @Override

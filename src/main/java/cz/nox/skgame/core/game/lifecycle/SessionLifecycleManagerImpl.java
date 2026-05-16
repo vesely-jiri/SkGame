@@ -131,6 +131,8 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager {
             }
         }
 
+        playerManager.getPlayer(player).removeValues(true);
+
         if (!partyManager.tryPromoteHost(session, player)) {
             disbandSession(session, partyManager.disbandReasonForHostLeave());
             return;
