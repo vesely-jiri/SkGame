@@ -202,25 +202,35 @@ public class AdminGuiService implements Listener {
                 .onClick(e -> openMapPropertiesGui((Player) e.getWhoClicked(), mapId)));
 
         int idx = 0;
-        for (String key : mg.getKeys()) {
-            if (!key.startsWith("map;") || idx >= ITEM_SLOTS.length) continue;
+        for (Map.Entry<String, CustomValue> entry : mg.getGameMapValueDefs().entrySet()) {
+            if (idx >= ITEM_SLOTS.length) break;
+            String key = entry.getKey();
+            CustomValue cvDef = entry.getValue();
 
             Object rawMapVal = map.getMiniGameValue(mgId, key);
-            boolean isSingular = rawMapVal != null && !(rawMapVal instanceof Object[]);
-            boolean isPlural = rawMapVal instanceof Object[];
+            String typeStr = (cvDef.getType() != null) ? cvDef.getType().getCodeName() : "unknown";
+            String plurStr = cvDef.getPlurality().name();
+            boolean valueIsPlural = cvDef.getPlurality() == CustomValuePlurality.PLURAL;
+            boolean isRegion = "region".equals(typeStr);
 
-            Material mat = (isSingular || isPlural) ? Material.CHEST_MINECART : Material.MINECART;
-            String nameColor = (isSingular || isPlural) ? "&a" : "&c";
-            String valueDisplay = isSingular ? rawMapVal.toString() : (isPlural ? "&6List" : "&cNot set");
+            String valueDisplay;
+            if (rawMapVal == null) {
+                valueDisplay = "&cNot set";
+            } else if (isRegion) {
+                valueDisplay = "&aConfigured";
+            } else if (rawMapVal instanceof Object[] arr) {
+                valueDisplay = "&6List (" + arr.length + ")";
+            } else {
+                valueDisplay = rawMapVal.toString();
+            }
 
-            Object mgVal = mg.getValue(key);
-            String typeStr = (mgVal instanceof CustomValue cv && cv.getType() != null)
-                    ? cv.getType().getCodeName() : String.valueOf(mgVal);
-            String plurStr = (mgVal instanceof CustomValue cv2)
-                    ? cv2.getPlurality().name() : "SINGLE";
-            boolean valueIsPlural = (mgVal instanceof CustomValue cv3)
-                    && cv3.getPlurality() == CustomValuePlurality.PLURAL;
-            String action = valueIsPlural ? "&aOpen value list" : "&aSet value";
+            String action;
+            if (isRegion) action = "&aSet region (wand)";
+            else if (valueIsPlural) action = "&aOpen value list";
+            else action = "&aSet value";
+
+            Material mat = rawMapVal != null ? Material.CHEST_MINECART : Material.MINECART;
+            String nameColor = rawMapVal != null ? "&a" : "&c";
 
             builder.slot(ITEM_SLOTS[idx++], GuiItem.of(mat)
                     .name(nameColor + key)
@@ -234,10 +244,17 @@ public class AdminGuiService implements Listener {
                     )
                     .onLeftClick(e -> {
                         Player p = (Player) e.getWhoClicked();
-                        if (valueIsPlural) {
+                        AdminSetupState st = states.computeIfAbsent(p.getUniqueId(), k -> new AdminSetupState());
+                        if (isRegion) {
+                            st.setResponseMode(AdminSetupState.ResponseMode.REGION_INPUT);
+                            st.setCurrentMapId(mapId);
+                            st.setCurrentMiniGameId(mgId);
+                            st.setCurrentValueKey(key);
+                            p.closeInventory();
+                            p.sendMessage(ADMIN_PREFIX + "Select two corners with the wand, then type 'save' in chat:");
+                        } else if (valueIsPlural) {
                             openPluralListGui(p, mapId, mgId, key);
                         } else {
-                            AdminSetupState st = states.computeIfAbsent(p.getUniqueId(), k -> new AdminSetupState());
                             st.setResponseMode(AdminSetupState.ResponseMode.VALUE_INPUT);
                             st.setCurrentMapId(mapId);
                             st.setCurrentMiniGameId(mgId);
@@ -249,7 +266,10 @@ public class AdminGuiService implements Listener {
                     .onShiftClick(e -> {
                         if (e.getClick() != ClickType.SHIFT_RIGHT) return;
                         GameMap freshMap = GameMapManager.getInstance().getGameMapById(mapId);
-                        if (freshMap != null) freshMap.setMiniGameValue(mgId, key, null);
+                        if (freshMap != null) {
+                            freshMap.setMiniGameValue(mgId, key, null);
+                            GameMapManager.getInstance().save();
+                        }
                         openValuesGui((Player) e.getWhoClicked(), mapId, mgId);
                     }));
         }
@@ -413,6 +433,12 @@ public class AdminGuiService implements Listener {
                 createMap(player, message, state);
             } else if (mode == AdminSetupState.ResponseMode.VALUE_INPUT) {
                 setMapValue(player, message, state);
+            } else if (mode == AdminSetupState.ResponseMode.REGION_INPUT) {
+                if ("save".equalsIgnoreCase(message)) {
+                    saveRegionValue(player, state);
+                } else {
+                    player.sendMessage(ADMIN_PREFIX + "Use the wand to select corners, then type 'save'. Type 'cancel' to abort.");
+                }
             }
         });
     }
@@ -459,8 +485,28 @@ public class AdminGuiService implements Listener {
         GameMap map = GameMapManager.getInstance().getGameMapById(mapId);
         if (map == null) return;
         map.setMiniGameValue(mgId, key, parseTypedValue(message));
+        GameMapManager.getInstance().save();
         state.setResponseMode(AdminSetupState.ResponseMode.NONE);
         player.sendMessage(ADMIN_PREFIX + "Value '" + key + "' set to " + message);
+        openValuesGui(player, mapId, mgId);
+    }
+
+    private void saveRegionValue(Player player, AdminSetupState state) {
+        if (!state.hasRegion()) {
+            player.sendMessage(ADMIN_PREFIX + "§cSet both positions with the wand first.");
+            return;
+        }
+        String mapId = state.getCurrentMapId();
+        String mgId = state.getCurrentMiniGameId();
+        String key = state.getCurrentValueKey();
+        if (mapId == null || mgId == null || key == null) return;
+        GameMap map = GameMapManager.getInstance().getGameMapById(mapId);
+        if (map == null) return;
+        map.setMiniGameValue(mgId, key, new CuboidRegion(state.getPos1(), state.getPos2()));
+        GameMapManager.getInstance().save();
+        state.setResponseMode(AdminSetupState.ResponseMode.NONE);
+        state.clearPositions();
+        player.sendMessage(ADMIN_PREFIX + "Region value '" + key + "' saved.");
         openValuesGui(player, mapId, mgId);
     }
 
@@ -469,13 +515,12 @@ public class AdminGuiService implements Listener {
             map.setMiniGameValues(mg.getId(), null);
         } else {
             map.setMiniGameValue(mg.getId(), "enabled", true);
-            for (String key : mg.getKeys()) {
-                if (!key.startsWith("map;")) continue;
-                Object val = mg.getValue(key);
-                Object toSet = (val instanceof CustomValue cv) ? cv.getDefaultValue() : val;
-                if (toSet != null) map.setMiniGameValue(mg.getId(), key, toSet);
+            for (Map.Entry<String, CustomValue> entry : mg.getGameMapValueDefs().entrySet()) {
+                Object toSet = entry.getValue().getDefaultValue();
+                if (toSet != null) map.setMiniGameValue(mg.getId(), entry.getKey(), toSet);
             }
         }
+        GameMapManager.getInstance().save();
     }
 
     private void sendLocationPicker(Player player, String mapId, String mgId, String key) {

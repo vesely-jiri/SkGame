@@ -9,6 +9,7 @@ import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
 import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.game.model.MiniGame;
+import cz.nox.skgame.core.game.GameMapManager;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -118,31 +119,28 @@ public class ExprGameMapMiniGameValue extends SimpleExpression<Object> implement
                 if (pattern == 1) return;
                 String k = key.getSingle(event);
                 if (delta == null || delta[0] == null || k == null) return;
-                map.setMiniGameValue(mg.getId(),k,delta[0]);
+                map.setMiniGameValue(mg.getId(), k, delta[0]);
+                GameMapManager.getInstance().save();
             }
 
             case ADD -> {
                 if (pattern == 1) return;
                 String k = key.getSingle(event);
                 if (k == null || delta == null) return;
-
                 for (Object o : delta) {
-                    if (o != null) {
-                        map.addMiniGameValue(mg.getId(), k, o);
-                    }
+                    if (o != null) map.addMiniGameValue(mg.getId(), k, o);
                 }
+                GameMapManager.getInstance().save();
             }
 
             case REMOVE -> {
                 if (pattern == 1) return;
                 String k = key.getSingle(event);
                 if (k == null || delta == null) return;
-
                 for (Object o : delta) {
-                    if (o != null) {
-                        map.removeMiniGameValue(mg.getId(), k, o);
-                    }
+                    if (o != null) map.removeMiniGameValue(mg.getId(), k, o);
                 }
+                GameMapManager.getInstance().save();
             }
 
             case RESET, DELETE -> {
@@ -151,8 +149,9 @@ public class ExprGameMapMiniGameValue extends SimpleExpression<Object> implement
                     if (k == null) return;
                     map.setMiniGameValue(mg.getId(), k, null);
                 } else {
-                    map.setMiniGameValues(mg.getId(),null);
+                    map.setMiniGameValues(mg.getId(), null);
                 }
+                GameMapManager.getInstance().save();
             }
         }
     }

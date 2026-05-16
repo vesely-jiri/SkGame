@@ -87,6 +87,7 @@ public class SkGame extends JavaPlugin {
             "cz.nox.skgame.skript.sections.EffSecRegisterGameMap",
             "cz.nox.skgame.skript.sections.EffSecRegisterMiniGame",
             "cz.nox.skgame.skript.sections.ExprSecCustomValue",
+            "cz.nox.skgame.skript.sections.EffSecSetGameMapValueDef",
             // Expressions — sessions
             "cz.nox.skgame.skript.expressions.sessions.ExprSessionsAll",
             "cz.nox.skgame.skript.expressions.sessions.ExprSessionFromId",
@@ -117,6 +118,7 @@ public class SkGame extends JavaPlugin {
             "cz.nox.skgame.skript.expressions.gamemaps.ExprGameMapAll",
             "cz.nox.skgame.skript.expressions.gamemaps.ExprGameMapValue",
             "cz.nox.skgame.skript.expressions.gamemaps.ExprGameMapMiniGameValue",
+            "cz.nox.skgame.skript.expressions.gamemaps.ExprGameMapConfigValue",
             "cz.nox.skgame.skript.expressions.gamemaps.ExprGameMapRegion",
             "cz.nox.skgame.skript.expressions.gamemaps.ExprGameMapArenaSlotCount",
             "cz.nox.skgame.skript.expressions.gamemaps.property.ExprGameMapId",

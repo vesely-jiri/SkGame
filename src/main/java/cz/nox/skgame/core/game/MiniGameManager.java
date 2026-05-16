@@ -15,6 +15,7 @@ public class MiniGameManager {
     private static MiniGameManager miniGameManager;
     private Map<String, MiniGame> miniGames = new HashMap<>();
     private MiniGame lastCreatedMiniGame;
+    private File storageFile;
 
     public static MiniGameManager getInstance() {
         if (miniGameManager == null) miniGameManager = new MiniGameManager();
@@ -28,7 +29,12 @@ public class MiniGameManager {
         return miniGames.values().toArray(new MiniGame[0]);
     }
 
+    public void save() {
+        if (storageFile != null) saveToFile(storageFile);
+    }
+
     public void loadFromFile(File file) {
+        this.storageFile = file;
         if (!file.exists()) return;
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
         ConfigurationSection baseSection = config.getConfigurationSection("minigames");
