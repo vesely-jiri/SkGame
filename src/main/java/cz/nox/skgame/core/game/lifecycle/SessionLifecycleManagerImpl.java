@@ -231,12 +231,11 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager {
             }
         }
 
-        // Clear all per-game state (temp + non-temp) after handlers have run
+        // Clear temp values after handlers have run
         for (Player p : session.getPlayers()) {
             playerManager.getPlayer(p).removeValues(true);
         }
         session.removeValues(true);
-        session.removeValues(false);
 
         // Transition PLAYER → LOBBY (snapshot to avoid ConcurrentModification)
         for (Player p : session.getPlayers()) {

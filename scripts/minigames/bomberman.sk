@@ -61,9 +61,9 @@ on "bomberman" game start:
     set {_rate} to (gamemap value "spawn_rate" of event-session) ? 5 ticks
     set {_timer} to (gamemap value "deathmatch_timer" of event-session) ? 1 minute
     set {_cd} to (gamemap value "respawn_cooldown" of event-session) ? 5 seconds
-    set session value "gamemode" of event-session to {_mode}
-    set session value "respawn_cooldown" of event-session to {_cd}
-    set session values "booster_locs" of event-session to {_loc::*}
+    set temporary session value "gamemode" of event-session to {_mode}
+    set temporary session value "respawn_cooldown" of event-session to {_cd}
+    set temporary session values "booster_locs" of event-session to {_loc::*}
     loop shuffled (players of event-session):
         add 1 to {_n}
         teleport loop-value to {_loc::%{_n}%}
@@ -135,7 +135,7 @@ on script load:
 #----------------------------------------------------------------------
 
 local function Bomberman_GetGamemode(session: session) :: string:
-    return (session value "gamemode" of {_session}) ? "elimination"
+    return (temporary session value "gamemode" of {_session}) ? "elimination"
 
 local function Bomberman_StartTimer(session: session, timer: timespan):
     while (state of {_session}) is STARTED:
@@ -153,10 +153,10 @@ local function Bomberman_GetRandomItemIndex() :: string:
     return random element of {{@var_prefix}::probabilities::*}
 
 local function Bomberman_RespawnPlayer(session: session, p: player):
-    set {_cd} to (session value "respawn_cooldown" of {_session}) ? 5 seconds
+    set {_cd} to (temporary session value "respawn_cooldown" of {_session}) ? 5 seconds
     wait {_cd}
     if {_p} is playing (minigame with id "bomberman"):
-        set {_l::*} to session values "booster_locs" of {_session}
+        set {_l::*} to temporary session values "booster_locs" of {_session}
         teleport {_p} to (random element of {_l::*})
         set gamemode of {_p} to survival
 

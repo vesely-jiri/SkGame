@@ -81,12 +81,12 @@ on "volleyball" game start:
     set {_teams::*} to {@teams}
     set {_spawn::1} to gamemap value "team_1_spawnpoint" of event-session
     set {_spawn::2} to gamemap value "team_2_spawnpoint" of event-session
-    set session value "net_block" of event-session to (gamemap value "net_block" of event-session) ? "light gray stained glass"
-    set session value "team_1_starting_block" of event-session to (gamemap value "team_1_starting_block" of event-session) ? "yellow terracotta"
-    set session value "team_1_detection_block" of event-session to (gamemap value "team_1_detection_block" of event-session) ? "yellow stained glass"
-    set session value "team_2_starting_block" of event-session to (gamemap value "team_2_starting_block" of event-session) ? "lime terracotta"
-    set session value "team_2_detection_block" of event-session to (gamemap value "team_2_detection_block" of event-session) ? "lime stained glass"
-    set session value "max_points" of event-session to (gamemap value "max_points" of event-session) ? {@max_points}
+    set temporary temporary session value "net_block" of event-session to (gamemap value "net_block" of event-session) ? "light gray stained glass"
+    set temporary temporary session value "team_1_starting_block" of event-session to (gamemap value "team_1_starting_block" of event-session) ? "yellow terracotta"
+    set temporary temporary session value "team_1_detection_block" of event-session to (gamemap value "team_1_detection_block" of event-session) ? "yellow stained glass"
+    set temporary temporary session value "team_2_starting_block" of event-session to (gamemap value "team_2_starting_block" of event-session) ? "lime terracotta"
+    set temporary temporary session value "team_2_detection_block" of event-session to (gamemap value "team_2_detection_block" of event-session) ? "lime stained glass"
+    set temporary temporary session value "max_points" of event-session to (gamemap value "max_points" of event-session) ? {@max_points}
     set {_chestplates::*} to leather chestplate, leather chestplate
     dye {_chestplates::1} {@chestplate_team1}
     dye {_chestplates::2} {@chestplate_team2}
@@ -148,7 +148,7 @@ local function Volleyball_TeamPointAdd(team: string, p: player, reason: string =
     else:
         send title "&c%{_p}% missed" with subtitle "%{_color}%+1" to {_players::*} for 2 seconds with fade in 0.5 second and fade out 0.5 second
     set temporary session value "score::%{_team}%" of {_session} to {_score}
-    set {_max-points} to (session value "max_points" of {_session}) ? {@max_points}
+    set {_max-points} to (temporary session value "max_points" of {_session}) ? {@max_points}
     if {_score} >= {_max-points}:
         stop game of {_session} with reason "WIN;%{_team}%"
     else:
@@ -176,14 +176,14 @@ local function Volleyball_SpawnBall(p: player):
     Volleyball_CheckForGroundBall((session of {_p}), {_e})
 
 local function Volleyball_CheckForGroundBall(session: session, e: entity):
-    set {_net} to (session value "net_block" of {_session}) ? "light gray stained glass"
+    set {_net} to (temporary session value "net_block" of {_session}) ? "light gray stained glass"
     set {_teams::*} to {@teams}
 
-    add (session value "team_1_starting_block" of {_session}) to {_team1::*}
-    add (session value "team_1_detection_block" of {_session}) to {_team1::*}
+    add (temporary session value "team_1_starting_block" of {_session}) to {_team1::*}
+    add (temporary session value "team_1_detection_block" of {_session}) to {_team1::*}
 
-    add (session value "team_2_starting_block" of {_session}) to {_team2::*}
-    add (session value "team_2_detection_block" of {_session}) to {_team2::*}
+    add (temporary session value "team_2_starting_block" of {_session}) to {_team2::*}
+    add (temporary session value "team_2_detection_block" of {_session}) to {_team2::*}
 
     while {_e} is alive:
         if {_e} is on ground:
