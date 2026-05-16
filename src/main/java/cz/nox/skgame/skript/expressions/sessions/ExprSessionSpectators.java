@@ -49,7 +49,7 @@ public class ExprSessionSpectators extends SimpleExpression<Player> {
 
     static {
         Skript.registerExpression(ExprSessionSpectators.class, Player.class, ExpressionType.PROPERTY,
-                "[all] [session] spectators of %session%"
+                "[all] spectators of %session%"
         );
     }
 
