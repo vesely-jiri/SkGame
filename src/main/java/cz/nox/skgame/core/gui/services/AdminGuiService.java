@@ -212,6 +212,7 @@ public class AdminGuiService implements Listener {
             String plurStr = cvDef.getPlurality().name();
             boolean valueIsPlural = cvDef.getPlurality() == CustomValuePlurality.PLURAL;
             boolean isRegion = "region".equals(typeStr);
+            boolean isLocation = "location".equals(typeStr);
 
             String valueDisplay;
             if (rawMapVal == null) {
@@ -227,6 +228,7 @@ public class AdminGuiService implements Listener {
             String action;
             if (isRegion) action = "&aSet region (wand)";
             else if (valueIsPlural) action = "&aOpen value list";
+            else if (isLocation) action = "&aSet location (picker)";
             else action = "&aSet value";
 
             Material mat = rawMapVal != null ? Material.CHEST_MINECART : Material.MINECART;
@@ -254,6 +256,9 @@ public class AdminGuiService implements Listener {
                             p.sendMessage(ADMIN_PREFIX + "Select two corners with the wand, then type 'save' in chat:");
                         } else if (valueIsPlural) {
                             openPluralListGui(p, mapId, mgId, key);
+                        } else if (isLocation) {
+                            p.closeInventory();
+                            sendLocationPicker(p, mapId, mgId, key, true);
                         } else {
                             st.setResponseMode(AdminSetupState.ResponseMode.VALUE_INPUT);
                             st.setCurrentMapId(mapId);
@@ -299,7 +304,7 @@ public class AdminGuiService implements Listener {
                 .onClick(e -> {
                     Player p = (Player) e.getWhoClicked();
                     p.closeInventory();
-                    sendLocationPicker(p, mapId, mgId, key);
+                    sendLocationPicker(p, mapId, mgId, key, false);
                 }));
 
         builder.slot(50, GuiItem.of(Material.ENDER_EYE)
@@ -523,7 +528,7 @@ public class AdminGuiService implements Listener {
         GameMapManager.getInstance().save();
     }
 
-    private void sendLocationPicker(Player player, String mapId, String mgId, String key) {
+    private void sendLocationPicker(Player player, String mapId, String mgId, String key, boolean single) {
         SkGame plugin = SkGame.getInstance();
         ClickCallback.Options oneUse = ClickCallback.Options.builder().uses(1).build();
 
@@ -536,8 +541,13 @@ public class AdminGuiService implements Listener {
                             Location loc = target.getLocation();
                             Bukkit.getScheduler().runTask(plugin, () -> {
                                 GameMap m = GameMapManager.getInstance().getGameMapById(mapId);
-                                if (m != null) m.addMiniGameValue(mgId, key, loc);
-                                openPluralListGui(p, mapId, mgId, key);
+                                if (m != null) {
+                                    if (single) m.setMiniGameValue(mgId, key, loc);
+                                    else m.addMiniGameValue(mgId, key, loc);
+                                    GameMapManager.getInstance().save();
+                                }
+                                if (single) openValuesGui(p, mapId, mgId);
+                                else openPluralListGui(p, mapId, mgId, key);
                             });
                         }, oneUse)))
                 .append(Component.text(" [Player]").color(NamedTextColor.LIGHT_PURPLE)
@@ -546,8 +556,13 @@ public class AdminGuiService implements Listener {
                             Location loc = p.getLocation();
                             Bukkit.getScheduler().runTask(plugin, () -> {
                                 GameMap m = GameMapManager.getInstance().getGameMapById(mapId);
-                                if (m != null) m.addMiniGameValue(mgId, key, loc);
-                                openPluralListGui(p, mapId, mgId, key);
+                                if (m != null) {
+                                    if (single) m.setMiniGameValue(mgId, key, loc);
+                                    else m.addMiniGameValue(mgId, key, loc);
+                                    GameMapManager.getInstance().save();
+                                }
+                                if (single) openValuesGui(p, mapId, mgId);
+                                else openPluralListGui(p, mapId, mgId, key);
                             });
                         }, oneUse)))
                 .append(Component.text(" [Stabilize]").color(NamedTextColor.DARK_AQUA)
@@ -558,8 +573,10 @@ public class AdminGuiService implements Listener {
                 .append(Component.text(" [Back to menu]").color(NamedTextColor.GRAY)
                         .clickEvent(ClickEvent.callback(a -> {
                             if (!(a instanceof Player p)) return;
-                            Bukkit.getScheduler().runTask(plugin,
-                                    () -> openPluralListGui(p, mapId, mgId, key));
+                            Bukkit.getScheduler().runTask(plugin, () -> {
+                                if (single) openValuesGui(p, mapId, mgId);
+                                else openPluralListGui(p, mapId, mgId, key);
+                            });
                         })));
         player.sendMessage(msg);
     }
