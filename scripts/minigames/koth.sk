@@ -9,25 +9,23 @@ on load:
         set minigame value "icon" of event-minigame to "red banner"
         set minigame value "author" of event-minigame to "JuraJ_Player"
         set minigame value "min_players" of event-minigame to 2
-        set minigame value "spawnpoints" of event-minigame to a custom value:
+        set gamemap value "spawnpoints" of event-minigame to a custom value:
             set value name to "Spawn points"
             set plurality to plural
             set value type to a location
             set description to "Spawn locations for players at game start"
-        set minigame value "hill_region" of event-minigame to a custom value:
+        set gamemap value "hill_region" of event-minigame to a custom value:
             set value name to "Hill region"
             set value type to a region
             set description to "The region that counts as the hill"
-        set minigame value "points_limit" of event-minigame to a custom value:
+        set gamemap value "points_limit" of event-minigame to a custom value:
             set value name to "Points limit"
             set value type to a number
             set default value to 30
             set description to "Score a player needs to reach to win"
 
 on "koth" game start:
-    set {_map} to map of event-session
-    set {_mg} to minigame of event-session
-    set {_spawnpoints::*} to values "spawnpoints" of {_map} of {_mg}
+    set {_spawnpoints::*} to gamemap values "spawnpoints" of event-session
     loop players of event-session:
         add 1 to {_n}
         teleport loop-player to {_spawnpoints::%{_n}%}
@@ -56,10 +54,8 @@ local function Koth_StartShowPoints(session: session):
         wait 1 second
 
 local function Koth_StartHillTicking(session: session):
-    set {_map} to map of {_session}
-    set {_mg} to minigame of {_session}
-    set {_region} to value "hill_region" of {_map} of {_mg}
-    set {_limit} to (value "points_limit" of {_map} of {_mg}) ? 30
+    set {_region} to gamemap value "hill_region" of {_session}
+    set {_limit} to (gamemap value "points_limit" of {_session}) ? 30
     while (state of {_session}) is STARTED:
         set {_p::*} to players in region {_region}
         if size of {_p::*} is 1:
@@ -87,14 +83,12 @@ on damage of player:
 
 on "koth" spectator join:
     set {_session} to event-session
-    set {_map} to map of {_session}
-    set {_mg} to minigame of {_session}
     set {_target} to event-player
     set {_c0} to new text component from "&aYou are spectating King of the Hill. "
     set {_c1} to new text component from "&e[Click here to join the game]"
     create callback for {_c1} with 1 use:
         make {_target} a player in {_session}
-        set {_spawnpoints::*} to values "spawnpoints" of {_map} of {_mg}
+        set {_spawnpoints::*} to gamemap values "spawnpoints" of {_session}
         teleport {_target} to random element out of {_spawnpoints::*}
         set slot 0 of {_target} to stick
     send components ({_c0} and {_c1}) to event-player

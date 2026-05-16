@@ -38,51 +38,49 @@ on script load:
         set minigame value "icon" of event-minigame to "magma cream"
         set minigame value "author" of event-minigame to "JuraJ_Player"
         set minigame value "min_players" of event-minigame to 2
-        set minigame value "net_block" of event-minigame to a custom value:
+        set gamemap value "net_block" of event-minigame to a custom value:
             set value name to "Net block"
             set value type to a text
             set default value to "light gray stained glass"
             set description to "Type of block used as the net"
-        set minigame value "team_1_spawnpoint" of event-minigame to a custom value:
+        set gamemap value "team_1_spawnpoint" of event-minigame to a custom value:
             set value name to "Spawnpoint of team 1"
             set value type to a location
             set description to "Spawn location for team 1 at game start"
-        set minigame value "team_1_starting_block" of event-minigame to a custom value:
+        set gamemap value "team_1_starting_block" of event-minigame to a custom value:
             set value name to "Starting block of team 1"
             set value type to a text
             set default value to "yellow terracotta"
             set description to "Block type team 1 must stand on to kick off"
-        set minigame value "team_1_detection_block" of event-minigame to a custom value:
+        set gamemap value "team_1_detection_block" of event-minigame to a custom value:
             set value name to "Detection block of team 1"
             set value type to a text
             set default value to "yellow stained glass"
             set description to "Block hidden 1 block under team 1's playground side (must be unique on map)"
-        set minigame value "team_2_spawnpoint" of event-minigame to a custom value:
+        set gamemap value "team_2_spawnpoint" of event-minigame to a custom value:
             set value name to "Spawnpoint of team 2"
             set value type to a location
             set description to "Spawn location for team 2 at game start"
-        set minigame value "team_2_starting_block" of event-minigame to a custom value:
+        set gamemap value "team_2_starting_block" of event-minigame to a custom value:
             set value name to "Starting block of team 2"
             set value type to a text
             set default value to "lime terracotta"
             set description to "Block type team 2 must stand on to kick off"
-        set minigame value "team_2_detection_block" of event-minigame to a custom value:
+        set gamemap value "team_2_detection_block" of event-minigame to a custom value:
             set value name to "Detection block of team 2"
             set value type to a text
             set default value to "lime stained glass"
             set description to "Block hidden 1 block under team 2's playground side (must be unique on map)"
-        set minigame value "max_points" of event-minigame to a custom value:
+        set gamemap value "max_points" of event-minigame to a custom value:
             set value name to "Maximum points"
             set value type to a number
             set default value to 5
             set description to "Points required to win"
 
 on "volleyball" game start:
-    set {_map} to map of event-session
-    set {_mg} to minigame of event-session
     set {_teams::*} to {@teams}
-    set {_spawn::1} to value "team_1_spawnpoint" of {_map} of {_mg}
-    set {_spawn::2} to value "team_2_spawnpoint" of {_map} of {_mg}
+    set {_spawn::1} to gamemap value "team_1_spawnpoint" of event-session
+    set {_spawn::2} to gamemap value "team_2_spawnpoint" of event-session
     set {_chestplates::*} to leather chestplate, leather chestplate
     dye {_chestplates::1} {@chestplate_team1}
     dye {_chestplates::2} {@chestplate_team2}
@@ -99,11 +97,7 @@ on "volleyball" game start:
     Volleyball_ScoreActionBar(event-session)
 
 on "volleyball" game stop:
-    set {_arena} to arena region of event-session
-    if {_arena} is not set:
-        set {_arena} to region of (map of event-session)
-    if {_arena} is set:
-        clear all entities in region {_arena}
+    # entity cleanup (ball) is handled automatically by SkGame (arena.cleanup config)
     set {_reason::*} to event-string split at ";"
     if {_reason::1} is "WIN":
         set {_team} to {_reason::2}
@@ -137,8 +131,6 @@ local function Volleyball_ShowChargeParticles(p: player):
 
 local function Volleyball_TeamPointAdd(team: string, p: player, reason: string = "ground"):
     set {_session} to session of {_p}
-    set {_map} to map of {_session}
-    set {_mg} to minigame of {_session}
     set {_score} to (session value "score::%{_team}%" of {_session}) ? 0
     set {_score} to {_score} + 1
     send "&a%{_p}% scored!" to (players of {_session}) and (spectators of {_session})
@@ -150,7 +142,7 @@ local function Volleyball_TeamPointAdd(team: string, p: player, reason: string =
     else:
         send title "&c%{_p}% missed" with subtitle "%{_color}%+1" to {_players::*} for 2 seconds with fade in 0.5 second and fade out 0.5 second
     set session value "score::%{_team}%" of {_session} to {_score}
-    set {_max-points} to (value "max_points" of {_map} of {_mg}) ? {@max_points}
+    set {_max-points} to (gamemap value "max_points" of {_session}) ? {@max_points}
     if {_score} >= {_max-points}:
         stop game of {_session} with reason "WIN;%{_team}%"
     else:
@@ -178,16 +170,14 @@ local function Volleyball_SpawnBall(p: player):
     Volleyball_CheckForGroundBall((session of {_p}), {_e})
 
 local function Volleyball_CheckForGroundBall(session: session, e: entity):
-    set {_map} to map of {_session}
-    set {_mg} to minigame of {_session}
-    set {_net} to (value "net_block" of {_map} of {_mg}) ? "light gray stained glass"
+    set {_net} to (gamemap value "net_block" of {_session}) ? "light gray stained glass"
     set {_teams::*} to {@teams}
 
-    add (value "team_1_starting_block" of {_map} of {_mg}) to {_team1::*}
-    add (value "team_1_detection_block" of {_map} of {_mg}) to {_team1::*}
+    add (gamemap value "team_1_starting_block" of {_session}) to {_team1::*}
+    add (gamemap value "team_1_detection_block" of {_session}) to {_team1::*}
 
-    add (value "team_2_starting_block" of {_map} of {_mg}) to {_team2::*}
-    add (value "team_2_detection_block" of {_map} of {_mg}) to {_team2::*}
+    add (gamemap value "team_2_starting_block" of {_session}) to {_team2::*}
+    add (gamemap value "team_2_detection_block" of {_session}) to {_team2::*}
 
     while {_e} is alive:
         if {_e} is on ground:
@@ -285,9 +275,7 @@ on rightclick with dragon egg:
     set {_team} to temporary value "team" of player
     set {_t} to 1 if {_team} is {_teams::1} else 2
     set {_session} to session of player
-    set {_mg} to minigame of {_session}
-    set {_map} to map of {_session}
-    set {_playout-block} to (value "team_%{_t}%_starting_block" of {_map} of {_mg}) ? "yellow terracotta"
+    set {_playout-block} to (gamemap value "team_%{_t}%_starting_block" of {_session}) ? "yellow terracotta"
     if (type of (block under player)) is {_playout-block}:
         remove (1 of dragon egg) from player
         Volleyball_SpawnBall(player)

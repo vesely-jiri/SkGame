@@ -35,6 +35,22 @@ public class GameMapManager {
             GameMap gameMap = GameMap.deserialize(section.getValues(true));
             maps.put(gameMap.getId(), gameMap);
         }
+        warnLegacyKeys();
+    }
+
+    private void warnLegacyKeys() {
+        for (GameMap map : maps.values()) {
+            for (Map.Entry<String, Map<String, Object>> mgEntry : map.getAllMiniGameValues().entrySet()) {
+                for (String valueKey : mgEntry.getValue().keySet()) {
+                    if (valueKey.startsWith("map;")) {
+                        SkGame.getInstance().getLogger().warning(
+                            "Orphaned legacy key '" + valueKey + "' for minigame '" + mgEntry.getKey() +
+                            "' on map '" + map.getId() + "'. Reconfigure via /game admin. Key is ignored."
+                        );
+                    }
+                }
+            }
+        }
     }
     public void save() {
         if (storageFile != null) saveToFile(storageFile);

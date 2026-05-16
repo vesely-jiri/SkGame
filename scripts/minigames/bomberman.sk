@@ -22,39 +22,41 @@ on load:
         set minigame value "description" of event-minigame to "&7- Pickup your &cTNT &7and fight"
         set minigame value "author" of event-minigame to "JuraJ_Player"
         set minigame value "min_players" of event-minigame to 2
-        set minigame value "gamemode" of event-minigame to a custom value:
+        set gamemap value "gamemode" of event-minigame to a custom value:
             set value name to "Gamemode"
             set value type to a text
             set default value to "elimination"
             set description to "Choose which gamemode to play: elimination (one life) or deathmatch"
-        set minigame value "respawn_cooldown" of event-minigame to a custom value:
+        set gamemap value "respawn_cooldown" of event-minigame to a custom value:
             set plurality to single
             set value name to "Respawn cooldown"
             set value type to a timespan
             set default value to 5 seconds
             set description to "How long it takes a player to respawn after death in deathmatch mode"
-        set minigame value "spawn_rate" of event-minigame to a custom value:
+        set gamemap value "spawn_rate" of event-minigame to a custom value:
             set value name to "Item spawn rate"
             set plurality to single
             set value type to a timespan
             set default value to 5 ticks
             set description to "How fast items are spawned at booster locations"
-        set minigame value "deathmatch_timer" of event-minigame to a custom value:
+        set gamemap value "deathmatch_timer" of event-minigame to a custom value:
             set value name to "Deathmatch playtime"
             set plurality to single
             set value type to a timespan
             set default value to 1 minute
             set description to "How long players play in deathmatch mode before TIMEOUT"
-        set minigame value "booster_spawnpoints" of event-minigame to a custom value:
+        set gamemap value "booster_spawnpoints" of event-minigame to a custom value:
             set value name to "Booster spawnpoints"
             set plurality to plural
             set value type to a location
             set description to "Locations where items spawn; players also start here"
+        set gamemap value "arena_region" of event-minigame to a custom value:
+            set value name to "Arena region"
+            set value type to a region
+            set description to "Playable area — used to clean up mines at game end"
 
 on "bomberman" game start:
-    set {_map} to map of event-session
-    set {_mg} to minigame of event-session
-    set {_loc::*} to values "booster_spawnpoints" of {_map} of {_mg}
+    set {_loc::*} to gamemap values "booster_spawnpoints" of event-session
     loop shuffled (players of event-session):
         add 1 to {_n}
         teleport loop-value to {_loc::%{_n}%}
@@ -65,19 +67,17 @@ on "bomberman" game start:
         if loop-value <= 3:
             play sound "minecraft:entity.experience_orb.pickup" to players of event-session
         wait 1 second
-    set {_rate} to (value "spawn_rate" of {_map} of {_mg}) ? 5 ticks
+    set {_rate} to (gamemap value "spawn_rate" of event-session) ? 5 ticks
     Bomberman_StartSpawningDrops(event-session, {_rate})
     if Bomberman_GetGamemode(event-session) is "deathmatch":
         Bomberman_StartTimer(event-session)
 
 on "bomberman" game stop:
-    set {_arena} to arena region of event-session
-    if {_arena} is not set:
-        set {_arena} to region of (map of event-session)
+    set {_arena} to gamemap value "arena_region" of event-session
     if {_arena} is set:
-        clear all entities in region {_arena}
         loop (blocks in region {_arena}) where [input is polished blackstone pressure plate]:
             set loop-block to air
+    # arena entity cleanup is handled automatically by SkGame (arena.cleanup config)
     set {_p::*} to Bomberman_GetPlayingPlayers(event-session)
     if event-string is "WIN":
         set {_m} to "&aWinner is %{_p::1}%"
@@ -129,14 +129,10 @@ on script load:
 #----------------------------------------------------------------------
 
 local function Bomberman_GetGamemode(session: session) :: string:
-    set {_map} to map of {_session}
-    set {_mg} to minigame of {_session}
-    return (value "gamemode" of {_map} of {_mg}) ? "elimination"
+    return (gamemap value "gamemode" of {_session}) ? "elimination"
 
 local function Bomberman_StartTimer(session: session):
-    set {_map} to map of {_session}
-    set {_mg} to minigame of {_session}
-    set {_timer} to (value "deathmatch_timer" of {_map} of {_mg}) ? 1 minute
+    set {_timer} to (gamemap value "deathmatch_timer" of {_session}) ? 1 minute
     while (state of {_session}) is STARTED:
         if {_timer} <= (loop-iteration * 1 second):
             stop game of {_session} with reason "TIMEOUT"
@@ -152,12 +148,10 @@ local function Bomberman_GetRandomItemIndex() :: string:
     return random element of {{@var_prefix}::probabilities::*}
 
 local function Bomberman_RespawnPlayer(session: session, p: player):
-    set {_map} to map of {_session}
-    set {_mg} to minigame of {_session}
-    set {_cd} to (value "respawn_cooldown" of {_map} of {_mg}) ? 5 seconds
+    set {_cd} to (gamemap value "respawn_cooldown" of {_session}) ? 5 seconds
     wait {_cd}
     if {_p} is playing (minigame with id "bomberman"):
-        set {_l::*} to values "booster_spawnpoints" of {_map} of {_mg}
+        set {_l::*} to gamemap values "booster_spawnpoints" of {_session}
         teleport {_p} to (random element of {_l::*})
         set gamemode of {_p} to survival
 
@@ -184,9 +178,7 @@ local function Bomberman_SpawnDrops(mode: string, l: locations):
         drop {_i} at {_l} without velocity
 
 local function Bomberman_StartSpawningDrops(session: session, rate: timespan):
-    set {_map} to map of {_session}
-    set {_mg} to minigame of {_session}
-    set {_l::*} to values "booster_spawnpoints" of {_map} of {_mg}
+    set {_l::*} to gamemap values "booster_spawnpoints" of {_session}
     Bomberman_SpawnDrops("charge", {_l::*})
     while state of {_session} is STARTED:
         Bomberman_SpawnDrops("random", {_l::*})
