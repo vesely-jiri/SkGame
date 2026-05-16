@@ -96,8 +96,8 @@ on "volleyball" game start:
         apply infinite speed 1 to loop-value
         set temporary player value "team" of loop-value to {_teams::%{_t}%}
         set chestplate of loop-value to {_chestplates::%{_t}%}
-    set session value "score::yellow" of event-session to 0
-    set session value "score::green" of event-session to 0
+    set temporary session value "score::yellow" of event-session to 0
+    set temporary session value "score::green" of event-session to 0
     wait 3 seconds
     Volleyball_GiveBallToTeam(event-session, (random element out of {_teams::*}))
     Volleyball_ScoreActionBar(event-session)
@@ -137,7 +137,7 @@ local function Volleyball_ShowChargeParticles(p: player):
 
 local function Volleyball_TeamPointAdd(team: string, p: player, reason: string = "ground"):
     set {_session} to session of {_p}
-    set {_score} to (session value "score::%{_team}%" of {_session}) ? 0
+    set {_score} to (temporary session value "score::%{_team}%" of {_session}) ? 0
     set {_score} to {_score} + 1
     send "&a%{_p}% scored!" to (players of {_session}) and (spectators of {_session})
     set {_teams::*} to {@teams}
@@ -147,7 +147,7 @@ local function Volleyball_TeamPointAdd(team: string, p: player, reason: string =
         send title "&7%{_p}% scored" with subtitle "%{_color}%+1" to {_players::*} for 2 seconds with fade in 0.5 second and fade out 0.5 second
     else:
         send title "&c%{_p}% missed" with subtitle "%{_color}%+1" to {_players::*} for 2 seconds with fade in 0.5 second and fade out 0.5 second
-    set session value "score::%{_team}%" of {_session} to {_score}
+    set temporary session value "score::%{_team}%" of {_session} to {_score}
     set {_max-points} to (session value "max_points" of {_session}) ? {@max_points}
     if {_score} >= {_max-points}:
         stop game of {_session} with reason "WIN;%{_team}%"
@@ -157,8 +157,8 @@ local function Volleyball_TeamPointAdd(team: string, p: player, reason: string =
 local function Volleyball_ScoreActionBar(session: session):
     set {_teams::*} to {@teams}
     while (state of {_session}) is STARTED:
-        set {_team1} to (session value "score::%{_teams::1}%" of {_session}) ? 0
-        set {_team2} to (session value "score::%{_teams::2}%" of {_session}) ? 0
+        set {_team1} to (temporary session value "score::%{_teams::1}%" of {_session}) ? 0
+        set {_team2} to (temporary session value "score::%{_teams::2}%" of {_session}) ? 0
         set {_p::*} to (players of {_session}) and (spectators of {_session})
         send action bar "&eYellow: %{_team1}% | &aGreen: %{_team2}%" to {_p::*}
         wait 1 second

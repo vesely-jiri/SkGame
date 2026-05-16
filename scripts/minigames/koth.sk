@@ -38,7 +38,7 @@ on "koth" game start:
 
 on "koth" game stop:
     if event-string is "WIN":
-        set {_winner} to session value "winner" of event-session
+        set {_winner} to temporary session value "winner" of event-session
         add "&7Player &f%{_winner}% &7won the game" to {_info::*}
     set {_p::*} to (players of event-session) and (spectators of event-session)
     reset {_p::*} for game
@@ -51,7 +51,7 @@ on "koth" game stop:
 local function Koth_StartShowPoints(session: session):
     while (state of {_session}) is STARTED:
         loop players of {_session}:
-            set {_s} to (session value "players::%loop-value%::score" of {_session}) ? 0
+            set {_s} to (temporary session value "players::%loop-value%::score" of {_session}) ? 0
             send action bar "&7Points: %{_s}%" to loop-player
         wait 1 second
 
@@ -59,11 +59,11 @@ local function Koth_StartHillTicking(session: session, region: region, limit: nu
     while (state of {_session}) is STARTED:
         set {_p::*} to players in region {_region}
         if size of {_p::*} is 1:
-            set {_s} to (session value "players::%{_p::1}%::score" of {_session}) ? 0
+            set {_s} to (temporary session value "players::%{_p::1}%::score" of {_session}) ? 0
             set {_new} to {_s} + 1
-            set session value "players::%{_p::1}%::score" of {_session} to {_new}
+            set temporary session value "players::%{_p::1}%::score" of {_session} to {_new}
             if {_new} >= {_limit}:
-                set session value "winner" of {_session} to {_p::1}
+                set temporary session value "winner" of {_session} to {_p::1}
                 stop game of {_session} with reason "WIN"
         wait 1 second
 
