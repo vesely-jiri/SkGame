@@ -52,6 +52,16 @@ spectators:
   # Only "lobby" is currently implemented. "reject" is not yet supported (see Phase 8 open questions).
   fallback-when-no-spawn: lobby
 
+# --- Arena ---
+arena:
+  cleanup:
+    # Remove all non-player entities from the arena region at game end.
+    entities: true
+    # Remove dropped item entities (subset; only applies when entities: false).
+    dropped-items: true
+    # Remove primed TNT entities (subset; only applies when entities: false).
+    primed-tnt: true
+
 # --- Messages ---
 messages:
   forced-locale: ~        # null = use per-player locale

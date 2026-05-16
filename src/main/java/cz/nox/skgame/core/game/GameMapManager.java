@@ -16,6 +16,7 @@ public class GameMapManager {
     private final Map<String, GameMap> maps = new HashMap<>();
     private final Set<String> claimedMaps = new HashSet<>();
     private GameMap lastCreatedGameMap;
+    private File storageFile;
 
     public static synchronized GameMapManager getInstance() {
         if (gameMapManager == null) gameMapManager = new GameMapManager();
@@ -23,6 +24,7 @@ public class GameMapManager {
     }
 
     public void loadFromFile(File file) {
+        this.storageFile = file;
         if (!file.exists()) return;
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
         ConfigurationSection baseSection = config.getConfigurationSection("maps");
@@ -34,6 +36,10 @@ public class GameMapManager {
             maps.put(gameMap.getId(), gameMap);
         }
     }
+    public void save() {
+        if (storageFile != null) saveToFile(storageFile);
+    }
+
     public void saveToFile(File file) {
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
         config.set("maps",null);

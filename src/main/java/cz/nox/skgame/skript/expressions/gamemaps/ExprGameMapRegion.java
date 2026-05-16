@@ -9,6 +9,7 @@ import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.util.coll.CollectionUtils;
 import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.region.Region;
+import cz.nox.skgame.core.game.GameMapManager;
 import cz.nox.skgame.core.region.RegionFactory;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
@@ -58,10 +59,15 @@ public class ExprGameMapRegion extends SimplePropertyExpression<GameMap, Region>
                     gameMap.setRegion(r);
                 } else {
                     Region adapted = RegionFactory.adapt(val);
-                    if (adapted != null) gameMap.setRegion(adapted);
+                    if (adapted == null) return;
+                    gameMap.setRegion(adapted);
                 }
+                GameMapManager.getInstance().save();
             }
-            case DELETE, RESET -> gameMap.setRegion(null);
+            case DELETE, RESET -> {
+                gameMap.setRegion(null);
+                GameMapManager.getInstance().save();
+            }
         }
     }
 

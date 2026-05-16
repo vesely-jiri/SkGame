@@ -146,6 +146,12 @@ public class Session {
             }
         }
         this.gameMap = gameMap;
+        // Slotted maps: claimSlot() in startImmediately() sets arenaRegion at game start.
+        if (gameMap == null) {
+            this.arenaRegion = null;
+        } else if (!gameMap.hasArenaSlots()) {
+            this.arenaRegion = gameMap.getRegion();
+        }
     }
 
     @Nullable

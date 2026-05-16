@@ -53,6 +53,8 @@ public class SkGame extends JavaPlugin {
             "cz.nox.skgame.skript.effects.EffResetPlayer",
             "cz.nox.skgame.skript.effects.EffTeleportToLobby",
             "cz.nox.skgame.skript.effects.EffClearRegion",
+            "cz.nox.skgame.skript.effects.EffClearArena",
+            "cz.nox.skgame.skript.effects.EffClearArenaEntityType",
             "cz.nox.skgame.skript.effects.EffMakeSpectator",
             "cz.nox.skgame.skript.effects.EffMakePlayer",
             "cz.nox.skgame.skript.effects.EffJoinAsSpectator",

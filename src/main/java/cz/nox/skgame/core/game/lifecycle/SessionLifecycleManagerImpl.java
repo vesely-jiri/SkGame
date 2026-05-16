@@ -25,7 +25,10 @@ import cz.nox.skgame.core.region.ArenaSlot;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.TNTPrimed;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.Nullable;
@@ -196,6 +199,8 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager {
     public void endGame(Session session, String reason) {
         sessionManager.cancelCountdownTask(session.getId());
 
+        Region arena = session.getArenaRegion();
+
         // Release arena slot
         if (session.getClaimedSlot() != null && session.getGameMap() != null) {
             session.getGameMap().releaseSlot(session.getId());
@@ -209,6 +214,19 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager {
         MiniGame miniGame = session.getMiniGame();
         if (miniGame != null) {
             Bukkit.getPluginManager().callEvent(new GameStopEvent(miniGame, session, reason));
+        }
+
+        // Auto-cleanup after scripts have run, before role transitions
+        if (arena != null && arena.getWorld() != null) {
+            boolean allEntities  = plugin.getConfig().getBoolean("arena.cleanup.entities", true);
+            boolean droppedItems = plugin.getConfig().getBoolean("arena.cleanup.dropped-items", true);
+            boolean primedTnt    = plugin.getConfig().getBoolean("arena.cleanup.primed-tnt", true);
+            if (allEntities) {
+                arena.clearEntities(Entity.class);
+            } else {
+                if (droppedItems) arena.clearEntities(Item.class);
+                if (primedTnt)    arena.clearEntities(TNTPrimed.class);
+            }
         }
 
         // Clear temp values after handlers have run
