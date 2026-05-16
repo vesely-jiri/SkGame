@@ -275,7 +275,13 @@ public class GameMap implements ConfigurationSerializable {
                     plural.put("__plural", true);
                     plural.put("values", new ArrayList<>(Arrays.asList(arr)));
                     result.put(innerKey, plural);
-                } else if (innerValue instanceof YggdrasilSerializable yggSer) {
+                } else if (innerValue instanceof Region region) {
+                    Map<String, Object> ser = new HashMap<>(serializeRegion(region));
+                    if (!ser.isEmpty()) {
+                        ser.put("__region", true);
+                        result.put(innerKey, ser);
+                    }
+                } else if (innerValue instanceof YggdrasilSerializable) {
                     ClassInfo<?> ci = Classes.getExactClassInfo(innerValue.getClass());
                     assert ci != null;
                     SerializedVariable.Value serialized = Classes.serialize(innerValue);
@@ -408,6 +414,13 @@ public class GameMap implements ConfigurationSerializable {
                 Object raw = valEntry.getValue();
                 if (raw instanceof MemorySection rawMap) {
                     Map<String, Object> data = rawMap.getValues(false);
+                    if (Boolean.TRUE.equals(data.get("__region"))) {
+                        Region r = deserializeRegion(rawMap);
+                        if (r != null) {
+                            gameMap.setMiniGameValue(miniGameId, key, r);
+                            continue;
+                        }
+                    }
                     if (Boolean.TRUE.equals(data.get("__plural"))) {
                         List<?> pluralList = rawMap.getList("values");
                         gameMap.setMiniGameValue(miniGameId, key, pluralList != null ? pluralList.toArray() : new Object[0]);

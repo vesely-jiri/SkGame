@@ -26,12 +26,14 @@ on load:
 
 on "koth" game start:
     set {_spawnpoints::*} to gamemap values "spawnpoints" of event-session
+    set {_region} to gamemap value "hill_region" of event-session
+    set {_limit} to (gamemap value "points_limit" of event-session) ? 30
     loop players of event-session:
         add 1 to {_n}
         teleport loop-player to {_spawnpoints::%{_n}%}
         set slot 0 of loop-player to stick
         reset {_n} if {_n} is size of {_spawnpoints::*}
-    Koth_StartHillTicking(event-session)
+    Koth_StartHillTicking(event-session, {_region}, {_limit})
     Koth_StartShowPoints(event-session)
 
 on "koth" game stop:
@@ -53,9 +55,7 @@ local function Koth_StartShowPoints(session: session):
             send action bar "&7Points: %{_s}%" to loop-player
         wait 1 second
 
-local function Koth_StartHillTicking(session: session):
-    set {_region} to gamemap value "hill_region" of {_session}
-    set {_limit} to (gamemap value "points_limit" of {_session}) ? 30
+local function Koth_StartHillTicking(session: session, region: region, limit: number):
     while (state of {_session}) is STARTED:
         set {_p::*} to players in region {_region}
         if size of {_p::*} is 1:
@@ -84,11 +84,11 @@ on damage of player:
 on "koth" spectator join:
     set {_session} to event-session
     set {_target} to event-player
+    set {_spawnpoints::*} to gamemap values "spawnpoints" of event-session
     set {_c0} to new text component from "&aYou are spectating King of the Hill. "
     set {_c1} to new text component from "&e[Click here to join the game]"
     create callback for {_c1} with 1 use:
         make {_target} a player in {_session}
-        set {_spawnpoints::*} to gamemap values "spawnpoints" of {_session}
         teleport {_target} to random element out of {_spawnpoints::*}
         set slot 0 of {_target} to stick
     send components ({_c0} and {_c1}) to event-player

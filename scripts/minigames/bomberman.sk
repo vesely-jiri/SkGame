@@ -57,6 +57,13 @@ on load:
 
 on "bomberman" game start:
     set {_loc::*} to gamemap values "booster_spawnpoints" of event-session
+    set {_mode} to (gamemap value "gamemode" of event-session) ? "elimination"
+    set {_rate} to (gamemap value "spawn_rate" of event-session) ? 5 ticks
+    set {_timer} to (gamemap value "deathmatch_timer" of event-session) ? 1 minute
+    set {_cd} to (gamemap value "respawn_cooldown" of event-session) ? 5 seconds
+    set session value "gamemode" of event-session to {_mode}
+    set session value "respawn_cooldown" of event-session to {_cd}
+    set session values "booster_locs" of event-session to {_loc::*}
     loop shuffled (players of event-session):
         add 1 to {_n}
         teleport loop-value to {_loc::%{_n}%}
@@ -67,10 +74,9 @@ on "bomberman" game start:
         if loop-value <= 3:
             play sound "minecraft:entity.experience_orb.pickup" to players of event-session
         wait 1 second
-    set {_rate} to (gamemap value "spawn_rate" of event-session) ? 5 ticks
-    Bomberman_StartSpawningDrops(event-session, {_rate})
-    if Bomberman_GetGamemode(event-session) is "deathmatch":
-        Bomberman_StartTimer(event-session)
+    Bomberman_StartSpawningDrops(event-session, {_rate}, {_loc::*})
+    if {_mode} is "deathmatch":
+        Bomberman_StartTimer(event-session, {_timer})
 
 on "bomberman" game stop:
     set {_arena} to gamemap value "arena_region" of event-session
@@ -129,10 +135,9 @@ on script load:
 #----------------------------------------------------------------------
 
 local function Bomberman_GetGamemode(session: session) :: string:
-    return (gamemap value "gamemode" of {_session}) ? "elimination"
+    return (session value "gamemode" of {_session}) ? "elimination"
 
-local function Bomberman_StartTimer(session: session):
-    set {_timer} to (gamemap value "deathmatch_timer" of {_session}) ? 1 minute
+local function Bomberman_StartTimer(session: session, timer: timespan):
     while (state of {_session}) is STARTED:
         if {_timer} <= (loop-iteration * 1 second):
             stop game of {_session} with reason "TIMEOUT"
@@ -148,10 +153,10 @@ local function Bomberman_GetRandomItemIndex() :: string:
     return random element of {{@var_prefix}::probabilities::*}
 
 local function Bomberman_RespawnPlayer(session: session, p: player):
-    set {_cd} to (gamemap value "respawn_cooldown" of {_session}) ? 5 seconds
+    set {_cd} to (session value "respawn_cooldown" of {_session}) ? 5 seconds
     wait {_cd}
     if {_p} is playing (minigame with id "bomberman"):
-        set {_l::*} to gamemap values "booster_spawnpoints" of {_session}
+        set {_l::*} to session values "booster_locs" of {_session}
         teleport {_p} to (random element of {_l::*})
         set gamemode of {_p} to survival
 
@@ -177,11 +182,10 @@ local function Bomberman_SpawnDrops(mode: string, l: locations):
             set string tag "{@var_prefix};type" of (custom nbt of {_i}) to {_index}
         drop {_i} at {_l} without velocity
 
-local function Bomberman_StartSpawningDrops(session: session, rate: timespan):
-    set {_l::*} to gamemap values "booster_spawnpoints" of {_session}
-    Bomberman_SpawnDrops("charge", {_l::*})
+local function Bomberman_StartSpawningDrops(session: session, rate: timespan, locs: locations):
+    Bomberman_SpawnDrops("charge", {_locs::*})
     while state of {_session} is STARTED:
-        Bomberman_SpawnDrops("random", {_l::*})
+        Bomberman_SpawnDrops("random", {_locs::*})
         wait {_rate}
 
 local function Bomberman_EliminatePlayer(victim: player, attacker: player):
