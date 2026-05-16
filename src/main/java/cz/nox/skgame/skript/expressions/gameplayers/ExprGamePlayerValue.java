@@ -44,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExprGamePlayerValue extends SimpleExpression<Object> implements KeyProviderExpression<Object> {
     private static final PlayerManager playerManager = PlayerManager.getInstance();
     private Expression<String> key;
-    private Expression<Player> player;
+    private Expression<Object> player;
 
     private int pattern;
     private int mark;
@@ -53,8 +53,8 @@ public class ExprGamePlayerValue extends SimpleExpression<Object> implements Key
 
     static {
         Skript.registerExpression(ExprGamePlayerValue.class, Object.class, ExpressionType.COMBINED,
-                "[temp:temp[orary]] [player] value[list:s] %string% of %player%",
-                "[all] [temp:temp[orary]] [player] values of %player%"
+                "[temp:temp[orary]] [player] value[list:s] %string% of %object%",
+                "[all] [temp:temp[orary]] [player] values of %object%"
         );
     }
 
@@ -64,9 +64,9 @@ public class ExprGamePlayerValue extends SimpleExpression<Object> implements Key
         this.pattern = pattern;
         if (pattern == 0) {
             key = (Expression<String>) exprs[0];
-            player = (Expression<Player>) exprs[1];
+            player = (Expression<Object>) exprs[1];
         } else {
-            player = (Expression<Player>) exprs[0];
+            player = (Expression<Object>) exprs[0];
         }
         isTemporary = parseResult.hasTag("temp");
         isList = parseResult.hasTag("list");
@@ -76,8 +76,8 @@ public class ExprGamePlayerValue extends SimpleExpression<Object> implements Key
     @Override
     protected Object @Nullable [] get(Event e) {
         if (player == null) return null;
-        Player p = player.getSingle(e);
-        if (p == null) return null;
+        Object raw = player.getSingle(e);
+        if (!(raw instanceof Player p)) return null;
         GamePlayer gamePlayer = playerManager.getPlayer(p);
         if (gamePlayer == null) return null;
         switch (pattern) {
@@ -111,8 +111,8 @@ public class ExprGamePlayerValue extends SimpleExpression<Object> implements Key
     @Override
     public void change(Event e, Object @Nullable [] delta, Changer.ChangeMode mode) {
         if (player == null) return;
-        Player p = player.getSingle(e);
-        if (p == null) return;
+        Object raw = player.getSingle(e);
+        if (!(raw instanceof Player p)) return;
         GamePlayer gamePlayer = playerManager.getPlayer(p);
         if (gamePlayer == null) return;
         switch (mode) {
@@ -139,9 +139,10 @@ public class ExprGamePlayerValue extends SimpleExpression<Object> implements Key
 
     @Override
     public @NotNull String @NotNull [] getArrayKeys(Event e) throws IllegalStateException {
-        Player p = player.getSingle(e);
-        assert p != null;
-        return playerManager.getPlayer(p).getKeys(isTemporary);
+        Object raw = player.getSingle(e);
+        if (!(raw instanceof Player p)) return new String[0];
+        GamePlayer gp = playerManager.getPlayer(p);
+        return gp != null ? gp.getKeys(isTemporary) : new String[0];
     }
 
     @Override

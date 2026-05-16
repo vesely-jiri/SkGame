@@ -51,7 +51,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ExprSessionValue extends SimpleExpression<Object> implements KeyProviderExpression<Object> {
     private Expression<String> key;
-    private Expression<Session> session;
+    private Expression<Object> session;
 
     private int pattern;
     private int mark;
@@ -60,8 +60,8 @@ public class ExprSessionValue extends SimpleExpression<Object> implements KeyPro
 
     static {
         Skript.registerExpression(ExprSessionValue.class, Object.class, ExpressionType.COMBINED,
-                "[temp:temp[orary]] [session] value[list:s] %string% of %session%",
-                "[all] [temp:temp[orary]] [session] values of %session%"
+                "[temp:temp[orary]] [session] value[list:s] %string% of %object%",
+                "[all] [temp:temp[orary]] [session] values of %object%"
         );
     }
 
@@ -71,9 +71,9 @@ public class ExprSessionValue extends SimpleExpression<Object> implements KeyPro
         this.pattern = pattern;
         if (pattern == 0) {
             key = (Expression<String>) exprs[0];
-            session = (Expression<Session>) exprs[1];
+            session = (Expression<Object>) exprs[1];
         } else {
-            session = (Expression<Session>) exprs[0];
+            session = (Expression<Object>) exprs[0];
         }
         mark = parseResult.mark;
         isTemporary = parseResult.hasTag("temp");
@@ -83,8 +83,8 @@ public class ExprSessionValue extends SimpleExpression<Object> implements KeyPro
 
     @Override
     protected Object @Nullable [] get(Event e) {
-        Session s = session.getSingle(e);
-        if (s == null) return null;
+        Object raw = session.getSingle(e);
+        if (!(raw instanceof Session s)) return null;
         switch (pattern) {
             case 0:
                 String k = key.getSingle(e);
@@ -115,8 +115,8 @@ public class ExprSessionValue extends SimpleExpression<Object> implements KeyPro
 
     @Override
     public void change(Event e, Object @Nullable [] delta, Changer.ChangeMode mode) {
-        Session s = session.getSingle(e);
-        if (s == null) return;
+        Object raw = session.getSingle(e);
+        if (!(raw instanceof Session s)) return;
         switch (mode) {
             case SET -> {
                 String k = key.getSingle(e);
@@ -141,8 +141,8 @@ public class ExprSessionValue extends SimpleExpression<Object> implements KeyPro
 
     @Override
     public @NotNull String @NotNull [] getArrayKeys(Event e) throws IllegalStateException {
-        Session s = session.getSingle(e);
-        assert s != null;
+        Object raw = session.getSingle(e);
+        if (!(raw instanceof Session s)) return new String[0];
         return s.getKeys(isTemporary);
     }
 
