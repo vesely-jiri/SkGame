@@ -81,12 +81,12 @@ on "volleyball" game start:
     set {_teams::*} to {@teams}
     set {_spawn::1} to gamemap value "team_1_spawnpoint" of event-session
     set {_spawn::2} to gamemap value "team_2_spawnpoint" of event-session
-    set temporary temporary session value "net_block" of event-session to (gamemap value "net_block" of event-session) ? "light gray stained glass"
-    set temporary temporary session value "team_1_starting_block" of event-session to (gamemap value "team_1_starting_block" of event-session) ? "yellow terracotta"
-    set temporary temporary session value "team_1_detection_block" of event-session to (gamemap value "team_1_detection_block" of event-session) ? "yellow stained glass"
-    set temporary temporary session value "team_2_starting_block" of event-session to (gamemap value "team_2_starting_block" of event-session) ? "lime terracotta"
-    set temporary temporary session value "team_2_detection_block" of event-session to (gamemap value "team_2_detection_block" of event-session) ? "lime stained glass"
-    set temporary temporary session value "max_points" of event-session to (gamemap value "max_points" of event-session) ? {@max_points}
+    set temporary session value "net_block" of event-session to (gamemap value "net_block" of event-session) ? "light gray stained glass"
+    set temporary session value "team_1_starting_block" of event-session to (gamemap value "team_1_starting_block" of event-session) ? "yellow terracotta"
+    set temporary session value "team_1_detection_block" of event-session to (gamemap value "team_1_detection_block" of event-session) ? "yellow stained glass"
+    set temporary session value "team_2_starting_block" of event-session to (gamemap value "team_2_starting_block" of event-session) ? "lime terracotta"
+    set temporary session value "team_2_detection_block" of event-session to (gamemap value "team_2_detection_block" of event-session) ? "lime stained glass"
+    set temporary session value "max_points" of event-session to (gamemap value "max_points" of event-session) ? {@max_points}
     set {_chestplates::*} to leather chestplate, leather chestplate
     dye {_chestplates::1} {@chestplate_team1}
     dye {_chestplates::2} {@chestplate_team2}
