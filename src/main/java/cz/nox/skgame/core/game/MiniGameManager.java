@@ -36,7 +36,17 @@ public class MiniGameManager {
     public void loadFromFile(File file) {
         this.storageFile = file;
         if (!file.exists()) return;
-        YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
+        YamlConfiguration config;
+        try {
+            config = YamlConfiguration.loadConfiguration(file);
+        } catch (Exception e) {
+            SkGame.getInstance().getLogger().severe(
+                "minigames.yml is corrupted (" + e.getMessage() + "). Resetting. Old file renamed to minigames.yml.corrupted");
+            File backup = new File(file.getParentFile(), file.getName() + ".corrupted");
+            //noinspection ResultOfMethodCallIgnored
+            file.renameTo(backup);
+            return;
+        }
         ConfigurationSection baseSection = config.getConfigurationSection("minigames");
         if (baseSection == null) return;
         for (String key : baseSection.getKeys(false)) {

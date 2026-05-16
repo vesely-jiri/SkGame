@@ -1,5 +1,11 @@
 package cz.nox.skgame.api.game.model;
 
+import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.classes.Serializer;
+import ch.njol.skript.registrations.Classes;
+import ch.njol.skript.variables.SerializedVariable;
+import ch.njol.yggdrasil.YggdrasilSerializable;
+import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +74,24 @@ public class MiniGame implements ConfigurationSerializable {
     public @NotNull Map<String, Object> serialize() {
         Map<String, Object> gm = new HashMap<>();
         gm.put("id", this.id);
-        gm.put("values", this.values);
+
+        Map<String, Object> serializedValues = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> entry : this.values.entrySet()) {
+            Object v = entry.getValue();
+            if (v instanceof YggdrasilSerializable) {
+                SerializedVariable.Value serialized = Classes.serialize(v);
+                if (serialized != null) {
+                    Map<String, Object> ser = new HashMap<>();
+                    ser.put("type", serialized.type);
+                    ser.put("data", serialized.data);
+                    serializedValues.put(entry.getKey(), ser);
+                    continue;
+                }
+            }
+            serializedValues.put(entry.getKey(), v);
+        }
+        gm.put("values", serializedValues);
+
         if (!gameMapValueDefs.isEmpty()) {
             gm.put("gamemap-values", new LinkedHashMap<>(gameMapValueDefs));
         }
@@ -80,12 +103,40 @@ public class MiniGame implements ConfigurationSerializable {
         if (gm == null) return null;
         String id = (String) gm.get("id");
         Object rawValues = gm.get("values");
-        Map<String, Object> values = new HashMap<>();
+        Map<String, Object> rawMap = new HashMap<>();
         if (rawValues instanceof Map) {
-            values = (Map<String, Object>) rawValues;
-        } else if (rawValues instanceof org.bukkit.configuration.MemorySection) {
-            values = ((org.bukkit.configuration.MemorySection) rawValues).getValues(false);
+            rawMap = (Map<String, Object>) rawValues;
+        } else if (rawValues instanceof MemorySection sec) {
+            rawMap = sec.getValues(false);
         }
+
+        Map<String, Object> values = new HashMap<>();
+        for (Map.Entry<String, Object> entry : rawMap.entrySet()) {
+            Object raw = entry.getValue();
+            boolean decoded = false;
+            if (raw instanceof MemorySection rawSection) {
+                Map<String, Object> data = rawSection.getValues(false);
+                String typeObj = (String) data.get("type");
+                Object rawBytes = data.get("data");
+                if (typeObj != null && rawBytes instanceof byte[] bytes) {
+                    ClassInfo<?> classInfo = Classes.getClassInfoNoError(typeObj);
+                    if (classInfo != null) {
+                        Serializer<?> ser = classInfo.getSerializer();
+                        if (ser != null) {
+                            Object obj = Classes.deserialize(classInfo, bytes);
+                            if (obj != null) {
+                                values.put(entry.getKey(), obj);
+                                decoded = true;
+                            }
+                        }
+                    }
+                }
+            }
+            if (!decoded) {
+                values.put(entry.getKey(), raw);
+            }
+        }
+
         MiniGame newGm = new MiniGame(id);
         newGm.setValues(values);
 
