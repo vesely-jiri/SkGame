@@ -181,7 +181,8 @@ public class SkGame extends JavaPlugin {
 
         saveDefaultConfig();
         migrateConfig();
-        loadLobbySpawn();
+        // Defer world resolution to first tick — Bukkit.getWorld() returns null during onEnable on Paper.
+        Bukkit.getScheduler().runTask(this, this::loadLobbySpawn);
 
         this.addon = Skript.registerAddon(instance);
 
