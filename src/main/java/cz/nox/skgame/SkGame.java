@@ -105,6 +105,8 @@ public class SkGame extends JavaPlugin {
             "cz.nox.skgame.skript.expressions.sessions.property.ExprSessionMap",
             "cz.nox.skgame.skript.expressions.sessions.property.ExprSessionHost",
             "cz.nox.skgame.skript.expressions.sessions.property.ExprSessionState",
+            "cz.nox.skgame.skript.expressions.sessions.property.ExprSessionTotalRounds",
+            "cz.nox.skgame.skript.expressions.sessions.property.ExprSessionCurrentRound",
             // Expressions — minigames
             "cz.nox.skgame.skript.expressions.minigames.ExprMiniGameFromId",
             "cz.nox.skgame.skript.expressions.minigames.ExprMiniGameAll",

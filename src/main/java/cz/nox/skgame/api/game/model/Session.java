@@ -30,6 +30,8 @@ public class Session {
     private Map<String, Object> tempValues;
     @Nullable private ArenaSlot claimedSlot;
     @Nullable private Region arenaRegion;
+    private int totalRounds = 1;
+    private int currentRound = 0;
 
     public Session(String id, Player host, MiniGame miniGame,
                    SessionState state, GameMap map, Set<Player> players, Set<Player> spectators,
@@ -161,6 +163,12 @@ public class Session {
     @Nullable
     public Region getArenaRegion() { return arenaRegion; }
     public void setArenaRegion(@Nullable Region arenaRegion) { this.arenaRegion = arenaRegion; }
+
+    public int getTotalRounds() { return totalRounds; }
+    public void setTotalRounds(int totalRounds) { this.totalRounds = Math.max(1, totalRounds); }
+
+    public int getCurrentRound() { return currentRound; }
+    public void setCurrentRound(int currentRound) { this.currentRound = Math.max(0, currentRound); }
 
     public Object getValue(String key, boolean isTemporary) {
         return getMap(isTemporary).get(key);

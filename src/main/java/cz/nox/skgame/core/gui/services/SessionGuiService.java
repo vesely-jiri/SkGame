@@ -189,13 +189,13 @@ public class SessionGuiService implements Listener {
                 .onLeftClick(e -> {
                     Player p = (Player) e.getWhoClicked();
                     if (!isHostOnly(p, session)) return;
-                    session.setValue("rounds", Math.min(getRounds(session) + 1, MAX_ROUNDS), false);
+                    session.setTotalRounds(Math.min(getRounds(session) + 1, MAX_ROUNDS));
                     update(session);
                 })
                 .onRightClick(e -> {
                     Player p = (Player) e.getWhoClicked();
                     if (!isHostOnly(p, session)) return;
-                    session.setValue("rounds", Math.max(getRounds(session) - 1, 1), false);
+                    session.setTotalRounds(Math.max(getRounds(session) - 1, 1));
                     update(session);
                 }));
 
@@ -340,8 +340,7 @@ public class SessionGuiService implements Listener {
     }
 
     private int getRounds(Session session) {
-        Object val = session.getValue("rounds", false);
-        return val instanceof Number n ? Math.max(1, n.intValue()) : 1;
+        return session.getTotalRounds();
     }
 
     private static Component legacy(String text) {

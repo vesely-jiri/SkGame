@@ -157,6 +157,10 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager {
         if (miniGame == null || gameMap == null) return false;
         if (!gameMap.supportsMiniGame(miniGame)) return false;
 
+        if (reason != GameStartReason.AUTO_NEXT_ROUND) {
+            session.setCurrentRound(1);
+        }
+
         if (countdownTicks != null && countdownTicks > 0) {
             startWithCountdown(session, countdownTicks);
         } else {
@@ -259,6 +263,19 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager {
         }
 
         partyManager.registerActivity(session);
+
+        int cur = session.getCurrentRound();
+        int total = session.getTotalRounds();
+        if (cur > 0 && cur < total) {
+            session.setCurrentRound(cur + 1);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (sessionManager.getSessionById(session.getId()) != null) {
+                    startGame(session, GameStartReason.AUTO_NEXT_ROUND, null);
+                }
+            }, 40L);
+        } else {
+            session.setCurrentRound(0);
+        }
     }
 
     @Override
