@@ -4,7 +4,6 @@ import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Serializer;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.variables.SerializedVariable;
-import ch.njol.yggdrasil.YggdrasilSerializable;
 import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.jetbrains.annotations.NotNull;
@@ -78,17 +77,15 @@ public class MiniGame implements ConfigurationSerializable {
         Map<String, Object> serializedValues = new LinkedHashMap<>();
         for (Map.Entry<String, Object> entry : this.values.entrySet()) {
             Object v = entry.getValue();
-            if (v instanceof YggdrasilSerializable) {
-                SerializedVariable.Value serialized = Classes.serialize(v);
-                if (serialized != null) {
-                    Map<String, Object> ser = new HashMap<>();
-                    ser.put("type", serialized.type);
-                    ser.put("data", serialized.data);
-                    serializedValues.put(entry.getKey(), ser);
-                    continue;
-                }
+            SerializedVariable.Value serialized = Classes.serialize(v);
+            if (serialized != null) {
+                Map<String, Object> ser = new HashMap<>();
+                ser.put("type", serialized.type);
+                ser.put("data", serialized.data);
+                serializedValues.put(entry.getKey(), ser);
+            } else {
+                serializedValues.put(entry.getKey(), v);
             }
-            serializedValues.put(entry.getKey(), v);
         }
         gm.put("values", serializedValues);
 

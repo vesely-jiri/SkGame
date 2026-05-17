@@ -4,7 +4,6 @@ import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Serializer;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.variables.SerializedVariable;
-import ch.njol.yggdrasil.YggdrasilSerializable;
 import cz.nox.skgame.api.region.Region;
 import cz.nox.skgame.core.region.ArenaSlot;
 import cz.nox.skgame.core.region.CuboidRegion;
@@ -281,17 +280,16 @@ public class GameMap implements ConfigurationSerializable {
                         ser.put("__region", true);
                         result.put(innerKey, ser);
                     }
-                } else if (innerValue instanceof YggdrasilSerializable) {
-                    ClassInfo<?> ci = Classes.getExactClassInfo(innerValue.getClass());
-                    assert ci != null;
-                    SerializedVariable.Value serialized = Classes.serialize(innerValue);
-                    assert serialized != null;
-                    Map<String, Object> ser = new HashMap<>();
-                    ser.put("type", serialized.type);
-                    ser.put("data", serialized.data);
-                    result.put(innerKey, ser);
                 } else {
-                    result.put(innerKey, innerValue);
+                    SerializedVariable.Value serialized = Classes.serialize(innerValue);
+                    if (serialized != null) {
+                        Map<String, Object> ser = new HashMap<>();
+                        ser.put("type", serialized.type);
+                        ser.put("data", serialized.data);
+                        result.put(innerKey, ser);
+                    } else {
+                        result.put(innerKey, innerValue);
+                    }
                 }
             });
             rawMiniGameValues.put(miniGame, result);
