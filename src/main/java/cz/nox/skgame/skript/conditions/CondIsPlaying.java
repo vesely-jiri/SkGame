@@ -36,7 +36,8 @@ public class CondIsPlaying extends Condition {
 
     static {
         Skript.registerCondition(CondIsPlaying.class,
-                "%players% (is|are) playing %minigame%"
+                "%players% (is|are) playing %minigame%",
+                "%players% (is not|are not|isn't|aren't) playing %minigame%"
         );
     }
 
@@ -45,19 +46,22 @@ public class CondIsPlaying extends Condition {
     public boolean init(Expression<?>[] exprs, int i, Kleenean kleenean, SkriptParser.ParseResult parseResult) {
         this.players = (Expression<Player>) exprs[0];
         this.miniGame = (Expression<MiniGame>) exprs[1];
+        setNegated(i == 1);
         return true;
     }
 
     @Override
     public boolean check(Event event) {
         MiniGame miniGame = this.miniGame.getSingle(event);
-        for (Player player : this.players.getAll(event)) {
+        if (miniGame == null) return isNegated();
+        return players.check(event, player -> {
             Session session = sessionManager.getSession(player);
             if (session == null) return false;
-            if (session.getMiniGame() != miniGame) return false;
-            if (session.getState() != SessionState.STARTED) return false;
-        }
-        return true;
+            MiniGame sessionMg = session.getMiniGame();
+            return sessionMg != null
+                    && sessionMg.getId().equals(miniGame.getId())
+                    && session.getState() == SessionState.STARTED;
+        }, isNegated());
     }
 
     @Override

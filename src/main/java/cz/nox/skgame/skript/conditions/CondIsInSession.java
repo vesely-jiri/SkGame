@@ -31,8 +31,9 @@ public class CondIsInSession extends Condition {
     private Expression<Session> session;
 
     static {
-        Skript.registerCondition(CondIsInSession.class, ConditionType.PROPERTY,
-                "%players% (is|are) in [session] %session%"
+        Skript.registerCondition(CondIsInSession.class,
+                "%players% (is|are) in [session] %session%",
+                "%players% (is not|are not|isn't|aren't) in [session] %session%"
         );
     }
 
@@ -41,20 +42,15 @@ public class CondIsInSession extends Condition {
     public boolean init(Expression<?>[] exprs, int i, Kleenean kleenean, SkriptParser.ParseResult parseResult) {
         this.players = (Expression<Player>) exprs[0];
         this.session = (Expression<Session>) exprs[1];
+        setNegated(i == 1);
         return true;
     }
 
     @Override
     public boolean check(Event event) {
-        Player[] players = this.players.getArray(event);
         Session session = this.session.getSingle(event);
-        if (session == null || players == null) return false;
-        for (Player player : players) {
-            if (!session.getPlayers().contains(player)) {
-                return false;
-            }
-        }
-        return true;
+        if (session == null) return isNegated();
+        return players.check(event, player -> session.getRole(player) != null, isNegated());
     }
 
     @Override
