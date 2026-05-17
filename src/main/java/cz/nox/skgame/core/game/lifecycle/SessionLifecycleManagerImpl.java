@@ -22,6 +22,7 @@ import cz.nox.skgame.api.region.Region;
 import cz.nox.skgame.core.game.PlayerManager;
 import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.region.ArenaSlot;
+import cz.nox.skgame.util.PlayerResetter;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -129,6 +130,12 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager {
                 session.removeSpectators(player);
                 Bukkit.getPluginManager().callEvent(new GamePlayerSessionLeave(player, session));
             }
+        }
+
+        if (role == SessionRole.PLAYER || role == SessionRole.SPECTATOR) {
+            PlayerResetter.reset(player, plugin.getDefaultGameMode());
+            Location lobbySpawn = plugin.getLobbySpawn();
+            if (lobbySpawn != null) player.teleport(lobbySpawn);
         }
 
         playerManager.getPlayer(player).removeValues(true);

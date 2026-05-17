@@ -10,6 +10,7 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.util.Kleenean;
 import cz.nox.skgame.SkGame;
+import cz.nox.skgame.util.PlayerResetter;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
@@ -50,28 +51,8 @@ public class EffResetPlayer extends Effect {
         if (players.length == 0) return;
         var gameMode = SkGame.getInstance().getDefaultGameMode();
         for (Player player : players) {
-            resetPlayer(player, gameMode);
+            PlayerResetter.reset(player, gameMode);
         }
-    }
-
-    private void resetPlayer(Player player, org.bukkit.GameMode gameMode) {
-        player.setFireTicks(0);
-        player.getActivePotionEffects().forEach(e -> player.removePotionEffect(e.getType()));
-        player.leaveVehicle();
-        player.getInventory().clear();
-        player.resetMaxHealth();
-        player.setHealth(player.getMaxHealth());
-        player.setExp(0f);
-        player.setLevel(0);
-        player.setWalkSpeed(0.2f);
-        player.setFlySpeed(0.1f);
-        player.setAllowFlight(false);
-        player.setFlying(false);
-        player.setInvulnerable(false);
-        player.setFoodLevel(20);
-        player.setSaturation(5.0f);
-        player.setGameMode(gameMode);
-        player.resetTitle();
     }
 
     @Override
