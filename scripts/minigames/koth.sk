@@ -5,9 +5,9 @@ options:
 
 on load:
     register minigame with id "koth":
-        set name of event-minigame to "King of the Hill"
-        set icon of event-minigame to red banner
-        set author of event-minigame to "JuraJ_Player"
+        set minigame name of event-minigame to "King of the Hill"
+        set minigame icon of event-minigame to red banner
+        set minigame author of event-minigame to "JuraJ_Player"
         set min players of event-minigame to 2
         set gamemap value "spawnpoints" of event-minigame to a custom value:
             set value name to "Spawn points"

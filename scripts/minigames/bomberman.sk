@@ -17,10 +17,10 @@ options:
 
 on load:
     register new minigame with id "bomberman":
-        set name of event-minigame to "&cBomberMan"
-        set icon of event-minigame to TNT
-        set description of event-minigame to "&7- Pickup your &cTNT &7and fight"
-        set author of event-minigame to "JuraJ_Player"
+        set minigame name of event-minigame to "&cBomberMan"
+        set minigame icon of event-minigame to TNT
+        set minigame description of event-minigame to "&7- Pickup your &cTNT &7and fight"
+        set minigame author of event-minigame to "JuraJ_Player"
         set min players of event-minigame to 2
         set gamemap value "gamemode" of event-minigame to a custom value:
             set value name to "Gamemode"
@@ -58,9 +58,10 @@ on load:
 on "bomberman" game start:
     set {_loc::*} to gamemap values "booster_spawnpoints" of event-session
     set {_mode} to (gamemap value "gamemode" of event-session) ? "elimination"
-    if {_mode} is not "elimination" and {_mode} is not "deathmatch":
-        log "[Bomberman] Invalid gamemode '%{_mode}%' on session %event-session%, falling back to elimination" to console
-        set {_mode} to "elimination"
+    if {_mode} is not "elimination":
+        if {_mode} is not "deathmatch":
+            log "[Bomberman] Invalid gamemode '%{_mode}%' on session %event-session%, falling back to elimination" to console
+            set {_mode} to "elimination"
     set {_rate} to (gamemap value "spawn_rate" of event-session) ? 5 ticks
     set {_timer} to (gamemap value "deathmatch_timer" of event-session) ? 1 minute
     set {_cd} to (gamemap value "respawn_cooldown" of event-session) ? 5 seconds
