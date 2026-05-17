@@ -33,11 +33,11 @@ on script load:
     add "&6---------------------------------------------------" to {_d::*}
 
     register minigame with id "volleyball":
-        set minigame value "name" of event-minigame to "&eVolleyball"
+        set name of event-minigame to "&eVolleyball"
         set minigame values "description" of event-minigame to {_d::*}
-        set minigame value "icon" of event-minigame to "magma cream"
-        set minigame value "author" of event-minigame to "JuraJ_Player"
-        set minigame value "min_players" of event-minigame to 2
+        set icon of event-minigame to magma cream
+        set author of event-minigame to "JuraJ_Player"
+        set min players of event-minigame to 2
         set gamemap value "net_block" of event-minigame to a custom value:
             set value name to "Net block"
             set value type to a text

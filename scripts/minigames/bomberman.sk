@@ -17,11 +17,11 @@ options:
 
 on load:
     register new minigame with id "bomberman":
-        set minigame value "name" of event-minigame to "&cBomberMan"
-        set minigame value "icon" of event-minigame to TNT
-        set minigame value "description" of event-minigame to "&7- Pickup your &cTNT &7and fight"
-        set minigame value "author" of event-minigame to "JuraJ_Player"
-        set minigame value "min_players" of event-minigame to 2
+        set name of event-minigame to "&cBomberMan"
+        set icon of event-minigame to TNT
+        set description of event-minigame to "&7- Pickup your &cTNT &7and fight"
+        set author of event-minigame to "JuraJ_Player"
+        set min players of event-minigame to 2
         set gamemap value "gamemode" of event-minigame to a custom value:
             set value name to "Gamemode"
             set value type to a text

@@ -16,6 +16,7 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryCloseEvent;
@@ -133,7 +134,11 @@ public class MinigamesGuiService implements Listener {
         String displayName = nameObj != null ? nameObj.toString() : mg.getId();
 
         Material mat = null;
-        if (iconObj != null) mat = Material.matchMaterial(iconObj.toString());
+        if (iconObj instanceof ItemStack stack) {
+            mat = stack.getType();
+        } else if (iconObj != null) {
+            mat = Material.matchMaterial(iconObj.toString());
+        }
         if (mat == null || mat == Material.AIR) mat = Material.BARRIER;
 
         return GuiItem.of(mat).name(displayName);
