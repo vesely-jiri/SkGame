@@ -32,7 +32,7 @@ public class ExprSessionId extends SimplePropertyExpression<Session, String> {
 
     static {
         register(ExprSessionId.class, String.class,
-                "id","session"
+                "session id","session"
         );
     }
 

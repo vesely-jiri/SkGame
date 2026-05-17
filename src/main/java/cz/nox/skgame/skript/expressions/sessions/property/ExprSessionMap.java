@@ -38,7 +38,7 @@ public class ExprSessionMap extends SimplePropertyExpression<Session, GameMap> {
 
     static {
         register(ExprSessionMap.class, GameMap.class,
-                "[game]map","session");
+                "session [game]map","session");
     }
 
     @Override

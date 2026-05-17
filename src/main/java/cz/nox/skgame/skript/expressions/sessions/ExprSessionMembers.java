@@ -32,7 +32,7 @@ public class ExprSessionMembers extends SimpleExpression<Player> {
 
     static {
         Skript.registerExpression(ExprSessionMembers.class, Player.class, ExpressionType.PROPERTY,
-                "[all] members of %session%"
+                "[all] session members of %session%"
         );
     }
 

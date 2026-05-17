@@ -64,15 +64,15 @@ on "bomberman" game start:
     set temporary session value "gamemode" of event-session to {_mode}
     set temporary session value "respawn_cooldown" of event-session to {_cd}
     set temporary session values "booster_locs" of event-session to {_loc::*}
-    loop shuffled (players of event-session):
+    loop shuffled (session players of event-session):
         add 1 to {_n}
         teleport loop-value to {_loc::%{_n}%}
         set gamemode of loop-value to survival
         reset {_n} if {_n} is size of {_loc::*}
     loop reversed {@startup_time} times:
-        set level of (players of event-session) to loop-value - 1
+        set level of (session players of event-session) to loop-value - 1
         if loop-value <= 3:
-            play sound "minecraft:entity.experience_orb.pickup" to players of event-session
+            play sound "minecraft:entity.experience_orb.pickup" to session players of event-session
         wait 1 second
     Bomberman_StartSpawningDrops(event-session, {_rate}, {_loc::*})
     if {_mode} is "deathmatch":
@@ -96,7 +96,7 @@ on "bomberman" game stop:
         set {_kills} to {_players::%{_player-list::1}%}
         set {_m} to "&aWinner is: %{_player-list::1}% with %{_kills}% kills"
         set {_win} to "WIN"
-    set {_p::*} to (players of event-session) and (spectators of event-session)
+    set {_p::*} to (session players of event-session) and (session spectators of event-session)
     reset {_p::*} for game
     if {_m} is set:
         send {_m} to {_p::*}
@@ -138,13 +138,13 @@ local function Bomberman_GetGamemode(session: session) :: string:
     return (temporary session value "gamemode" of {_session}) ? "elimination"
 
 local function Bomberman_StartTimer(session: session, timer: timespan):
-    while (state of {_session}) is STARTED:
+    while (session state of {_session}) is STARTED:
         if {_timer} <= (loop-iteration * 1 second):
             stop game of {_session} with reason "TIMEOUT"
         wait 1 second
 
 local function Bomberman_GetPlayingPlayers(session: session) :: players:
-    return (players of {_session}) where [gamemode of input is survival]
+    return (session players of {_session}) where [gamemode of input is survival]
 
 local function Bomberman_GetFuseTime(type: string) :: integer:
     return {{@var_prefix}::items::%{_type}%::fuse}
@@ -184,7 +184,7 @@ local function Bomberman_SpawnDrops(mode: string, l: locations):
 
 local function Bomberman_StartSpawningDrops(session: session, rate: timespan, locs: locations):
     Bomberman_SpawnDrops("charge", {_locs::*})
-    while state of {_session} is STARTED:
+    while session state of {_session} is STARTED:
         Bomberman_SpawnDrops("random", {_locs::*})
         wait {_rate}
 
@@ -198,7 +198,7 @@ local function Bomberman_EliminatePlayer(victim: player, attacker: player):
         set {_v} to (temporary session value "players::%{_victim}%::deaths" of {_session}) ? 0
         set temporary session value "players::%{_victim}%::deaths" of {_session} to {_v} + 1
         play sound "minecraft:entity.player.hurt" at {_victim}
-        send {@player_eliminated} to (players of {_session}) and (spectators of {_session})
+        send {@player_eliminated} to (session players of {_session}) and (session spectators of {_session})
         if {_victim} is not {_attacker}:
             Bomberman_AddPoint({_session}, {_attacker})
         if Bomberman_GetGamemode({_session}) is "elimination":

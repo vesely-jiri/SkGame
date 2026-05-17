@@ -42,7 +42,7 @@ public class ExprSessionState extends SimplePropertyExpression<Session, SessionS
 
     static {
         register(ExprSessionState.class, SessionState.class,
-                "state","session");
+                "session state","session");
     }
 
     @Override

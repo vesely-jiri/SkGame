@@ -90,7 +90,7 @@ on "volleyball" game start:
     set {_chestplates::*} to leather chestplate, leather chestplate
     dye {_chestplates::1} {@chestplate_team1}
     dye {_chestplates::2} {@chestplate_team2}
-    loop (players of event-session):
+    loop (session players of event-session):
         set {_t} to 1 if mod(loop-iteration,2) is 0 else 2
         teleport loop-value to {_spawn::%{_t}%}
         apply infinite speed 1 to loop-value
@@ -108,11 +108,11 @@ on "volleyball" game stop:
     if {_reason::1} is "WIN":
         set {_team} to {_reason::2}
         add "&eTeam %{_team}% won!" to {_additional::*}
-        loop players of event-session:
+        loop session players of event-session:
             set {_t} to temporary player value "team" of loop-value
             if {_t} is {_team}:
                 add "&a%loop-value%" to {_additional::*}
-    set {_p::*} to (players of event-session) and (spectators of event-session)
+    set {_p::*} to (session players of event-session) and (session spectators of event-session)
     reset {_p::*} for game
     if size of {_additional::*} > 0:
         send join {_additional::*} to {_p::*}
@@ -124,7 +124,7 @@ local function Volleyball_GetTeamOfPlayer(p: player) :: string:
     return temporary player value "team" of {_p}
 
 local function Volleyball_GiveBallToTeam(session: session, team: string):
-    set {_p::*} to (players of {_session}) where [temporary player value "team" of input is {_team}]
+    set {_p::*} to (session players of {_session}) where [temporary player value "team" of input is {_team}]
     set {_player} to random player of {_p::*}
     give {_player} 1 of {@ball_item}
 
@@ -139,10 +139,10 @@ local function Volleyball_TeamPointAdd(team: string, p: player, reason: string =
     set {_session} to session of {_p}
     set {_score} to (temporary session value "score::%{_team}%" of {_session}) ? 0
     set {_score} to {_score} + 1
-    send "&a%{_p}% scored!" to (players of {_session}) and (spectators of {_session})
+    send "&a%{_p}% scored!" to (session players of {_session}) and (session spectators of {_session})
     set {_teams::*} to {@teams}
     set {_color} to "&e" if {_team} is "yellow" else "&a"
-    set {_players::*} to (players of {_session}) and (spectators of {_session})
+    set {_players::*} to (session players of {_session}) and (session spectators of {_session})
     if {_reason} is "ground":
         send title "&7%{_p}% scored" with subtitle "%{_color}%+1" to {_players::*} for 2 seconds with fade in 0.5 second and fade out 0.5 second
     else:
@@ -156,10 +156,10 @@ local function Volleyball_TeamPointAdd(team: string, p: player, reason: string =
 
 local function Volleyball_ScoreActionBar(session: session):
     set {_teams::*} to {@teams}
-    while (state of {_session}) is STARTED:
+    while (session state of {_session}) is STARTED:
         set {_team1} to (temporary session value "score::%{_teams::1}%" of {_session}) ? 0
         set {_team2} to (temporary session value "score::%{_teams::2}%" of {_session}) ? 0
-        set {_p::*} to (players of {_session}) and (spectators of {_session})
+        set {_p::*} to (session players of {_session}) and (session spectators of {_session})
         send action bar "&eYellow: %{_team1}% | &aGreen: %{_team2}%" to {_p::*}
         wait 1 second
 
@@ -211,7 +211,7 @@ on rightclick on magma cube:
     cancel event
     if {@double_touch} is true:
         set {_session} to session of player
-        (size of (players of {_session})) >= 4
+        (size of (session players of {_session})) >= 4
         (metadata tag "{@var_prefix}.attacker" of event-entity) is player
         send {@cant_double_touch} to player
         stop
@@ -230,7 +230,7 @@ on damage of magma cube:
     invulnerability time of victim is 0 seconds
     if {@double_touch} is true:
         set {_session} to session of attacker
-        if (size of (players of {_session})) >= 4:
+        if (size of (session players of {_session})) >= 4:
             set {_a} to metadata tag "{@var_prefix}.attacker" of victim
             if attacker is {_a}:
                 send {@cant_double_touch} to attacker

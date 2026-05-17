@@ -35,7 +35,7 @@ public class ExprSessionActivePlayers extends SimpleExpression<Player> {
 
     static {
         Skript.registerExpression(ExprSessionActivePlayers.class, Player.class, ExpressionType.PROPERTY,
-                "[all] (playing|active) players of %session%"
+                "[all] (playing|active) session players of %session%"
         );
     }
 
