@@ -4,6 +4,7 @@ import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.variables.SerializedVariable;
 import cz.nox.skgame.api.game.model.type.CustomValuePlurality;
+import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.jetbrains.annotations.NotNull;
 
@@ -93,9 +94,25 @@ public class CustomValue implements ConfigurationSerializable {
             cv.type = getClassInfoNoError(code);
         }
         Object def = map.get("defaultValue");
-        if (def instanceof Map<?, ?> ser) {
-            String typeCode = (String) ser.get("type");
-            byte[] data = (byte[]) ser.get("data");
+        Map<String, Object> defMap = null;
+        if (def instanceof MemorySection defSec) {
+            defMap = defSec.getValues(false);
+        } else if (def instanceof Map<?, ?> m) {
+            //noinspection unchecked
+            defMap = (Map<String, Object>) m;
+        }
+        if (defMap != null) {
+            String typeCode = (String) defMap.get("type");
+            Object rawData = defMap.get("data");
+            byte[] data = null;
+            if (rawData instanceof byte[] b) {
+                data = b;
+            } else if (rawData instanceof java.util.List<?> list) {
+                data = new byte[list.size()];
+                for (int i = 0; i < list.size(); i++) {
+                    data[i] = ((Number) list.get(i)).byteValue();
+                }
+            }
             if (typeCode != null && data != null) {
                 cv.defaultValue = Classes.deserialize(typeCode, data);
             }

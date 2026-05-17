@@ -90,7 +90,11 @@ public class MiniGame implements ConfigurationSerializable {
         gm.put("values", serializedValues);
 
         if (!gameMapValueDefs.isEmpty()) {
-            gm.put("gamemap-values", new LinkedHashMap<>(gameMapValueDefs));
+            Map<String, Object> defs = new LinkedHashMap<>();
+            for (Map.Entry<String, CustomValue> e : gameMapValueDefs.entrySet()) {
+                defs.put(e.getKey(), e.getValue().serialize());
+            }
+            gm.put("gamemap-values", defs);
         }
         return gm;
     }
@@ -138,11 +142,25 @@ public class MiniGame implements ConfigurationSerializable {
         newGm.setValues(values);
 
         Object rawDefs = gm.get("gamemap-values");
-        if (rawDefs instanceof Map<?, ?> defsMap) {
+        Map<String, Object> defsMap = null;
+        if (rawDefs instanceof MemorySection sec) {
+            defsMap = sec.getValues(false);
+        } else if (rawDefs instanceof Map<?, ?> m) {
+            //noinspection unchecked
+            defsMap = (Map<String, Object>) m;
+        }
+        if (defsMap != null) {
             Map<String, CustomValue> defs = new LinkedHashMap<>();
-            for (Map.Entry<?, ?> entry : defsMap.entrySet()) {
-                if (entry.getValue() instanceof CustomValue cv) {
-                    defs.put((String) entry.getKey(), cv);
+            for (Map.Entry<String, Object> entry : defsMap.entrySet()) {
+                Map<String, Object> cvMap = null;
+                if (entry.getValue() instanceof MemorySection cvSec) {
+                    cvMap = cvSec.getValues(false);
+                } else if (entry.getValue() instanceof Map<?, ?> m) {
+                    //noinspection unchecked
+                    cvMap = (Map<String, Object>) m;
+                }
+                if (cvMap != null) {
+                    defs.put(entry.getKey(), CustomValue.deserialize(cvMap));
                 }
             }
             newGm.setGameMapValueDefs(defs);
