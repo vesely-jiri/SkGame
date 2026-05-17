@@ -21,16 +21,6 @@ modules:
   scoreboard:
     enabled: false
 
-# --- Lobby ---
-# Set via /skgame setlobby or the `set lobby spawn to %location%` effect.
-lobby:
-  world: ~
-  x: 0.0
-  y: 0.0
-  z: 0.0
-  yaw: 0.0
-  pitch: 0.0
-
 # --- Defaults ---
 defaults:
   gamemode: adventure

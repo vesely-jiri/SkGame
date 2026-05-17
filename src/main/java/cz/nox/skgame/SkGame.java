@@ -20,8 +20,11 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.io.IOException;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -151,6 +154,7 @@ public class SkGame extends JavaPlugin {
     private final File dataFolder = new File(getDataFolder(), "storage");
     private final File miniGamesDataFile = new File(dataFolder, "minigames.yml");
     private final File mapsDataFile = new File(dataFolder, "maps.yml");
+    private final File lobbyFile = new File(getDataFolder(), "lobby.yml");
 
     @Nullable
     private Location lobbySpawn;
@@ -249,17 +253,20 @@ public class SkGame extends JavaPlugin {
 
     public void setLobbySpawn(@Nullable Location location) {
         this.lobbySpawn = location;
-        if (location == null || location.getWorld() == null) {
-            getConfig().set("lobby.world", null);
-        } else {
-            getConfig().set("lobby.world", location.getWorld().getName());
-            getConfig().set("lobby.x", location.getX());
-            getConfig().set("lobby.y", location.getY());
-            getConfig().set("lobby.z", location.getZ());
-            getConfig().set("lobby.yaw", location.getYaw());
-            getConfig().set("lobby.pitch", location.getPitch());
+        YamlConfiguration cfg = new YamlConfiguration();
+        if (location != null && location.getWorld() != null) {
+            cfg.set("world", location.getWorld().getName());
+            cfg.set("x", location.getX());
+            cfg.set("y", location.getY());
+            cfg.set("z", location.getZ());
+            cfg.set("yaw", (double) location.getYaw());
+            cfg.set("pitch", (double) location.getPitch());
         }
-        saveConfig();
+        try {
+            cfg.save(lobbyFile);
+        } catch (IOException e) {
+            logUtil.error("Could not save lobby.yml: " + e.getMessage());
+        }
     }
 
     public GameMode getDefaultGameMode() {
@@ -399,18 +406,20 @@ public class SkGame extends JavaPlugin {
     }
 
     private void loadLobbySpawn() {
-        String worldName = getConfig().getString("lobby.world");
+        if (!lobbyFile.exists()) return;
+        YamlConfiguration cfg = YamlConfiguration.loadConfiguration(lobbyFile);
+        String worldName = cfg.getString("world");
         if (worldName == null) return;
         World world = Bukkit.getWorld(worldName);
         if (world == null) {
             logUtil.warning("Lobby world '" + worldName + "' not found — lobby spawn not loaded");
             return;
         }
-        double x = getConfig().getDouble("lobby.x");
-        double y = getConfig().getDouble("lobby.y");
-        double z = getConfig().getDouble("lobby.z");
-        float yaw = (float) getConfig().getDouble("lobby.yaw");
-        float pitch = (float) getConfig().getDouble("lobby.pitch");
+        double x = cfg.getDouble("x");
+        double y = cfg.getDouble("y");
+        double z = cfg.getDouble("z");
+        float yaw = (float) cfg.getDouble("yaw");
+        float pitch = (float) cfg.getDouble("pitch");
         this.lobbySpawn = new Location(world, x, y, z, yaw, pitch);
     }
 }
