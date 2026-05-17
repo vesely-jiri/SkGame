@@ -26,7 +26,7 @@ on load:
             set value name to "Gamemode"
             set value type to a text
             set default value to "elimination"
-            set description to "Choose which gamemode to play: elimination (one life) or deathmatch"
+            set description to "Gamemode: 'elimination' (one life, last alive wins) or 'deathmatch' (respawn, most kills when timer ends wins)"
         set gamemap value "respawn_cooldown" of event-minigame to a custom value:
             set plurality to single
             set value name to "Respawn cooldown"
@@ -58,6 +58,9 @@ on load:
 on "bomberman" game start:
     set {_loc::*} to gamemap values "booster_spawnpoints" of event-session
     set {_mode} to (gamemap value "gamemode" of event-session) ? "elimination"
+    if {_mode} is not "elimination" and {_mode} is not "deathmatch":
+        log "[Bomberman] Invalid gamemode '%{_mode}%' on session %event-session%, falling back to elimination" to console
+        set {_mode} to "elimination"
     set {_rate} to (gamemap value "spawn_rate" of event-session) ? 5 ticks
     set {_timer} to (gamemap value "deathmatch_timer" of event-session) ? 1 minute
     set {_cd} to (gamemap value "respawn_cooldown" of event-session) ? 5 seconds
@@ -185,7 +188,8 @@ local function Bomberman_SpawnDrops(mode: string, l: locations):
 local function Bomberman_StartSpawningDrops(session: session, rate: timespan, locs: locations):
     Bomberman_SpawnDrops("charge", {_locs::*})
     while session state of {_session} is STARTED:
-        Bomberman_SpawnDrops("random", {_locs::*})
+        set {_cur::*} to temporary session values "booster_locs" of {_session}
+        Bomberman_SpawnDrops("random", {_cur::*})
         wait {_rate}
 
 local function Bomberman_EliminatePlayer(victim: player, attacker: player):
