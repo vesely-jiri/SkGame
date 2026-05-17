@@ -281,12 +281,15 @@ public class SessionGuiService implements Listener {
         if (mg != null) {
             Object iconObj = mg.getValue("icon");
             Object nameObj = mg.getValue("name");
-            if (iconObj != null) {
-                Material mat = Material.matchMaterial(iconObj.toString());
-                if (mat != null && mat != Material.AIR) {
-                    String displayName = nameObj != null ? nameObj.toString() : "?";
-                    return GuiItem.of(mat).name(displayName);
-                }
+            String displayName = nameObj != null ? nameObj.toString() : mg.getId();
+            Material mat = null;
+            if (iconObj instanceof ItemStack stack) {
+                mat = stack.getType();
+            } else if (iconObj != null) {
+                mat = Material.matchMaterial(iconObj.toString());
+            }
+            if (mat != null && mat != Material.AIR) {
+                return GuiItem.of(mat).name(displayName);
             }
         }
         return GuiItem.of(Material.LIGHT_GRAY_BUNDLE).name("&7&lMinigames");
