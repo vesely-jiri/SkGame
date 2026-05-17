@@ -11,19 +11,17 @@ import ch.njol.skript.lang.SkriptParser;
 import ch.njol.util.Kleenean;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.type.SessionRole;
-import cz.nox.skgame.core.game.SessionManager;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
 @Name("Session - Is Spectator")
 @Description({
-        "Checks whether a player or players are spectators in a session.",
-        "If no session is provided, uses each player's current session.",
+        "Checks whether a player or players are spectators in the given session.",
         "Returns true only if ALL players satisfy the condition."
 })
 @Examples({
-        "if player is a spectator:",
+        "if player is a spectator in {_session}:",
         "if player is not a spectator in {_session}:"
 })
 @Since("1.0.0")
@@ -35,8 +33,8 @@ public class CondIsSpectator extends Condition {
 
     static {
         Skript.registerCondition(CondIsSpectator.class,
-                "%players% (is|are) [a] spectator [(in|of) %-session%]",
-                "%players% (is not|are not|isn't|aren't) [a] spectator [(in|of) %-session%]"
+                "%players% (is|are) [a] spectator (in|of) %session%",
+                "%players% (is not|are not|isn't|aren't) [a] spectator (in|of) %session%"
         );
     }
 
@@ -51,15 +49,9 @@ public class CondIsSpectator extends Condition {
 
     @Override
     public boolean check(Event event) {
-        return players.check(event, player -> {
-            Session s = resolveSession(player, event);
-            return s != null && s.getRole(player) == SessionRole.SPECTATOR;
-        }, isNegated());
-    }
-
-    private Session resolveSession(Player player, Event event) {
-        Session explicit = this.session.getSingle(event);
-        return explicit != null ? explicit : SessionManager.getInstance().getSession(player);
+        Session s = this.session.getSingle(event);
+        if (s == null) return isNegated();
+        return players.check(event, player -> s.getRole(player) == SessionRole.SPECTATOR, isNegated());
     }
 
     @Override
