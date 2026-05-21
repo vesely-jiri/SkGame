@@ -60,10 +60,12 @@ public class ExprCustomValueType extends SimplePropertyExpression<CustomValue, O
     @Override
     public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
         CustomValue v = getExpr().getSingle(event);
-        if (v == null || delta == null || delta[0] == null) return;
-        ClassInfo<?> info = (ClassInfo<?>) delta[0];
+        if (v == null) return;
         switch (mode) {
-            case SET -> v.setType(info);
+            case SET -> {
+                if (delta == null || delta[0] == null) return;
+                v.setType((ClassInfo<?>) delta[0]);
+            }
             case RESET, DELETE -> v.setType(null);
         }
     }

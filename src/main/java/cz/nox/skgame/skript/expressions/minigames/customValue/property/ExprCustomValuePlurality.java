@@ -60,16 +60,13 @@ public class ExprCustomValuePlurality extends SimplePropertyExpression<CustomVal
     @Override
     public void change(Event e, Object @Nullable [] delta, Changer.ChangeMode mode) {
         CustomValue expr = getExpr().getSingle(e);
-        if (expr == null || delta == null || delta[0] == null) {
-            return;
-        }
-        CustomValuePlurality plur = (CustomValuePlurality) delta[0];
+        if (expr == null) return;
         switch (mode) {
-            case SET:
-                expr.setPlurality(plur);
-                break;
-            case RESET, DELETE:
-                expr.setPlurality(null);
+            case SET -> {
+                if (delta == null || delta[0] == null) return;
+                expr.setPlurality((CustomValuePlurality) delta[0]);
+            }
+            case RESET, DELETE -> expr.setPlurality(null);
         }
     }
 

@@ -58,7 +58,7 @@ public class ExprSessionsAll extends SimpleExpression<Session> {
     @Override
     public Class<?> @Nullable [] acceptChange(Changer.ChangeMode mode) {
         if (mode == Changer.ChangeMode.RESET || mode == Changer.ChangeMode.DELETE)
-            return CollectionUtils.array(Session.class);
+            return CollectionUtils.array();
         return null;
     }
 

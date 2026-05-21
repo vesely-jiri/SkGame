@@ -102,24 +102,6 @@ public class Types {
                         return false;
                     }
                 })
-                .changer(new Changer<>() {
-                    @Override
-                    public Class<?> @Nullable [] acceptChange(ChangeMode mode) {
-                        if (mode == ChangeMode.DELETE) {
-                            return CollectionUtils.array();
-                        }
-                        return null;
-                    }
-
-                    @Override
-                    public void change(Session[] sessions, Object @Nullable [] objects, ChangeMode mode) {
-                        if (mode == ChangeMode.DELETE) {
-                            for (Session session : sessions) {
-                                sessionManager.deleteSession(session.getId());
-                            }
-                        }
-                    }
-                })
         );
 
         Classes.registerClass(new ClassInfo<>(GameMap.class, "gamemap")

@@ -58,10 +58,12 @@ public class ExprCustomValueDefaultValue extends SimplePropertyExpression<Custom
     @Override
     public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
         CustomValue v = getExpr().getSingle(event);
-        if (v == null || delta == null || delta[0] == null) return;
-        Object info = delta[0];
+        if (v == null) return;
         switch (mode) {
-            case SET -> v.setDefaultValue(info);
+            case SET -> {
+                if (delta == null || delta[0] == null) return;
+                v.setDefaultValue(delta[0]);
+            }
             case RESET, DELETE -> v.setDefaultValue(null);
         }
     }
