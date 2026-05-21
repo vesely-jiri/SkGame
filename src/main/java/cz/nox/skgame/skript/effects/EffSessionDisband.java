@@ -20,7 +20,8 @@ import org.jetbrains.annotations.Nullable;
         "Deletes a session.",
 })
 @Examples({
-        "delete session {_session}",
+        "disband session {_session}",
+        "disband {_session}",
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")
@@ -30,7 +31,7 @@ public class EffSessionDisband extends Effect {
 
     static {
         Skript.registerEffect(EffSessionDisband.class,
-                "(delete|disband) [session] %session%"
+                "disband [session] %session%"
         );
     }
 
