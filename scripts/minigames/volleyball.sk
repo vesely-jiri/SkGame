@@ -90,7 +90,7 @@ on "volleyball" game start:
     set {_chestplates::*} to leather chestplate, leather chestplate
     dye {_chestplates::1} {@chestplate_team1}
     dye {_chestplates::2} {@chestplate_team2}
-    loop (session players of event-session):
+    loop shuffled session players of event-session:
         set {_t} to 1 if mod(loop-iteration,2) is 0 else 2
         teleport loop-value to {_spawn::%{_t}%}
         apply infinite speed 1 to loop-value

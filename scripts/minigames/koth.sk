@@ -28,7 +28,7 @@ on "koth" game start:
     set {_spawnpoints::*} to gamemap values "spawnpoints" of event-session
     set {_region} to gamemap value "hill_region" of event-session
     set {_limit} to (gamemap value "points_limit" of event-session) ? 30
-    loop session players of event-session:
+    loop shuffled session players of event-session:
         add 1 to {_n}
         teleport loop-player to {_spawnpoints::%{_n}%}
         set slot 0 of loop-player to stick

@@ -151,15 +151,18 @@ public class SessionGuiService implements Listener {
         // Slot 7 — Spectators count + toggle
         builder.slot(7, buildSpectatorsSlot(session, viewer));
 
-        // Slot 24 — Shuffle players (host-only; stub — .sk also unimplemented)
+        // Slot 24 — Shuffle players (host-only)
         builder.slot(24, GuiItem.of(Material.WIND_CHARGE)
-                .name("&7&lShuffle players")
-                .lore(legacy("&7True/&cFalse"))
+                .name(Messages.get("gui.session.shuffle.title", viewer))
+                .lore(Messages.getComponent(session.isShuffle()
+                        ? "gui.session.shuffle.lore-on"
+                        : "gui.session.shuffle.lore-off", viewer))
                 .onClick(e -> {
                     Player p = (Player) e.getWhoClicked();
                     if (isMidGameLocked(session, p)) return;
                     if (!isHostOnly(p, session)) return;
-                    plugin.getLogUtil().info("TODO: shuffle not implemented for session " + session.getId());
+                    session.setShuffle(!session.isShuffle());
+                    update(session);
                 }));
 
         // Slot 25 — Minigames (host-only)

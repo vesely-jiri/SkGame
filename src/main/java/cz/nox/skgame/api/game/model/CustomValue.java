@@ -8,7 +8,9 @@ import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static ch.njol.skript.registrations.Classes.getClassInfoNoError;
@@ -19,6 +21,7 @@ public class CustomValue implements ConfigurationSerializable {
     Object defaultValue;
     String description;
     CustomValuePlurality plurality;
+    private List<String> allowedValues = new ArrayList<>();
 
     public CustomValue() {}
     public CustomValue(String name) {
@@ -67,6 +70,16 @@ public class CustomValue implements ConfigurationSerializable {
         this.plurality = plur;
     }
 
+    public List<String> getAllowedValues() {
+        return allowedValues != null ? allowedValues : new ArrayList<>();
+    }
+    public void setAllowedValues(List<String> vals) {
+        this.allowedValues = new ArrayList<>(vals);
+    }
+    public boolean hasAllowedValues() {
+        return allowedValues != null && !allowedValues.isEmpty();
+    }
+
     @Override
     public @NotNull Map<String, Object> serialize() {
         Map<String, Object> map = new HashMap<>();
@@ -82,6 +95,9 @@ public class CustomValue implements ConfigurationSerializable {
                 ser.put("data", val.data);
                 map.put("defaultValue", ser);
             }
+        }
+        if (allowedValues != null && !allowedValues.isEmpty()) {
+            map.put("allowed-values", new ArrayList<>(allowedValues));
         }
         return map;
     }
@@ -121,6 +137,14 @@ public class CustomValue implements ConfigurationSerializable {
         Object pl = map.get("plurality");
         if (pl != null) {
             cv.plurality = CustomValuePlurality.valueOf(pl.toString());
+        }
+        Object av = map.get("allowed-values");
+        if (av instanceof List<?> avList) {
+            List<String> allowed = new ArrayList<>();
+            for (Object item : avList) {
+                if (item instanceof String s) allowed.add(s);
+            }
+            cv.allowedValues = allowed;
         }
         return cv;
     }

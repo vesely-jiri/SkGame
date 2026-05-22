@@ -26,6 +26,7 @@ on load:
             set value name to "Gamemode"
             set value type to a text
             set default value to "elimination"
+            set allowed values to "elimination", "deathmatch"
             set description to "Gamemode: 'elimination' (one life, last alive wins) or 'deathmatch' (respawn, most kills when timer ends wins)"
         set gamemap value "respawn_cooldown" of event-minigame to a custom value:
             set plurality to single
@@ -68,7 +69,7 @@ on "bomberman" game start:
     set temporary session value "gamemode" of event-session to {_mode}
     set temporary session value "respawn_cooldown" of event-session to {_cd}
     set temporary session values "booster_locs" of event-session to {_loc::*}
-    loop shuffled (session players of event-session):
+    loop shuffled session players of event-session:
         add 1 to {_n}
         teleport loop-value to {_loc::%{_n}%}
         set gamemode of loop-value to survival

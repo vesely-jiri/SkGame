@@ -58,6 +58,10 @@ gui:
       title: "&7&lPovolit diváky"
       lore-on: "&aDiváci povoleni"
       lore-off: "&cDiváci zakázáni"
+    shuffle:
+      title: "&7&lNáhodné pořadí"
+      lore-on: "&aNáhodné pořadí: ZAP"
+      lore-off: "&7Náhodné pořadí: VYP"
     error:
       not-host: "&cToto tlačítko může používat pouze host"
       no-minigame: "&cNejdříve zvol minihru"
@@ -76,6 +80,8 @@ gui:
     title: "&2Dostupné mapy pro minihru"
   admin:
     title: "&cAdmin rozhraní"
+    enum-picker:
+      title: "&3Vyber hodnotu pro {0}"
 
 admin:
   setup:

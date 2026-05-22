@@ -115,6 +115,8 @@ public class SkGame extends JavaPlugin {
             "cz.nox.skgame.skript.expressions.sessions.property.ExprSessionTotalRounds",
             "cz.nox.skgame.skript.expressions.sessions.property.ExprSessionCurrentRound",
             "cz.nox.skgame.skript.expressions.sessions.property.ExprAllowSpectate",
+            "cz.nox.skgame.skript.expressions.sessions.property.ExprSessionShuffle",
+            "cz.nox.skgame.skript.expressions.sessions.ExprShuffledSessionPlayers",
             // Expressions — minigames
             "cz.nox.skgame.skript.expressions.minigames.ExprMiniGameFromId",
             "cz.nox.skgame.skript.expressions.minigames.ExprMiniGameAll",
@@ -130,6 +132,7 @@ public class SkGame extends JavaPlugin {
             "cz.nox.skgame.skript.expressions.minigames.customValue.property.ExprCustomValueName",
             "cz.nox.skgame.skript.expressions.minigames.customValue.property.ExprCustomValuePlurality",
             "cz.nox.skgame.skript.expressions.minigames.customValue.property.ExprCustomValueType",
+            "cz.nox.skgame.skript.expressions.minigames.customValue.property.ExprCustomValueAllowedValues",
             // Expressions — gamemaps
             "cz.nox.skgame.skript.expressions.gamemaps.ExprGameMapFromId",
             "cz.nox.skgame.skript.expressions.gamemaps.ExprGameMapMiniGames",

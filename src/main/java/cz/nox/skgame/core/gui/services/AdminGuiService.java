@@ -38,7 +38,9 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -229,6 +231,7 @@ public class AdminGuiService implements Listener {
             if (isRegion) action = "&aSet region (wand)";
             else if (valueIsPlural) action = "&aOpen value list";
             else if (isLocation) action = "&aSet location (picker)";
+            else if (cvDef.hasAllowedValues()) action = "&aChoose from options";
             else action = "&aSet value";
 
             Material mat = rawMapVal != null ? Material.CHEST_MINECART : Material.MINECART;
@@ -259,6 +262,8 @@ public class AdminGuiService implements Listener {
                         } else if (isLocation) {
                             p.closeInventory();
                             sendLocationPicker(p, mapId, mgId, key, true);
+                        } else if (cvDef.hasAllowedValues()) {
+                            openEnumPickerGui(p, mapId, mgId, key, cvDef.getAllowedValues());
                         } else {
                             st.setResponseMode(AdminSetupState.ResponseMode.VALUE_INPUT);
                             st.setCurrentMapId(mapId);
@@ -363,6 +368,37 @@ public class AdminGuiService implements Listener {
                             openPluralListGui((Player) e.getWhoClicked(), mapId, mgId, key);
                         }));
             }
+        }
+
+        player.openInventory(builder.build());
+    }
+
+    public void openEnumPickerGui(Player player, String mapId, String mgId, String key, List<String> allowedValues) {
+        GuiBuilder builder = new GuiBuilder()
+                .size(6)
+                .title(legacy("&3Choose value for " + key));
+
+        GuiItem blackGlass = GuiItem.of(Material.BLACK_STAINED_GLASS_PANE).name(Component.text(" "));
+        for (int s : BLACK_BORDER) builder.slot(s, blackGlass);
+
+        builder.slot(53, GuiItem.of(Material.SPRUCE_DOOR)
+                .name("&c&lBack to values")
+                .onClick(e -> openValuesGui((Player) e.getWhoClicked(), mapId, mgId)));
+
+        List<String> vals = new ArrayList<>(allowedValues);
+        for (int i = 0; i < Math.min(vals.size(), ITEM_SLOTS.length); i++) {
+            String val = vals.get(i);
+            builder.slot(ITEM_SLOTS[i], GuiItem.of(Material.PAPER)
+                    .name("&f" + val)
+                    .onClick(e -> {
+                        Player p = (Player) e.getWhoClicked();
+                        GameMap freshMap = GameMapManager.getInstance().getGameMapById(mapId);
+                        if (freshMap != null) {
+                            freshMap.setMiniGameValue(mgId, key, val);
+                            GameMapManager.getInstance().save();
+                        }
+                        openValuesGui(p, mapId, mgId);
+                    }));
         }
 
         player.openInventory(builder.build());

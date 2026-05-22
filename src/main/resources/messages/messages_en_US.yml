@@ -67,6 +67,10 @@ gui:
       title: "&7&lAllow spectators"
       lore-on: "&aSpectators allowed"
       lore-off: "&cSpectators not allowed"
+    shuffle:
+      title: "&7&lShuffle players"
+      lore-on: "&aShuffle ON: spawn order randomized"
+      lore-off: "&7Shuffle OFF: spawn order deterministic"
     error:
       not-host: "&cOnly host can use this button"
       no-minigame: "&cChoose a minigame before readying up"
@@ -85,6 +89,8 @@ gui:
     title: "&2Available maps for the minigame"
   admin:
     title: "&cAdmin gui"
+    enum-picker:
+      title: "&3Choose value for {0}"
     map:
       title: "&9GES"
       addon-title: "&9GES&7-&e{0}"
