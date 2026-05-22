@@ -11,6 +11,7 @@ session:
     notification: "&7Opustil jsi session"
   disband:
     notification: "&7Session zanikla ({0})"
+    shutdown: "&cServer se vypíná — session zanikla"
   error:
     already-in-session: "&cJiž jsi v session"
     mid-game-locked: "&cBěhem hry nelze měnit nastavení session"
@@ -40,6 +41,10 @@ command:
   error:
     no-permission: "&cNa to nemáš oprávnění"
     session-no-spectate: "&cTato session neumožňuje sledování"
+  join:
+    usage: "&cPoužití: /game join <id-session>"
+    not-found: "&cSession nenalezena: {0}"
+    already-in-session: "&cJiž jsi v session"
 
 lobby:
   spawn-set: "&aLobby spawn nastaven na tvou pozici"

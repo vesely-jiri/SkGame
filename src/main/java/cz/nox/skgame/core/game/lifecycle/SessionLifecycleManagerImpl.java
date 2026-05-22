@@ -340,17 +340,27 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
 
     @Override
     public void disbandSession(Session session, DisbandReason reason) {
-        String reasonName = reason.name().toLowerCase().replace('_', ' ');
         for (Player member : session.getMembers()) {
-            Messages.send(member, "session.disband.notification", reasonName);
+            if (reason == DisbandReason.SHUTDOWN) {
+                Messages.send(member, "session.disband.shutdown");
+            } else {
+                String reasonName = reason.name().toLowerCase().replace('_', ' ');
+                Messages.send(member, "session.disband.notification", reasonName);
+            }
         }
         partyManager.onSessionDisbanded(session.getId());
         Bukkit.getPluginManager().callEvent(new SessionDisbandEvent(session, reason));
         sessionManager.deleteSession(session.getId());
     }
 
-    /** Called from SkGame.onDisable — disbands all live sessions with SHUTDOWN reason. */
+    /** Called from SkGame.onDisable — ends running games then disbands all sessions. */
     public void shutdown() {
+        for (Session session : sessionManager.getAllSessions()) {
+            SessionState state = session.getState();
+            if (state == SessionState.STARTED || state == SessionState.STARTING) {
+                endGame(session, "SHUTDOWN");
+            }
+        }
         partyManager.shutdown();
     }
 

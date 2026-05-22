@@ -161,9 +161,10 @@ public class MainGuiService implements Listener {
                     // else: player not in session — no-op (matches .sk implicit stop)
                 }));
 
-        // Dynamic session list — LOBBY only, sorted oldest-first (intentional deviation from .sk)
+        // Dynamic session list — LOBBY + public only, sorted oldest-first
         List<Session> lobbySessions = Arrays.stream(sm.getAllSessions())
-                .filter(s -> s.getState() == SessionState.LOBBY)
+                .filter(s -> s.getState() == SessionState.LOBBY
+                        && !"private".equals(s.getValue("mode", false)))
                 .sorted(Comparator.comparingLong(Session::getCreatedAt))
                 .collect(Collectors.toList());
 

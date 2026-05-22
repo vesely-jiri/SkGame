@@ -2,6 +2,7 @@ package cz.nox.skgame.core.command;
 
 import cz.nox.skgame.api.messages.Messages;
 import cz.nox.skgame.core.command.subcommands.AdminSubcommand;
+import cz.nox.skgame.core.command.subcommands.JoinSubcommand;
 import cz.nox.skgame.core.command.subcommands.SpectateSubcommand;
 import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.gui.services.MainGuiService;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 public class GameCommand implements CommandExecutor, TabCompleter {
 
     private final AdminSubcommand adminSub = new AdminSubcommand();
+    private final JoinSubcommand joinSub = new JoinSubcommand();
     private final SpectateSubcommand spectateSub = new SpectateSubcommand();
 
     @Override
@@ -37,6 +39,7 @@ public class GameCommand implements CommandExecutor, TabCompleter {
         }
         switch (args[0].toLowerCase()) {
             case "admin"    -> adminSub.execute(player, args);
+            case "join"     -> joinSub.execute(player, args);
             case "spectate" -> spectateSub.execute(player, args);
             default         -> Messages.send(player, "command.error.unknown-subcommand");
         }
@@ -48,14 +51,18 @@ public class GameCommand implements CommandExecutor, TabCompleter {
         if (!(sender instanceof Player player)) return List.of();
 
         if (args.length == 1) {
-            List<String> opts = new ArrayList<>();
+            List<String> opts = new ArrayList<>(List.of("join"));
             if (player.hasPermission("skgame.spectate")) opts.add("spectate");
             if (player.hasPermission("skgame.admin")) opts.add("admin");
             String partial = args[0].toLowerCase();
             return opts.stream().filter(s -> s.startsWith(partial)).collect(Collectors.toList());
         }
-        if (args.length == 2 && args[0].equalsIgnoreCase("spectate")) {
-            return spectateSub.tabComplete(player, args);
+        if (args.length == 2) {
+            return switch (args[0].toLowerCase()) {
+                case "join"     -> joinSub.tabComplete(player, args);
+                case "spectate" -> spectateSub.tabComplete(player, args);
+                default         -> List.of();
+            };
         }
         return List.of();
     }
