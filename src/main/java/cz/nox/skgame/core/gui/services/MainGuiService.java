@@ -14,6 +14,7 @@ import cz.nox.skgame.api.messages.Messages;
 import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl;
 import cz.nox.skgame.core.gui.services.SessionGuiService;
+import cz.nox.skgame.core.gui.services.SpectateGuiService;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
@@ -39,7 +40,8 @@ public class MainGuiService implements Listener {
     private static final int[] GRAY_SLOTS    = {0, 2, 8, 10, 18, 20, 26, 28, 36, 38, 44, 46, 50, 52};
     private static final int[] RED_SLOTS     = {4, 12, 22, 30, 40, 48};
     // Slot 51 excluded — .sk sets black glass then immediately overwrites with BOOK; net = BOOK.
-    private static final int[] BLACK_SLOTS   = {1, 3, 5, 7, 9, 11, 13, 17, 21, 27, 29, 31, 35, 37, 39, 47, 49, 53};
+    // Slot 47 excluded — replaced by spectate browser button.
+    private static final int[] BLACK_SLOTS   = {1, 3, 5, 7, 9, 11, 13, 17, 21, 27, 29, 31, 35, 37, 39, 49, 53};
     private static final int[] SESSION_SLOTS = {14, 15, 16, 23, 24, 25, 32, 33, 34, 41, 42, 43};
     private static final String CREATE_PERMISSION = "skript.game.create_session";
 
@@ -141,6 +143,12 @@ public class MainGuiService implements Listener {
         builder.slot(45, GuiItem.of(Material.SPRUCE_DOOR)
                 .name("&c&lClose")
                 .onClick(e -> e.getWhoClicked().closeInventory()));
+
+        // Slot 47 — Spectate browser
+        builder.slot(47, GuiItem.of(Material.SPYGLASS)
+                .name("&3&lSpectate running games")
+                .lore(legacy("&7Browse and join active games"))
+                .onClick(e -> SpectateGuiService.getInstance().openFor((Player) e.getWhoClicked())));
 
         // Slot 51 — Open current session
         builder.slot(51, GuiItem.of(Material.BOOK)

@@ -1,5 +1,6 @@
 package cz.nox.skgame.core.command.subcommands;
 
+import cz.nox.skgame.SkGame;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.api.messages.Messages;
@@ -30,6 +31,11 @@ public class SpectateSubcommand {
         }
         if (sm.getSession(player) != null) {
             Messages.send(player, "spectator.already-in-session");
+            return;
+        }
+        if (!session.isAllowSpectate()
+                && !player.hasPermission(SkGame.getInstance().getSpectateBypassPermission())) {
+            Messages.send(player, "command.error.session-no-spectate");
             return;
         }
         boolean joined = SessionLifecycleManagerImpl.getInstance().joinAsSpectator(player, session);

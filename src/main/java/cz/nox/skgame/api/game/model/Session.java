@@ -32,6 +32,7 @@ public class Session {
     @Nullable private Region arenaRegion;
     private int totalRounds = 1;
     private int currentRound = 0;
+    private boolean allowSpectate = SkGame.getInstance().getSpectateDefaultAllow();
 
     public Session(String id, Player host, MiniGame miniGame,
                    SessionState state, GameMap map, Set<Player> players, Set<Player> spectators,
@@ -169,6 +170,9 @@ public class Session {
 
     public int getCurrentRound() { return currentRound; }
     public void setCurrentRound(int currentRound) { this.currentRound = Math.max(0, currentRound); }
+
+    public boolean isAllowSpectate() { return allowSpectate; }
+    public void setAllowSpectate(boolean allowSpectate) { this.allowSpectate = allowSpectate; }
 
     public Object getValue(String key, boolean isTemporary) {
         return getMap(isTemporary).get(key);

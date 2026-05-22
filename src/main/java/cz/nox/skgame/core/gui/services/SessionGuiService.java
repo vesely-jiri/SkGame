@@ -150,6 +150,20 @@ public class SessionGuiService implements Listener {
         // Slot 7 — Spectators count + toggle
         builder.slot(7, buildSpectatorsSlot(session, viewer));
 
+        // Slot 27 — Allow spectators toggle (host-only)
+        boolean allowSpectate = session.isAllowSpectate();
+        builder.slot(27, GuiItem.of(allowSpectate ? Material.SPYGLASS : Material.BARRIER)
+                .name(Messages.getComponent("gui.session.allow-spectate.title", viewer))
+                .lore(Messages.getComponent(allowSpectate
+                        ? "gui.session.allow-spectate.lore-on"
+                        : "gui.session.allow-spectate.lore-off", viewer))
+                .onClick(e -> {
+                    Player p = (Player) e.getWhoClicked();
+                    if (!isHostOnly(p, session)) return;
+                    session.setAllowSpectate(!session.isAllowSpectate());
+                    update(session);
+                }));
+
         // Slot 24 — Shuffle players (host-only; stub — .sk also unimplemented)
         builder.slot(24, GuiItem.of(Material.WIND_CHARGE)
                 .name("&7&lShuffle players")

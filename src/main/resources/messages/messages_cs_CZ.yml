@@ -33,6 +33,7 @@ spectator:
 command:
   error:
     no-permission: "&cNa to nemáš oprávnění"
+    session-no-spectate: "&cTato session neumožňuje sledování"
 
 lobby:
   spawn-set: "&aLobby spawn nastaven na tvou pozici"
@@ -42,10 +43,22 @@ gui:
     title: "&6Hlavní nabídka her"
   session:
     title: "&5Lobby hosta {0}"
+    allow-spectate:
+      title: "&7&lPovolit diváky"
+      lore-on: "&aDiváci povoleni"
+      lore-off: "&cDiváci zakázáni"
     error:
       not-host: "&cToto tlačítko může používat pouze host"
       no-minigame: "&cNejdříve zvol minihru"
       no-map: "&cNejdříve zvol mapu"
+  spectate:
+    title: "&3Sledovat probíhající hry"
+    empty: "&7Žádné hry k sledování"
+    session-card:
+      minigame: "&7Hra: &f{0}"
+      map: "&7Mapa: &f{0}"
+      players: "&7Hráči: &f{0}"
+      spectators: "&7Diváci: &f{0}"
   minigames:
     title: "&3Minihry"
   maps:

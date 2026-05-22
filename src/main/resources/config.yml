@@ -33,6 +33,13 @@ session:
   # When false, any host departure immediately disbands the party (HOST_LEAVE reason).
   auto-promote-host: true
 
+# --- Spectate browser ---
+spectate:
+  # Default value of allow-spectate for new sessions (host can override per-session via GUI or Skript)
+  default-allow: true
+  # Permission node that bypasses a session's allow-spectate flag
+  bypass-permission: skgame.spectate.bypass
+
 # --- Spectators ---
 spectators:
   # Gamemode applied when a player becomes a spectator.

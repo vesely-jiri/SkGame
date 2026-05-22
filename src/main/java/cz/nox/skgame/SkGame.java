@@ -107,6 +107,7 @@ public class SkGame extends JavaPlugin {
             "cz.nox.skgame.skript.expressions.sessions.property.ExprSessionState",
             "cz.nox.skgame.skript.expressions.sessions.property.ExprSessionTotalRounds",
             "cz.nox.skgame.skript.expressions.sessions.property.ExprSessionCurrentRound",
+            "cz.nox.skgame.skript.expressions.sessions.property.ExprAllowSpectate",
             // Expressions — minigames
             "cz.nox.skgame.skript.expressions.minigames.ExprMiniGameFromId",
             "cz.nox.skgame.skript.expressions.minigames.ExprMiniGameAll",
@@ -208,6 +209,7 @@ public class SkGame extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.gui.services.MinigamesGuiService.getInstance(), instance);
         Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.gui.services.MapsGuiService.getInstance(), instance);
         Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.gui.services.AdminGuiService.getInstance(), instance);
+        Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.gui.services.SpectateGuiService.getInstance(), instance);
 
         for (SkGameModule module : enabledModules) {
             module.onEnable(this);
@@ -272,6 +274,14 @@ public class SkGame extends JavaPlugin {
         } catch (IOException e) {
             logUtil.error("Could not save lobby.yml: " + e.getMessage());
         }
+    }
+
+    public boolean getSpectateDefaultAllow() {
+        return getConfig().getBoolean("spectate.default-allow", true);
+    }
+
+    public String getSpectateBypassPermission() {
+        return getConfig().getString("spectate.bypass-permission", "skgame.spectate.bypass");
     }
 
     public GameMode getDefaultGameMode() {

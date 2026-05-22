@@ -41,6 +41,7 @@ spectator:
 command:
   error:
     no-permission: "&cYou don't have permission to do this"
+    session-no-spectate: "&cThis session doesn't allow spectators"
 
 lobby:
   spawn-set: "&aGame lobby was set to your location"
@@ -51,10 +52,22 @@ gui:
   session:
     title: "&5Lobby of {0}"
     host-label: "&eHost"
+    allow-spectate:
+      title: "&7&lAllow spectators"
+      lore-on: "&aSpectators allowed"
+      lore-off: "&cSpectators not allowed"
     error:
       not-host: "&cOnly host can use this button"
       no-minigame: "&cChoose a minigame before readying up"
       no-map: "&cChoose a map before readying up"
+  spectate:
+    title: "&3Spectate running games"
+    empty: "&7No games available to spectate"
+    session-card:
+      minigame: "&7Game: &f{0}"
+      map: "&7Map: &f{0}"
+      players: "&7Players: &f{0}"
+      spectators: "&7Spectators: &f{0}"
   minigames:
     title: "&3Minigames"
   maps:
