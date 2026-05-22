@@ -81,6 +81,7 @@ public class MiniGameManager {
     }
     public void unregisterMiniGame(String id) {
         miniGames.remove(id.toLowerCase());
+        save();
     }
     public boolean isRegistered(String id) {
         return miniGames.containsKey(id.toLowerCase());

@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.NotSerializableException;
 import java.io.StreamCorruptedException;
+import java.util.Arrays;
 
 @SuppressWarnings("unused")
 public class Types {
@@ -335,7 +336,17 @@ public class Types {
                     }
                     @Override
                     public String toVariableNameString(Region region) {
-                        return "region:" + System.identityHashCode(region);
+                        if (region instanceof CuboidRegion c) {
+                            String w = c.getWorld() != null ? c.getWorld().getName() : "?";
+                            return "region:cuboid:" + w + ":" + c.getMinX() + "," + c.getMinY() + "," + c.getMinZ()
+                                    + "-" + c.getMaxX() + "," + c.getMaxY() + "," + c.getMaxZ();
+                        } else if (region instanceof SkBeeBoundRegion skbee) {
+                            return "region:skbee:" + skbee.getId();
+                        } else if (region instanceof WorldGuardRegion wg) {
+                            String w = wg.getWorld() != null ? wg.getWorld().getName() : "?";
+                            return "region:worldguard:" + w + ":" + wg.getRegionId();
+                        }
+                        return "region:unknown:" + System.identityHashCode(region);
                     }
                     private String locStr(Location l) {
                         return l.getBlockX() + "," + l.getBlockY() + "," + l.getBlockZ();
@@ -441,7 +452,7 @@ public class Types {
 
                     @Override
                     public String toVariableNameString(CustomValue value) {
-                        return "customValue:" + value.toString();
+                        return "customValue:" + (value.getName() != null ? value.getName() : "?");
                     }
                 })
                 .serializer(new Serializer<CustomValue>() {
@@ -453,6 +464,9 @@ public class Types {
                         fields.putObject("defaultValue", o.getDefaultValue());
                         fields.putObject("description", o.getDescription());
                         fields.putObject("plurality", o.getPlurality());
+                        if (o.hasAllowedValues()) {
+                            fields.putObject("allowedValues", o.getAllowedValues().toArray(new String[0]));
+                        }
                         return fields;
                     }
 
@@ -464,6 +478,8 @@ public class Types {
                         v.setDefaultValue(fields.getObject("defaultValue", Object.class));
                         v.setDescription(fields.getObject("description", String.class));
                         v.setPlurality(fields.getObject("plurality", CustomValuePlurality.class));
+                        String[] av = fields.getObject("allowedValues", String[].class);
+                        if (av != null) v.setAllowedValues(Arrays.asList(av));
                         return v;
                     }
 

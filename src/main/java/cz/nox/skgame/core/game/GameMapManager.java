@@ -95,6 +95,7 @@ public class GameMapManager {
     }
     public void unregisterGameMap(String id) {
         maps.remove(id.toLowerCase());
+        save();
     }
     public boolean isMapRegistered(String id) {
         return maps.containsKey(id.toLowerCase());

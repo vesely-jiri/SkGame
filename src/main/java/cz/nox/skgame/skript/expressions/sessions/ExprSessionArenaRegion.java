@@ -17,13 +17,15 @@ import org.jetbrains.annotations.Nullable;
 
 @Name("Session - Arena Region")
 @Description({
-        "Returns the arena region instance assigned to a session when the game started.",
-        "Only set when the session's GameMap has arena slots configured.",
-        "Use `center of arena region of session` to teleport players to their instance."
+        "Returns the arena region assigned to a session.",
+        "Populated automatically when a game map is set — always non-null during a running game.",
+        "For slot-based maps, reflects the specific claimed slot; for non-slotted maps, mirrors the map's region.",
+        "Use this to clean up or reference the play area during game-start/stop handlers."
 })
 @Examples({
-        "set {_arena} to arena region of event-session",
-        "teleport players of event-session to center of (arena region of event-session)"
+        "set {_arena} to arena of event-session",
+        "loop players in region (arena of event-session):",
+        "    teleport loop-player to location of event-session"
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")

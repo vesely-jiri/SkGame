@@ -41,6 +41,8 @@ public class ExprGameMapRegion extends SimplePropertyExpression<GameMap, Region>
     @Override
     public Class<?> @Nullable [] acceptChange(ChangeMode mode) {
         return switch (mode) {
+            // Object.class is intentional: change() tries RegionFactory.adapt() for non-SkGame
+            // region types (SkBee, WorldGuard) so users can pass native region objects directly.
             case SET -> CollectionUtils.array(Region.class, Object.class);
             case DELETE, RESET -> CollectionUtils.array();
             default -> null;
