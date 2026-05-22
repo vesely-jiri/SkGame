@@ -16,6 +16,7 @@ import cz.nox.skgame.api.gui.event.SpectateGuiOpenEvent;
 import cz.nox.skgame.api.messages.Messages;
 import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl;
+import cz.nox.skgame.core.gui.services.SessionGuiService;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -136,7 +137,9 @@ public class SpectateGuiService implements Listener {
                         return;
                     }
                     boolean joined = lifecycle.joinAsSpectator(p, clicked);
-                    if (!joined) {
+                    if (joined) {
+                        SessionGuiService.getInstance().openFor(p);
+                    } else {
                         Messages.send(p, "spectator.join-denied");
                     }
                 }));

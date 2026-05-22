@@ -150,20 +150,6 @@ public class SessionGuiService implements Listener {
         // Slot 7 — Spectators count + toggle
         builder.slot(7, buildSpectatorsSlot(session, viewer));
 
-        // Slot 27 — Allow spectators toggle (host-only)
-        boolean allowSpectate = session.isAllowSpectate();
-        builder.slot(27, GuiItem.of(allowSpectate ? Material.SPYGLASS : Material.BARRIER)
-                .name(Messages.getComponent("gui.session.allow-spectate.title", viewer))
-                .lore(Messages.getComponent(allowSpectate
-                        ? "gui.session.allow-spectate.lore-on"
-                        : "gui.session.allow-spectate.lore-off", viewer))
-                .onClick(e -> {
-                    Player p = (Player) e.getWhoClicked();
-                    if (!isHostOnly(p, session)) return;
-                    session.setAllowSpectate(!session.isAllowSpectate());
-                    update(session);
-                }));
-
         // Slot 24 — Shuffle players (host-only; stub — .sk also unimplemented)
         builder.slot(24, GuiItem.of(Material.WIND_CHARGE)
                 .name("&7&lShuffle players")
@@ -282,23 +268,36 @@ public class SessionGuiService implements Listener {
 
     private GuiItem buildSpectatorsSlot(Session session, Player viewer) {
         PlayerManager pm = PlayerManager.getInstance();
+        boolean viewerIsHost = viewer.equals(session.getHost());
         Set<Player> spectators = session.getSpectators();
         int count = Math.max(1, Math.min(spectators.size(), 64));
+
         List<Component> lore = spectators.stream()
                 .map(p -> legacy("&7" + p.getName()))
                 .collect(Collectors.toList());
-        // Show viewer's own opt-in status when game is running
+
+        // Opt-in status lore (STARTED+SPECTATOR viewer only)
         boolean viewerIsSpectator = session.getRole(viewer) == SessionRole.SPECTATOR;
         if (viewerIsSpectator && session.getState() == SessionState.STARTED) {
             boolean wantsJoin = Boolean.TRUE.equals(pm.getPlayer(viewer).getValue("join_party_after_game", true));
             lore.add(Component.empty());
             lore.add(legacy(wantsJoin ? "&aWill join party after this game" : "&7Click to join party after this game"));
         }
+
+        // Action hints
+        lore.add(Component.empty());
+        lore.add(legacy("&7Left-click: become spectator/player"));
+        if (viewerIsHost) {
+            boolean allowSpectate = session.isAllowSpectate();
+            lore.add(legacy("&7Right-click: toggle allow-spectate (currently: "
+                    + (allowSpectate ? "&aON" : "&cOFF") + "&7)"));
+        }
+
         return GuiItem.of(Material.SPYGLASS)
                 .name("&7&lSpectators")
                 .lore(lore)
                 .amount(count)
-                .onClick(e -> {
+                .onLeftClick(e -> {
                     Player p = (Player) e.getWhoClicked();
                     Session s = SessionManager.getInstance().getSession(p);
                     if (s == null) return;
@@ -321,6 +320,17 @@ public class SessionGuiService implements Listener {
                         }
                         // PlayerRoleChangeEvent fires → onRoleChange → update(session)
                     }
+                })
+                .onRightClick(e -> {
+                    Player p = (Player) e.getWhoClicked();
+                    Session s = SessionManager.getInstance().getSession(p);
+                    if (s == null) return;
+                    if (!p.equals(s.getHost())) {
+                        Messages.send(p, "gui.session.error.not-host");
+                        return;
+                    }
+                    s.setAllowSpectate(!s.isAllowSpectate());
+                    update(s);
                 });
     }
 
