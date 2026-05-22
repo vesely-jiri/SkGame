@@ -107,16 +107,9 @@ on "volleyball" game stop:
     set {_reason::*} to event-string split at ";"
     if {_reason::1} is "WIN":
         set {_team} to {_reason::2}
-        add "&eTeam %{_team}% won!" to {_additional::*}
-        loop session players of event-session:
-            set {_t} to temporary player value "team" of loop-value
-            if {_t} is {_team}:
-                add "&a%loop-value%" to {_additional::*}
-    set {_p::*} to (session players of event-session) and (session spectators of event-session)
-    reset {_p::*} for game
-    if size of {_additional::*} > 0:
-        send join {_additional::*} to {_p::*}
-    teleport {_p::*} to lobby spawn
+        send "&eTeam %{_team}% won!" to (session players of event-session) and (session spectators of event-session)
+        set {_winners::*} to (session players of event-session) where [temporary player value "team" of input is {_team}]
+        set winners of event-session to {_winners::*}
 
 #----------------------------------------------------------------------
 

@@ -69,6 +69,12 @@ public class SkGame extends JavaPlugin {
             "cz.nox.skgame.skript.effects.EffOpenMinigamesGui",
             "cz.nox.skgame.skript.effects.EffOpenMapsGui",
             "cz.nox.skgame.skript.effects.EffOpenAdminGui",
+            // Effects — minigame section shorthands
+            "cz.nox.skgame.skript.effects.EffSectionMgName",
+            "cz.nox.skgame.skript.effects.EffSectionMgIcon",
+            "cz.nox.skgame.skript.effects.EffSectionMgDescription",
+            "cz.nox.skgame.skript.effects.EffSectionMgAuthor",
+            "cz.nox.skgame.skript.effects.EffSectionMgMinPlayers",
             // Events
             "cz.nox.skgame.skript.events.EvtSessionCreate",
             "cz.nox.skgame.skript.events.EvtPlayerSessionLeave",
