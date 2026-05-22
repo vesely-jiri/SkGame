@@ -35,6 +35,10 @@ spectator:
   demoted: "&7You are now a spectator"
   no-spawn-defined: "&cThis map has no spectator spawn — using lobby"
 
+command:
+  error:
+    no-permission: "&cYou don't have permission to do this"
+
 lobby:
   spawn-set: "&aGame lobby was set to your location"
 

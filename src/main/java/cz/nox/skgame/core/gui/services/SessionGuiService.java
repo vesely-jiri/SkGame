@@ -1,6 +1,7 @@
 package cz.nox.skgame.core.gui.services;
 
 import cz.nox.skgame.SkGame;
+import cz.nox.skgame.api.game.event.GamePlayerSessionJoin;
 import cz.nox.skgame.api.game.event.GamePlayerSessionLeave;
 import cz.nox.skgame.api.game.event.GameStartEvent;
 import cz.nox.skgame.api.game.event.PlayerRoleChangeEvent;
@@ -100,6 +101,7 @@ public class SessionGuiService implements Listener {
     @EventHandler public void onSessionDisband(SessionDisbandEvent e) { closeFor(e.getSession()); }
     @EventHandler public void onGameStart(GameStartEvent e)           { closeFor(e.getSession()); }
     @EventHandler public void onRoleChange(PlayerRoleChangeEvent e)   { update(e.getSession()); }
+    @EventHandler public void onPlayerJoin(GamePlayerSessionJoin e)   { update(e.getSession()); }
 
     @EventHandler
     public void onPlayerLeave(GamePlayerSessionLeave e) {
@@ -110,6 +112,7 @@ public class SessionGuiService implements Listener {
                 && leaving.getOpenInventory().getTopInventory().getHolder() instanceof GuiHolder) {
             leaving.closeInventory();
         }
+        update(e.getSession());
     }
 
     @EventHandler
@@ -235,7 +238,10 @@ public class SessionGuiService implements Listener {
                 .onShiftClick(e -> {
                     if (e.getClick() != ClickType.SHIFT_RIGHT) return;
                     Player p = (Player) e.getWhoClicked();
-                    if (!p.equals(session.getHost())) return;
+                    if (!p.equals(session.getHost())) {
+                        Messages.send(p, "gui.session.error.not-host");
+                        return;
+                    }
                     lifecycle.disbandSession(session, DisbandReason.EXPLICIT_DISBAND);
                 }));
 
@@ -308,12 +314,11 @@ public class SessionGuiService implements Listener {
         return GuiItem.of(Material.BARRIER).name("&7&lMaps").lore(legacy("&c- Choose a map"));
     }
 
-    @SuppressWarnings("deprecation")
     private GuiItem buildPlayerHead(Player member, boolean isHost, boolean isReady, Player viewer) {
         ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
         SkullMeta meta = (SkullMeta) skull.getItemMeta();
         if (meta != null) {
-            meta.setOwningPlayer(member);
+            meta.setPlayerProfile(member.getPlayerProfile());
             meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
             skull.setItemMeta(meta);
         }

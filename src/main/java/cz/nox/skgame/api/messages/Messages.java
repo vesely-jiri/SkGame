@@ -31,6 +31,9 @@ public final class Messages {
     private static final Map<String, YamlConfiguration> locales = new ConcurrentHashMap<>();
     private static final Set<String> warnedKeys = ConcurrentHashMap.newKeySet();
 
+    /** Sentinel: key exists but value is "". Means "suppress this message — don't send anything." */
+    private static final Resolved SUPPRESS = new Resolved(Format.LEGACY, "");
+
     @Nullable private static String forcedLocale = null;
     private static String fallbackLocale = "en_US";
     @Nullable private static Logger logger = null;
@@ -99,7 +102,9 @@ public final class Messages {
      */
     public static String getForLocale(String key, String locale, Object... args) {
         Resolved resolved = lookup(key, locale);
+        if (resolved == SUPPRESS) return "";
         if (resolved == null) resolved = lookup(key, fallbackLocale);
+        if (resolved == SUPPRESS) return "";
         if (resolved == null) return missing(key);
         return applyAndFormatString(resolved, args);
     }
@@ -110,15 +115,19 @@ public final class Messages {
      * Null args are stringified to "null" via String.valueOf.
      */
     public static Component getComponent(String key, @Nullable Player player, Object... args) {
-        Resolved resolved = lookup(key, resolveLocale(player));
-        if (resolved == null) resolved = lookup(key, fallbackLocale);
-        if (resolved == null) return Component.text(missing(key));
-        return applyAndFormatComponent(resolved, args);
+        Component c = resolveComponent(key, resolveLocale(player), args);
+        if (c != null) return c;
+        c = resolveComponent(key, fallbackLocale, args);
+        if (c != null) return c;
+        return Component.text(missing(key));
     }
 
     /** Send a localized message to a player using their own locale. */
     public static void send(Player player, String key, Object... args) {
-        player.sendMessage(getComponent(key, player, args));
+        Component c = resolveComponent(key, resolveLocale(player), args);
+        if (c == null) c = resolveComponent(key, fallbackLocale, args);
+        if (c == null) { missing(key); return; } // warn once, skip send
+        player.sendMessage(c);
     }
 
     /**
@@ -129,8 +138,16 @@ public final class Messages {
         if (target instanceof Player player) {
             send(player, key, args);
         } else {
-            target.sendMessage(getForLocale(key, fallbackLocale, args));
+            String msg = getForLocale(key, fallbackLocale, args);
+            if (!msg.isEmpty()) target.sendMessage(msg);
         }
+    }
+
+    /** Returns the formatted component, or null if key is suppressed (empty value). */
+    private static @Nullable Component resolveComponent(String key, String locale, Object[] args) {
+        Resolved resolved = lookup(key, locale);
+        if (resolved == null || resolved == SUPPRESS) return null;
+        return applyAndFormatComponent(resolved, args);
     }
 
     // ─── Locale resolution ───────────────────────────────────────────────────
@@ -162,7 +179,7 @@ public final class Messages {
         if (yaml == null) return null;
 
         String rawString = yaml.getString(key);
-        if (rawString != null) return new Resolved(Format.LEGACY, rawString);
+        if (rawString != null) return rawString.isEmpty() ? SUPPRESS : new Resolved(Format.LEGACY, rawString);
 
         String format = yaml.getString(key + ".format");
         String text   = yaml.getString(key + ".text");

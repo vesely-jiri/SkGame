@@ -120,7 +120,10 @@ public class MainGuiService implements Listener {
                         Messages.send(p, "session.error.already-in-session");
                         return;
                     }
-                    if (!p.hasPermission(CREATE_PERMISSION)) return;
+                    if (!p.hasPermission(CREATE_PERMISSION)) {
+                        Messages.send(p, "command.error.no-permission");
+                        return;
+                    }
                     Session created = lifecycle.createSession(p);
                     if (created != null) {
                         SessionGuiService.getInstance().openFor(p);
@@ -177,7 +180,7 @@ public class MainGuiService implements Listener {
         if (host != null) {
             SkullMeta meta = (SkullMeta) skull.getItemMeta();
             if (meta != null) {
-                meta.setOwningPlayer(host);
+                meta.setPlayerProfile(host.getPlayerProfile());
                 skull.setItemMeta(meta);
             }
         }

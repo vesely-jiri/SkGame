@@ -31,6 +31,9 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TNTPrimed;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 import java.util.UUID;
 
-public class SessionLifecycleManagerImpl implements SessionLifecycleManager {
+public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Listener {
 
     private static SessionLifecycleManagerImpl instance;
 
@@ -123,6 +126,8 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager {
         SessionRole role = session.getRole(player);
         if (role == null) return;
 
+        SessionState stateBeforeLeave = session.getState();
+
         switch (role) {
             case LOBBY -> session.removeLobbyMember(player);  // fires GamePlayerSessionLeave
             case PLAYER -> session.removePlayers(player);      // fires GamePlayerSessionLeave
@@ -148,8 +153,16 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager {
             return;
         }
         if (partyManager.shouldAutoDisband(session)) {
+            // BUG 9: last player left during a running game — clean arena before disband
+            if (stateBeforeLeave == SessionState.STARTED) endGame(session, "abandoned");
             disbandSession(session, DisbandReason.EMPTY_PARTY);
         }
+    }
+
+    // BUG 8: route server quit through leaveSession so host promotion + arena cleanup fire
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent e) {
+        leaveSession(e.getPlayer());
     }
 
     @Override

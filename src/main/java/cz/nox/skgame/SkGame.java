@@ -199,7 +199,9 @@ public class SkGame extends JavaPlugin {
 
         Bukkit.getPluginManager().registerEvents(SessionManager.getInstance(), instance);
         // Initialize lifecycle manager singleton after SessionManager is ready
-        cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl.getInstance();
+        cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl lifecycle =
+                cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl.getInstance();
+        Bukkit.getPluginManager().registerEvents(lifecycle, instance);
         Bukkit.getPluginManager().registerEvents(new cz.nox.skgame.core.gui.GuiClickRouter(), instance);
         Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.gui.services.MainGuiService.getInstance(), instance);
         Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.gui.services.SessionGuiService.getInstance(), instance);

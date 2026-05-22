@@ -27,6 +27,10 @@ spectator:
   demoted: "&7Nyní jsi divák"
   no-spawn-defined: "&cTato mapa nemá spawn pro diváky — používám lobby"
 
+command:
+  error:
+    no-permission: "&cNa to nemáš oprávnění"
+
 lobby:
   spawn-set: "&aLobby spawn nastaven na tvou pozici"
 
