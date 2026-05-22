@@ -263,12 +263,9 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             }
         }
 
-        // Snapshot before mutations — setRole removes from live set, causing CME otherwise.
-        // allActiveMembers includes mid-game LOBBY members (e.g. spectators promoted via slot 7)
-        // who would be absent from activePlayers/activeSpectators but still need reset+teleport.
+        // Snapshot before mutations — setRole removes from live set, causing CME otherwise
         Set<Player> activePlayers    = new HashSet<>(session.getPlayers());
         Set<Player> activeSpectators = new HashSet<>(session.getSpectators());
-        Set<Player> allActiveMembers = new HashSet<>(session.getMembers());
 
         // Clear temp values after handlers have run
         for (Player p : activePlayers) {
@@ -276,21 +273,27 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         }
         session.removeValues(true);
 
-        // Transition PLAYER → LOBBY
+        // Transition PLAYER → LOBBY (stays in party)
         for (Player p : activePlayers) {
             session.setRole(p, SessionRole.LOBBY); // fires PlayerRoleChangeEvent
             Bukkit.getPluginManager().callEvent(new LobbyEnterEvent(p, session));
         }
 
-        // Transition SPECTATOR → LOBBY
+        Location lobbySpawn = plugin.getLobbySpawn();
+
+        // SPECTATOR → leave session entirely (spectator is transient; opt-in to party = promote to
+        // PLAYER mid-game via slot 7, then PLAYER→LOBBY on endGame naturally)
         for (Player p : activeSpectators) {
-            session.setRole(p, SessionRole.LOBBY); // fires PlayerRoleChangeEvent
-            Bukkit.getPluginManager().callEvent(new LobbyEnterEvent(p, session));
+            session.removeSpectators(p);
+            Bukkit.getPluginManager().callEvent(new GamePlayerSessionLeave(p, session));
+            playerManager.getPlayer(p).removeValues(true);
+            PlayerResetter.reset(p, plugin.getDefaultGameMode());
+            if (lobbySpawn != null) p.teleport(lobbySpawn);
+            Messages.send(p, "session.leave.notification");
         }
 
-        // Reset and teleport every member present at game end (all roles)
-        Location lobbySpawn = plugin.getLobbySpawn();
-        for (Player p : allActiveMembers) {
+        // Reset and teleport active players (now in LOBBY role)
+        for (Player p : activePlayers) {
             PlayerResetter.reset(p, plugin.getDefaultGameMode());
             if (lobbySpawn != null) p.teleport(lobbySpawn);
         }
