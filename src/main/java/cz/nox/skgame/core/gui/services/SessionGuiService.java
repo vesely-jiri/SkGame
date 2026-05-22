@@ -24,6 +24,7 @@ import cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -281,9 +282,18 @@ public class SessionGuiService implements Listener {
                     if (s == null) return;
                     SessionRole role = s.getRole(p);
                     if (role == SessionRole.SPECTATOR) {
-                        s.setRole(p, SessionRole.LOBBY);
+                        if (s.getState() == SessionState.STARTED) {
+                            // Opt-in to active game — PLAYER so endGame reset+teleport picks them up
+                            s.setRole(p, SessionRole.PLAYER);
+                            p.setGameMode(SkGame.getInstance().getDefaultGameMode());
+                        } else {
+                            s.setRole(p, SessionRole.LOBBY);
+                        }
                     } else if (role == SessionRole.LOBBY) {
                         s.setRole(p, SessionRole.SPECTATOR);
+                        if (s.getState() == SessionState.STARTED) {
+                            p.setGameMode(GameMode.SPECTATOR);
+                        }
                     }
                     // PlayerRoleChangeEvent fires → onRoleChange → update(session)
                 });
