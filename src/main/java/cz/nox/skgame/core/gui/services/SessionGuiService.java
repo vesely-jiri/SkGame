@@ -13,6 +13,7 @@ import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.type.DisbandReason;
 import cz.nox.skgame.api.game.model.type.GameStartReason;
 import cz.nox.skgame.api.game.model.type.SessionRole;
+import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.api.gui.GuiBuilder;
 import cz.nox.skgame.api.gui.GuiHolder;
 import cz.nox.skgame.api.gui.GuiItem;
@@ -246,12 +247,18 @@ public class SessionGuiService implements Listener {
                 }));
 
         // Dynamic player head slots
-        // Phase 9 adaptation: use getLobbyMembers() — pre-Phase 9 .sk used getPlayers()
+        // LOBBY state: show lobby members with ready indicator.
+        // STARTING/STARTED state: show active players (lobby is empty during a running game).
+        SessionState state = session.getState();
+        Set<Player> displayMembers = (state == SessionState.LOBBY)
+                ? session.getLobbyMembers()
+                : session.getPlayers();
         int idx = 0;
-        for (Player member : session.getLobbyMembers()) {
+        for (Player member : displayMembers) {
             if (idx >= PLAYER_SLOTS.length) break;
             boolean isHost = member.equals(session.getHost());
-            boolean isReady = Boolean.TRUE.equals(pm.getPlayer(member).getValue("ready", true));
+            boolean isReady = state != SessionState.LOBBY ||
+                    Boolean.TRUE.equals(pm.getPlayer(member).getValue("ready", true));
             builder.slot(PLAYER_SLOTS[idx++], buildPlayerHead(member, isHost, isReady, viewer));
         }
 

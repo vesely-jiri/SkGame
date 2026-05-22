@@ -38,6 +38,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -262,24 +263,37 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             }
         }
 
+        // Snapshot before mutations — setRole removes from live set, causing CME otherwise
+        Set<Player> activePlayers    = new HashSet<>(session.getPlayers());
+        Set<Player> activeSpectators = new HashSet<>(session.getSpectators());
+
         // Clear temp values after handlers have run
-        for (Player p : session.getPlayers()) {
+        for (Player p : activePlayers) {
             playerManager.getPlayer(p).removeValues(true);
         }
         session.removeValues(true);
 
-        // Transition PLAYER → LOBBY (snapshot to avoid ConcurrentModification)
-        for (Player p : session.getPlayers()) {
+        // Transition PLAYER → LOBBY
+        for (Player p : activePlayers) {
             session.setRole(p, SessionRole.LOBBY); // fires PlayerRoleChangeEvent
-            LobbyEnterEvent e = new LobbyEnterEvent(p, session);
-            Bukkit.getPluginManager().callEvent(e); // not cancellable on game end — ignore result
+            Bukkit.getPluginManager().callEvent(new LobbyEnterEvent(p, session));
         }
 
         // Transition SPECTATOR → LOBBY
-        for (Player p : session.getSpectators()) {
+        for (Player p : activeSpectators) {
             session.setRole(p, SessionRole.LOBBY); // fires PlayerRoleChangeEvent
-            LobbyEnterEvent e = new LobbyEnterEvent(p, session);
-            Bukkit.getPluginManager().callEvent(e);
+            Bukkit.getPluginManager().callEvent(new LobbyEnterEvent(p, session));
+        }
+
+        // Reset and teleport all active members to lobby spawn
+        Location lobbySpawn = plugin.getLobbySpawn();
+        for (Player p : activePlayers) {
+            PlayerResetter.reset(p, plugin.getDefaultGameMode());
+            if (lobbySpawn != null) p.teleport(lobbySpawn);
+        }
+        for (Player p : activeSpectators) {
+            PlayerResetter.reset(p, plugin.getDefaultGameMode());
+            if (lobbySpawn != null) p.teleport(lobbySpawn);
         }
 
         partyManager.registerActivity(session);
