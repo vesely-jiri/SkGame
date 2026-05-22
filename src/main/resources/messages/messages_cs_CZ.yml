@@ -13,6 +13,9 @@ session:
     notification: "&7Session zanikla ({0})"
   error:
     already-in-session: "&cJiž jsi v session"
+  spectator:
+    queued-join: "&aPo skončení hry se připojíš do party"
+    queued-leave: "&7Po skončení hry session opustíš"
   stop:
     vote-success: "&aHráči úspěšně odhlasovali ukončení hry"
     no-players: "&cŽádní hráči. Ukončuji hru"

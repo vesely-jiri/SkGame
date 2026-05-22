@@ -19,6 +19,9 @@ session:
     notification: "&7Session disbanded ({0})"
   error:
     already-in-session: "&cYou are already in a session"
+  spectator:
+    queued-join: "&aYou will join the party after this game"
+    queued-leave: "&7You will not join the party after this game"
   stop:
     vote-success: "&aPlayers successfully voted to stop the game"
     no-players: "&cThere are no players. Stopping game"

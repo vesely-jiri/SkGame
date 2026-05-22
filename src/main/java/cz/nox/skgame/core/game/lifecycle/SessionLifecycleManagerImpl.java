@@ -281,15 +281,23 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
 
         Location lobbySpawn = plugin.getLobbySpawn();
 
-        // SPECTATOR → leave session entirely (spectator is transient; opt-in to party = promote to
-        // PLAYER mid-game via slot 7, then PLAYER→LOBBY on endGame naturally)
+        // SPECTATOR → opt-in (join_party_after_game flag set) becomes LOBBY; otherwise evicted
         for (Player p : activeSpectators) {
-            session.removeSpectators(p);
-            Bukkit.getPluginManager().callEvent(new GamePlayerSessionLeave(p, session));
+            boolean wantsJoin = Boolean.TRUE.equals(
+                    playerManager.getPlayer(p).getValue("join_party_after_game", true));
             playerManager.getPlayer(p).removeValues(true);
-            PlayerResetter.reset(p, plugin.getDefaultGameMode());
-            if (lobbySpawn != null) p.teleport(lobbySpawn);
-            Messages.send(p, "session.leave.notification");
+            if (wantsJoin) {
+                session.setRole(p, SessionRole.LOBBY); // fires PlayerRoleChangeEvent
+                Bukkit.getPluginManager().callEvent(new LobbyEnterEvent(p, session));
+                PlayerResetter.reset(p, plugin.getDefaultGameMode());
+                if (lobbySpawn != null) p.teleport(lobbySpawn);
+            } else {
+                session.removeSpectators(p);
+                Bukkit.getPluginManager().callEvent(new GamePlayerSessionLeave(p, session));
+                PlayerResetter.reset(p, plugin.getDefaultGameMode());
+                if (lobbySpawn != null) p.teleport(lobbySpawn);
+                Messages.send(p, "session.leave.notification");
+            }
         }
 
         // Reset and teleport active players (now in LOBBY role)

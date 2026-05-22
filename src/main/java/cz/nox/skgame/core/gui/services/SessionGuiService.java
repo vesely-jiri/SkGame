@@ -148,7 +148,7 @@ public class SessionGuiService implements Listener {
         builder.slot(34, GuiItem.of(Material.LIGHT_GRAY_STAINED_GLASS_PANE).name(Component.space()));
 
         // Slot 7 — Spectators count + toggle
-        builder.slot(7, buildSpectatorsSlot(session));
+        builder.slot(7, buildSpectatorsSlot(session, viewer));
 
         // Slot 24 — Shuffle players (host-only; stub — .sk also unimplemented)
         builder.slot(24, GuiItem.of(Material.WIND_CHARGE)
@@ -266,12 +266,20 @@ public class SessionGuiService implements Listener {
         return builder.build();
     }
 
-    private GuiItem buildSpectatorsSlot(Session session) {
+    private GuiItem buildSpectatorsSlot(Session session, Player viewer) {
+        PlayerManager pm = PlayerManager.getInstance();
         Set<Player> spectators = session.getSpectators();
         int count = Math.max(1, Math.min(spectators.size(), 64));
         List<Component> lore = spectators.stream()
                 .map(p -> legacy("&7" + p.getName()))
                 .collect(Collectors.toList());
+        // Show viewer's own opt-in status when game is running
+        boolean viewerIsSpectator = session.getRole(viewer) == SessionRole.SPECTATOR;
+        if (viewerIsSpectator && session.getState() == SessionState.STARTED) {
+            boolean wantsJoin = Boolean.TRUE.equals(pm.getPlayer(viewer).getValue("join_party_after_game", true));
+            lore.add(Component.empty());
+            lore.add(legacy(wantsJoin ? "&aWill join party after this game" : "&7Click to join party after this game"));
+        }
         return GuiItem.of(Material.SPYGLASS)
                 .name("&7&lSpectators")
                 .lore(lore)
@@ -283,19 +291,22 @@ public class SessionGuiService implements Listener {
                     SessionRole role = s.getRole(p);
                     if (role == SessionRole.SPECTATOR) {
                         if (s.getState() == SessionState.STARTED) {
-                            // Opt-in to active game — PLAYER so endGame reset+teleport picks them up
-                            s.setRole(p, SessionRole.PLAYER);
-                            p.setGameMode(SkGame.getInstance().getDefaultGameMode());
+                            // Queue opt-in for next round; stay spectator for the current game
+                            boolean current = Boolean.TRUE.equals(pm.getPlayer(p).getValue("join_party_after_game", true));
+                            pm.getPlayer(p).setValue("join_party_after_game", !current, true);
+                            Messages.send(p, !current ? "session.spectator.queued-join" : "session.spectator.queued-leave");
+                            update(s);
                         } else {
                             s.setRole(p, SessionRole.LOBBY);
+                            // PlayerRoleChangeEvent fires → onRoleChange → update(session)
                         }
                     } else if (role == SessionRole.LOBBY) {
                         s.setRole(p, SessionRole.SPECTATOR);
                         if (s.getState() == SessionState.STARTED) {
                             p.setGameMode(GameMode.SPECTATOR);
                         }
+                        // PlayerRoleChangeEvent fires → onRoleChange → update(session)
                     }
-                    // PlayerRoleChangeEvent fires → onRoleChange → update(session)
                 });
     }
 
