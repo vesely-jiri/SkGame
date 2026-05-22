@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 @Name("Session - Arena Region")
 @Description({
-        "Returns the arena region assigned to a session.",
+        "Returns the arena of a session.",
         "Populated automatically when a game map is set — always non-null during a running game.",
         "For slot-based maps, reflects the specific claimed slot; for non-slotted maps, mirrors the map's region.",
         "Use this to clean up or reference the play area during game-start/stop handlers."

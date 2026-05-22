@@ -16,7 +16,7 @@ import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
 @Name("Effect - Clear Arena")
-@Description("Removes all non-player entities from the arena region of a session.")
+@Description("Removes all non-player entities from the arena of a session.")
 @Examples("clear arena of event-session")
 @Since("1.0.0")
 @SuppressWarnings("unused")

@@ -310,7 +310,7 @@ public class Types {
                 .name("Region")
                 .description(
                         "Represents a 3D region in the world.",
-                        "In Phase 1, only CuboidRegion is supported.",
+                        "Supported impls: CuboidRegion (built-in), SkBeeBoundRegion (SkBee adapter), WorldGuardRegion (WorldGuard adapter).",
                         "Can be stored in Skript variables and as a GameMap property."
                 )
                 .examples(
