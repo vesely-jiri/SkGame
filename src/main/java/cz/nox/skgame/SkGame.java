@@ -98,6 +98,7 @@ public class SkGame extends JavaPlugin {
             "cz.nox.skgame.skript.expressions.sessions.ExprSessionSpectators",
             "cz.nox.skgame.skript.expressions.sessions.ExprSessionValue",
             "cz.nox.skgame.skript.expressions.sessions.ExprSessionActivePlayers",
+            "cz.nox.skgame.skript.expressions.sessions.ExprSessionWinners",
             "cz.nox.skgame.skript.expressions.sessions.ExprSessionArenaRegion",
             "cz.nox.skgame.skript.expressions.sessions.ExprSessionMembers",
             "cz.nox.skgame.skript.expressions.sessions.property.ExprSessionId",
@@ -274,6 +275,10 @@ public class SkGame extends JavaPlugin {
         } catch (IOException e) {
             logUtil.error("Could not save lobby.yml: " + e.getMessage());
         }
+    }
+
+    public boolean isAllowMidGameChanges() {
+        return getConfig().getBoolean("session.allow-mid-game-changes", false);
     }
 
     public boolean getSpectateDefaultAllow() {

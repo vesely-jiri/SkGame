@@ -19,6 +19,7 @@ session:
     notification: "&7Session disbanded ({0})"
   error:
     already-in-session: "&cYou are already in a session"
+    mid-game-locked: "&cCannot change session settings while game is running"
   spectator:
     queued-join: "&aYou will join the party after this game"
     queued-leave: "&7You will not join the party after this game"
@@ -28,6 +29,11 @@ session:
     unknown-error: "&cUnknown error. Stopping game"
     summary-separator: "&6------------------------------------"
     summary-finished: "&6Game of &e{0} &6on map &e{1} &6has finished"
+
+game:
+  winners:
+    single: "&6&lWinner: &f{0}"
+    multiple: "&6&lWinners: &f{0}"
 
 spectator:
   session-not-found: "&cSession '{0}' not found"

@@ -13,6 +13,7 @@ session:
     notification: "&7Session zanikla ({0})"
   error:
     already-in-session: "&cJiž jsi v session"
+    mid-game-locked: "&cBěhem hry nelze měnit nastavení session"
   spectator:
     queued-join: "&aPo skončení hry se připojíš do party"
     queued-leave: "&7Po skončení hry session opustíš"
@@ -20,6 +21,11 @@ session:
     vote-success: "&aHráči úspěšně odhlasovali ukončení hry"
     no-players: "&cŽádní hráči. Ukončuji hru"
     unknown-error: "&cNeznámá chyba. Ukončuji hru"
+
+game:
+  winners:
+    single: "&6&lVítěz: &f{0}"
+    multiple: "&6&lVítězové: &f{0}"
 
 spectator:
   session-not-found: "&cSession '{0}' nenalezena"

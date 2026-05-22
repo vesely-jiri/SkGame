@@ -32,6 +32,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
@@ -156,6 +157,7 @@ public class SessionGuiService implements Listener {
                 .lore(legacy("&7True/&cFalse"))
                 .onClick(e -> {
                     Player p = (Player) e.getWhoClicked();
+                    if (isMidGameLocked(session, p)) return;
                     if (!isHostOnly(p, session)) return;
                     plugin.getLogUtil().info("TODO: shuffle not implemented for session " + session.getId());
                 }));
@@ -163,6 +165,7 @@ public class SessionGuiService implements Listener {
         // Slot 25 — Minigames (host-only)
         builder.slot(25, buildMinigameSlot(session).onClick(e -> {
             Player p = (Player) e.getWhoClicked();
+            if (isMidGameLocked(session, p)) return;
             if (!isHostOnly(p, session)) return;
             MinigamesGuiService.getInstance().openFor(p);
         }));
@@ -174,6 +177,7 @@ public class SessionGuiService implements Listener {
                 .lore(legacy("public".equals(mode) ? "&aPublic&7/Private" : "&7Public/&aPrivate"))
                 .onClick(e -> {
                     Player p = (Player) e.getWhoClicked();
+                    if (isMidGameLocked(session, p)) return;
                     if (!isHostOnly(p, session)) return;
                     String cur = session.getValue("mode", false) instanceof String str ? str : "public";
                     session.setValue("mode", "public".equals(cur) ? "private" : "public", false);
@@ -183,6 +187,7 @@ public class SessionGuiService implements Listener {
         // Slot 33 — Maps (host-only; no-op if minigame not yet selected)
         builder.slot(33, buildMapsSlot(session).onClick(e -> {
             Player p = (Player) e.getWhoClicked();
+            if (isMidGameLocked(session, p)) return;
             if (!isHostOnly(p, session)) return;
             MapsGuiService.getInstance().openFor(p);
         }));
@@ -193,12 +198,14 @@ public class SessionGuiService implements Listener {
                 .amount(getRounds(session))
                 .onLeftClick(e -> {
                     Player p = (Player) e.getWhoClicked();
+                    if (isMidGameLocked(session, p)) return;
                     if (!isHostOnly(p, session)) return;
                     session.setTotalRounds(Math.min(getRounds(session) + 1, MAX_ROUNDS));
                     update(session);
                 })
                 .onRightClick(e -> {
                     Player p = (Player) e.getWhoClicked();
+                    if (isMidGameLocked(session, p)) return;
                     if (!isHostOnly(p, session)) return;
                     session.setTotalRounds(Math.max(getRounds(session) - 1, 1));
                     update(session);
@@ -258,9 +265,10 @@ public class SessionGuiService implements Listener {
         for (Player member : displayMembers) {
             if (idx >= PLAYER_SLOTS.length) break;
             boolean isHost = member.equals(session.getHost());
-            boolean isReady = state != SessionState.LOBBY ||
-                    Boolean.TRUE.equals(pm.getPlayer(member).getValue("ready", true));
-            builder.slot(PLAYER_SLOTS[idx++], buildPlayerHead(member, isHost, isReady, viewer));
+            boolean rawReady = Boolean.TRUE.equals(pm.getPlayer(member).getValue("ready", true));
+            boolean isReady = state != SessionState.LOBBY || rawReady;
+            boolean applyGlow = state == SessionState.LOBBY && rawReady;
+            builder.slot(PLAYER_SLOTS[idx++], buildPlayerHead(member, isHost, isReady, applyGlow, viewer));
         }
 
         return builder.build();
@@ -366,12 +374,15 @@ public class SessionGuiService implements Listener {
         return GuiItem.of(Material.BARRIER).name("&7&lMaps").lore(legacy("&c- Choose a map"));
     }
 
-    private GuiItem buildPlayerHead(Player member, boolean isHost, boolean isReady, Player viewer) {
+    private GuiItem buildPlayerHead(Player member, boolean isHost, boolean isReady, boolean applyGlow, Player viewer) {
         ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
         SkullMeta meta = (SkullMeta) skull.getItemMeta();
         if (meta != null) {
             meta.setPlayerProfile(member.getPlayerProfile());
             meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+            if (applyGlow) {
+                meta.addEnchant(Enchantment.UNBREAKING, 1, true);
+            }
             skull.setItemMeta(meta);
         }
         GuiItem item = GuiItem.of(skull)
@@ -383,6 +394,14 @@ public class SessionGuiService implements Listener {
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    private boolean isMidGameLocked(Session session, Player player) {
+        SessionState st = session.getState();
+        if (st != SessionState.STARTING && st != SessionState.STARTED) return false;
+        if (SkGame.getInstance().isAllowMidGameChanges()) return false;
+        Messages.send(player, "session.error.mid-game-locked");
+        return true;
+    }
 
     private boolean isHostOnly(Player player, Session session) {
         if (player.equals(session.getHost())) return true;

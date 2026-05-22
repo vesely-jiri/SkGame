@@ -191,6 +191,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
     }
 
     private void startImmediately(Session session) {
+        session.clearWinners(); // fresh winners list for each game / round
         // Snapshot before mutation
         Set<Player> lobbySnapshot = session.getLobbyMembers();
 
@@ -249,6 +250,21 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         if (miniGame != null) {
             Bukkit.getPluginManager().callEvent(new GameStopEvent(miniGame, session, reason));
         }
+
+        // Broadcast winners (set by scripts during GameStopEvent)
+        var sessionWinners = session.getWinners();
+        if (!sessionWinners.isEmpty()) {
+            StringBuilder names = new StringBuilder();
+            for (Player w : sessionWinners) {
+                if (names.length() > 0) names.append(", ");
+                names.append(w.getName());
+            }
+            String winKey = sessionWinners.size() == 1 ? "game.winners.single" : "game.winners.multiple";
+            for (Player member : session.getMembers()) {
+                Messages.send(member, winKey, names.toString());
+            }
+        }
+        session.clearWinners();
 
         // Auto-cleanup after scripts have run, before role transitions
         if (arena != null && arena.getWorld() != null) {

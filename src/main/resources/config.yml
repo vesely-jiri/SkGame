@@ -32,6 +32,8 @@ session:
   # When true, the first LOBBY member (insertion order) becomes host if current host leaves.
   # When false, any host departure immediately disbands the party (HOST_LEAVE reason).
   auto-promote-host: true
+  # When false (default), host cannot change minigame/map/rounds while game is STARTING or STARTED.
+  allow-mid-game-changes: false
 
 # --- Spectate browser ---
 spectate:

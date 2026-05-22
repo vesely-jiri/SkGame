@@ -33,6 +33,7 @@ public class Session {
     private int totalRounds = 1;
     private int currentRound = 0;
     private boolean allowSpectate = SkGame.getInstance().getSpectateDefaultAllow();
+    private List<Player> winners = new ArrayList<>();
 
     public Session(String id, Player host, MiniGame miniGame,
                    SessionState state, GameMap map, Set<Player> players, Set<Player> spectators,
@@ -173,6 +174,10 @@ public class Session {
 
     public boolean isAllowSpectate() { return allowSpectate; }
     public void setAllowSpectate(boolean allowSpectate) { this.allowSpectate = allowSpectate; }
+
+    public List<Player> getWinners() { return Collections.unmodifiableList(winners); }
+    public void setWinners(List<Player> w) { this.winners = new ArrayList<>(w); }
+    public void clearWinners() { this.winners.clear(); }
 
     public Object getValue(String key, boolean isTemporary) {
         return getMap(isTemporary).get(key);
