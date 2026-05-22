@@ -7,6 +7,10 @@
 
 session:
   created: "&aSession vytvořena"
+  leave:
+    notification: "&7Opustil jsi session"
+  disband:
+    notification: "&7Session zanikla ({0})"
   error:
     already-in-session: "&cJiž jsi v session"
   stop:

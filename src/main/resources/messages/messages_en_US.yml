@@ -13,6 +13,10 @@
 
 session:
   created: "&aSession created"
+  leave:
+    notification: "&7You left the session"
+  disband:
+    notification: "&7Session disbanded ({0})"
   error:
     already-in-session: "&cYou are already in a session"
   stop:

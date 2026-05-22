@@ -22,6 +22,7 @@ import cz.nox.skgame.api.region.Region;
 import cz.nox.skgame.core.game.PlayerManager;
 import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.region.ArenaSlot;
+import cz.nox.skgame.api.messages.Messages;
 import cz.nox.skgame.util.PlayerResetter;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -139,6 +140,8 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager {
         }
 
         playerManager.getPlayer(player).removeValues(true);
+
+        Messages.send(player, "session.leave.notification");
 
         if (!partyManager.tryPromoteHost(session, player)) {
             disbandSession(session, partyManager.disbandReasonForHostLeave());
@@ -280,6 +283,10 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager {
 
     @Override
     public void disbandSession(Session session, DisbandReason reason) {
+        String reasonName = reason.name().toLowerCase().replace('_', ' ');
+        for (Player member : session.getMembers()) {
+            Messages.send(member, "session.disband.notification", reasonName);
+        }
         partyManager.onSessionDisbanded(session.getId());
         Bukkit.getPluginManager().callEvent(new SessionDisbandEvent(session, reason));
         sessionManager.deleteSession(session.getId());
