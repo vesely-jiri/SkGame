@@ -10,6 +10,7 @@ import cz.nox.skgame.api.gui.event.SessionGuiOpenEvent;
 import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
+import cz.nox.skgame.api.game.model.SessionVisibility;
 import cz.nox.skgame.api.game.model.type.DisbandReason;
 import cz.nox.skgame.api.game.model.type.GameStartReason;
 import cz.nox.skgame.api.game.model.type.SessionRole;
@@ -20,6 +21,7 @@ import cz.nox.skgame.api.gui.GuiItem;
 import cz.nox.skgame.api.messages.Messages;
 import cz.nox.skgame.core.game.PlayerManager;
 import cz.nox.skgame.core.game.SessionManager;
+import cz.nox.skgame.core.util.GamePlayerKeys;
 import cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -174,16 +176,16 @@ public class SessionGuiService implements Listener {
         }));
 
         // Slot 26 — Lobby mode toggle (host-only)
-        String mode = session.getValue("mode", false) instanceof String s ? s : "public";
+        boolean isPublic = session.getVisibility() == SessionVisibility.PUBLIC;
         builder.slot(26, GuiItem.of(Material.OMINOUS_TRIAL_KEY)
                 .name("&7&lLobby mode")
-                .lore(legacy("public".equals(mode) ? "&aPublic&7/Private" : "&7Public/&aPrivate"))
+                .lore(legacy(isPublic ? "&aPublic&7/Private" : "&7Public/&aPrivate"))
                 .onClick(e -> {
                     Player p = (Player) e.getWhoClicked();
                     if (isMidGameLocked(session, p)) return;
                     if (!isHostOnly(p, session)) return;
-                    String cur = session.getValue("mode", false) instanceof String str ? str : "public";
-                    session.setValue("mode", "public".equals(cur) ? "private" : "public", false);
+                    session.setVisibility(session.getVisibility() == SessionVisibility.PUBLIC
+                            ? SessionVisibility.PRIVATE : SessionVisibility.PUBLIC);
                     update(session);
                 }));
 
@@ -215,7 +217,7 @@ public class SessionGuiService implements Listener {
                 }));
 
         // Slot 43 — Ready toggle (shows viewer's own ready state)
-        boolean viewerReady = Boolean.TRUE.equals(pm.getPlayer(viewer).getValue("ready", true));
+        boolean viewerReady = Boolean.TRUE.equals(pm.getPlayer(viewer).getValue(GamePlayerKeys.READY, true));
         builder.slot(43, GuiItem.of(viewerReady ? Material.LIME_STAINED_GLASS_PANE : Material.ORANGE_STAINED_GLASS_PANE)
                 .name(viewerReady ? "&aReady" : "&cNot ready")
                 .onClick(e -> {
@@ -228,8 +230,8 @@ public class SessionGuiService implements Listener {
                         Messages.send(p, "gui.session.error.no-map");
                         return;
                     }
-                    boolean wasReady = Boolean.TRUE.equals(pm.getPlayer(p).getValue("ready", true));
-                    pm.getPlayer(p).setValue("ready", !wasReady, true);
+                    boolean wasReady = Boolean.TRUE.equals(pm.getPlayer(p).getValue(GamePlayerKeys.READY, true));
+                    pm.getPlayer(p).setValue(GamePlayerKeys.READY, !wasReady, true);
                     update(session);
                     // Ready-check uses LOBBY members only — spectators do not count (per design)
                     if (allLobbyMembersReady(session, pm)) {
@@ -268,7 +270,7 @@ public class SessionGuiService implements Listener {
         for (Player member : displayMembers) {
             if (idx >= PLAYER_SLOTS.length) break;
             boolean isHost = member.equals(session.getHost());
-            boolean rawReady = Boolean.TRUE.equals(pm.getPlayer(member).getValue("ready", true));
+            boolean rawReady = Boolean.TRUE.equals(pm.getPlayer(member).getValue(GamePlayerKeys.READY, true));
             boolean isReady = state != SessionState.LOBBY || rawReady;
             boolean applyGlow = state == SessionState.LOBBY && rawReady;
             builder.slot(PLAYER_SLOTS[idx++], buildPlayerHead(member, isHost, isReady, applyGlow, viewer));
@@ -290,7 +292,7 @@ public class SessionGuiService implements Listener {
         // Opt-in status lore (STARTED+SPECTATOR viewer only)
         boolean viewerIsSpectator = session.getRole(viewer) == SessionRole.SPECTATOR;
         if (viewerIsSpectator && session.getState() == SessionState.STARTED) {
-            boolean wantsJoin = Boolean.TRUE.equals(pm.getPlayer(viewer).getValue("join_party_after_game", true));
+            boolean wantsJoin = Boolean.TRUE.equals(pm.getPlayer(viewer).getValue(GamePlayerKeys.JOIN_PARTY_AFTER_GAME, true));
             lore.add(Component.empty());
             lore.add(legacy(wantsJoin ? "&aWill join party after this game" : "&7Click to join party after this game"));
         }
@@ -316,8 +318,8 @@ public class SessionGuiService implements Listener {
                     if (role == SessionRole.SPECTATOR) {
                         if (s.getState() == SessionState.STARTED) {
                             // Queue opt-in for next round; stay spectator for the current game
-                            boolean current = Boolean.TRUE.equals(pm.getPlayer(p).getValue("join_party_after_game", true));
-                            pm.getPlayer(p).setValue("join_party_after_game", !current, true);
+                            boolean current = Boolean.TRUE.equals(pm.getPlayer(p).getValue(GamePlayerKeys.JOIN_PARTY_AFTER_GAME, true));
+                            pm.getPlayer(p).setValue(GamePlayerKeys.JOIN_PARTY_AFTER_GAME, !current, true);
                             Messages.send(p, !current ? "session.spectator.queued-join" : "session.spectator.queued-leave");
                             update(s);
                         } else {
@@ -415,7 +417,7 @@ public class SessionGuiService implements Listener {
     private boolean allLobbyMembersReady(Session session, PlayerManager pm) {
         Set<Player> lobby = session.getLobbyMembers();
         if (lobby.isEmpty()) return false;
-        return lobby.stream().allMatch(p -> Boolean.TRUE.equals(pm.getPlayer(p).getValue("ready", true)));
+        return lobby.stream().allMatch(p -> Boolean.TRUE.equals(pm.getPlayer(p).getValue(GamePlayerKeys.READY, true)));
     }
 
     private int getRounds(Session session) {

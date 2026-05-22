@@ -1,6 +1,7 @@
 package cz.nox.skgame.core.command.subcommands;
 
 import cz.nox.skgame.api.game.model.Session;
+import cz.nox.skgame.api.game.model.SessionVisibility;
 import cz.nox.skgame.api.messages.Messages;
 import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl;
@@ -33,7 +34,7 @@ public class JoinSubcommand {
         String partial = args.length >= 2 ? args[1].toLowerCase() : "";
         // Only expose public session IDs — private sessions are not discoverable
         return Arrays.stream(SessionManager.getInstance().getAllSessions())
-                .filter(s -> !"private".equals(s.getValue("mode", false)))
+                .filter(s -> s.getVisibility() == SessionVisibility.PUBLIC)
                 .map(Session::getId)
                 .filter(id -> id.startsWith(partial))
                 .collect(Collectors.toList());

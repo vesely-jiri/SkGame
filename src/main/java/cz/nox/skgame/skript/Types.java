@@ -11,6 +11,7 @@ import cz.nox.skgame.api.game.model.CustomValue;
 import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
+import cz.nox.skgame.api.game.model.SessionVisibility;
 import cz.nox.skgame.api.game.model.type.CustomValuePlurality;
 import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.api.region.Region;
@@ -273,6 +274,34 @@ public class Types {
                     @Override
                     public String toVariableNameString(SessionState sessionState) {
                         return "sessionState:" + sessionState.toString();
+                    }
+                })
+        );
+
+        Classes.registerClass(new EnumClassInfo<>(SessionVisibility.class, "sessionvisibility", "session visibilities", new SimpleLiteral<>(SessionVisibility.PUBLIC, true))
+                .user("session ?visibilit(y|ies)")
+                .name("Session Visibility")
+                .description("Represents the visibility of a session. PUBLIC (default) or PRIVATE.")
+                .since("1.0.0")
+                .parser(new Parser<>() {
+
+                    @Override
+                    public SessionVisibility parse(String input, ParseContext context) {
+                        try {
+                            return SessionVisibility.valueOf(input.trim().toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            return null;
+                        }
+                    }
+
+                    @Override
+                    public String toString(SessionVisibility v, int i) {
+                        return v.name().toLowerCase();
+                    }
+
+                    @Override
+                    public String toVariableNameString(SessionVisibility v) {
+                        return "sessionVisibility:" + v.name();
                     }
                 })
         );

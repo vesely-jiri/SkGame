@@ -5,6 +5,7 @@ import cz.nox.skgame.api.game.event.GameStopEvent;
 import cz.nox.skgame.api.game.event.SessionCreateEvent;
 import cz.nox.skgame.api.game.event.SessionDisbandEvent;
 import cz.nox.skgame.api.game.model.Session;
+import cz.nox.skgame.api.game.model.SessionVisibility;
 import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.api.gui.GuiBuilder;
 import cz.nox.skgame.api.gui.GuiHolder;
@@ -164,7 +165,7 @@ public class MainGuiService implements Listener {
         // Dynamic session list — LOBBY + public only, sorted oldest-first
         List<Session> lobbySessions = Arrays.stream(sm.getAllSessions())
                 .filter(s -> s.getState() == SessionState.LOBBY
-                        && !"private".equals(s.getValue("mode", false)))
+                        && s.getVisibility() == SessionVisibility.PUBLIC)
                 .sorted(Comparator.comparingLong(Session::getCreatedAt))
                 .collect(Collectors.toList());
 

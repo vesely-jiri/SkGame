@@ -18,6 +18,7 @@ import cz.nox.skgame.api.game.model.type.DisbandReason;
 import cz.nox.skgame.api.game.model.type.GameStartReason;
 import cz.nox.skgame.api.game.model.type.SessionRole;
 import cz.nox.skgame.api.game.model.type.SessionState;
+import cz.nox.skgame.core.util.GamePlayerKeys;
 import cz.nox.skgame.api.region.Region;
 import cz.nox.skgame.core.game.PlayerManager;
 import cz.nox.skgame.core.game.SessionManager;
@@ -300,7 +301,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         // SPECTATOR → opt-in (join_party_after_game flag set) becomes LOBBY; otherwise evicted
         for (Player p : activeSpectators) {
             boolean wantsJoin = Boolean.TRUE.equals(
-                    playerManager.getPlayer(p).getValue("join_party_after_game", true));
+                    playerManager.getPlayer(p).getValue(GamePlayerKeys.JOIN_PARTY_AFTER_GAME, true));
             playerManager.getPlayer(p).removeValues(true);
             if (wantsJoin) {
                 session.setRole(p, SessionRole.LOBBY); // fires PlayerRoleChangeEvent

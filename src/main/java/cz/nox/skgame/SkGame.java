@@ -116,6 +116,7 @@ public class SkGame extends JavaPlugin {
             "cz.nox.skgame.skript.expressions.sessions.property.ExprSessionCurrentRound",
             "cz.nox.skgame.skript.expressions.sessions.property.ExprAllowSpectate",
             "cz.nox.skgame.skript.expressions.sessions.property.ExprSessionShuffle",
+            "cz.nox.skgame.skript.expressions.sessions.property.ExprSessionVisibility",
             "cz.nox.skgame.skript.expressions.sessions.ExprShuffledSessionPlayers",
             // Expressions — minigames
             "cz.nox.skgame.skript.expressions.minigames.ExprMiniGameFromId",

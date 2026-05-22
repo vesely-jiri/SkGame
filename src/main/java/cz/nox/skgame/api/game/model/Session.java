@@ -34,6 +34,7 @@ public class Session {
     private int currentRound = 0;
     private boolean allowSpectate = SkGame.getInstance().getSpectateDefaultAllow();
     private boolean shuffle = false;
+    private SessionVisibility visibility = SessionVisibility.PUBLIC;
     private List<Player> winners = new ArrayList<>();
 
     public Session(String id, Player host, MiniGame miniGame,
@@ -178,6 +179,9 @@ public class Session {
 
     public boolean isShuffle() { return shuffle; }
     public void setShuffle(boolean shuffle) { this.shuffle = shuffle; }
+
+    public SessionVisibility getVisibility() { return visibility; }
+    public void setVisibility(SessionVisibility visibility) { this.visibility = visibility; }
 
     public List<Player> getWinners() { return Collections.unmodifiableList(winners); }
     public void setWinners(List<Player> w) { this.winners = new ArrayList<>(w); }
