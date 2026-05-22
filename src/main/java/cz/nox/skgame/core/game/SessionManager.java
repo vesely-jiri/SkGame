@@ -35,10 +35,9 @@ public class SessionManager implements Listener {
         Session session;
         if (!sessions.containsKey(id)) {
             session = new Session(id);
-            Event e = new SessionCreateEvent(session);
-            Bukkit.getPluginManager().callEvent(e);
-            sessions.put(id,session);
+            sessions.put(id, session);
             setLastCreatedSession(session);
+            Bukkit.getPluginManager().callEvent(new SessionCreateEvent(session));
         } else {
             session = sessions.get(id);
         }
