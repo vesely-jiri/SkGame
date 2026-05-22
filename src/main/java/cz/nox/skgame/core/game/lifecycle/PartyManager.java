@@ -53,13 +53,24 @@ class PartyManager {
     /**
      * Handle host-leave logic. Call after the leaving player has been removed from their role set.
      *
-     * @return true  — no disband needed (player wasn't host, host promoted, or game running)
+     * @param explicitLeave true = player chose to leave (GUI/command); false = server disconnect.
+     *                      Matters in STARTED state: explicit leave promotes a new host immediately;
+     *                      disconnect leaves host = null (Phase 9 design for mid-game disconnect).
+     * @return true  — no disband needed (player wasn't host, host promoted, or disconnect path)
      * @return false — disband needed; use {@link #disbandReasonForHostLeave()} for the reason
      */
-    boolean tryPromoteHost(Session session, Player leaving) {
+    boolean tryPromoteHost(Session session, Player leaving, boolean explicitLeave) {
         if (!leaving.equals(session.getHost())) return true;
         if (session.getState() != SessionState.LOBBY) {
-            // Host concept irrelevant mid-game — clear, no disband
+            if (explicitLeave && autoPromoteHost) {
+                Set<Player> players = session.getPlayers();
+                if (!players.isEmpty()) {
+                    session.setHost(players.iterator().next());
+                    return true;
+                }
+                return false; // explicit leave, no remaining players — disband
+            }
+            // Disconnect or auto-promote disabled: clear host, game continues without one
             session.setHost(null);
             return true;
         }

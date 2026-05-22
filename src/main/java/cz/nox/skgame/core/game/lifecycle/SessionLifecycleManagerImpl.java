@@ -120,6 +120,16 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
 
     @Override
     public void leaveSession(Player player) {
+        leaveSessionInternal(player, true);
+    }
+
+    // BUG 8: server disconnect — explicit=false so mid-game host stays null (Phase 9 design)
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent e) {
+        leaveSessionInternal(e.getPlayer(), false);
+    }
+
+    private void leaveSessionInternal(Player player, boolean explicitLeave) {
         Session session = sessionManager.getSession(player);
         if (session == null) return;
 
@@ -148,21 +158,15 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
 
         Messages.send(player, "session.leave.notification");
 
-        if (!partyManager.tryPromoteHost(session, player)) {
+        if (!partyManager.tryPromoteHost(session, player, explicitLeave)) {
+            if (stateBeforeLeave == SessionState.STARTED) endGame(session, "abandoned");
             disbandSession(session, partyManager.disbandReasonForHostLeave());
             return;
         }
         if (partyManager.shouldAutoDisband(session)) {
-            // BUG 9: last player left during a running game — clean arena before disband
             if (stateBeforeLeave == SessionState.STARTED) endGame(session, "abandoned");
             disbandSession(session, DisbandReason.EMPTY_PARTY);
         }
-    }
-
-    // BUG 8: route server quit through leaveSession so host promotion + arena cleanup fire
-    @EventHandler
-    public void onPlayerQuit(PlayerQuitEvent e) {
-        leaveSession(e.getPlayer());
     }
 
     @Override
