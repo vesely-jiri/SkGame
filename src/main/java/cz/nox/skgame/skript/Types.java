@@ -334,7 +334,7 @@ public class Types {
                 })
         );
 
-        Classes.registerClass(new ClassInfo<>(Region.class, "region")
+        Classes.registerClass(new ClassInfo<>(Region.class, "skgameregion")
                 .user("regions?")
                 .name("Region")
                 .description(

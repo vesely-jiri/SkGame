@@ -32,7 +32,7 @@ public class EffSectionMgAuthor extends Effect {
     private Expression<String> value;
 
     static {
-        Skript.registerEffect(EffSectionMgAuthor.class, "author: %text%");
+        Skript.registerEffect(EffSectionMgAuthor.class, "author: %string%");
     }
 
     @SuppressWarnings("unchecked")

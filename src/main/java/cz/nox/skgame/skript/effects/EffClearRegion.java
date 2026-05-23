@@ -28,7 +28,7 @@ public class EffClearRegion extends Effect {
 
     static {
         Skript.registerEffect(EffClearRegion.class,
-                "clear [all] entities (in|from) [region] %region%"
+                "clear [all] entities (in|from) [region] %skgameregion%"
         );
     }
 

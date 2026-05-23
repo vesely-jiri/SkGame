@@ -33,7 +33,7 @@ public class EffSectionMgDescription extends Effect {
     private Expression<String> value;
 
     static {
-        Skript.registerEffect(EffSectionMgDescription.class, "description: %text%");
+        Skript.registerEffect(EffSectionMgDescription.class, "description: %string%");
     }
 
     @SuppressWarnings("unchecked")

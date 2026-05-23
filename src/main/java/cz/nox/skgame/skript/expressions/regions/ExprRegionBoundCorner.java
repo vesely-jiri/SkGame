@@ -31,8 +31,8 @@ public class ExprRegionBoundCorner extends SimpleExpression<Location> {
 
     static {
         Skript.registerExpression(ExprRegionBoundCorner.class, Location.class, ExpressionType.PROPERTY,
-                "min[imum] [corner] of [region] %region%",
-                "max[imum] [corner] of [region] %region%"
+                "min[imum] [corner] of [region] %skgameregion%",
+                "max[imum] [corner] of [region] %skgameregion%"
         );
     }
 
