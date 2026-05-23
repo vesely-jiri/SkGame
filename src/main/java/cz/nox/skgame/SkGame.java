@@ -92,6 +92,7 @@ public class SkGame extends JavaPlugin {
             "cz.nox.skgame.skript.events.EvtMapsGuiOpen",
             "cz.nox.skgame.skript.events.EvtAdminGuiOpen",
             // Sections
+            "cz.nox.skgame.skript.sections.EffSecConfigureSession",
             "cz.nox.skgame.skript.sections.EffSecCreateSession",
             "cz.nox.skgame.skript.sections.EffSecRegisterGameMap",
             "cz.nox.skgame.skript.sections.EffSecRegisterMiniGame",
