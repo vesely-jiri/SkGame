@@ -39,9 +39,13 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.Nullable;
 
+import cz.nox.skgame.core.storage.GameResultsRepository;
+
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Listener {
 
@@ -202,6 +206,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         }
 
         session.setState(SessionState.STARTED);
+        session.setStartedAt(System.currentTimeMillis());
 
         // Claim arena slot if applicable
         GameMap gameMap = session.getGameMap();
@@ -254,6 +259,23 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
 
         // Broadcast winners (set by scripts during GameStopEvent)
         var sessionWinners = session.getWinners();
+
+        // Capture game result data before clearWinners() and role transitions
+        {
+            long endTime = System.currentTimeMillis();
+            long startTime = session.getStartedAt();
+            String sessionId = session.getId();
+            String minigameId = miniGame != null ? miniGame.getId() : "";
+            String gamemapId = session.getGameMap() != null ? session.getGameMap().getId() : "";
+            Set<UUID> playerUuids = session.getPlayers().stream()
+                    .map(Player::getUniqueId).collect(Collectors.toSet());
+            Set<UUID> winnerUuids = sessionWinners.stream()
+                    .map(Player::getUniqueId).collect(Collectors.toSet());
+            GameResultsRepository.getInstance().recordAsync(
+                    plugin, sessionId, minigameId, gamemapId,
+                    startTime, endTime, reason, playerUuids, winnerUuids);
+        }
+
         if (!sessionWinners.isEmpty()) {
             StringBuilder names = new StringBuilder();
             for (Player w : sessionWinners) {

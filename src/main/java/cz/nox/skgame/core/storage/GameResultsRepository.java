@@ -1,0 +1,155 @@
+package cz.nox.skgame.core.storage;
+
+import cz.nox.skgame.SkGame;
+import org.bukkit.Bukkit;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
+public class GameResultsRepository {
+
+    private static GameResultsRepository instance;
+
+    private GameResultsRepository() {}
+
+    public static GameResultsRepository getInstance() {
+        if (instance == null) instance = new GameResultsRepository();
+        return instance;
+    }
+
+    /**
+     * Enqueues an async task to persist one completed game result.
+     * All Player-derived data must be converted to UUIDs/strings before calling (main-thread capture).
+     */
+    public void recordAsync(SkGame plugin, String sessionId, String minigameId, String gamemapId,
+                            long startTime, long endTime, String reason,
+                            Set<UUID> playerUuids, Set<UUID> winnerUuids) {
+        if (!DatabaseManager.getInstance().isAvailable()) return;
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                insert(sessionId, minigameId, gamemapId, startTime, endTime, reason, playerUuids, winnerUuids);
+            } catch (SQLException e) {
+                plugin.getLogUtil().warning("Failed to record game result for session " + sessionId + ": " + e.getMessage());
+            }
+        });
+    }
+
+    private void insert(String sessionId, String minigameId, String gamemapId,
+                        long startTime, long endTime, String reason,
+                        Set<UUID> playerUuids, Set<UUID> winnerUuids) throws SQLException {
+        DatabaseManager db = DatabaseManager.getInstance();
+        try (Connection conn = db.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                long resultId = insertGameResult(conn, sessionId, minigameId, gamemapId,
+                        startTime, endTime, reason, winnerUuids);
+                insertParticipants(conn, resultId, playerUuids, winnerUuids);
+                conn.commit();
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        }
+    }
+
+    private long insertGameResult(Connection conn, String sessionId, String minigameId, String gamemapId,
+                                  long startTime, long endTime, String reason,
+                                  Set<UUID> winnerUuids) throws SQLException {
+        String winners = winnerUuids.stream().map(UUID::toString)
+                .reduce((a, b) -> a + "," + b).orElse("");
+        try (PreparedStatement ps = conn.prepareStatement(
+                "INSERT INTO game_results(session_id,minigame_id,gamemap_id,start_time,end_time,reason,winners) VALUES(?,?,?,?,?,?,?)",
+                Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, sessionId);
+            ps.setString(2, minigameId);
+            ps.setString(3, gamemapId);
+            ps.setLong(4, startTime);
+            ps.setLong(5, endTime);
+            ps.setString(6, reason);
+            ps.setString(7, winners);
+            ps.executeUpdate();
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (keys.next()) return keys.getLong(1);
+                throw new SQLException("No generated key for game_results insert");
+            }
+        }
+    }
+
+    private void insertParticipants(Connection conn, long resultId,
+                                    Set<UUID> playerUuids, Set<UUID> winnerUuids) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(
+                "INSERT INTO game_participants(game_result_id,player_uuid,is_winner) VALUES(?,?,?)")) {
+            for (UUID uuid : playerUuids) {
+                ps.setLong(1, resultId);
+                ps.setString(2, uuid.toString());
+                ps.setInt(3, winnerUuids.contains(uuid) ? 1 : 0);
+                ps.addBatch();
+            }
+            ps.executeBatch();
+        }
+    }
+
+    // ── Query helpers for future leaderboard use ─────────────────────────────
+
+    public int getWinsByMinigame(UUID playerUuid, String minigameId) {
+        if (!DatabaseManager.getInstance().isAvailable()) return 0;
+        String sql = """
+                SELECT COUNT(*) FROM game_participants p
+                JOIN game_results r ON p.game_result_id = r.id
+                WHERE p.player_uuid = ? AND r.minigame_id = ? AND p.is_winner = 1""";
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, playerUuid.toString());
+            ps.setString(2, minigameId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        } catch (SQLException e) {
+            return 0;
+        }
+    }
+
+    public List<Map<String, Object>> getResultsForPlayer(UUID playerUuid, int limit) {
+        if (!DatabaseManager.getInstance().isAvailable()) return List.of();
+        String sql = """
+                SELECT r.id, r.minigame_id, r.gamemap_id, r.start_time, r.end_time, r.reason,
+                       p.is_winner
+                FROM game_participants p
+                JOIN game_results r ON p.game_result_id = r.id
+                WHERE p.player_uuid = ?
+                ORDER BY r.end_time DESC
+                LIMIT ?""";
+        List<Map<String, Object>> results = new ArrayList<>();
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, playerUuid.toString());
+            ps.setInt(2, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    results.add(Map.of(
+                            "id",          rs.getLong("id"),
+                            "minigame_id", rs.getString("minigame_id"),
+                            "gamemap_id",  rs.getString("gamemap_id"),
+                            "start_time",  rs.getLong("start_time"),
+                            "end_time",    rs.getLong("end_time"),
+                            "reason",      rs.getString("reason") != null ? rs.getString("reason") : "",
+                            "is_winner",   rs.getInt("is_winner") == 1
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            return List.of();
+        }
+        return results;
+    }
+}

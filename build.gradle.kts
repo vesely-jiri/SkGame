@@ -20,6 +20,8 @@ repositories {
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT")
     compileOnly("com.github.SkriptLang:Skript:2.13.0")
+    implementation("com.zaxxer:HikariCP:5.1.0")
+    implementation("org.xerial:sqlite-jdbc:3.45.3.0")
 }
 
 tasks {

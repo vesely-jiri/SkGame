@@ -61,6 +61,12 @@ arena:
     # Remove primed TNT entities (subset; only applies when entities: false).
     primed-tnt: true
 
+# --- Storage ---
+storage:
+  type: sqlite    # Supported: sqlite. Future: mysql, postgres.
+  sqlite:
+    file: skgame.db   # Relative to plugins/SkGame/storage/
+
 # --- Messages ---
 messages:
   forced-locale: ~        # null = use per-player locale
