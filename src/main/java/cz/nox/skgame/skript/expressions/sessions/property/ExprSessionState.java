@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 @Name("Session - State")
 @Description({
         "Represents the current state of a game session.",
-        "You can retrieve or change the session's state, such as waiting, running, or stopped.",
+        "Valid states: LOBBY (resting), STARTING (countdown), STARTED (active game), STOPPED (transient — disband only).",
         "",
         "Setting this value changes the session's active state.",
         "Resetting this value sets the state back to 'LOBBY'.",
@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 })
 @Examples({
         "set {_session} to session with id \"the_session_id\"",
-        "if state of {_session} is RUNNING:",
+        "if state of {_session} is STARTED:",
         "    broadcast \"The session is running!\"",
         "",
         "set state of {_session} to LOBBY",
