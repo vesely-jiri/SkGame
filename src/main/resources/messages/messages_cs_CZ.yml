@@ -78,6 +78,29 @@ gui:
     title: "&3Minihry"
   maps:
     title: "&2Dostupné mapy pro minihru"
+  leaderboard:
+    button:
+      title: "&6&lŽebříčky"
+      lore: "&7Zobraz nejlepší hráče pro každou minihru"
+      unavailable: "&8Žebříčky (databáze vypnuta)"
+    picker:
+      title: "&6Žebříčky — Vyber minihru"
+      label: "&6&lŽebříčky"
+      click-hint: "&7Klikni pro zobrazení žebříčku"
+    title: "&6Žebříček — {0}"
+    loading: "&7Načítám..."
+    empty: "&7Žádné výsledky"
+    back: "&c&lZpět"
+    sort:
+      wins: "&6Řadit: Výhry"
+      plays: "&7Řadit: Hry"
+      win-rate: "&bŘadit: Výhernost"
+    entry:
+      wins: "&6Výhry: &f{0}"
+      plays: "&7Hry: &f{0}"
+      win-rate: "&bVýhernost: &f{0}"
+      wins-lore: "&6Výhry: &f{0}"
+      plays-lore: "&7Hry: &f{0}"
   admin:
     title: "&cAdmin rozhraní"
     enum-picker:

@@ -1,7 +1,10 @@
 package cz.nox.skgame.core.storage;
 
 import cz.nox.skgame.SkGame;
+import cz.nox.skgame.api.statistics.GameResult;
+import cz.nox.skgame.api.statistics.LeaderboardEntry;
 import org.bukkit.Bukkit;
+import org.jetbrains.annotations.Nullable;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -99,7 +102,7 @@ public class GameResultsRepository {
         }
     }
 
-    // ── Query helpers for future leaderboard use ─────────────────────────────
+    // ── Query helpers ────────────────────────────────────────────────────────
 
     public int getWinsByMinigame(UUID playerUuid, String minigameId) {
         if (!DatabaseManager.getInstance().isAvailable()) return 0;
@@ -151,5 +154,100 @@ public class GameResultsRepository {
             return List.of();
         }
         return results;
+    }
+
+    public List<GameResult> getGameResults(UUID playerUuid, @Nullable String minigameId, int limit) {
+        if (!DatabaseManager.getInstance().isAvailable()) return List.of();
+        String sql = "SELECT r.id, r.minigame_id, r.gamemap_id, r.start_time, r.end_time, r.reason, p.is_winner"
+                + " FROM game_participants p JOIN game_results r ON p.game_result_id = r.id"
+                + " WHERE p.player_uuid = ?"
+                + (minigameId != null ? " AND r.minigame_id = ?" : "")
+                + " ORDER BY r.end_time DESC LIMIT ?";
+        List<GameResult> results = new ArrayList<>();
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            int idx = 1;
+            ps.setString(idx++, playerUuid.toString());
+            if (minigameId != null) ps.setString(idx++, minigameId);
+            ps.setInt(idx, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    results.add(new GameResult(
+                            rs.getLong("id"),
+                            rs.getString("minigame_id"),
+                            rs.getString("gamemap_id"),
+                            rs.getLong("start_time"),
+                            rs.getLong("end_time"),
+                            rs.getString("reason") != null ? rs.getString("reason") : "",
+                            rs.getInt("is_winner") == 1
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            return List.of();
+        }
+        return results;
+    }
+
+    public int getPlayCount(UUID playerUuid, String minigameId) {
+        if (!DatabaseManager.getInstance().isAvailable()) return 0;
+        String sql = "SELECT COUNT(*) FROM game_participants p"
+                + " JOIN game_results r ON p.game_result_id = r.id"
+                + " WHERE p.player_uuid = ? AND r.minigame_id = ?";
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, playerUuid.toString());
+            ps.setString(2, minigameId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        } catch (SQLException e) {
+            return 0;
+        }
+    }
+
+    public List<LeaderboardEntry> getTopPlayersByWins(String minigameId, int limit) {
+        String sql = "SELECT p.player_uuid, SUM(p.is_winner) as wins, COUNT(*) as plays"
+                + " FROM game_participants p JOIN game_results r ON p.game_result_id = r.id"
+                + " WHERE r.minigame_id = ? GROUP BY p.player_uuid ORDER BY wins DESC LIMIT ?";
+        return queryLeaderboard(sql, minigameId, limit, -1);
+    }
+
+    public List<LeaderboardEntry> getTopPlayersByPlays(String minigameId, int limit) {
+        String sql = "SELECT p.player_uuid, SUM(p.is_winner) as wins, COUNT(*) as plays"
+                + " FROM game_participants p JOIN game_results r ON p.game_result_id = r.id"
+                + " WHERE r.minigame_id = ? GROUP BY p.player_uuid ORDER BY plays DESC LIMIT ?";
+        return queryLeaderboard(sql, minigameId, limit, -1);
+    }
+
+    public List<LeaderboardEntry> getTopPlayersByWinRate(String minigameId, int limit, int minPlays) {
+        String sql = "SELECT p.player_uuid, SUM(p.is_winner) as wins, COUNT(*) as plays"
+                + " FROM game_participants p JOIN game_results r ON p.game_result_id = r.id"
+                + " WHERE r.minigame_id = ? GROUP BY p.player_uuid HAVING plays >= ?"
+                + " ORDER BY CAST(SUM(p.is_winner) AS REAL) / COUNT(*) DESC LIMIT ?";
+        return queryLeaderboard(sql, minigameId, limit, minPlays);
+    }
+
+    private List<LeaderboardEntry> queryLeaderboard(String sql, String minigameId, int limit, int minPlays) {
+        if (!DatabaseManager.getInstance().isAvailable()) return List.of();
+        List<LeaderboardEntry> entries = new ArrayList<>();
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            int idx = 1;
+            ps.setString(idx++, minigameId);
+            if (minPlays >= 0) ps.setInt(idx++, minPlays);
+            ps.setInt(idx, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    UUID uuid = UUID.fromString(rs.getString("player_uuid"));
+                    String name = Bukkit.getOfflinePlayer(uuid).getName();
+                    if (name == null) name = "Unknown (" + uuid.toString().substring(0, 8) + ")";
+                    entries.add(new LeaderboardEntry(uuid, name, rs.getInt("wins"), rs.getInt("plays")));
+                }
+            }
+        } catch (SQLException e) {
+            return List.of();
+        }
+        return entries;
     }
 }

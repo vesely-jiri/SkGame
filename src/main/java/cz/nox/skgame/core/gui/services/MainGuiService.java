@@ -15,8 +15,10 @@ import cz.nox.skgame.api.messages.Messages;
 import cz.nox.skgame.SkGame;
 import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl;
+import cz.nox.skgame.core.gui.services.LeaderboardGuiService;
 import cz.nox.skgame.core.gui.services.SessionGuiService;
 import cz.nox.skgame.core.gui.services.SpectateGuiService;
+import cz.nox.skgame.core.storage.DatabaseManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
@@ -137,12 +139,16 @@ public class MainGuiService implements Listener {
                     }
                 }));
 
-        // Slot 19 — Server event placeholder
-        // NOTE: .sk broadcasts to all; Java port sends to clicking player only.
-        builder.slot(19, GuiItem.of(Material.BARRIER)
-                .name("&cThis function was not implemented yet")
-                .onClick(e -> e.getWhoClicked().sendMessage(
-                        legacy("&cThis function was not implemented yet"))));
+        // Slot 19 — Leaderboards
+        if (DatabaseManager.getInstance().isAvailable()) {
+            builder.slot(19, GuiItem.of(Material.NETHER_STAR)
+                    .name(Messages.getComponent("gui.leaderboard.button.title", viewer))
+                    .lore(Messages.getComponent("gui.leaderboard.button.lore", viewer))
+                    .onClick(e -> LeaderboardGuiService.getInstance().openMinigamePicker((Player) e.getWhoClicked())));
+        } else {
+            builder.slot(19, GuiItem.of(Material.BARRIER)
+                    .name(Messages.getComponent("gui.leaderboard.button.unavailable", viewer)));
+        }
 
         // Slot 45 — Close
         builder.slot(45, GuiItem.of(Material.SPRUCE_DOOR)

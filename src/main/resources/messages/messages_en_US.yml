@@ -87,6 +87,29 @@ gui:
     title: "&3Minigames"
   maps:
     title: "&2Available maps for the minigame"
+  leaderboard:
+    button:
+      title: "&6&lLeaderboards"
+      lore: "&7View top players for each minigame"
+      unavailable: "&8Leaderboards (database disabled)"
+    picker:
+      title: "&6Leaderboards — Choose Minigame"
+      label: "&6&lLeaderboards"
+      click-hint: "&7Click to view leaderboard"
+    title: "&6Leaderboard — {0}"
+    loading: "&7Loading..."
+    empty: "&7No results found"
+    back: "&c&lBack"
+    sort:
+      wins: "&6Sort: Wins"
+      plays: "&7Sort: Plays"
+      win-rate: "&bSort: Win Rate"
+    entry:
+      wins: "&6Wins: &f{0}"
+      plays: "&7Plays: &f{0}"
+      win-rate: "&bWin rate: &f{0}"
+      wins-lore: "&6Wins: &f{0}"
+      plays-lore: "&7Plays: &f{0}"
   admin:
     title: "&cAdmin gui"
     enum-picker:

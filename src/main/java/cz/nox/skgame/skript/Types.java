@@ -15,6 +15,7 @@ import cz.nox.skgame.api.game.model.SessionVisibility;
 import cz.nox.skgame.api.game.model.type.CustomValuePlurality;
 import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.api.region.Region;
+import cz.nox.skgame.api.statistics.GameResult;
 import cz.nox.skgame.core.game.GameMapManager;
 import cz.nox.skgame.core.game.MiniGameManager;
 import cz.nox.skgame.core.game.SessionManager;
@@ -528,6 +529,30 @@ public class Types {
                     }
                 })
                 .defaultExpression(new EventValueExpression<>(CustomValue.class))
+        );
+
+        Classes.registerClass(new ClassInfo<>(GameResult.class, "gameresult")
+                .user("game ?results?")
+                .name("Game Result")
+                .description(
+                        "Represents a single completed game result from the database.",
+                        "Access fields with: id, minigame id, gamemap id, start time, end time, reason, winner."
+                )
+                .since("1.0.0")
+                .parser(new Parser<GameResult>() {
+                    @Override
+                    public boolean canParse(ParseContext context) {
+                        return false;
+                    }
+                    @Override
+                    public String toString(GameResult r, int flags) {
+                        return "game result #" + r.id() + " (" + r.minigameId() + ")";
+                    }
+                    @Override
+                    public String toVariableNameString(GameResult r) {
+                        return "gameresult:" + r.id();
+                    }
+                })
         );
     }
 }
