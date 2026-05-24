@@ -1,16 +1,11 @@
 package cz.nox.skgame.skript.expressions.minigames.customValue.property;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
-import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.ExpressionType;
-import ch.njol.skript.lang.SkriptParser;
-import ch.njol.skript.lang.util.SimpleExpression;
-import ch.njol.util.Kleenean;
+import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.util.coll.CollectionUtils;
 import cz.nox.skgame.api.game.model.CustomValue;
 import org.bukkit.event.Event;
@@ -34,29 +29,31 @@ import java.util.List;
         "    set allowed values to \"elimination\", \"deathmatch\""
 })
 @Since("1.0.0")
-public class ExprCustomValueAllowedValues extends SimpleExpression<String> {
-
-    private Expression<CustomValue> customValue;
+public class ExprCustomValueAllowedValues extends SimplePropertyExpression<CustomValue, String> {
 
     static {
-        Skript.registerExpression(ExprCustomValueAllowedValues.class, String.class, ExpressionType.PROPERTY,
-                "[the] allowed values of %customvalue%"
-        );
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public boolean init(Expression<?>[] exprs, int i, Kleenean kleenean, SkriptParser.ParseResult parseResult) {
-        this.customValue = (Expression<CustomValue>) exprs[0];
-        return true;
+        registerDefault(ExprCustomValueAllowedValues.class, String.class,
+                "allowed values", "customvalue");
     }
 
     @Override
-    protected @Nullable String[] get(Event event) {
-        CustomValue cv = this.customValue.getSingle(event);
-        if (cv == null) return null;
-        List<String> vals = cv.getAllowedValues();
-        return vals.isEmpty() ? null : vals.toArray(new String[0]);
+    protected String[] get(Event event, CustomValue[] source) {
+        List<String> result = new ArrayList<>();
+        for (CustomValue cv : source) {
+            result.addAll(cv.getAllowedValues());
+        }
+        return result.toArray(new String[0]);
+    }
+
+    @Nullable
+    @Override
+    public String convert(CustomValue from) {
+        return null; // superseded by get(Event, CustomValue[]) override
+    }
+
+    @Override
+    public boolean isSingle() {
+        return false;
     }
 
     @Override
@@ -70,7 +67,7 @@ public class ExprCustomValueAllowedValues extends SimpleExpression<String> {
 
     @Override
     public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
-        CustomValue cv = this.customValue.getSingle(event);
+        CustomValue cv = getExpr().getSingle(event);
         if (cv == null) return;
         String[] values = (delta == null) ? new String[0] :
                 Arrays.copyOf(delta, delta.length, String[].class);
@@ -91,17 +88,12 @@ public class ExprCustomValueAllowedValues extends SimpleExpression<String> {
     }
 
     @Override
-    public boolean isSingle() {
-        return false;
-    }
-
-    @Override
     public Class<? extends String> getReturnType() {
         return String.class;
     }
 
     @Override
-    public String toString(@Nullable Event e, boolean b) {
-        return "allowed values of " + this.customValue.toString(e, b);
+    protected String getPropertyName() {
+        return "allowed values";
     }
 }
