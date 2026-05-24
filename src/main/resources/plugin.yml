@@ -9,8 +9,7 @@ softdepend: [ SkBee, WorldGuard ]
 commands:
   skgame:
     description: SkGame admin commands
-    usage: /skgame reload messages
-    permission: skgame.admin.reload
+    usage: /skgame <reload|maintenance> [args]
   game:
     description: Open game menu or manage sessions
     usage: /game [admin|spectate <session-id>]

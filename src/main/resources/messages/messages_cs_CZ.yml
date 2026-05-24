@@ -22,6 +22,15 @@ session:
     vote-success: "&aHráči úspěšně odhlasovali ukončení hry"
     no-players: "&cŽádní hráči. Ukončuji hru"
     unknown-error: "&cNeznámá chyba. Ukončuji hru"
+  start:
+    maintenance: "&cServer je v režimu údržby — žádné nové hry nemohou začít"
+  maintenance:
+    round-ending: "&eRežim údržby aktivní — toto je poslední kolo"
+  rejoin:
+    offer: "&eOdpojil ses od session &7{0}&e."
+    expired: "&cČas pro znovupřipojení vypršel"
+    success: "&aZnovupřipojení úspěšné"
+    usage: "&cPoužití: /game rejoin <id-session>"
 
 game:
   winners:
@@ -45,6 +54,11 @@ command:
     usage: "&cPoužití: /game join <id-session>"
     not-found: "&cSession nenalezena: {0}"
     already-in-session: "&cJiž jsi v session"
+  maintenance:
+    enabled: "&eRežim údržby &aaktivován&e. Probíhající hry dohrají aktuální kolo."
+    disabled: "&eRežim údržby &cdeaktivován&e. Hry mohou normálně začínat."
+    status-on: "&eRežim údržby je &aZAPNUT"
+    status-off: "&eRežim údržby je &7VYPNUT"
 
 lobby:
   spawn-set: "&aLobby spawn nastaven na tvou pozici"

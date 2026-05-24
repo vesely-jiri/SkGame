@@ -10,6 +10,7 @@ import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
+import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.statistics.LeaderboardEntry;
 import cz.nox.skgame.core.storage.GameResultsRepository;
 import org.bukkit.Bukkit;
@@ -32,9 +33,9 @@ import java.util.List;
         "TODO: if leaderboard tables grow significantly, switch to async with cached snapshots."
 })
 @Examples({
-        "set {_top::*} to top 10 players of minigame \"koth\"",
-        "set {_top::*} to top 5 players by plays of minigame \"koth\"",
-        "set {_top::*} to top 10 players by win rate with at least 5 plays of minigame \"koth\""
+        "set {_top::*} to top 10 players in minigame \"koth\"",
+        "set {_top::*} to top 5 players by plays in minigame \"koth\"",
+        "set {_top::*} to top 10 players by win rate with at least 5 plays in minigame \"koth\""
 })
 @Since("1.0.0")
 public class ExprTopPlayers extends SimpleExpression<OfflinePlayer> {
@@ -43,14 +44,14 @@ public class ExprTopPlayers extends SimpleExpression<OfflinePlayer> {
     private int pattern;
     private Expression<Number> limit;
     private Expression<Number> minPlays;
-    private Expression<String> minigameId;
+    private Expression<MiniGame> minigame;
 
     static {
         Skript.registerExpression(ExprTopPlayers.class, OfflinePlayer.class, ExpressionType.COMBINED,
-                "top %number% players [by wins] of minigame %string%",
-                "top %number% players by plays of minigame %string%",
-                "top %number% players by win[ ]rate of minigame %string%",
-                "top %number% players by win[ ]rate with at least %number% plays of minigame %string%"
+                "top %number% players [by wins] in [minigame] %minigame%",
+                "top %number% players by plays in [minigame] %minigame%",
+                "top %number% players by win[ ]rate in [minigame] %minigame%",
+                "top %number% players by win[ ]rate with at least %number% plays in [minigame] %minigame%"
         );
     }
 
@@ -62,9 +63,9 @@ public class ExprTopPlayers extends SimpleExpression<OfflinePlayer> {
         limit = (Expression<Number>) exprs[0];
         if (pattern == 3) {
             minPlays = (Expression<Number>) exprs[1];
-            minigameId = (Expression<String>) exprs[2];
+            minigame = (Expression<MiniGame>) exprs[2];
         } else {
-            minigameId = (Expression<String>) exprs[1];
+            minigame = (Expression<MiniGame>) exprs[1];
         }
         return true;
     }
@@ -72,9 +73,10 @@ public class ExprTopPlayers extends SimpleExpression<OfflinePlayer> {
     @Override
     protected @Nullable OfflinePlayer[] get(Event event) {
         Number lim = limit.getSingle(event);
-        String mgId = minigameId.getSingle(event);
-        if (lim == null || mgId == null) return new OfflinePlayer[0];
+        MiniGame mg = minigame.getSingle(event);
+        if (lim == null || mg == null) return new OfflinePlayer[0];
         int n = Math.max(1, lim.intValue());
+        String mgId = mg.getId();
 
         GameResultsRepository repo = GameResultsRepository.getInstance();
         List<LeaderboardEntry> entries = switch (pattern) {
@@ -111,6 +113,6 @@ public class ExprTopPlayers extends SimpleExpression<OfflinePlayer> {
             default -> "";
         };
         return "top " + limit.toString(event, debug) + " players" + sortStr
-                + " of minigame " + minigameId.toString(event, debug);
+                + " in minigame " + minigame.toString(event, debug);
     }
 }

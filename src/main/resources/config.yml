@@ -34,6 +34,11 @@ session:
   auto-promote-host: true
   # When false (default), host cannot change minigame/map/rounds while game is STARTING or STARTED.
   allow-mid-game-changes: false
+  # Rejoin offer after disconnect — shown to players who were mid-game when they disconnected.
+  rejoin:
+    enabled: true
+    # How long (in seconds) the rejoin offer remains valid after disconnect.
+    window-seconds: 60
 
 # --- Spectate browser ---
 spectate:

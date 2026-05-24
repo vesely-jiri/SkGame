@@ -10,6 +10,7 @@ import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
+import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.core.storage.GameResultsRepository;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.event.Event;
@@ -24,18 +25,18 @@ import org.jetbrains.annotations.Nullable;
         "Supports: GET."
 })
 @Examples({
-        "set {_wins} to win count of minigame \"koth\" of player",
-        "send \"You have %win count of minigame \"\"koth\"\" of player% wins!\" to player"
+        "set {_wins} to win count of player in minigame \"koth\"",
+        "send \"You have %win count of player in minigame \"\"koth\"\"%wins!\" to player"
 })
 @Since("1.0.0")
 public class ExprPlayerWinCount extends SimpleExpression<Number> {
 
-    private Expression<String> minigameId;
     private Expression<OfflinePlayer> player;
+    private Expression<MiniGame> minigame;
 
     static {
         Skript.registerExpression(ExprPlayerWinCount.class, Number.class, ExpressionType.COMBINED,
-                "win count of minigame %string% of %offlineplayer%"
+                "win[s] count of %offlineplayer% in [minigame] %minigame%"
         );
     }
 
@@ -43,17 +44,17 @@ public class ExprPlayerWinCount extends SimpleExpression<Number> {
     @Override
     public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed,
                         SkriptParser.ParseResult parseResult) {
-        minigameId = (Expression<String>) exprs[0];
-        player = (Expression<OfflinePlayer>) exprs[1];
+        player = (Expression<OfflinePlayer>) exprs[0];
+        minigame = (Expression<MiniGame>) exprs[1];
         return true;
     }
 
     @Override
     protected @Nullable Number[] get(Event event) {
-        String mgId = minigameId.getSingle(event);
         OfflinePlayer p = player.getSingle(event);
-        if (mgId == null || p == null) return null;
-        int wins = GameResultsRepository.getInstance().getWinsByMinigame(p.getUniqueId(), mgId);
+        MiniGame mg = minigame.getSingle(event);
+        if (p == null || mg == null) return null;
+        int wins = GameResultsRepository.getInstance().getWinsByMinigame(p.getUniqueId(), mg.getId());
         return new Number[]{wins};
     }
 
@@ -69,7 +70,7 @@ public class ExprPlayerWinCount extends SimpleExpression<Number> {
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return "win count of minigame " + minigameId.toString(event, debug)
-                + " of " + player.toString(event, debug);
+        return "win count of " + player.toString(event, debug)
+                + " in minigame " + minigame.toString(event, debug);
     }
 }

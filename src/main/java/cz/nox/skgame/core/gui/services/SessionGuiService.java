@@ -34,8 +34,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.enchantments.Enchantment;
-import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 
@@ -272,8 +270,7 @@ public class SessionGuiService implements Listener {
             boolean isHost = member.equals(session.getHost());
             boolean rawReady = Boolean.TRUE.equals(pm.getPlayer(member).getValue(GamePlayerKeys.READY, true));
             boolean isReady = state != SessionState.LOBBY || rawReady;
-            boolean applyGlow = state == SessionState.LOBBY && rawReady;
-            builder.slot(PLAYER_SLOTS[idx++], buildPlayerHead(member, isHost, isReady, applyGlow, viewer));
+            builder.slot(PLAYER_SLOTS[idx++], buildPlayerHead(member, isHost, isReady, viewer));
         }
 
         return builder.build();
@@ -379,19 +376,15 @@ public class SessionGuiService implements Listener {
         return GuiItem.of(Material.BARRIER).name("&7&lMaps").lore(legacy("&c- Choose a map"));
     }
 
-    private GuiItem buildPlayerHead(Player member, boolean isHost, boolean isReady, boolean applyGlow, Player viewer) {
+    private GuiItem buildPlayerHead(Player member, boolean isHost, boolean isReady, Player viewer) {
         ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
         SkullMeta meta = (SkullMeta) skull.getItemMeta();
         if (meta != null) {
             meta.setPlayerProfile(member.getPlayerProfile());
-            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-            if (applyGlow) {
-                meta.addEnchant(Enchantment.UNBREAKING, 1, true);
-            }
             skull.setItemMeta(meta);
         }
         GuiItem item = GuiItem.of(skull)
-                .name((isReady ? "&a" : "&c") + member.getName());
+                .name((isReady ? "&a✓ " : "&c✗ ") + member.getName());
         if (isHost) {
             item.lore(Messages.getComponent("gui.session.host-label", viewer));
         }

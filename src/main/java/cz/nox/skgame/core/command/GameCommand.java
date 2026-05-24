@@ -5,6 +5,7 @@ import cz.nox.skgame.core.command.subcommands.AdminSubcommand;
 import cz.nox.skgame.core.command.subcommands.JoinSubcommand;
 import cz.nox.skgame.core.command.subcommands.SpectateSubcommand;
 import cz.nox.skgame.core.game.SessionManager;
+import cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl;
 import cz.nox.skgame.core.gui.services.MainGuiService;
 import cz.nox.skgame.core.gui.services.SessionGuiService;
 import org.bukkit.command.Command;
@@ -41,6 +42,13 @@ public class GameCommand implements CommandExecutor, TabCompleter {
             case "admin"    -> adminSub.execute(player, args);
             case "join"     -> joinSub.execute(player, args);
             case "spectate" -> spectateSub.execute(player, args);
+            case "rejoin"   -> {
+                if (args.length < 2) {
+                    Messages.send(player, "session.rejoin.usage");
+                    return true;
+                }
+                SessionLifecycleManagerImpl.getInstance().rejoinSession(player, args[1]);
+            }
             default         -> Messages.send(player, "command.error.unknown-subcommand");
         }
         return true;
@@ -51,7 +59,7 @@ public class GameCommand implements CommandExecutor, TabCompleter {
         if (!(sender instanceof Player player)) return List.of();
 
         if (args.length == 1) {
-            List<String> opts = new ArrayList<>(List.of("join"));
+            List<String> opts = new ArrayList<>(List.of("join", "rejoin"));
             if (player.hasPermission("skgame.spectate")) opts.add("spectate");
             if (player.hasPermission("skgame.admin")) opts.add("admin");
             String partial = args[0].toLowerCase();

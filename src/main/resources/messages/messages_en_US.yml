@@ -30,6 +30,15 @@ session:
     unknown-error: "&cUnknown error. Stopping game"
     summary-separator: "&6------------------------------------"
     summary-finished: "&6Game of &e{0} &6on map &e{1} &6has finished"
+  start:
+    maintenance: "&cServer is in maintenance mode — no new games can start"
+  maintenance:
+    round-ending: "&eMaintenance mode active — this is the final round"
+  rejoin:
+    offer: "&eYou disconnected from session &7{0}&e."
+    expired: "&cYour rejoin window has expired"
+    success: "&aRejoined session"
+    usage: "&cUsage: /game rejoin <session-id>"
 
 game:
   winners:
@@ -53,6 +62,11 @@ command:
     usage: "&cUsage: /game join <session-id>"
     not-found: "&cSession not found: {0}"
     already-in-session: "&cYou're already in a session"
+  maintenance:
+    enabled: "&eMaintenance mode &aenabled&e. Active games will finish their current round."
+    disabled: "&eMaintenance mode &cdisabled&e. Games can start normally."
+    status-on: "&eMaintenance mode is &aON"
+    status-off: "&eMaintenance mode is &7OFF"
 
 lobby:
   spawn-set: "&aGame lobby was set to your location"

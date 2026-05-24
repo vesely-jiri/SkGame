@@ -10,6 +10,7 @@ import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
+import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.statistics.GameResult;
 import cz.nox.skgame.core.storage.GameResultsRepository;
 import org.bukkit.OfflinePlayer;
@@ -29,20 +30,20 @@ import java.util.List;
 })
 @Examples({
         "set {_results::*} to last 10 game results of player",
-        "set {_results::*} to last 10 game results of minigame \"koth\" of player"
+        "set {_results::*} to last 10 game results of player in minigame \"koth\""
 })
 @Since("1.0.0")
 public class ExprPlayerGameResults extends SimpleExpression<GameResult> {
 
     private Expression<Number> limit;
-    private Expression<String> minigameId;
+    private Expression<MiniGame> minigame;
     private Expression<OfflinePlayer> players;
     private int pattern;
 
     static {
         Skript.registerExpression(ExprPlayerGameResults.class, GameResult.class, ExpressionType.COMBINED,
                 "[last] %number% game results of %offlineplayers%",
-                "[last] %number% game results of minigame %string% of %offlineplayers%"
+                "[last] %number% game results of %offlineplayers% in [minigame] %minigame%"
         );
     }
 
@@ -52,11 +53,9 @@ public class ExprPlayerGameResults extends SimpleExpression<GameResult> {
                         SkriptParser.ParseResult parseResult) {
         pattern = matchedPattern;
         limit = (Expression<Number>) exprs[0];
-        if (pattern == 0) {
-            players = (Expression<OfflinePlayer>) exprs[1];
-        } else {
-            minigameId = (Expression<String>) exprs[1];
-            players = (Expression<OfflinePlayer>) exprs[2];
+        players = (Expression<OfflinePlayer>) exprs[1];
+        if (pattern == 1) {
+            minigame = (Expression<MiniGame>) exprs[2];
         }
         return true;
     }
@@ -66,7 +65,8 @@ public class ExprPlayerGameResults extends SimpleExpression<GameResult> {
         Number lim = limit.getSingle(event);
         if (lim == null) return new GameResult[0];
         int n = Math.max(1, lim.intValue());
-        String mgId = minigameId != null ? minigameId.getSingle(event) : null;
+        MiniGame mg = minigame != null ? minigame.getSingle(event) : null;
+        String mgId = mg != null ? mg.getId() : null;
         OfflinePlayer[] all = players.getAll(event);
         if (all == null) return new GameResult[0];
         List<GameResult> results = new ArrayList<>();
@@ -89,8 +89,8 @@ public class ExprPlayerGameResults extends SimpleExpression<GameResult> {
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        String mgPart = minigameId != null ? " of minigame " + minigameId.toString(event, debug) : "";
-        return "last " + limit.toString(event, debug) + " game results" + mgPart
-                + " of " + players.toString(event, debug);
+        String mgPart = minigame != null ? " in minigame " + minigame.toString(event, debug) : "";
+        return "last " + limit.toString(event, debug) + " game results of "
+                + players.toString(event, debug) + mgPart;
     }
 }

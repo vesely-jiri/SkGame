@@ -39,12 +39,20 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.Nullable;
 
+import cz.nox.skgame.core.game.RejoinSnapshot;
 import cz.nox.skgame.core.storage.GameResultsRepository;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.bukkit.event.player.PlayerJoinEvent;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Listener {
@@ -55,6 +63,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
     private final PlayerManager playerManager;
     private final SkGame plugin;
     private final PartyManager partyManager;
+    private final Map<UUID, RejoinSnapshot> rejoinSnapshots = new ConcurrentHashMap<>();
 
     private SessionLifecycleManagerImpl(SkGame plugin) {
         this.sessionManager = SessionManager.getInstance();
@@ -132,7 +141,74 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
     // BUG 8: server disconnect — explicit=false so mid-game host stays null (Phase 9 design)
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent e) {
-        leaveSessionInternal(e.getPlayer(), false);
+        Player player = e.getPlayer();
+        if (plugin.getConfig().getBoolean("session.rejoin.enabled", true)) {
+            Session session = sessionManager.getSession(player);
+            if (session != null) {
+                SessionRole role = session.getRole(player);
+                SessionState state = session.getState();
+                if (role == SessionRole.PLAYER
+                        && (state == SessionState.STARTING || state == SessionState.STARTED)) {
+                    rejoinSnapshots.put(player.getUniqueId(),
+                            new RejoinSnapshot(player.getUniqueId(), session.getId(), System.currentTimeMillis()));
+                }
+            }
+        }
+        leaveSessionInternal(player, false);
+    }
+
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent e) {
+        if (!plugin.getConfig().getBoolean("session.rejoin.enabled", true)) return;
+        Player player = e.getPlayer();
+        RejoinSnapshot snapshot = rejoinSnapshots.get(player.getUniqueId());
+        if (snapshot == null) return;
+        long windowSeconds = plugin.getConfig().getLong("session.rejoin.window-seconds", 60L);
+        if ((System.currentTimeMillis() - snapshot.disconnectTime()) / 1000L > windowSeconds) {
+            rejoinSnapshots.remove(player.getUniqueId());
+            return;
+        }
+        Session session = sessionManager.getSessionById(snapshot.sessionId());
+        if (session == null
+                || (session.getState() != SessionState.STARTING && session.getState() != SessionState.STARTED)) {
+            rejoinSnapshots.remove(player.getUniqueId());
+            return;
+        }
+        String sessionId = snapshot.sessionId();
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (!player.isOnline()) return;
+            String offerText = Messages.get("session.rejoin.offer", player, sessionId);
+            Component message = LegacyComponentSerializer.legacyAmpersand().deserialize(offerText)
+                    .append(Component.text(" [Click to rejoin]")
+                            .color(NamedTextColor.GREEN)
+                            .clickEvent(ClickEvent.runCommand("/game rejoin " + sessionId)));
+            player.sendMessage(message);
+        }, 40L);
+    }
+
+    public void rejoinSession(Player player, String sessionId) {
+        RejoinSnapshot snapshot = rejoinSnapshots.get(player.getUniqueId());
+        if (snapshot == null || !snapshot.sessionId().equals(sessionId)) {
+            Messages.send(player, "session.rejoin.expired");
+            return;
+        }
+        long windowSeconds = plugin.getConfig().getLong("session.rejoin.window-seconds", 60L);
+        if ((System.currentTimeMillis() - snapshot.disconnectTime()) / 1000L > windowSeconds) {
+            rejoinSnapshots.remove(player.getUniqueId());
+            Messages.send(player, "session.rejoin.expired");
+            return;
+        }
+        Session session = sessionManager.getSessionById(sessionId);
+        if (session == null
+                || (session.getState() != SessionState.STARTING && session.getState() != SessionState.STARTED)) {
+            rejoinSnapshots.remove(player.getUniqueId());
+            Messages.send(player, "session.rejoin.expired");
+            return;
+        }
+        rejoinSnapshots.remove(player.getUniqueId());
+        if (joinSession(player, session)) {
+            Messages.send(player, "session.rejoin.success");
+        }
     }
 
     private void leaveSessionInternal(Player player, boolean explicitLeave) {
@@ -182,6 +258,13 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         GameMap gameMap = session.getGameMap();
         if (miniGame == null || gameMap == null) return false;
         if (!gameMap.supportsMiniGame(miniGame)) return false;
+
+        if (plugin.isMaintenanceMode()) {
+            for (Player p : session.getLobbyMembers()) {
+                Messages.send(p, "session.start.maintenance");
+            }
+            return false;
+        }
 
         if (reason != GameStartReason.AUTO_NEXT_ROUND) {
             session.setCurrentRound(1);
@@ -349,7 +432,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
 
         int cur = session.getCurrentRound();
         int total = session.getTotalRounds();
-        if (cur > 0 && cur < total) {
+        if (!plugin.isMaintenanceMode() && cur > 0 && cur < total) {
             session.setCurrentRound(cur + 1);
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 if (sessionManager.getSessionById(session.getId()) != null) {
@@ -357,6 +440,11 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
                 }
             }, 40L);
         } else {
+            if (plugin.isMaintenanceMode() && cur > 0 && cur < total) {
+                for (Player member : session.getMembers()) {
+                    Messages.send(member, "session.maintenance.round-ending");
+                }
+            }
             session.setCurrentRound(0);
         }
     }

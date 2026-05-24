@@ -159,6 +159,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             "cz.nox.skgame.skript.expressions.regions.ExprCuboidRegion",
             // Expressions — misc
             "cz.nox.skgame.skript.expressions.ExprLobbySpawn",
+            "cz.nox.skgame.skript.expressions.ExprMaintenanceMode",
             "cz.nox.skgame.skript.expressions.ExprParty"
     );
 
@@ -176,6 +177,8 @@ public class SkGame extends JavaPlugin implements TabCompleter {
 
     @Nullable
     private Location lobbySpawn;
+
+    private volatile boolean maintenanceMode = false;
 
     public static SkGame getInstance() {
         return instance;
@@ -294,6 +297,14 @@ public class SkGame extends JavaPlugin implements TabCompleter {
         }
     }
 
+    public boolean isMaintenanceMode() {
+        return maintenanceMode;
+    }
+
+    public void setMaintenanceMode(boolean value) {
+        this.maintenanceMode = value;
+    }
+
     public boolean isAllowMidGameChanges() {
         return getConfig().getBoolean("session.allow-mid-game-changes", false);
     }
@@ -320,36 +331,70 @@ public class SkGame extends JavaPlugin implements TabCompleter {
     @Override
     @SuppressWarnings("deprecation")
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (args.length == 0 || !args[0].equalsIgnoreCase("reload")) {
-            sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame reload [all|config|messages|storage|scripts]");
+        if (args.length == 0) {
+            sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame <reload|maintenance> [args]");
             return true;
         }
-        if (!sender.hasPermission("skgame.admin.reload")) {
-            sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
-            return true;
-        }
-        String component = args.length >= 2 ? args[1].toLowerCase() : "all";
-        switch (component) {
-            case "all" -> {
-                doReloadConfig(sender);
-                doReloadMessages(sender);
-                doReloadStorage(sender);
+        switch (args[0].toLowerCase()) {
+            case "reload" -> {
+                if (!sender.hasPermission("skgame.admin.reload")) {
+                    sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
+                    return true;
+                }
+                String component = args.length >= 2 ? args[1].toLowerCase() : "all";
+                switch (component) {
+                    case "all" -> { doReloadConfig(sender); doReloadMessages(sender); doReloadStorage(sender); }
+                    case "config"   -> doReloadConfig(sender);
+                    case "messages" -> doReloadMessages(sender);
+                    case "storage"  -> doReloadStorage(sender);
+                    case "scripts"  -> doReloadScripts(sender);
+                    default -> sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame reload [all|config|messages|storage|scripts]");
+                }
             }
-            case "config"   -> doReloadConfig(sender);
-            case "messages" -> doReloadMessages(sender);
-            case "storage"  -> doReloadStorage(sender);
-            case "scripts"  -> doReloadScripts(sender);
-            default -> sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame reload [all|config|messages|storage|scripts]");
+            case "maintenance" -> {
+                if (!sender.hasPermission("skgame.admin")) {
+                    sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
+                    return true;
+                }
+                String sub = args.length >= 2 ? args[1].toLowerCase() : "status";
+                switch (sub) {
+                    case "on" -> {
+                        setMaintenanceMode(true);
+                        Messages.send(sender, "command.maintenance.enabled");
+                    }
+                    case "off" -> {
+                        setMaintenanceMode(false);
+                        Messages.send(sender, "command.maintenance.disabled");
+                    }
+                    default -> Messages.send(sender, maintenanceMode
+                            ? "command.maintenance.status-on"
+                            : "command.maintenance.status-off");
+                }
+            }
+            default -> sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame <reload|maintenance> [args]");
         }
         return true;
     }
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission("skgame.admin.reload")) return Collections.emptyList();
-        if (args.length == 1) return StringUtil.copyPartialMatches(args[0], List.of("reload"), new ArrayList<>());
-        if (args.length == 2 && args[0].equalsIgnoreCase("reload"))
-            return StringUtil.copyPartialMatches(args[1], RELOAD_COMPONENTS, new ArrayList<>());
+        if (args.length == 1) {
+            List<String> opts = new ArrayList<>();
+            if (sender.hasPermission("skgame.admin.reload")) opts.add("reload");
+            if (sender.hasPermission("skgame.admin")) opts.add("maintenance");
+            return StringUtil.copyPartialMatches(args[0], opts, new ArrayList<>());
+        }
+        if (args.length == 2) {
+            return switch (args[0].toLowerCase()) {
+                case "reload" -> sender.hasPermission("skgame.admin.reload")
+                        ? StringUtil.copyPartialMatches(args[1], RELOAD_COMPONENTS, new ArrayList<>())
+                        : Collections.emptyList();
+                case "maintenance" -> sender.hasPermission("skgame.admin")
+                        ? StringUtil.copyPartialMatches(args[1], List.of("on", "off", "status"), new ArrayList<>())
+                        : Collections.emptyList();
+                default -> Collections.emptyList();
+            };
+        }
         return Collections.emptyList();
     }
 
@@ -429,11 +474,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             loadSkriptClass(fqn);
         }
         for (SkGameModule module : modules) {
-            List<String> moduleClasses = module.getSkriptClasses();
-            Bukkit.getLogger().info("[DEBUG-SkGame] Module '" + module.getId() + "' provides "
-                    + moduleClasses.size() + " Skript class(es)");
-            for (String fqn : moduleClasses) {
-                Bukkit.getLogger().info("[DEBUG-SkGame] Loading Skript class: " + fqn);
+            for (String fqn : module.getSkriptClasses()) {
                 loadSkriptClass(fqn);
             }
         }
