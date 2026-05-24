@@ -31,9 +31,9 @@ import java.util.List;
         "Supports: event-session"
 })
 @Examples({
-        "configure session of player:",
+        "configure session of (session of player):",
         "\tset shuffle of event-session to true",
-        "\tset rounds of event-session to 3",
+        "\tset session rounds of event-session to 3",
         "\tset session visibility of event-session to private"
 })
 @Since("1.0.0")
@@ -45,7 +45,7 @@ public class EffSecConfigureSession extends EffectSection {
 
     static {
         Skript.registerSection(EffSecConfigureSession.class,
-                "configure [the] session %session%");
+                "configure [the] session [of] %session%");
         EventValues.registerEventValue(SessionConfigureEvent.class, Session.class,
                 SessionConfigureEvent::getSession);
     }

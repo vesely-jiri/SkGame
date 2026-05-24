@@ -12,6 +12,7 @@ import cz.nox.skgame.api.gui.GuiHolder;
 import cz.nox.skgame.api.gui.GuiItem;
 import cz.nox.skgame.api.gui.event.MainGuiOpenEvent;
 import cz.nox.skgame.api.messages.Messages;
+import cz.nox.skgame.SkGame;
 import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl;
 import cz.nox.skgame.core.gui.services.SessionGuiService;
@@ -87,7 +88,10 @@ public class MainGuiService implements Listener {
     }
 
     @EventHandler
-    public void onSessionCreate(SessionCreateEvent event) { update(); }
+    public void onSessionCreate(SessionCreateEvent event) {
+        // SessionCreateEvent fires before setHost() in SessionLifecycleManagerImpl — defer by one tick
+        Bukkit.getScheduler().runTask(SkGame.getInstance(), this::update);
+    }
 
     @EventHandler
     public void onSessionDisband(SessionDisbandEvent event) { update(); }
