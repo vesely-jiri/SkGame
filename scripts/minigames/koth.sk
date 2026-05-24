@@ -53,6 +53,7 @@ local function Koth_StartShowPoints(session: session):
 local function Koth_StartHillTicking(session: session, region: region, limit: number):
     while (session state of {_session}) is STARTED:
         set {_p::*} to players in region {_region}
+        send "[KOTH-DEBUG] region=%{_region}%, hill-players=%size of {_p::*}%" to console
         if size of {_p::*} is 1:
             set {_s} to (temporary session value "players::%{_p::1}%::score" of {_session}) ? 0
             set {_new} to {_s} + 1
