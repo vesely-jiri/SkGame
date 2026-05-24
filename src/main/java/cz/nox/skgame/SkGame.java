@@ -20,6 +20,8 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
+import org.bukkit.util.StringUtil;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -34,7 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class SkGame extends JavaPlugin {
+public class SkGame extends JavaPlugin implements TabCompleter {
 
     // All Skript syntax classes that are always-on (not owned by any optional module).
     private static final List<String> CORE_SKRIPT_CLASSES = List.of(
@@ -233,7 +235,10 @@ public class SkGame extends JavaPlugin {
         }, 1L);
 
         var cmd = getCommand("skgame");
-        if (cmd != null) cmd.setExecutor(this);
+        if (cmd != null) {
+            cmd.setExecutor(this);
+            cmd.setTabCompleter(this);
+        }
 
         cz.nox.skgame.core.command.GameCommand gameCommand = new cz.nox.skgame.core.command.GameCommand();
         var gameCmd = getCommand("game");
@@ -309,33 +314,80 @@ public class SkGame extends JavaPlugin {
         }
     }
 
+    private static final List<String> RELOAD_COMPONENTS = List.of("all", "config", "messages", "storage", "scripts");
+
     @Override
     @SuppressWarnings("deprecation")
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (args.length == 0 || !args[0].equalsIgnoreCase("reload")) {
+            sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame reload [all|config|messages|storage|scripts]");
+            return true;
+        }
         if (!sender.hasPermission("skgame.admin.reload")) {
             sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
             return true;
         }
-        if (args.length >= 2 && args[0].equalsIgnoreCase("reload") && args[1].equalsIgnoreCase("messages")) {
-            if (!getConfig().getBoolean("messages.hot-reload", true)) {
-                sender.sendMessage(ChatColor.RED + "Hot-reload is disabled (messages.hot-reload: false in config.yml).");
-                return true;
+        String component = args.length >= 2 ? args[1].toLowerCase() : "all";
+        switch (component) {
+            case "all" -> {
+                doReloadConfig(sender);
+                doReloadMessages(sender);
+                doReloadStorage(sender);
             }
-            boolean messagesEnabled = enabledModules != null &&
-                    enabledModules.stream().anyMatch(m -> m.getId().equals("messages"));
-            if (!messagesEnabled) {
-                sender.sendMessage(ChatColor.RED + "Messages module is not enabled.");
-                return true;
-            }
-            File messagesDir = new File(getDataFolder(), "messages");
-            Messages.load(messagesDir, getConfig(), getLogger());
-            int loaded = Messages.getLoadedLocales().size();
-            sender.sendMessage(ChatColor.GREEN + "Messages reloaded — " + loaded
-                    + " locale(s): " + Messages.getLoadedLocales());
-            return true;
+            case "config"   -> doReloadConfig(sender);
+            case "messages" -> doReloadMessages(sender);
+            case "storage"  -> doReloadStorage(sender);
+            case "scripts"  -> doReloadScripts(sender);
+            default -> sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame reload [all|config|messages|storage|scripts]");
         }
-        sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame reload messages");
         return true;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
+        if (!sender.hasPermission("skgame.admin.reload")) return Collections.emptyList();
+        if (args.length == 1) return StringUtil.copyPartialMatches(args[0], List.of("reload"), new ArrayList<>());
+        if (args.length == 2 && args[0].equalsIgnoreCase("reload"))
+            return StringUtil.copyPartialMatches(args[1], RELOAD_COMPONENTS, new ArrayList<>());
+        return Collections.emptyList();
+    }
+
+    @SuppressWarnings("deprecation")
+    private void doReloadConfig(CommandSender sender) {
+        reloadConfig();
+        sender.sendMessage(ChatColor.GREEN + "config.yml reloaded.");
+    }
+
+    @SuppressWarnings("deprecation")
+    private void doReloadMessages(CommandSender sender) {
+        if (!getConfig().getBoolean("messages.hot-reload", true)) {
+            sender.sendMessage(ChatColor.RED + "Hot-reload is disabled (messages.hot-reload: false in config.yml).");
+            return;
+        }
+        boolean messagesEnabled = enabledModules != null &&
+                enabledModules.stream().anyMatch(m -> m.getId().equals("messages"));
+        if (!messagesEnabled) {
+            sender.sendMessage(ChatColor.RED + "Messages module is not enabled.");
+            return;
+        }
+        File messagesDir = new File(getDataFolder(), "messages");
+        Messages.load(messagesDir, getConfig(), getLogger());
+        int loaded = Messages.getLoadedLocales().size();
+        sender.sendMessage(ChatColor.GREEN + "Messages reloaded — " + loaded
+                + " locale(s): " + Messages.getLoadedLocales());
+    }
+
+    @SuppressWarnings("deprecation")
+    private void doReloadStorage(CommandSender sender) {
+        MiniGameManager.getInstance().loadFromFile(miniGamesDataFile);
+        GameMapManager.getInstance().loadFromFile(mapsDataFile);
+        sender.sendMessage(ChatColor.GREEN + "Storage reloaded (minigames.yml, maps.yml).");
+    }
+
+    @SuppressWarnings("deprecation")
+    private void doReloadScripts(CommandSender sender) {
+        Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), "skript reload skgame");
+        sender.sendMessage(ChatColor.GREEN + "Dispatched: skript reload skgame");
     }
 
     private List<SkGameModule> resolveModules() {
