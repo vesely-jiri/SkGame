@@ -429,7 +429,11 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             loadSkriptClass(fqn);
         }
         for (SkGameModule module : modules) {
-            for (String fqn : module.getSkriptClasses()) {
+            List<String> moduleClasses = module.getSkriptClasses();
+            Bukkit.getLogger().info("[DEBUG-SkGame] Module '" + module.getId() + "' provides "
+                    + moduleClasses.size() + " Skript class(es)");
+            for (String fqn : moduleClasses) {
+                Bukkit.getLogger().info("[DEBUG-SkGame] Loading Skript class: " + fqn);
                 loadSkriptClass(fqn);
             }
         }
