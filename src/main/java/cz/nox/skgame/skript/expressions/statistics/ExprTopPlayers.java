@@ -34,13 +34,15 @@ import java.util.List;
 })
 @Examples({
         "set {_top::*} to top 10 players in minigame \"koth\"",
-        "set {_top::*} to top 5 players by plays in minigame \"koth\"",
-        "set {_top::*} to top 10 players by win rate with at least 5 plays in minigame \"koth\""
+        "set {_top::*} to top 10 players in minigame \"koth\" by wins",
+        "set {_top::*} to top 5 players in minigame \"koth\" by plays",
+        "set {_top::*} to top 10 players in minigame \"koth\" by win rate",
+        "set {_top::*} to top 10 players in minigame \"koth\" by win rate with at least 5 plays"
 })
 @Since("1.0.0")
 public class ExprTopPlayers extends SimpleExpression<OfflinePlayer> {
 
-    // 0=WINS, 1=PLAYS, 2=WIN_RATE (no minPlays), 3=WIN_RATE (with minPlays)
+    // 0=default(wins), 1=wins explicit, 2=plays, 3=win rate, 4=win rate+minPlays
     private int pattern;
     private Expression<Number> limit;
     private Expression<Number> minPlays;
@@ -48,10 +50,11 @@ public class ExprTopPlayers extends SimpleExpression<OfflinePlayer> {
 
     static {
         Skript.registerExpression(ExprTopPlayers.class, OfflinePlayer.class, ExpressionType.COMBINED,
-                "top %number% players [by wins] in [minigame] %minigame%",
-                "top %number% players by plays in [minigame] %minigame%",
-                "top %number% players by win[ ]rate in [minigame] %minigame%",
-                "top %number% players by win[ ]rate with at least %number% plays in [minigame] %minigame%"
+                "top %number% players in [minigame] %minigame%",
+                "top %number% players in [minigame] %minigame% by wins",
+                "top %number% players in [minigame] %minigame% by plays",
+                "top %number% players in [minigame] %minigame% by win[ ]rate",
+                "top %number% players in [minigame] %minigame% by win[ ]rate with at least %number% plays"
         );
     }
 
@@ -61,11 +64,9 @@ public class ExprTopPlayers extends SimpleExpression<OfflinePlayer> {
                         SkriptParser.ParseResult parseResult) {
         pattern = matchedPattern;
         limit = (Expression<Number>) exprs[0];
-        if (pattern == 3) {
-            minPlays = (Expression<Number>) exprs[1];
-            minigame = (Expression<MiniGame>) exprs[2];
-        } else {
-            minigame = (Expression<MiniGame>) exprs[1];
+        minigame = (Expression<MiniGame>) exprs[1];
+        if (pattern == 4) {
+            minPlays = (Expression<Number>) exprs[2];
         }
         return true;
     }
@@ -80,13 +81,13 @@ public class ExprTopPlayers extends SimpleExpression<OfflinePlayer> {
 
         GameResultsRepository repo = GameResultsRepository.getInstance();
         List<LeaderboardEntry> entries = switch (pattern) {
-            case 1 -> repo.getTopPlayersByPlays(mgId, n);
-            case 2 -> repo.getTopPlayersByWinRate(mgId, n, 1);
-            case 3 -> {
+            case 2 -> repo.getTopPlayersByPlays(mgId, n);
+            case 3 -> repo.getTopPlayersByWinRate(mgId, n, 1);
+            case 4 -> {
                 Number mp = minPlays != null ? minPlays.getSingle(event) : null;
                 yield repo.getTopPlayersByWinRate(mgId, n, mp != null ? mp.intValue() : 1);
             }
-            default -> repo.getTopPlayersByWins(mgId, n);
+            default -> repo.getTopPlayersByWins(mgId, n); // 0 and 1
         };
 
         return entries.stream()
@@ -107,12 +108,12 @@ public class ExprTopPlayers extends SimpleExpression<OfflinePlayer> {
     @Override
     public String toString(@Nullable Event event, boolean debug) {
         String sortStr = switch (pattern) {
-            case 1 -> " by plays";
-            case 2 -> " by win rate";
-            case 3 -> " by win rate with at least " + (minPlays != null ? minPlays.toString(event, debug) : "1") + " plays";
+            case 2 -> " by plays";
+            case 3 -> " by win rate";
+            case 4 -> " by win rate with at least " + (minPlays != null ? minPlays.toString(event, debug) : "1") + " plays";
             default -> "";
         };
-        return "top " + limit.toString(event, debug) + " players" + sortStr
-                + " in minigame " + minigame.toString(event, debug);
+        return "top " + limit.toString(event, debug) + " players in minigame "
+                + minigame.toString(event, debug) + sortStr;
     }
 }

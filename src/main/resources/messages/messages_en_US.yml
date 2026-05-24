@@ -37,7 +37,7 @@ session:
   rejoin:
     offer: "&eYou disconnected from session &7{0}&e."
     expired: "&cYour rejoin window has expired"
-    success: "&aRejoined session"
+    success: "&aRejoined as spectator — will auto-join party next round"
     usage: "&cUsage: /game rejoin <session-id>"
 
 game:

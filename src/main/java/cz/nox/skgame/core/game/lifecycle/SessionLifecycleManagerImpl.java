@@ -206,7 +206,8 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             return;
         }
         rejoinSnapshots.remove(player.getUniqueId());
-        if (joinSession(player, session)) {
+        if (joinAsSpectator(player, session)) {
+            playerManager.getPlayer(player).setValue(GamePlayerKeys.JOIN_PARTY_AFTER_GAME, true, true);
             Messages.send(player, "session.rejoin.success");
         }
     }
@@ -440,12 +441,27 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
                 }
             }, 40L);
         } else {
-            if (plugin.isMaintenanceMode() && cur > 0 && cur < total) {
-                for (Player member : session.getMembers()) {
-                    Messages.send(member, "session.maintenance.round-ending");
+            session.setCurrentRound(0);
+        }
+    }
+
+    /** Called from SkGame.setMaintenanceMode(true): broadcast to active sessions + clear lobby ready states. */
+    public void onMaintenanceEnabled() {
+        for (Session session : sessionManager.getAllSessions()) {
+            SessionState state = session.getState();
+            if (state == SessionState.STARTING || state == SessionState.STARTED) {
+                int cur = session.getCurrentRound();
+                int total = session.getTotalRounds();
+                if (cur > 0 && cur < total) {
+                    for (Player member : session.getMembers()) {
+                        Messages.send(member, "session.maintenance.round-ending");
+                    }
+                }
+            } else if (state == SessionState.LOBBY) {
+                for (Player member : session.getLobbyMembers()) {
+                    playerManager.getPlayer(member).setValue(GamePlayerKeys.READY, false, true);
                 }
             }
-            session.setCurrentRound(0);
         }
     }
 

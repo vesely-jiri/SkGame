@@ -29,7 +29,7 @@ session:
   rejoin:
     offer: "&eOdpojil ses od session &7{0}&e."
     expired: "&cČas pro znovupřipojení vypršel"
-    success: "&aZnovupřipojení úspěšné"
+    success: "&aPřipojen jako divák — při dalším kole automaticky vstoupíš do party"
     usage: "&cPoužití: /game rejoin <id-session>"
 
 game:

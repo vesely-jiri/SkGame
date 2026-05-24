@@ -303,6 +303,10 @@ public class SkGame extends JavaPlugin implements TabCompleter {
 
     public void setMaintenanceMode(boolean value) {
         this.maintenanceMode = value;
+        if (value) {
+            cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl.getInstance()
+                    .onMaintenanceEnabled();
+        }
     }
 
     public boolean isAllowMidGameChanges() {

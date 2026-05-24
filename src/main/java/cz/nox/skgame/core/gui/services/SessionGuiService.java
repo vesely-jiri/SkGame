@@ -220,6 +220,10 @@ public class SessionGuiService implements Listener {
                 .name(viewerReady ? "&aReady" : "&cNot ready")
                 .onClick(e -> {
                     Player p = (Player) e.getWhoClicked();
+                    if (SkGame.getInstance().isMaintenanceMode()) {
+                        Messages.send(p, "session.start.maintenance");
+                        return;
+                    }
                     if (session.getMiniGame() == null) {
                         Messages.send(p, "gui.session.error.no-minigame");
                         return;
