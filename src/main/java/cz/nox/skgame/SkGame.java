@@ -137,6 +137,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             "cz.nox.skgame.skript.expressions.minigames.customValue.property.ExprCustomValuePlurality",
             "cz.nox.skgame.skript.expressions.minigames.customValue.property.ExprCustomValueType",
             "cz.nox.skgame.skript.expressions.minigames.customValue.property.ExprCustomValueAllowedValues",
+            "cz.nox.skgame.skript.expressions.minigames.customValue.ExprGameMapValueDef",
             // Expressions — gamemaps
             "cz.nox.skgame.skript.expressions.gamemaps.ExprGameMapFromId",
             "cz.nox.skgame.skript.expressions.gamemaps.ExprGameMapMiniGames",
@@ -439,6 +440,11 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             Class.forName(fqn, true, getClass().getClassLoader());
         } catch (ClassNotFoundException e) {
             logUtil.error("Skript class not found: " + fqn);
+        } catch (ExceptionInInitializerError | NoClassDefFoundError e) {
+            // Static initializer threw (e.g. unregistered return type passed to Skript.registerExpression).
+            // Log and continue — do not let one bad class abort loading of subsequent classes.
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+            logUtil.error("Skript class failed to initialize: " + fqn + " — " + cause);
         }
     }
 

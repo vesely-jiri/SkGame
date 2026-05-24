@@ -28,13 +28,13 @@ import org.jetbrains.annotations.Nullable;
         "send \"You played %play count of minigame \"\"koth\"\" of player% times!\" to player"
 })
 @Since("1.0.0")
-public class ExprPlayerPlayCount extends SimpleExpression<Long> {
+public class ExprPlayerPlayCount extends SimpleExpression<Number> {
 
     private Expression<String> minigameId;
     private Expression<OfflinePlayer> player;
 
     static {
-        Skript.registerExpression(ExprPlayerPlayCount.class, Long.class, ExpressionType.COMBINED,
+        Skript.registerExpression(ExprPlayerPlayCount.class, Number.class, ExpressionType.COMBINED,
                 "play count of minigame %string% of %offlineplayer%"
         );
     }
@@ -49,12 +49,12 @@ public class ExprPlayerPlayCount extends SimpleExpression<Long> {
     }
 
     @Override
-    protected @Nullable Long[] get(Event event) {
+    protected @Nullable Number[] get(Event event) {
         String mgId = minigameId.getSingle(event);
         OfflinePlayer p = player.getSingle(event);
         if (mgId == null || p == null) return null;
         int plays = GameResultsRepository.getInstance().getPlayCount(p.getUniqueId(), mgId);
-        return new Long[]{(long) plays};
+        return new Number[]{plays};
     }
 
     @Override
@@ -63,8 +63,8 @@ public class ExprPlayerPlayCount extends SimpleExpression<Long> {
     }
 
     @Override
-    public Class<? extends Long> getReturnType() {
-        return Long.class;
+    public Class<? extends Number> getReturnType() {
+        return Number.class;
     }
 
     @Override
