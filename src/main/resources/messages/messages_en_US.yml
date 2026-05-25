@@ -32,8 +32,6 @@ session:
     summary-finished: "&6Game of &e{0} &6on map &e{1} &6has finished"
   start:
     maintenance: "&cServer is in maintenance mode — no new games can start"
-  maintenance:
-    round-ending: "&eMaintenance mode active — this is the final round"
   rejoin:
     offer: "&eYou disconnected from session &7{0}&e."
     expired: "&cYour rejoin window has expired"
@@ -67,6 +65,7 @@ command:
     disabled: "&eMaintenance mode &cdisabled&e. Games can start normally."
     status-on: "&eMaintenance mode is &aON"
     status-off: "&eMaintenance mode is &7OFF"
+    enabled-summary: "&eActive sessions: &f{0} &7(multi-round: &f{1}&7, single-round: &f{2}&7). Online players: &f{3}&e."
 
 lobby:
   spawn-set: "&aGame lobby was set to your location"
@@ -132,6 +131,11 @@ gui:
       title: "&9GES"
       addon-title: "&9GES&7-&e{0}"
       values-title: "&9GES{0}"
+
+maintenance:
+  broadcast:
+    enabled: "&eMaintenance mode &cENABLED&e. Multi-round games will end after current round. No new games can start."
+    disabled: "&aMaintenance mode &7DISABLED&a. Server returning to normal operation."
 
 admin:
   wand:

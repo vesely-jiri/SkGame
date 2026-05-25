@@ -445,23 +445,24 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         }
     }
 
-    /** Called from SkGame.setMaintenanceMode(true): broadcast to active sessions + clear lobby ready states. */
+    /** Called from SkGame.setMaintenanceMode(true): server-wide broadcast + clear lobby ready states. */
     public void onMaintenanceEnabled() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            Messages.send(player, "maintenance.broadcast.enabled");
+        }
         for (Session session : sessionManager.getAllSessions()) {
-            SessionState state = session.getState();
-            if (state == SessionState.STARTING || state == SessionState.STARTED) {
-                int cur = session.getCurrentRound();
-                int total = session.getTotalRounds();
-                if (cur > 0 && cur < total) {
-                    for (Player member : session.getMembers()) {
-                        Messages.send(member, "session.maintenance.round-ending");
-                    }
-                }
-            } else if (state == SessionState.LOBBY) {
+            if (session.getState() == SessionState.LOBBY) {
                 for (Player member : session.getLobbyMembers()) {
                     playerManager.getPlayer(member).setValue(GamePlayerKeys.READY, false, true);
                 }
             }
+        }
+    }
+
+    /** Called from SkGame.setMaintenanceMode(false): server-wide broadcast. */
+    public void onMaintenanceDisabled() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            Messages.send(player, "maintenance.broadcast.disabled");
         }
     }
 

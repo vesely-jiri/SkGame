@@ -24,8 +24,6 @@ session:
     unknown-error: "&cNeznámá chyba. Ukončuji hru"
   start:
     maintenance: "&cServer je v režimu údržby — žádné nové hry nemohou začít"
-  maintenance:
-    round-ending: "&eRežim údržby aktivní — toto je poslední kolo"
   rejoin:
     offer: "&eOdpojil ses od session &7{0}&e."
     expired: "&cČas pro znovupřipojení vypršel"
@@ -59,6 +57,7 @@ command:
     disabled: "&eRežim údržby &cdeaktivován&e. Hry mohou normálně začínat."
     status-on: "&eRežim údržby je &aZAPNUT"
     status-off: "&eRežim údržby je &7VYPNUT"
+    enabled-summary: "&eAktivní sessions: &f{0} &7(víceroundové: &f{1}&7, jednoroundové: &f{2}&7). Hráčů online: &f{3}&e."
 
 lobby:
   spawn-set: "&aLobby spawn nastaven na tvou pozici"
@@ -119,6 +118,11 @@ gui:
     title: "&cAdmin rozhraní"
     enum-picker:
       title: "&3Vyber hodnotu pro {0}"
+
+maintenance:
+  broadcast:
+    enabled: "&eRežim údržby &cZAPNUT&e. Víceroundové hry dohrají aktuální kolo. Žádné nové hry nemohou začít."
+    disabled: "&aRežim údržby &7VYPNUT&a. Server se vrací do normálního provozu."
 
 admin:
   setup:

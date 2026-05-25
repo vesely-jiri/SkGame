@@ -96,7 +96,10 @@ public class MainGuiService implements Listener {
     }
 
     @EventHandler
-    public void onSessionDisband(SessionDisbandEvent event) { update(); }
+    public void onSessionDisband(SessionDisbandEvent event) {
+        // Defer by one tick so sessionManager.deleteSession() completes before we rebuild.
+        Bukkit.getScheduler().runTask(SkGame.getInstance(), this::update);
+    }
 
     @EventHandler
     public void onGameStart(GameStartEvent event) { update(); }
