@@ -9,6 +9,7 @@ import cz.nox.skgame.core.command.subcommands.SpectateSubcommand;
 import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl;
 import cz.nox.skgame.core.gui.services.MainGuiService;
+import cz.nox.skgame.core.gui.services.GameHistoryGuiService;
 import cz.nox.skgame.core.gui.services.PlayerProfileGuiService;
 import cz.nox.skgame.core.gui.services.SessionGuiService;
 import net.kyori.adventure.text.Component;
@@ -81,11 +82,33 @@ public class GameCommand implements CommandExecutor, TabCompleter {
                 }
                 PlayerProfileGuiService.getInstance().openFor(player, subject);
             }
+            case "history"  -> handleHistory(player, args);
             case "invite"   -> handleInvite(player, args);
             case "uninvite" -> handleUninvite(player, args);
             default         -> Messages.send(player, "command.error.unknown-subcommand");
         }
         return true;
+    }
+
+    private void handleHistory(Player player, String[] args) {
+        OfflinePlayer subject;
+        if (args.length < 2) {
+            subject = player;
+        } else {
+            if (!player.hasPermission("skgame.history.others")) {
+                Messages.send(player, "command.history.no-permission-others");
+                return;
+            }
+            Player online = Bukkit.getPlayerExact(args[1]);
+            @SuppressWarnings("deprecation")
+            OfflinePlayer offline = online != null ? online : Bukkit.getOfflinePlayer(args[1]);
+            subject = offline;
+            if (!subject.hasPlayedBefore() && !(subject instanceof Player)) {
+                Messages.send(player, "command.history.not-found", args[1]);
+                return;
+            }
+        }
+        GameHistoryGuiService.getInstance().openFor(player, subject);
     }
 
     private void handleInvite(Player player, String[] args) {
@@ -140,7 +163,7 @@ public class GameCommand implements CommandExecutor, TabCompleter {
         if (!(sender instanceof Player player)) return List.of();
 
         if (args.length == 1) {
-            List<String> opts = new ArrayList<>(List.of("join", "rejoin"));
+            List<String> opts = new ArrayList<>(List.of("join", "rejoin", "history"));
             if (player.hasPermission("skgame.profile")) opts.add("profile");
             if (player.hasPermission("skgame.spectate")) opts.add("spectate");
             if (player.hasPermission("skgame.admin")) opts.add("admin");

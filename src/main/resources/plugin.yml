@@ -30,3 +30,6 @@ permissions:
   skgame.profile.others:
     description: View other players' profiles via /game profile <name>
     default: op
+  skgame.history.others:
+    description: View other players' game history via /game history <name>
+    default: op

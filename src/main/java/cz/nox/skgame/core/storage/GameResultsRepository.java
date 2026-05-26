@@ -158,19 +158,24 @@ public class GameResultsRepository {
     }
 
     public List<GameResult> getGameResults(UUID playerUuid, @Nullable String minigameId, int limit) {
+        return getGameResults(playerUuid, minigameId, limit, 0);
+    }
+
+    public List<GameResult> getGameResults(UUID playerUuid, @Nullable String minigameId, int limit, int offset) {
         if (!DatabaseManager.getInstance().isAvailable()) return List.of();
         String sql = "SELECT r.id, r.minigame_id, r.gamemap_id, r.start_time, r.end_time, r.reason, p.is_winner"
                 + " FROM game_participants p JOIN game_results r ON p.game_result_id = r.id"
                 + " WHERE p.player_uuid = ?"
                 + (minigameId != null ? " AND r.minigame_id = ?" : "")
-                + " ORDER BY r.end_time DESC LIMIT ?";
+                + " ORDER BY r.end_time DESC LIMIT ? OFFSET ?";
         List<GameResult> results = new ArrayList<>();
         try (Connection conn = DatabaseManager.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             int idx = 1;
             ps.setString(idx++, playerUuid.toString());
             if (minigameId != null) ps.setString(idx++, minigameId);
-            ps.setInt(idx, limit);
+            ps.setInt(idx++, limit);
+            ps.setInt(idx, offset);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     results.add(new GameResult(
@@ -284,6 +289,22 @@ public class GameResultsRepository {
             }
         } catch (SQLException e) { /* return partial result */ }
         return result;
+    }
+
+    public List<String> getDistinctMinigames(UUID playerUuid) {
+        if (!DatabaseManager.getInstance().isAvailable()) return List.of();
+        String sql = "SELECT r.minigame_id FROM game_participants p"
+                + " JOIN game_results r ON p.game_result_id = r.id"
+                + " WHERE p.player_uuid = ? GROUP BY r.minigame_id ORDER BY COUNT(*) DESC";
+        List<String> ids = new ArrayList<>();
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, playerUuid.toString());
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) ids.add(rs.getString("minigame_id"));
+            }
+        } catch (SQLException e) { return List.of(); }
+        return ids;
     }
 
     /** Count games the player participated in, optionally filtered by minigame. */

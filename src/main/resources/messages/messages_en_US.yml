@@ -68,6 +68,9 @@ command:
   profile:
     not-found: "&cPlayer not found: {0}"
     no-permission-others: "&cYou don't have permission to view other players' profiles"
+  history:
+    not-found: "&cPlayer not found: {0}"
+    no-permission-others: "&cYou don't have permission to view other players' history"
   invite:
     usage: "&cUsage: /game invite <player>"
     wrong-mode: "&cSwitch session to invite-only mode first"
@@ -148,6 +151,12 @@ gui:
       win-rate: "&bWin rate: &f{0}"
       wins-lore: "&6Wins: &f{0}"
       plays-lore: "&7Plays: &f{0}"
+  history:
+    loading: "&7Loading history..."
+    empty: "&7No games found"
+    filter:
+      all: "&e&lFilter: &fAll minigames"
+      active: "&e&lFilter: &f{0}"
   admin-panel:
     title: "&3&lAdmin Panel"
     no-sessions: "&7No active sessions"
