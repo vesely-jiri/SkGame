@@ -20,24 +20,30 @@ import cz.nox.skgame.core.gui.services.PlayerProfileGuiService;
 import cz.nox.skgame.core.gui.services.SessionGuiService;
 import cz.nox.skgame.core.gui.services.SpectateGuiService;
 import cz.nox.skgame.core.storage.DatabaseManager;
+import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class MainGuiService implements Listener {
@@ -52,6 +58,8 @@ public class MainGuiService implements Listener {
 
     private static MainGuiService instance;
     private final Set<UUID> activeViewers = new HashSet<>();
+    private final java.util.Map<UUID, String> viewerFilters = new ConcurrentHashMap<>();
+    private final Set<UUID> awaitingFilterInput = ConcurrentHashMap.newKeySet();
 
     private MainGuiService() {}
 
@@ -107,6 +115,34 @@ public class MainGuiService implements Listener {
 
     @EventHandler
     public void onGameStop(GameStopEvent event) { update(); }
+
+    @EventHandler(priority = EventPriority.LOW)
+    public void onChat(AsyncChatEvent event) {
+        Player p = event.getPlayer();
+        if (!awaitingFilterInput.remove(p.getUniqueId())) return;
+        event.setCancelled(true);
+        String text = PlainTextComponentSerializer.plainText().serialize(event.message()).trim();
+        if (text.equalsIgnoreCase("clear") || text.isEmpty()) {
+            viewerFilters.remove(p.getUniqueId());
+        } else {
+            viewerFilters.put(p.getUniqueId(), text);
+        }
+        Bukkit.getScheduler().runTask(SkGame.getInstance(), () -> openFor(p));
+    }
+
+    // ─── Filter API (used by ExprMainGuiFilter Skript expression) ────────────
+
+    public @Nullable String getFilter(Player player) {
+        return viewerFilters.get(player.getUniqueId());
+    }
+
+    public void setFilter(Player player, @Nullable String filter) {
+        if (filter == null || filter.isEmpty()) {
+            viewerFilters.remove(player.getUniqueId());
+        } else {
+            viewerFilters.put(player.getUniqueId(), filter);
+        }
+    }
 
     private Inventory buildFor(Player viewer) {
         SessionLifecycleManagerImpl lifecycle = SessionLifecycleManagerImpl.getInstance();
@@ -182,10 +218,32 @@ public class MainGuiService implements Listener {
                     // else: player not in session — no-op (matches .sk implicit stop)
                 }));
 
-        // Dynamic session list — LOBBY + public only, sorted oldest-first
+        // Slot 4 — Filter sessions (overrides the red glass pane from RED_SLOTS)
+        String currentFilter = viewerFilters.get(viewer.getUniqueId());
+        boolean hasFilter = currentFilter != null && !currentFilter.isEmpty();
+        builder.slot(4, GuiItem.of(Material.HOPPER)
+                .name(hasFilter ? "&e&lFilter: &f" + currentFilter : "&e&lFilter sessions")
+                .lore(hasFilter
+                        ? List.of(legacy("&7Click to change"), legacy("&cShift-click to clear"))
+                        : List.of(legacy("&7Type minigame, host, or map name")))
+                .onClick(e -> {
+                    Player p = (Player) e.getWhoClicked();
+                    if (e.isShiftClick() && viewerFilters.containsKey(p.getUniqueId())) {
+                        viewerFilters.remove(p.getUniqueId());
+                        openFor(p);
+                        return;
+                    }
+                    p.closeInventory();
+                    awaitingFilterInput.add(p.getUniqueId());
+                    p.sendMessage(legacy("&eType a filter (minigame, host, or map). Type &cclear &eto reset:"));
+                }));
+
+        // Dynamic session list — LOBBY + public only, filtered, sorted oldest-first
+        String filter = viewerFilters.get(viewer.getUniqueId());
         List<Session> lobbySessions = Arrays.stream(sm.getAllSessions())
                 .filter(s -> s.getState() == SessionState.LOBBY
                         && s.getVisibility() == SessionVisibility.PUBLIC)
+                .filter(s -> matchesFilter(s, filter))
                 .sorted(Comparator.comparingLong(Session::getCreatedAt))
                 .collect(Collectors.toList());
 
@@ -235,6 +293,20 @@ public class MainGuiService implements Listener {
                         Messages.send(p, "session.error.already-in-session");
                     }
                 });
+    }
+
+    private boolean matchesFilter(Session s, @Nullable String filter) {
+        if (filter == null || filter.isEmpty()) return true;
+        String f = filter.toLowerCase(Locale.ROOT);
+        if (s.getHost() != null && s.getHost().getName().toLowerCase(Locale.ROOT).contains(f)) return true;
+        if (s.getMiniGame() != null) {
+            // Name stored as custom value; fall back to id
+            Object mgName = s.getMiniGame().getValue("name");
+            String mgStr = mgName != null ? mgName.toString() : s.getMiniGame().getId();
+            if (mgStr.toLowerCase(Locale.ROOT).contains(f)) return true;
+        }
+        if (s.getGameMap() != null && s.getGameMap().getId().toLowerCase(Locale.ROOT).contains(f)) return true;
+        return false;
     }
 
     private static Component legacy(String text) {
