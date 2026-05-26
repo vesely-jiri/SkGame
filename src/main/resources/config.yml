@@ -77,6 +77,15 @@ storage:
   sqlite:
     file: skgame.db   # Relative to plugins/SkGame/storage/
 
+# --- Quickplay ---
+quickplay:
+  enabled: true
+  # Seconds to search for an existing public LOBBY session before creating a new one.
+  search-window-seconds: 15
+  # When true: create a new session after search window expires with no match.
+  # When false: notify the player and remove them from the queue.
+  create-on-no-match: true
+
 # --- Messages ---
 messages:
   forced-locale: ~        # null = use per-player locale

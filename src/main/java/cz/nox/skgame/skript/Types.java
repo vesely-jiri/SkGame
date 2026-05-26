@@ -10,6 +10,7 @@ import ch.njol.yggdrasil.Fields;
 import cz.nox.skgame.api.game.model.CustomValue;
 import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.game.model.MiniGame;
+import cz.nox.skgame.api.game.model.MinigameTag;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.SessionVisibility;
 import cz.nox.skgame.api.game.model.type.CustomValuePlurality;
@@ -331,6 +332,32 @@ public class Types {
                     @Override
                     public String toVariableNameString(CustomValuePlurality plur) {
                         return "valuePlurality:" + plur.toString();
+                    }
+                })
+        );
+
+        Classes.registerClass(new EnumClassInfo<>(MinigameTag.class, "minigametag", "minigame tags",
+                new SimpleLiteral<>(MinigameTag.PVP, true))
+                .user("minigame ?tags?")
+                .name("Minigame Tag")
+                .description("Represents a category tag for a minigame (pvp, pve, ffa, team, building, puzzle, race).")
+                .since("1.0.0")
+                .parser(new Parser<>() {
+                    @Override
+                    public MinigameTag parse(String input, ParseContext context) {
+                        try {
+                            return MinigameTag.valueOf(input.trim().toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            return null;
+                        }
+                    }
+                    @Override
+                    public String toString(MinigameTag tag, int i) {
+                        return tag.name().toLowerCase();
+                    }
+                    @Override
+                    public String toVariableNameString(MinigameTag tag) {
+                        return "minigameTag:" + tag.name();
                     }
                 })
         );

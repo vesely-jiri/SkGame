@@ -187,3 +187,15 @@ admin:
     created: "&aMapa {0} vytvořena"
     deleted: "&aMapa {0} odstraněna"
     already-exists: "&cMapa {0} již existuje"
+
+quickplay:
+  queued: "&aHledám hru... &7(použij &c/game quickplay cancel &7pro zrušení)"
+  queued-with-tags: "&aHledám hru s tagy: &f{0} &7(použij &c/game quickplay cancel &7pro zrušení)"
+  searching: "&7Quickplay: hledám... zbývá &e{0}s"
+  found: "&aNalezena shoda! Připojuji se k session &e{0}&a..."
+  created-session: "&aŽádná volná session nenalezena. Vytvořena nová!"
+  no-match: "&7Žádná odpovídající session nenalezena. Zkus to znovu."
+  cancelled: "&7Quickplay hledání zrušeno"
+  not-queued: "&7Nejsi ve frontě quickplay"
+  already-queued: "&eJiž hledáš hru. Použij &c/game quickplay cancel &epro zastavení."
+  unknown-tag: "&cNeznámý tag: &f{0}&c. Platné: pvp, pve, ffa, team, building, puzzle, race"

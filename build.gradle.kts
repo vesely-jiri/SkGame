@@ -24,11 +24,26 @@ dependencies {
     implementation("org.xerial:sqlite-jdbc:3.45.3.0")
 }
 
+val gitSha: String = try {
+    ProcessBuilder("git", "rev-parse", "--short", "HEAD")
+        .redirectErrorStream(true)
+        .start()
+        .inputStream
+        .bufferedReader()
+        .readLine()
+        ?.trim() ?: "unknown"
+} catch (e: Exception) {
+    "unknown"
+}
+
 tasks {
 
     processResources {
         filesMatching("plugin.yml") {
             expand("version" to project.version)
+        }
+        filesMatching("build-info.properties") {
+            expand("version" to project.version, "gitSha" to gitSha)
         }
         from("scripts") {
             into("scripts")

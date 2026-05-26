@@ -8,10 +8,14 @@ import cz.nox.skgame.api.module.SkGameModule;
 import cz.nox.skgame.core.game.MiniGameManager;
 import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.storage.DatabaseManager;
+import cz.nox.skgame.util.BuildInfo;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -24,42 +28,48 @@ import java.util.stream.Collectors;
 
 public class InfoSubcommand {
 
+    private static final String GITHUB_URL = "https://github.com/vesely-jiri/SkGame";
+
     public void execute(CommandSender sender) {
         SkGame plugin = SkGame.getInstance();
         boolean extended = sender.hasPermission("skgame.info.extended");
 
-        send(sender, "&3&l===== SkGame Info =====");
+        // Header with clickable version + git SHA
+        String ver = plugin.getDescription().getVersion();
+        String sha = BuildInfo.gitSha();
+        String shaDisplay = sha.length() > 7 ? sha.substring(0, 7) : sha;
 
-        // SkGame
-        send(sender, "&3SkGame:");
-        send(sender, "  &7Version: &f" + plugin.getDescription().getVersion());
+        Component versionChip = Component.text("[SkGame " + ver + "]", NamedTextColor.AQUA, TextDecoration.BOLD)
+                .hoverEvent(HoverEvent.showText(Component.text("Open GitHub repository", NamedTextColor.GRAY)))
+                .clickEvent(ClickEvent.openUrl(GITHUB_URL));
+        Component shaChip = Component.text("[git:" + shaDisplay + "]", NamedTextColor.DARK_GRAY)
+                .hoverEvent(HoverEvent.showText(Component.text("Full SHA: " + sha, NamedTextColor.GRAY)));
 
-        // Server
-        send(sender, "&3Server:");
-        send(sender, "  &7Server: &f" + Bukkit.getServer().getName() + " " + Bukkit.getServer().getVersion());
-        Plugin skriptPlugin = Bukkit.getPluginManager().getPlugin("Skript");
-        String skriptVer = skriptPlugin != null ? skriptPlugin.getDescription().getVersion() : "unknown";
-        send(sender, "  &7Skript: &f" + skriptVer);
+        send(sender, versionChip
+                .append(Component.text(" ", NamedTextColor.WHITE))
+                .append(shaChip));
+
+        // Server line
+        Plugin skript = Bukkit.getPluginManager().getPlugin("Skript");
+        String skriptVer = skript != null ? skript.getDescription().getVersion() : "unknown";
+        send(sender, c("&7Server: &f" + Bukkit.getServer().getName()
+                + " " + Bukkit.getServer().getVersion()
+                + " &7| Skript &f" + skriptVer));
 
         // Modules
         List<SkGameModule> modules = plugin.getEnabledModules();
         String moduleList = modules.isEmpty() ? "none"
                 : modules.stream().map(SkGameModule::getId).collect(Collectors.joining(", "));
-        send(sender, "&3Modules:");
-        send(sender, "  &7Enabled: &f" + moduleList);
+        send(sender, c("&7Modules: &f" + moduleList));
 
         // Minigames
-        MiniGame[] minigames = MiniGameManager.getInstance().getAllMiniGames();
-        send(sender, "&3Minigames &8(" + minigames.length + ")&3:");
-        if (minigames.length == 0) {
-            send(sender, "  &7(none registered)");
-        } else {
-            for (MiniGame mg : minigames) {
-                Object nameObj = mg.getValue("name");
-                String displayName = nameObj != null ? nameObj.toString() : mg.getId();
-                send(sender, "  &7- &f" + displayName + " &8[" + mg.getId() + "]");
-            }
-        }
+        MiniGame[] mgs = MiniGameManager.getInstance().getAllMiniGames();
+        String mgNames = mgs.length == 0 ? "none"
+                : Arrays.stream(mgs).map(mg -> {
+            Object n = mg.getValue("name");
+            return n != null ? n.toString() : mg.getId();
+        }).collect(Collectors.joining(", "));
+        send(sender, c("&7Minigames &8(" + mgs.length + ")&7: &f" + mgNames));
 
         // Sessions
         Session[] all = SessionManager.getInstance().getAllSessions();
@@ -67,54 +77,45 @@ public class InfoSubcommand {
         long running = Arrays.stream(all)
                 .filter(s -> s.getState() == SessionState.STARTED || s.getState() == SessionState.STARTING)
                 .count();
-        send(sender, "&3Sessions:");
-        send(sender, "  &7Active: &f" + all.length
-                + " &7(lobby: &f" + lobby + "&7, running: &f" + running + "&7)");
+        send(sender, c("&7Sessions: &f" + all.length
+                + " &8(lobby: &f" + lobby + "&8, running: &f" + running + "&8)"));
 
         if (!extended) return;
 
-        // Runtime
-        send(sender, "&3Runtime &8(extended)&3:");
+        // Extended: runtime
         long uptimeMs = System.currentTimeMillis() - plugin.getPluginStartTime();
-        send(sender, "  &7Uptime: &f" + formatUptime(uptimeMs));
-        send(sender, "  &7Maintenance: " + (plugin.isMaintenanceMode() ? "&cON" : "&aOFF"));
+        send(sender, c("&7Uptime: &f" + formatUptime(uptimeMs)
+                + " &7| Maintenance: " + (plugin.isMaintenanceMode() ? "&cON" : "&aOFF")));
+
         Location lobbySpawn = plugin.getLobbySpawn();
         if (lobbySpawn != null) {
-            String worldName = lobbySpawn.getWorld() != null ? lobbySpawn.getWorld().getName() : "?";
-            send(sender, "  &7Lobby spawn: &f" + worldName
-                    + " " + String.format("%.1f", lobbySpawn.getX())
-                    + " " + String.format("%.1f", lobbySpawn.getY())
-                    + " " + String.format("%.1f", lobbySpawn.getZ()));
+            String world = lobbySpawn.getWorld() != null ? lobbySpawn.getWorld().getName() : "?";
+            send(sender, c("&7Lobby spawn: &f" + world
+                    + String.format(" %.1f %.1f %.1f", lobbySpawn.getX(), lobbySpawn.getY(), lobbySpawn.getZ())));
         } else {
-            send(sender, "  &7Lobby spawn: &cnot set");
+            send(sender, c("&7Lobby spawn: &cnot set"));
         }
 
-        // Database
+        // Extended: database
         DatabaseManager db = DatabaseManager.getInstance();
-        send(sender, "&3Database &8(extended)&3:");
         if (db.isAvailable()) {
-            send(sender, "  &7Status: &aconnected");
-            long rowCount = db.getTotalGameResultCount();
-            send(sender, "  &7Game results stored: &f" + (rowCount >= 0 ? rowCount : "unknown"));
+            long rows = db.getTotalGameResultCount();
+            String rowStr = rows >= 0 ? String.format("%,d", rows) : "unknown";
             File dbFile = db.getDbFile();
-            if (dbFile != null && dbFile.exists()) {
-                send(sender, "  &7DB file size: &f" + formatFileSize(dbFile.length()));
-            }
+            String sizeStr = dbFile != null && dbFile.exists() ? " | " + formatFileSize(dbFile.length()) : "";
+            send(sender, c("&7Database: &aconnected &7| &f" + rowStr + " results" + sizeStr));
         } else {
-            send(sender, "  &7Status: &cdisconnected");
+            send(sender, c("&7Database: &cdisconnected"));
         }
     }
 
     private static String formatUptime(long ms) {
-        long seconds = ms / 1000;
-        long d = seconds / 86400;
-        long h = (seconds % 86400) / 3600;
-        long m = (seconds % 3600) / 60;
-        long s = seconds % 60;
+        long s = ms / 1000;
+        long d = s / 86400, h = (s % 86400) / 3600, m = (s % 3600) / 60, sec = s % 60;
         if (d > 0) return d + "d " + h + "h " + m + "m";
-        if (h > 0) return h + "h " + m + "m " + s + "s";
-        if (m > 0) return m + "m " + s + "s";
-        return s + "s";
+        if (h > 0) return h + "h " + m + "m " + sec + "s";
+        if (m > 0) return m + "m " + sec + "s";
+        return sec + "s";
     }
 
     private static String formatFileSize(long bytes) {
@@ -123,12 +124,21 @@ public class InfoSubcommand {
         return String.format("%.1f MB", bytes / (1024.0 * 1024));
     }
 
+    private static Component c(String legacy) {
+        return LegacyComponentSerializer.legacyAmpersand().deserialize(legacy);
+    }
+
+    private static void send(CommandSender sender, String legacy) {
+        send(sender, c(legacy));
+    }
+
     @SuppressWarnings({"deprecation", "UnstableApiUsage"})
-    private static void send(CommandSender sender, String msg) {
+    private static void send(CommandSender sender, Component component) {
         if (sender instanceof Player p) {
-            p.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(msg));
+            p.sendMessage(component);
         } else {
-            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
+            // Console: strip to plain text via legacy serializer
+            sender.sendMessage(LegacyComponentSerializer.legacyAmpersand().serialize(component));
         }
     }
 }

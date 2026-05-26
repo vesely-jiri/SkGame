@@ -9,14 +9,17 @@ import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class MiniGame implements ConfigurationSerializable {
     private String id;
     private Map<String, Object> values;
     private Map<String, CustomValue> gameMapValueDefs = new LinkedHashMap<>();
+    private Set<MinigameTag> tags = EnumSet.noneOf(MinigameTag.class);
 
     public MiniGame(String id,Map<String, Object> values) {
         this.id = id;
@@ -69,6 +72,19 @@ public class MiniGame implements ConfigurationSerializable {
         this.gameMapValueDefs = (defs != null) ? defs : new LinkedHashMap<>();
     }
 
+    public Set<MinigameTag> getTags() {
+        return tags;
+    }
+    public void setTags(Set<MinigameTag> tags) {
+        this.tags = tags != null ? tags : EnumSet.noneOf(MinigameTag.class);
+    }
+    public void addTag(MinigameTag tag) {
+        if (tag != null) tags.add(tag);
+    }
+    public void removeTag(MinigameTag tag) {
+        tags.remove(tag);
+    }
+
     @Override
     public @NotNull Map<String, Object> serialize() {
         Map<String, Object> gm = new HashMap<>();
@@ -96,6 +112,12 @@ public class MiniGame implements ConfigurationSerializable {
             }
             gm.put("gamemap-values", defs);
         }
+
+        if (!tags.isEmpty()) {
+            gm.put("tags", tags.stream().map(MinigameTag::name)
+                    .reduce((a, b) -> a + "," + b).orElse(""));
+        }
+
         return gm;
     }
 
@@ -164,6 +186,15 @@ public class MiniGame implements ConfigurationSerializable {
                 }
             }
             newGm.setGameMapValueDefs(defs);
+        }
+
+        Object rawTags = gm.get("tags");
+        if (rawTags instanceof String s && !s.isEmpty()) {
+            Set<MinigameTag> tagSet = EnumSet.noneOf(MinigameTag.class);
+            for (String part : s.split(",")) {
+                try { tagSet.add(MinigameTag.valueOf(part.trim())); } catch (IllegalArgumentException ignored) {}
+            }
+            newGm.setTags(tagSet);
         }
 
         return newGm;

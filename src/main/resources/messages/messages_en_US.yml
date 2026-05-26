@@ -257,3 +257,15 @@ admin:
       header: "&6List of &7values {0} &6for &7map {1} &6of &7addon {2}"
   action:
     canceled: "&cAction canceled"
+
+quickplay:
+  queued: "&aSearching for a game... &7(use &c/game quickplay cancel &7to cancel)"
+  queued-with-tags: "&aSearching for a game with tags: &f{0} &7(use &c/game quickplay cancel &7to cancel)"
+  searching: "&7Quickplay: searching... &e{0}s &7remaining"
+  found: "&aMatch found! Joining session &e{0}&a..."
+  created-session: "&aNo open session found. Created a new one for you!"
+  no-match: "&7No matching session found. Try again later."
+  cancelled: "&7Quickplay search cancelled"
+  not-queued: "&7You are not in the quickplay queue"
+  already-queued: "&eAlready searching. Use &c/game quickplay cancel &eto stop."
+  unknown-tag: "&cUnknown tag: &f{0}&c. Valid: pvp, pve, ffa, team, building, puzzle, race"

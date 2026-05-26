@@ -163,7 +163,12 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             "cz.nox.skgame.skript.expressions.ExprLobbySpawn",
             "cz.nox.skgame.skript.expressions.ExprMaintenanceMode",
             "cz.nox.skgame.skript.expressions.ExprParty",
-            "cz.nox.skgame.skript.expressions.ExprMainGuiFilter"
+            "cz.nox.skgame.skript.expressions.ExprMainGuiFilter",
+            // Minigame tags
+            "cz.nox.skgame.skript.effects.EffSetMiniGameTags",
+            "cz.nox.skgame.skript.expressions.minigames.ExprMiniGameTags",
+            // Quickplay
+            "cz.nox.skgame.skript.conditions.CondIsInQuickplayQueue"
     );
 
     private static final List<String> CORE_RESOURCE_PATHS = List.of();
@@ -244,6 +249,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
         Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.gui.services.PlayerProfileGuiService.getInstance(), instance);
         Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.gui.services.AdminPanelGuiService.getInstance(), instance);
         Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.gui.services.GameHistoryGuiService.getInstance(), instance);
+        Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.gui.services.FilterPickerGuiService.getInstance(), instance);
         Bukkit.getPluginManager().registerEvents(new cz.nox.skgame.core.listener.ChatIsolationListener(), instance);
 
         for (SkGameModule module : enabledModules) {
@@ -276,6 +282,8 @@ public class SkGame extends JavaPlugin implements TabCompleter {
 
         MiniGameManager.getInstance().saveToFile(miniGamesDataFile);
         GameMapManager.getInstance().saveToFile(mapsDataFile);
+
+        cz.nox.skgame.core.game.quickplay.QuickplayQueue.getInstance().shutdown();
 
         // Disband all live sessions before modules unload
         cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl.getInstance().shutdown();

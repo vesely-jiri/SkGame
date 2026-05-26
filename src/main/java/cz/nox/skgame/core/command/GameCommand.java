@@ -5,6 +5,7 @@ import cz.nox.skgame.api.game.model.SessionVisibility;
 import cz.nox.skgame.api.messages.Messages;
 import cz.nox.skgame.core.command.subcommands.AdminSubcommand;
 import cz.nox.skgame.core.command.subcommands.JoinSubcommand;
+import cz.nox.skgame.core.command.subcommands.QuickplaySubcommand;
 import cz.nox.skgame.core.command.subcommands.SpectateSubcommand;
 import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl;
@@ -31,6 +32,7 @@ public class GameCommand implements CommandExecutor, TabCompleter {
 
     private final AdminSubcommand adminSub = new AdminSubcommand();
     private final JoinSubcommand joinSub = new JoinSubcommand();
+    private final QuickplaySubcommand quickplaySub = new QuickplaySubcommand();
     private final SpectateSubcommand spectateSub = new SpectateSubcommand();
 
     @Override
@@ -48,9 +50,10 @@ public class GameCommand implements CommandExecutor, TabCompleter {
             return true;
         }
         switch (args[0].toLowerCase()) {
-            case "admin"    -> adminSub.execute(player, args);
-            case "join"     -> joinSub.execute(player, args);
-            case "spectate" -> spectateSub.execute(player, args);
+            case "admin"     -> adminSub.execute(player, args);
+            case "join"      -> joinSub.execute(player, args);
+            case "quickplay" -> quickplaySub.execute(player, args);
+            case "spectate"  -> spectateSub.execute(player, args);
             case "rejoin"   -> {
                 if (args.length < 2) {
                     Messages.send(player, "session.rejoin.usage");
@@ -163,7 +166,7 @@ public class GameCommand implements CommandExecutor, TabCompleter {
         if (!(sender instanceof Player player)) return List.of();
 
         if (args.length == 1) {
-            List<String> opts = new ArrayList<>(List.of("join", "rejoin", "history"));
+            List<String> opts = new ArrayList<>(List.of("join", "quickplay", "rejoin", "history"));
             if (player.hasPermission("skgame.profile")) opts.add("profile");
             if (player.hasPermission("skgame.spectate")) opts.add("spectate");
             if (player.hasPermission("skgame.admin")) opts.add("admin");
@@ -177,13 +180,23 @@ public class GameCommand implements CommandExecutor, TabCompleter {
         }
         if (args.length == 2) {
             return switch (args[0].toLowerCase()) {
-                case "join"     -> joinSub.tabComplete(player, args);
-                case "spectate" -> spectateSub.tabComplete(player, args);
-                case "history"  -> player.hasPermission("skgame.history.others")
+                case "join"      -> joinSub.tabComplete(player, args);
+                case "quickplay" -> {
+                    List<String> qopts = new java.util.ArrayList<>(List.of("cancel"));
+                    for (cz.nox.skgame.api.game.model.MinigameTag t :
+                            cz.nox.skgame.api.game.model.MinigameTag.values()) {
+                        qopts.add(t.name().toLowerCase());
+                    }
+                    yield qopts.stream()
+                            .filter(s -> s.startsWith(args[1].toLowerCase()))
+                            .collect(Collectors.toList());
+                }
+                case "spectate"  -> spectateSub.tabComplete(player, args);
+                case "history"   -> player.hasPermission("skgame.history.others")
                         ? onlineNames(args[1]) : List.of();
-                case "profile"  -> player.hasPermission("skgame.profile.others")
+                case "profile"   -> player.hasPermission("skgame.profile.others")
                         ? onlineNames(args[1]) : List.of();
-                default         -> List.of();
+                default          -> List.of();
             };
         }
         return List.of();

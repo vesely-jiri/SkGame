@@ -4,6 +4,7 @@ import cz.nox.skgame.api.game.event.GameStartEvent;
 import cz.nox.skgame.api.game.event.GameStopEvent;
 import cz.nox.skgame.api.game.event.SessionCreateEvent;
 import cz.nox.skgame.api.game.event.SessionDisbandEvent;
+import cz.nox.skgame.api.game.model.MinigameTag;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.SessionVisibility;
 import cz.nox.skgame.api.game.model.type.SessionState;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -60,6 +62,7 @@ public class MainGuiService implements Listener {
     private final Set<UUID> activeViewers = new HashSet<>();
     private final java.util.Map<UUID, String> viewerFilters = new ConcurrentHashMap<>();
     private final Set<UUID> awaitingFilterInput = ConcurrentHashMap.newKeySet();
+    private final java.util.Map<UUID, Set<MinigameTag>> viewerTagFilters = new ConcurrentHashMap<>();
 
     private MainGuiService() {}
 
@@ -145,6 +148,18 @@ public class MainGuiService implements Listener {
         }
     }
 
+    public Set<MinigameTag> getTagFilter(Player player) {
+        return viewerTagFilters.getOrDefault(player.getUniqueId(), Set.of());
+    }
+
+    public void setTagFilter(Player player, Set<MinigameTag> tags) {
+        if (tags == null || tags.isEmpty()) {
+            viewerTagFilters.remove(player.getUniqueId());
+        } else {
+            viewerTagFilters.put(player.getUniqueId(), new HashSet<>(tags));
+        }
+    }
+
     private Inventory buildFor(Player viewer) {
         SessionLifecycleManagerImpl lifecycle = SessionLifecycleManagerImpl.getInstance();
         SessionManager sm = SessionManager.getInstance();
@@ -221,30 +236,52 @@ public class MainGuiService implements Listener {
 
         // Slot 4 — Filter sessions (overrides the red glass pane from RED_SLOTS)
         String currentFilter = viewerFilters.get(viewer.getUniqueId());
-        boolean hasFilter = currentFilter != null && !currentFilter.isEmpty();
+        Set<MinigameTag> currentTagFilter = viewerTagFilters.getOrDefault(viewer.getUniqueId(), Set.of());
+        boolean hasTextFilter = currentFilter != null && !currentFilter.isEmpty();
+        boolean hasTagFilter = !currentTagFilter.isEmpty();
+        boolean hasAnyFilter = hasTextFilter || hasTagFilter;
+
+        List<Component> filterLore = new java.util.ArrayList<>();
+        if (hasTextFilter) filterLore.add(legacy("&7Text: &f" + currentFilter));
+        if (hasTagFilter) {
+            String tagStr = currentTagFilter.stream()
+                    .map(MinigameTag::displayName)
+                    .reduce((a, b) -> a + ", " + b).orElse("");
+            filterLore.add(legacy("&7Tags: &f" + tagStr));
+        }
+        filterLore.add(legacy("&aLeft-click &7to pick tags"));
+        filterLore.add(legacy("&eShift-click &7to type text filter"));
+        if (hasAnyFilter) filterLore.add(legacy("&cRight-click &7to clear all"));
+
         builder.slot(4, GuiItem.of(Material.HOPPER)
-                .name(hasFilter ? "&e&lFilter: &f" + currentFilter : "&e&lFilter sessions")
-                .lore(hasFilter
-                        ? List.of(legacy("&7Left-click to change"), legacy("&cRight-click to clear"))
-                        : List.of(legacy("&7Type minigame, host, or map name")))
+                .name(hasAnyFilter ? "&e&lFiltered" : "&e&lFilter sessions")
+                .lore(filterLore)
                 .onClick(e -> {
                     Player p = (Player) e.getWhoClicked();
                     if (e.getClick().isRightClick()) {
                         viewerFilters.remove(p.getUniqueId());
+                        viewerTagFilters.remove(p.getUniqueId());
                         openFor(p);
                         return;
                     }
-                    p.closeInventory();
-                    awaitingFilterInput.add(p.getUniqueId());
-                    p.sendMessage(legacy("&eType a filter (minigame, host, or map). Type &cclear &eto reset:"));
+                    if (e.getClick().isShiftClick()) {
+                        p.closeInventory();
+                        awaitingFilterInput.add(p.getUniqueId());
+                        p.sendMessage(legacy("&eType a filter (minigame, host, or map). Type &cclear &eto reset:"));
+                        return;
+                    }
+                    // Left-click — open tag picker
+                    Set<MinigameTag> activeTags = viewerTagFilters.getOrDefault(p.getUniqueId(), Set.of());
+                    FilterPickerGuiService.getInstance().openFor(p, activeTags);
                 }));
 
         // Dynamic session list — LOBBY + public only, filtered, sorted oldest-first
         String filter = viewerFilters.get(viewer.getUniqueId());
+        Set<MinigameTag> tagFilter = viewerTagFilters.getOrDefault(viewer.getUniqueId(), Set.of());
         List<Session> lobbySessions = Arrays.stream(sm.getAllSessions())
                 .filter(s -> s.getState() == SessionState.LOBBY
                         && s.getVisibility() == SessionVisibility.PUBLIC)
-                .filter(s -> matchesFilter(s, filter))
+                .filter(s -> matchesFilter(s, filter, tagFilter))
                 .sorted(Comparator.comparingLong(Session::getCreatedAt))
                 .collect(Collectors.toList());
 
@@ -296,18 +333,34 @@ public class MainGuiService implements Listener {
                 });
     }
 
-    private boolean matchesFilter(Session s, @Nullable String filter) {
-        if (filter == null || filter.isEmpty()) return true;
-        String f = filter.toLowerCase(Locale.ROOT);
-        if (s.getHost() != null && s.getHost().getName().toLowerCase(Locale.ROOT).contains(f)) return true;
-        if (s.getMiniGame() != null) {
-            // Name stored as custom value; fall back to id
-            Object mgName = s.getMiniGame().getValue("name");
-            String mgStr = mgName != null ? mgName.toString() : s.getMiniGame().getId();
-            if (mgStr.toLowerCase(Locale.ROOT).contains(f)) return true;
+    private boolean matchesFilter(Session s, @Nullable String textFilter, Set<MinigameTag> tagFilter) {
+        // AND between dimensions: both conditions must pass when both are active
+        if (textFilter != null && !textFilter.isEmpty()) {
+            String f = textFilter.toLowerCase(Locale.ROOT);
+            boolean textMatch = false;
+            if (s.getHost() != null && s.getHost().getName().toLowerCase(Locale.ROOT).contains(f))
+                textMatch = true;
+            if (!textMatch && s.getMiniGame() != null) {
+                Object mgName = s.getMiniGame().getValue("name");
+                String mgStr = mgName != null ? mgName.toString() : s.getMiniGame().getId();
+                if (mgStr.toLowerCase(Locale.ROOT).contains(f)) textMatch = true;
+            }
+            if (!textMatch && s.getGameMap() != null
+                    && s.getGameMap().getId().toLowerCase(Locale.ROOT).contains(f))
+                textMatch = true;
+            if (!textMatch) return false;
         }
-        if (s.getGameMap() != null && s.getGameMap().getId().toLowerCase(Locale.ROOT).contains(f)) return true;
-        return false;
+        // Tag filter: OR within set (session must have at least one matching tag)
+        if (!tagFilter.isEmpty()) {
+            if (s.getMiniGame() == null) return false;
+            Set<MinigameTag> sessionTags = s.getMiniGame().getTags();
+            boolean tagMatch = false;
+            for (MinigameTag t : tagFilter) {
+                if (sessionTags.contains(t)) { tagMatch = true; break; }
+            }
+            if (!tagMatch) return false;
+        }
+        return true;
     }
 
     private static Component legacy(String text) {
