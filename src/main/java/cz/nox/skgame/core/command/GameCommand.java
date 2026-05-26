@@ -179,9 +179,21 @@ public class GameCommand implements CommandExecutor, TabCompleter {
             return switch (args[0].toLowerCase()) {
                 case "join"     -> joinSub.tabComplete(player, args);
                 case "spectate" -> spectateSub.tabComplete(player, args);
+                case "history"  -> player.hasPermission("skgame.history.others")
+                        ? onlineNames(args[1]) : List.of();
+                case "profile"  -> player.hasPermission("skgame.profile.others")
+                        ? onlineNames(args[1]) : List.of();
                 default         -> List.of();
             };
         }
         return List.of();
+    }
+
+    private static List<String> onlineNames(String partial) {
+        String low = partial.toLowerCase(java.util.Locale.ROOT);
+        return Bukkit.getOnlinePlayers().stream()
+                .map(Player::getName)
+                .filter(n -> n.toLowerCase(java.util.Locale.ROOT).startsWith(low))
+                .collect(Collectors.toList());
     }
 }

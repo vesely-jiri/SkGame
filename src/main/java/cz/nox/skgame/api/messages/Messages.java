@@ -109,12 +109,13 @@ public final class Messages {
 
             for (String key : missing) {
                 userConfig.set(key, bundled.get(key));
-                if (log != null) log.info("[SkGame/Messages] Auto-merge: added missing key '"
-                        + key + "' to messages_" + locale + ".yml");
+                if (log != null) log.info("[Messages] Auto-merged key '" + key + "' into messages_" + locale + ".yml");
             }
             try {
                 userConfig.save(userFile);
                 locales.put(locale, userConfig);
+                if (log != null) log.info("[Messages] Auto-merged " + missing.size()
+                        + " missing key(s) for locale " + locale);
             } catch (IOException e) {
                 if (log != null) log.warning("[SkGame/Messages] Auto-merge: could not save messages_"
                         + locale + ".yml — " + e.getMessage());

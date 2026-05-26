@@ -116,7 +116,7 @@ public class MainGuiService implements Listener {
     @EventHandler
     public void onGameStop(GameStopEvent event) { update(); }
 
-    @EventHandler(priority = EventPriority.LOW)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onChat(AsyncChatEvent event) {
         Player p = event.getPlayer();
         if (!awaitingFilterInput.remove(p.getUniqueId())) return;
