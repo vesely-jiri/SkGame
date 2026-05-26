@@ -4,6 +4,11 @@ import cz.nox.skgame.api.game.model.MinigameTag;
 import cz.nox.skgame.api.messages.Messages;
 import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.game.quickplay.QuickplayQueue;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.entity.Player;
 
 import java.util.EnumSet;
@@ -53,5 +58,15 @@ public class QuickplaySubcommand {
                     .orElse("");
             Messages.send(player, "quickplay.queued-with-tags", tagStr);
         }
+
+        // Clickable cancel button sent once on queue entry
+        Component cancelChip = LegacyComponentSerializer.legacyAmpersand()
+                .deserialize("&7[")
+                .append(Component.text("Click to cancel", NamedTextColor.RED)
+                        .clickEvent(ClickEvent.runCommand("/game quickplay cancel"))
+                        .hoverEvent(HoverEvent.showText(
+                                Component.text("Cancel quickplay search", NamedTextColor.GRAY))))
+                .append(LegacyComponentSerializer.legacyAmpersand().deserialize("&7]"));
+        player.sendMessage(cancelChip);
     }
 }

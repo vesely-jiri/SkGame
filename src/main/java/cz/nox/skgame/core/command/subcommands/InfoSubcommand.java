@@ -31,6 +31,10 @@ public class InfoSubcommand {
     private static final String GITHUB_URL = "https://github.com/vesely-jiri/SkGame";
 
     public void execute(CommandSender sender) {
+        if (!sender.hasPermission("skgame.info")) {
+            send(sender, c("&cYou don't have permission to do this"));
+            return;
+        }
         SkGame plugin = SkGame.getInstance();
         boolean extended = sender.hasPermission("skgame.info.extended");
 
@@ -42,8 +46,10 @@ public class InfoSubcommand {
         Component versionChip = Component.text("[SkGame " + ver + "]", NamedTextColor.AQUA, TextDecoration.BOLD)
                 .hoverEvent(HoverEvent.showText(Component.text("Open GitHub repository", NamedTextColor.GRAY)))
                 .clickEvent(ClickEvent.openUrl(GITHUB_URL));
+        String commitUrl = GITHUB_URL + "/commit/" + sha;
         Component shaChip = Component.text("[git:" + shaDisplay + "]", NamedTextColor.DARK_GRAY)
-                .hoverEvent(HoverEvent.showText(Component.text("Full SHA: " + sha, NamedTextColor.GRAY)));
+                .hoverEvent(HoverEvent.showText(Component.text("Click to view commit on GitHub", NamedTextColor.GRAY)))
+                .clickEvent(ClickEvent.openUrl(commitUrl));
 
         send(sender, versionChip
                 .append(Component.text(" ", NamedTextColor.WHITE))

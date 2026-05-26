@@ -62,7 +62,7 @@ public class FilterPickerGuiService implements Listener {
         for (int i = 0; i < tags.length && i < TAG_SLOTS.length; i++) {
             MinigameTag tag = tags[i];
             boolean active = selected.contains(tag);
-            Material mat = active ? Material.LIME_STAINED_GLASS_PANE : Material.GRAY_STAINED_GLASS_PANE;
+            Material mat = active ? Material.LIME_STAINED_GLASS_PANE : Material.LIGHT_GRAY_STAINED_GLASS_PANE;
             builder.slot(TAG_SLOTS[i], GuiItem.of(mat)
                     .name((active ? "&a&l" : "&7") + tag.displayName())
                     .onClick(e -> {

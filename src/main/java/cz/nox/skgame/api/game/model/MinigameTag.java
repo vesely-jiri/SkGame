@@ -4,7 +4,14 @@ public enum MinigameTag {
     PVP, PVE, FFA, TEAM, BUILDING, PUZZLE, RACE;
 
     public String displayName() {
-        String n = name();
-        return n.charAt(0) + n.substring(1).toLowerCase(java.util.Locale.ROOT);
+        return switch (this) {
+            case PVP      -> "PVP";
+            case PVE      -> "PVE";
+            case FFA      -> "FFA";
+            case TEAM     -> "Team";
+            case BUILDING -> "Building";
+            case PUZZLE   -> "Puzzle";
+            case RACE     -> "Race";
+        };
     }
 }

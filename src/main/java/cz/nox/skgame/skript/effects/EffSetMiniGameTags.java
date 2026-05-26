@@ -21,12 +21,16 @@ import java.util.Set;
 @Name("Set Minigame Tags")
 @Description({
         "Sets the tags of a minigame from a list of tag name strings.",
-        "Use the inline form ('tags: ...') inside a register minigame section.",
+        "Use the inline form inside a register minigame section — literal tag keywords is case-insensitive.",
         "Valid tag names: pvp, pve, ffa, team, building, puzzle, race (case-insensitive)."
 })
 @Examples({
         "register new minigame with id \"koth\":",
-        "    tags: \"pvp\", \"team\""
+        "    tags: PVP, Team",
+        "",
+        "# Equivalent — literal 'tags:' is case-insensitive:",
+        "register new minigame with id \"koth\":",
+        "    Tags: PVP, FFA"
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")
