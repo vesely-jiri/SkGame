@@ -121,6 +121,7 @@ public class MainGuiService implements Listener {
         Player p = event.getPlayer();
         if (!awaitingFilterInput.remove(p.getUniqueId())) return;
         event.setCancelled(true);
+        event.viewers().clear(); // belt-and-suspenders: drop all recipients regardless of cancel semantics
         String text = PlainTextComponentSerializer.plainText().serialize(event.message()).trim();
         if (text.equalsIgnoreCase("clear") || text.isEmpty()) {
             viewerFilters.remove(p.getUniqueId());
@@ -224,11 +225,11 @@ public class MainGuiService implements Listener {
         builder.slot(4, GuiItem.of(Material.HOPPER)
                 .name(hasFilter ? "&e&lFilter: &f" + currentFilter : "&e&lFilter sessions")
                 .lore(hasFilter
-                        ? List.of(legacy("&7Click to change"), legacy("&cShift-click to clear"))
+                        ? List.of(legacy("&7Left-click to change"), legacy("&cRight-click to clear"))
                         : List.of(legacy("&7Type minigame, host, or map name")))
                 .onClick(e -> {
                     Player p = (Player) e.getWhoClicked();
-                    if (e.isShiftClick() && viewerFilters.containsKey(p.getUniqueId())) {
+                    if (e.getClick().isRightClick()) {
                         viewerFilters.remove(p.getUniqueId());
                         openFor(p);
                         return;
