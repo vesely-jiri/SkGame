@@ -87,9 +87,6 @@ lobby:
   spawn-set: "&aLobby spawn nastaven na tvou pozici"
 
 gui:
-  filter:
-    set: "&aTextový filtr nastaven na: &f{0}"
-    cleared: "&7Textový filtr vymazán"
   main:
     title: "&6Hlavní nabídka her"
   session:

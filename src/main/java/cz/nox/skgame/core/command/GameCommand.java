@@ -4,7 +4,6 @@ import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.SessionVisibility;
 import cz.nox.skgame.api.messages.Messages;
 import cz.nox.skgame.core.command.subcommands.AdminSubcommand;
-import cz.nox.skgame.core.command.subcommands.FilterSubcommand;
 import cz.nox.skgame.core.command.subcommands.JoinSubcommand;
 import cz.nox.skgame.core.command.subcommands.QuickplaySubcommand;
 import cz.nox.skgame.core.command.subcommands.SpectateSubcommand;
@@ -32,7 +31,6 @@ import java.util.stream.Collectors;
 public class GameCommand implements CommandExecutor, TabCompleter {
 
     private final AdminSubcommand adminSub = new AdminSubcommand();
-    private final FilterSubcommand filterSub = new FilterSubcommand();
     private final JoinSubcommand joinSub = new JoinSubcommand();
     private final QuickplaySubcommand quickplaySub = new QuickplaySubcommand();
     private final SpectateSubcommand spectateSub = new SpectateSubcommand();
@@ -53,7 +51,6 @@ public class GameCommand implements CommandExecutor, TabCompleter {
         }
         switch (args[0].toLowerCase()) {
             case "admin"     -> adminSub.execute(player, args);
-            case "filter"    -> filterSub.execute(player, args);
             case "join"      -> joinSub.execute(player, args);
             case "quickplay" -> quickplaySub.execute(player, args);
             case "spectate"  -> spectateSub.execute(player, args);
@@ -169,7 +166,7 @@ public class GameCommand implements CommandExecutor, TabCompleter {
         if (!(sender instanceof Player player)) return List.of();
 
         if (args.length == 1) {
-            List<String> opts = new ArrayList<>(List.of("join", "filter", "quickplay", "rejoin", "history"));
+            List<String> opts = new ArrayList<>(List.of("join", "quickplay", "rejoin", "history"));
             if (player.hasPermission("skgame.profile")) opts.add("profile");
             if (player.hasPermission("skgame.spectate")) opts.add("spectate");
             if (player.hasPermission("skgame.admin")) opts.add("admin");
@@ -183,9 +180,6 @@ public class GameCommand implements CommandExecutor, TabCompleter {
         }
         if (args.length == 2) {
             return switch (args[0].toLowerCase()) {
-                case "filter"    -> List.of("clear").stream()
-                        .filter(s -> s.startsWith(args[1].toLowerCase()))
-                        .collect(Collectors.toList());
                 case "join"      -> joinSub.tabComplete(player, args);
                 case "quickplay" -> {
                     List<String> qopts = new java.util.ArrayList<>(List.of("cancel"));
