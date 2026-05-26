@@ -11,13 +11,16 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Static message service. Initialized by {@code MessagesModule.onEnable()}.
@@ -81,6 +84,48 @@ public final class Messages {
     /** Returns the set of currently loaded locale identifiers (e.g. "en_US", "cs_CZ"). */
     public static Set<String> getLoadedLocales() {
         return locales.keySet();
+    }
+
+    // ─── Auto-merge ───────────────────────────────────────────────────────────
+
+    /**
+     * For each locale in {@code bundledDefaults}, appends any keys present in the bundled
+     * YAML but absent in the user's on-disk file. Saves to disk and refreshes in-memory map.
+     * No-op when the user file is missing or already complete.
+     */
+    public static void autoMerge(File messagesDir, Map<String, YamlConfiguration> bundledDefaults, Logger log) {
+        for (Map.Entry<String, YamlConfiguration> entry : bundledDefaults.entrySet()) {
+            String locale = entry.getKey();
+            YamlConfiguration bundled = entry.getValue();
+            File userFile = new File(messagesDir, "messages_" + locale + ".yml");
+            if (!userFile.exists()) continue;
+
+            YamlConfiguration userConfig = locales.getOrDefault(locale,
+                    YamlConfiguration.loadConfiguration(userFile));
+
+            Set<String> missing = new TreeSet<>(getLeafKeys(bundled));
+            missing.removeAll(getLeafKeys(userConfig));
+            if (missing.isEmpty()) continue;
+
+            for (String key : missing) {
+                userConfig.set(key, bundled.get(key));
+                if (log != null) log.info("[SkGame/Messages] Auto-merge: added missing key '"
+                        + key + "' to messages_" + locale + ".yml");
+            }
+            try {
+                userConfig.save(userFile);
+                locales.put(locale, userConfig);
+            } catch (IOException e) {
+                if (log != null) log.warning("[SkGame/Messages] Auto-merge: could not save messages_"
+                        + locale + ".yml — " + e.getMessage());
+            }
+        }
+    }
+
+    private static Set<String> getLeafKeys(YamlConfiguration config) {
+        return config.getKeys(true).stream()
+                .filter(k -> !config.isConfigurationSection(k))
+                .collect(Collectors.toSet());
     }
 
     // ─── Public API ──────────────────────────────────────────────────────────

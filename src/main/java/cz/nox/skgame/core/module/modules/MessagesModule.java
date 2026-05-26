@@ -5,8 +5,15 @@ import cz.nox.skgame.api.messages.Messages;
 import cz.nox.skgame.api.module.ResourceTarget;
 import cz.nox.skgame.api.module.SkGameModule;
 
+import org.bukkit.configuration.file.YamlConfiguration;
+
 import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MessagesModule implements SkGameModule {
 
@@ -18,6 +25,21 @@ public class MessagesModule implements SkGameModule {
         File messagesDir = new File(plugin.getDataFolder(), "messages");
         messagesDir.mkdirs();
         Messages.load(messagesDir, plugin.getConfig(), plugin.getLogger());
+
+        if (plugin.getConfig().getBoolean("messages.auto-merge", true)) {
+            Map<String, YamlConfiguration> bundled = new HashMap<>();
+            for (String locale : List.of("en_US", "cs_CZ")) {
+                InputStream stream = plugin.getResource("messages/messages_" + locale + ".yml");
+                if (stream != null) {
+                    bundled.put(locale, YamlConfiguration.loadConfiguration(
+                            new InputStreamReader(stream, StandardCharsets.UTF_8)));
+                }
+            }
+            if (!bundled.isEmpty()) {
+                Messages.autoMerge(messagesDir, bundled, plugin.getLogger());
+            }
+        }
+
         int loaded = Messages.getLoadedLocales().size();
         if (loaded == 0) {
             plugin.getLogUtil().warning("MessagesModule: no locale files found in "
