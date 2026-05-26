@@ -37,6 +37,14 @@ session:
     expired: "&cYour rejoin window has expired"
     success: "&aRejoined as spectator — will auto-join party next round"
     usage: "&cUsage: /game rejoin <session-id>"
+  invite:
+    sent: "&aInvite sent to {0}"
+    revoked: "&7Invite revoked for {0}"
+    received: "&eYou were invited to a session by {0}. &a[Click to join]"
+    not-invited: "&cYou are not invited to this session"
+  code:
+    your-code: "&eYour session code: &f&l{0}"
+    invalid: "&cInvalid or expired session code"
 
 game:
   winners:
@@ -56,6 +64,13 @@ command:
   error:
     no-permission: "&cYou don't have permission to do this"
     session-no-spectate: "&cThis session doesn't allow spectators"
+    unknown-subcommand: "&cUnknown command. Use /game for options."
+  profile:
+    not-found: "&cPlayer not found: {0}"
+    no-permission-others: "&cYou don't have permission to view other players' profiles"
+  invite:
+    usage: "&cUsage: /game invite <player>"
+    wrong-mode: "&cSwitch session to invite-only mode first"
   join:
     usage: "&cUsage: /game join <session-id>"
     not-found: "&cSession not found: {0}"
@@ -66,6 +81,12 @@ command:
     status-on: "&eMaintenance mode is &aON"
     status-off: "&eMaintenance mode is &7OFF"
     enabled-summary: "&eActive sessions: &f{0} &7(multi-round: &f{1}&7, single-round: &f{2}&7). Online players: &f{3}&e."
+  stats:
+    reset:
+      confirm-prompt: "&eAbout to reset &f{0}&e game(s) for &f{1}&e. Add 'confirm' to proceed."
+      done: "&aReset &f{0}&a game(s) for &f{1}"
+      no-data: "&7No games found for {0}"
+      player-not-found: "&cPlayer not found: {0}"
 
 lobby:
   spawn-set: "&aGame lobby was set to your location"
@@ -84,6 +105,10 @@ gui:
       title: "&7&lShuffle players"
       lore-on: "&aShuffle ON: spawn order randomized"
       lore-off: "&7Shuffle OFF: spawn order deterministic"
+    visibility:
+      public: "&aPublic"
+      invite: "&7Invite-only"
+      code: "&7Code: &f{0}"
     error:
       not-host: "&cOnly host can use this button"
       no-minigame: "&cChoose a minigame before readying up"
@@ -123,6 +148,15 @@ gui:
       win-rate: "&bWin rate: &f{0}"
       wins-lore: "&6Wins: &f{0}"
       plays-lore: "&7Plays: &f{0}"
+  profile:
+    title: "&3Profile: {0}"
+    loading: "&7Loading..."
+    total-games: "&7Total games: &f{0}"
+    total-wins: "&aWins: &f{0}"
+    total-losses: "&cLosses: &f{0}"
+    win-rate: "&eWin rate: &f{0}"
+    favorite: "&7Favorite: &f{0}"
+    no-data: "&7No games played yet"
   admin:
     title: "&cAdmin gui"
     enum-picker:

@@ -173,19 +173,8 @@ public class SessionGuiService implements Listener {
             MinigamesGuiService.getInstance().openFor(p);
         }));
 
-        // Slot 26 — Lobby mode toggle (host-only)
-        boolean isPublic = session.getVisibility() == SessionVisibility.PUBLIC;
-        builder.slot(26, GuiItem.of(Material.OMINOUS_TRIAL_KEY)
-                .name("&7&lLobby mode")
-                .lore(legacy(isPublic ? "&aPublic&7/Private" : "&7Public/&aPrivate"))
-                .onClick(e -> {
-                    Player p = (Player) e.getWhoClicked();
-                    if (isMidGameLocked(session, p)) return;
-                    if (!isHostOnly(p, session)) return;
-                    session.setVisibility(session.getVisibility() == SessionVisibility.PUBLIC
-                            ? SessionVisibility.PRIVATE : SessionVisibility.PUBLIC);
-                    update(session);
-                }));
+        // Slot 26 — Visibility cycle: PUBLIC → INVITE_ONLY → CODE → PUBLIC (host-only)
+        builder.slot(26, buildVisibilitySlot(session, viewer));
 
         // Slot 33 — Maps (host-only; no-op if minigame not yet selected)
         builder.slot(33, buildMapsSlot(session).onClick(e -> {
@@ -278,6 +267,46 @@ public class SessionGuiService implements Listener {
         }
 
         return builder.build();
+    }
+
+    private GuiItem buildVisibilitySlot(Session session, Player viewer) {
+        SessionVisibility vis = session.getVisibility();
+        String label = switch (vis) {
+            case PUBLIC      -> Messages.get("gui.session.visibility.public", viewer);
+            case INVITE_ONLY -> Messages.get("gui.session.visibility.invite", viewer);
+            case CODE        -> Messages.get("gui.session.visibility.code", viewer, session.getJoinCode() != null ? session.getJoinCode() : "---");
+            default          -> vis.name();
+        };
+        return GuiItem.of(Material.OMINOUS_TRIAL_KEY)
+                .name("&7&lVisibility")
+                .lore(legacy(label))
+                .onClick(e -> {
+                    Player p = (Player) e.getWhoClicked();
+                    if (isMidGameLocked(session, p)) return;
+                    if (!isHostOnly(p, session)) return;
+                    SessionVisibility next = switch (session.getVisibility()) {
+                        case PUBLIC      -> SessionVisibility.INVITE_ONLY;
+                        case INVITE_ONLY -> SessionVisibility.CODE;
+                        default          -> SessionVisibility.PUBLIC;
+                    };
+                    session.setVisibility(next);
+                    if (next == SessionVisibility.CODE && session.getJoinCode() == null) {
+                        String code = generateJoinCode();
+                        session.setJoinCode(code);
+                        Messages.send(p, "session.code.your-code", code);
+                    } else if (next != SessionVisibility.CODE) {
+                        session.setJoinCode(null);
+                    }
+                    update(session);
+                });
+    }
+
+    private static String generateJoinCode() {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        StringBuilder sb = new StringBuilder(6);
+        java.util.Random rng = new java.util.Random();
+        for (int i = 0; i < 6; i++) sb.append(chars.charAt(rng.nextInt(chars.length())));
+        return sb.toString();
     }
 
     private GuiItem buildSpectatorsSlot(Session session, Player viewer) {

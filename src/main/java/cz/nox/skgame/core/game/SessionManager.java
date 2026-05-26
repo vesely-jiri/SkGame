@@ -89,6 +89,15 @@ public class SessionManager implements Listener {
         return sessions.get(id.toLowerCase());
     }
 
+    @Nullable
+    public Session getSessionByCode(String code) {
+        if (code == null) return null;
+        for (Session session : sessions.values()) {
+            if (code.equalsIgnoreCase(session.getJoinCode())) return session;
+        }
+        return null;
+    }
+
     public void setLastCreatedSession(Session session) {
         this.lastCreatedSession = session;
     }

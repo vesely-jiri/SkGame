@@ -29,6 +29,14 @@ session:
     expired: "&cČas pro znovupřipojení vypršel"
     success: "&aPřipojen jako divák — při dalším kole automaticky vstoupíš do party"
     usage: "&cPoužití: /game rejoin <id-session>"
+  invite:
+    sent: "&aPozvánka odeslána hráči {0}"
+    revoked: "&7Pozvánka pro {0} zrušena"
+    received: "&eObdržel jsi pozvánku do session od {0}. &a[Klikni pro připojení]"
+    not-invited: "&cNejsi pozván do této session"
+  code:
+    your-code: "&eKód tvé session: &f&l{0}"
+    invalid: "&cNeplatný nebo prošlý kód session"
 
 game:
   winners:
@@ -48,6 +56,13 @@ command:
   error:
     no-permission: "&cNa to nemáš oprávnění"
     session-no-spectate: "&cTato session neumožňuje sledování"
+    unknown-subcommand: "&cNeznámý příkaz. Použij /game pro nápovědu."
+  profile:
+    not-found: "&cHráč nenalezen: {0}"
+    no-permission-others: "&cNemáš oprávnění zobrazit profil jiného hráče"
+  invite:
+    usage: "&cPoužití: /game invite <hráč>"
+    wrong-mode: "&cNejprve přepni session do režimu pouze pozvaní"
   join:
     usage: "&cPoužití: /game join <id-session>"
     not-found: "&cSession nenalezena: {0}"
@@ -58,6 +73,12 @@ command:
     status-on: "&eRežim údržby je &aZAPNUT"
     status-off: "&eRežim údržby je &7VYPNUT"
     enabled-summary: "&eAktivní sessions: &f{0} &7(víceroundové: &f{1}&7, jednoroundové: &f{2}&7). Hráčů online: &f{3}&e."
+  stats:
+    reset:
+      confirm-prompt: "&ePřipravuji reset &f{0}&e her pro &f{1}&e. Přidej 'confirm' pro pokračování."
+      done: "&aResetováno &f{0}&a her pro &f{1}"
+      no-data: "&7Žádné hry nenalezeny pro {0}"
+      player-not-found: "&cHráč nenalezen: {0}"
 
 lobby:
   spawn-set: "&aLobby spawn nastaven na tvou pozici"
@@ -75,6 +96,10 @@ gui:
       title: "&7&lNáhodné pořadí"
       lore-on: "&aNáhodné pořadí: ZAP"
       lore-off: "&7Náhodné pořadí: VYP"
+    visibility:
+      public: "&aVerejná"
+      invite: "&7Pouze pozvaní"
+      code: "&7Kód: &f{0}"
     error:
       not-host: "&cToto tlačítko může používat pouze host"
       no-minigame: "&cNejdříve zvol minihru"
@@ -114,6 +139,15 @@ gui:
       win-rate: "&bVýhernost: &f{0}"
       wins-lore: "&6Výhry: &f{0}"
       plays-lore: "&7Hry: &f{0}"
+  profile:
+    title: "&3Profil: {0}"
+    loading: "&7Načítám..."
+    total-games: "&7Celkem her: &f{0}"
+    total-wins: "&aVýhry: &f{0}"
+    total-losses: "&cProhry: &f{0}"
+    win-rate: "&eVýhernost: &f{0}"
+    favorite: "&7Oblíbená: &f{0}"
+    no-data: "&7Zatím žádné hry"
   admin:
     title: "&cAdmin rozhraní"
     enum-picker:

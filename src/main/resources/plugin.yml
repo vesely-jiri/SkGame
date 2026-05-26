@@ -24,3 +24,9 @@ permissions:
   skgame.spectate:
     description: Join sessions as spectator via /game spectate
     default: op
+  skgame.profile:
+    description: View own player profile via /game profile
+    default: true
+  skgame.profile.others:
+    description: View other players' profiles via /game profile <name>
+    default: op

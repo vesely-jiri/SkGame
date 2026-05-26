@@ -71,6 +71,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             "cz.nox.skgame.skript.effects.EffOpenMinigamesGui",
             "cz.nox.skgame.skript.effects.EffOpenMapsGui",
             "cz.nox.skgame.skript.effects.EffOpenAdminGui",
+            "cz.nox.skgame.skript.effects.EffOpenPlayerProfileGui",
             // Effects — minigame section shorthands
             "cz.nox.skgame.skript.effects.EffSectionMgName",
             "cz.nox.skgame.skript.effects.EffSectionMgIcon",
@@ -93,6 +94,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             "cz.nox.skgame.skript.events.EvtMinigamesGuiOpen",
             "cz.nox.skgame.skript.events.EvtMapsGuiOpen",
             "cz.nox.skgame.skript.events.EvtAdminGuiOpen",
+            "cz.nox.skgame.skript.events.EvtPlayerProfileGuiOpen",
             // Sections
             "cz.nox.skgame.skript.sections.EffSecConfigureSession",
             "cz.nox.skgame.skript.sections.EffSecCreateSession",
@@ -228,6 +230,8 @@ public class SkGame extends JavaPlugin implements TabCompleter {
         Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.gui.services.MapsGuiService.getInstance(), instance);
         Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.gui.services.AdminGuiService.getInstance(), instance);
         Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.gui.services.SpectateGuiService.getInstance(), instance);
+        Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.gui.services.PlayerProfileGuiService.getInstance(), instance);
+        Bukkit.getPluginManager().registerEvents(new cz.nox.skgame.core.listener.ChatIsolationListener(), instance);
 
         for (SkGameModule module : enabledModules) {
             module.onEnable(this);
@@ -358,6 +362,17 @@ public class SkGame extends JavaPlugin implements TabCompleter {
                     default -> sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame reload [all|config|messages|storage|scripts]");
                 }
             }
+            case "stats" -> {
+                if (!sender.hasPermission("skgame.admin")) {
+                    sender.sendMessage(ChatColor.RED + "You do not have permission.");
+                    return true;
+                }
+                if (args.length < 3 || !args[1].equalsIgnoreCase("reset")) {
+                    sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame stats reset <player> [minigame] [confirm]");
+                    return true;
+                }
+                handleStatsReset(sender, args);
+            }
             case "maintenance" -> {
                 if (!sender.hasPermission("skgame.admin")) {
                     sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
@@ -387,9 +402,55 @@ public class SkGame extends JavaPlugin implements TabCompleter {
                             : "command.maintenance.status-off");
                 }
             }
-            default -> sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame <reload|maintenance> [args]");
+            default -> sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame <reload|maintenance|stats> [args]");
         }
         return true;
+    }
+
+    @SuppressWarnings("deprecation")
+    private void handleStatsReset(CommandSender sender, String[] args) {
+        // args: [0]=stats [1]=reset [2]=playerName [3?]=minigame|confirm [4?]=confirm
+        String playerName = args[2];
+        String minigameId = null;
+        boolean confirmed = false;
+
+        if (args.length >= 4) {
+            if (args[args.length - 1].equalsIgnoreCase("confirm")) {
+                confirmed = true;
+                if (args.length >= 5) minigameId = args[3].toLowerCase();
+            } else {
+                minigameId = args[3].toLowerCase();
+            }
+        }
+
+        org.bukkit.OfflinePlayer target = Bukkit.getOfflinePlayer(playerName);
+        if (!target.hasPlayedBefore() && !(target instanceof org.bukkit.entity.Player)) {
+            Messages.send(sender, "command.stats.reset.player-not-found", playerName);
+            return;
+        }
+
+        cz.nox.skgame.core.storage.GameResultsRepository repo =
+                cz.nox.skgame.core.storage.GameResultsRepository.getInstance();
+        int count = repo.countGamesForPlayer(target.getUniqueId(), minigameId);
+
+        if (count == 0) {
+            Messages.send(sender, "command.stats.reset.no-data", playerName);
+            return;
+        }
+        if (!confirmed) {
+            String scope = minigameId != null ? " (minigame: " + minigameId + ")" : "";
+            Messages.send(sender, "command.stats.reset.confirm-prompt", count, playerName + scope);
+            return;
+        }
+
+        String finalMinigameId = minigameId;
+        String finalName = playerName;
+        java.util.UUID uuid = target.getUniqueId();
+        Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
+            int deleted = repo.deletePlayerStats(uuid, finalMinigameId);
+            Bukkit.getScheduler().runTask(this, () ->
+                    Messages.send(sender, "command.stats.reset.done", deleted, finalName));
+        });
     }
 
     @Override
@@ -397,7 +458,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
         if (args.length == 1) {
             List<String> opts = new ArrayList<>();
             if (sender.hasPermission("skgame.admin.reload")) opts.add("reload");
-            if (sender.hasPermission("skgame.admin")) opts.add("maintenance");
+            if (sender.hasPermission("skgame.admin")) { opts.add("maintenance"); opts.add("stats"); }
             return StringUtil.copyPartialMatches(args[0], opts, new ArrayList<>());
         }
         if (args.length == 2) {

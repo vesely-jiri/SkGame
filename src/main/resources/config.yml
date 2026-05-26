@@ -39,6 +39,11 @@ session:
     enabled: true
     # How long (in seconds) the rejoin offer remains valid after disconnect.
     window-seconds: 60
+  # Chat isolation — restrict session members' chat to their own session.
+  chat:
+    isolation: false
+    # When true, spectators only see spectator-side chat within the session.
+    spectator-isolation: false
 
 # --- Spectate browser ---
 spectate:

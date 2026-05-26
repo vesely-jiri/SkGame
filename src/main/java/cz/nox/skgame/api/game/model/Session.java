@@ -37,6 +37,8 @@ public class Session {
     private boolean shuffle = false;
     private SessionVisibility visibility = SessionVisibility.PUBLIC;
     private List<Player> winners = new ArrayList<>();
+    private final Set<UUID> invitedPlayers = new HashSet<>();
+    @Nullable private String joinCode;
 
     public Session(String id, Player host, MiniGame miniGame,
                    SessionState state, GameMap map, Set<Player> players, Set<Player> spectators,
@@ -191,6 +193,14 @@ public class Session {
     public void setWinners(List<Player> w) { this.winners = new ArrayList<>(w); }
     public void clearWinners() { this.winners.clear(); }
 
+    public Set<UUID> getInvitedPlayers() { return Collections.unmodifiableSet(invitedPlayers); }
+    public void addInvitedPlayer(UUID uuid) { invitedPlayers.add(uuid); }
+    public void removeInvitedPlayer(UUID uuid) { invitedPlayers.remove(uuid); }
+    public boolean isInvited(UUID uuid) { return invitedPlayers.contains(uuid); }
+
+    @Nullable public String getJoinCode() { return joinCode; }
+    public void setJoinCode(@Nullable String joinCode) { this.joinCode = joinCode; }
+
     public Object getValue(String key, boolean isTemporary) {
         return getMap(isTemporary).get(key);
     }
@@ -252,7 +262,7 @@ public class Session {
     }
 
     /**
-     * Returns a mutable snapshot of all session members (lobbyMembers ∪ players ∪ spectators).
+     * Returns a mutable snapshot of all session members (lobbyMembers + players + spectators).
      * Modifying the returned set does not affect session state.
      */
     public Set<Player> getMembers() {

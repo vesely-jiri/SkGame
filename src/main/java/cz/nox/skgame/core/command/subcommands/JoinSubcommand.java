@@ -22,10 +22,28 @@ public class JoinSubcommand {
             Messages.send(player, "command.join.already-in-session");
             return;
         }
-        Session session = SessionManager.getInstance().getSessionById(args[1]);
+        String token = args[1];
+        SessionManager sm = SessionManager.getInstance();
+        // Try by ID first, then by join code
+        Session session = sm.getSessionById(token);
+        if (session == null) session = sm.getSessionByCode(token);
         if (session == null) {
-            Messages.send(player, "command.join.not-found", args[1]);
+            Messages.send(player, "command.join.not-found", token);
             return;
+        }
+        // Access control for non-PUBLIC sessions
+        SessionVisibility vis = session.getVisibility();
+        if (vis == SessionVisibility.INVITE_ONLY) {
+            if (!session.isInvited(player.getUniqueId())) {
+                Messages.send(player, "session.invite.not-invited");
+                return;
+            }
+        } else if (vis == SessionVisibility.CODE) {
+            // Must have joined via code (session.getJoinCode() matched)
+            if (sm.getSessionByCode(token) == null) {
+                Messages.send(player, "session.code.invalid");
+                return;
+            }
         }
         SessionLifecycleManagerImpl.getInstance().joinSession(player, session);
     }
