@@ -162,7 +162,8 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             // Expressions — misc
             "cz.nox.skgame.skript.expressions.ExprLobbySpawn",
             "cz.nox.skgame.skript.expressions.ExprMaintenanceMode",
-            "cz.nox.skgame.skript.expressions.ExprParty"
+            "cz.nox.skgame.skript.expressions.ExprParty",
+            "cz.nox.skgame.skript.expressions.ExprMainGuiFilter"
     );
 
     private static final List<String> CORE_RESOURCE_PATHS = List.of();
@@ -231,6 +232,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
         Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.gui.services.AdminGuiService.getInstance(), instance);
         Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.gui.services.SpectateGuiService.getInstance(), instance);
         Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.gui.services.PlayerProfileGuiService.getInstance(), instance);
+        Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.gui.services.AdminPanelGuiService.getInstance(), instance);
         Bukkit.getPluginManager().registerEvents(new cz.nox.skgame.core.listener.ChatIsolationListener(), instance);
 
         for (SkGameModule module : enabledModules) {
@@ -362,6 +364,17 @@ public class SkGame extends JavaPlugin implements TabCompleter {
                     default -> sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame reload [all|config|messages|storage|scripts]");
                 }
             }
+            case "panel" -> {
+                if (!(sender instanceof org.bukkit.entity.Player player)) {
+                    sender.sendMessage("Player only.");
+                    return true;
+                }
+                if (!player.hasPermission("skgame.admin")) {
+                    sender.sendMessage(ChatColor.RED + "You do not have permission.");
+                    return true;
+                }
+                cz.nox.skgame.core.gui.services.AdminPanelGuiService.getInstance().openPanel(player);
+            }
             case "stats" -> {
                 if (!sender.hasPermission("skgame.admin")) {
                     sender.sendMessage(ChatColor.RED + "You do not have permission.");
@@ -402,7 +415,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
                             : "command.maintenance.status-off");
                 }
             }
-            default -> sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame <reload|maintenance|stats> [args]");
+            default -> sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame <reload|maintenance|stats|panel> [args]");
         }
         return true;
     }
@@ -458,7 +471,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
         if (args.length == 1) {
             List<String> opts = new ArrayList<>();
             if (sender.hasPermission("skgame.admin.reload")) opts.add("reload");
-            if (sender.hasPermission("skgame.admin")) { opts.add("maintenance"); opts.add("stats"); }
+            if (sender.hasPermission("skgame.admin")) { opts.add("maintenance"); opts.add("stats"); opts.add("panel"); }
             return StringUtil.copyPartialMatches(args[0], opts, new ArrayList<>());
         }
         if (args.length == 2) {

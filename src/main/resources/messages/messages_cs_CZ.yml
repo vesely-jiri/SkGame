@@ -139,6 +139,18 @@ gui:
       win-rate: "&bVýhernost: &f{0}"
       wins-lore: "&6Výhry: &f{0}"
       plays-lore: "&7Hry: &f{0}"
+  admin-panel:
+    title: "&3&lAdmin Panel"
+    no-sessions: "&7Žádné aktivní sessions"
+    session:
+      game: "&7Hra: &f{0}"
+      map: "&7Mapa: &f{0}"
+      uptime: "&7Doba běhu: &f{0}"
+      players: "&7Hráči: &f{0}"
+      rounds: "&7Kolo: &f{0}/{1}"
+    force-start: "&aVynutit start"
+    force-end: "&cUkončit hru"
+    force-disband: "&cRozpustit session"
   profile:
     title: "&3Profil: {0}"
     loading: "&7Načítám..."

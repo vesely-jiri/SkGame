@@ -148,6 +148,18 @@ gui:
       win-rate: "&bWin rate: &f{0}"
       wins-lore: "&6Wins: &f{0}"
       plays-lore: "&7Plays: &f{0}"
+  admin-panel:
+    title: "&3&lAdmin Panel"
+    no-sessions: "&7No active sessions"
+    session:
+      game: "&7Game: &f{0}"
+      map: "&7Map: &f{0}"
+      uptime: "&7Uptime: &f{0}"
+      players: "&7Players: &f{0}"
+      rounds: "&7Round: &f{0}/{1}"
+    force-start: "&aForce start"
+    force-end: "&cForce end game"
+    force-disband: "&cForce disband"
   profile:
     title: "&3Profile: {0}"
     loading: "&7Loading..."
