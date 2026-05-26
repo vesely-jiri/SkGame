@@ -99,6 +99,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             "cz.nox.skgame.skript.sections.EffSecConfigureSession",
             "cz.nox.skgame.skript.sections.EffSecCreateSession",
             "cz.nox.skgame.skript.sections.EffSecRegisterGameMap",
+            "cz.nox.skgame.skript.sections.StrucRegisterMiniGame",
             "cz.nox.skgame.skript.sections.EffSecRegisterMiniGame",
             "cz.nox.skgame.skript.sections.ExprSecCustomValue",
             "cz.nox.skgame.skript.sections.EffSecSetGameMapValueDef",

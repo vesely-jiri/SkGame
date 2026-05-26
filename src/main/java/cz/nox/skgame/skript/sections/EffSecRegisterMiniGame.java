@@ -53,7 +53,7 @@ public class EffSecRegisterMiniGame extends EffectSection {
     @SuppressWarnings("unchecked")
     @Override
     public boolean init(Expression<?>[] exprs, int i, Kleenean kleenean, SkriptParser.ParseResult parseResult,
-                        SectionNode sectionNode, List<TriggerItem> list) {
+                        SectionNode sectionNode, @Nullable List<TriggerItem> list) {
         if (hasSection()) {
             trigger = loadCode(sectionNode,"minigame register", MiniGameRegisterEvent.class);
         }
