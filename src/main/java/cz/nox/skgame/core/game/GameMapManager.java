@@ -48,6 +48,12 @@ public class GameMapManager {
                             "' on map '" + map.getId() + "'. Reconfigure via /game admin. Key is ignored."
                         );
                     }
+                    if (valueKey.equals("arena_region")) {
+                        SkGame.getInstance().getLogger().warning(
+                            "Legacy gamemap value key 'arena_region' found for minigame '" + mgEntry.getKey() +
+                            "' on map '" + map.getId() + "'. Rename to 'arena' in your minigame script and reconfigure via /game admin."
+                        );
+                    }
                 }
             }
         }

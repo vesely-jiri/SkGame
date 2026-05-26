@@ -182,6 +182,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
     private Location lobbySpawn;
 
     private volatile boolean maintenanceMode = false;
+    private long pluginStartTime;
 
     public static SkGame getInstance() {
         return instance;
@@ -191,8 +192,17 @@ public class SkGame extends JavaPlugin implements TabCompleter {
         return logUtil;
     }
 
+    public long getPluginStartTime() {
+        return pluginStartTime;
+    }
+
+    public List<SkGameModule> getEnabledModules() {
+        return enabledModules != null ? enabledModules : List.of();
+    }
+
     public void onEnable() {
         long s = System.currentTimeMillis();
+        this.pluginStartTime = s;
 
         instance = this;
         this.logUtil = new LogUtil(instance);
@@ -346,7 +356,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
     @SuppressWarnings("deprecation")
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 0) {
-            sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame <reload|maintenance> [args]");
+            sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame <info|reload|maintenance|stats|panel> [args]");
             return true;
         }
         switch (args[0].toLowerCase()) {
@@ -365,6 +375,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
                     default -> sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame reload [all|config|messages|storage|scripts]");
                 }
             }
+            case "info" -> new cz.nox.skgame.core.command.subcommands.InfoSubcommand().execute(sender);
             case "panel" -> {
                 if (!(sender instanceof org.bukkit.entity.Player player)) {
                     sender.sendMessage("Player only.");
@@ -416,7 +427,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
                             : "command.maintenance.status-off");
                 }
             }
-            default -> sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame <reload|maintenance|stats|panel> [args]");
+            default -> sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame <info|reload|maintenance|stats|panel> [args]");
         }
         return true;
     }
@@ -471,6 +482,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 1) {
             List<String> opts = new ArrayList<>();
+            if (sender.hasPermission("skgame.info")) opts.add("info");
             if (sender.hasPermission("skgame.admin.reload")) opts.add("reload");
             if (sender.hasPermission("skgame.admin")) { opts.add("maintenance"); opts.add("stats"); opts.add("panel"); }
             return StringUtil.copyPartialMatches(args[0], opts, new ArrayList<>());

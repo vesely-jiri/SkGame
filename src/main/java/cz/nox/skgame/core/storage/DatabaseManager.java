@@ -15,6 +15,7 @@ public class DatabaseManager {
     private static DatabaseManager instance;
 
     private @Nullable HikariDataSource dataSource;
+    private @Nullable File dbFile;
 
     private DatabaseManager() {}
 
@@ -28,7 +29,9 @@ public class DatabaseManager {
         storageDir.mkdirs();
 
         String fileName = plugin.getConfig().getString("storage.sqlite.file", "skgame.db");
-        String jdbcUrl = "jdbc:sqlite:" + new File(storageDir, fileName).getAbsolutePath();
+        File file = new File(storageDir, fileName);
+        this.dbFile = file;
+        String jdbcUrl = "jdbc:sqlite:" + file.getAbsolutePath();
 
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(jdbcUrl);
@@ -74,6 +77,21 @@ public class DatabaseManager {
 
     public boolean isAvailable() {
         return dataSource != null && !dataSource.isClosed();
+    }
+
+    public @Nullable File getDbFile() {
+        return dbFile;
+    }
+
+    public long getTotalGameResultCount() {
+        if (dataSource == null) return 0L;
+        try (Connection conn = getConnection();
+             var ps = conn.prepareStatement("SELECT COUNT(*) FROM game_results");
+             var rs = ps.executeQuery()) {
+            return rs.next() ? rs.getLong(1) : 0L;
+        } catch (SQLException e) {
+            return -1L;
+        }
     }
 
     public void shutdown() {

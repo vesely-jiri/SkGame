@@ -9,7 +9,7 @@ softdepend: [ SkBee, WorldGuard ]
 commands:
   skgame:
     description: SkGame admin commands
-    usage: /skgame <reload|maintenance> [args]
+    usage: /skgame <info|reload|maintenance|stats|panel> [args]
   game:
     description: Open game menu or manage sessions
     usage: /game [admin|spectate <session-id>]
@@ -32,4 +32,10 @@ permissions:
     default: op
   skgame.history.others:
     description: View other players' game history via /game history <name>
+    default: op
+  skgame.info:
+    description: View SkGame server info via /skgame info
+    default: true
+  skgame.info.extended:
+    description: View extended runtime/database info via /skgame info
     default: op
