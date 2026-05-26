@@ -51,7 +51,7 @@ on load:
             set plurality to plural
             set value type to a location
             set description to "Locations where items spawn; players also start here"
-        set gamemap value "arena_region" of event-minigame to a custom value:
+        set gamemap value "arena" of event-minigame to a custom value:
             set value name to "Arena region"
             set value type to a region
             set description to "Playable area — used to clean up mines at game end"
@@ -84,7 +84,7 @@ on "bomberman" game start:
         Bomberman_StartTimer(event-session, {_timer})
 
 on "bomberman" game stop:
-    set {_arena} to gamemap value "arena_region" of event-session
+    set {_arena} to gamemap value "arena" of event-session
     if {_arena} is set:
         loop (blocks in region {_arena}) where [input is polished blackstone pressure plate]:
             set loop-block to air

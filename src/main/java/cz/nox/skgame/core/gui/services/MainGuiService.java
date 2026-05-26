@@ -16,6 +16,7 @@ import cz.nox.skgame.SkGame;
 import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl;
 import cz.nox.skgame.core.gui.services.LeaderboardGuiService;
+import cz.nox.skgame.core.gui.services.PlayerProfileGuiService;
 import cz.nox.skgame.core.gui.services.SessionGuiService;
 import cz.nox.skgame.core.gui.services.SpectateGuiService;
 import cz.nox.skgame.core.storage.DatabaseManager;
@@ -41,7 +42,7 @@ import java.util.stream.Collectors;
 
 public class MainGuiService implements Listener {
 
-    private static final int[] GRAY_SLOTS    = {0, 2, 8, 10, 18, 20, 26, 28, 36, 38, 44, 46, 50, 52};
+    private static final int[] GRAY_SLOTS    = {0, 2, 8, 10, 18, 20, 26, 28, 36, 38, 44, 50, 52};
     private static final int[] RED_SLOTS     = {4, 12, 22, 30, 40, 48};
     // Slot 51 excluded — .sk sets black glass then immediately overwrites with BOOK; net = BOOK.
     // Slot 47 excluded — replaced by spectate browser button.
@@ -163,6 +164,12 @@ public class MainGuiService implements Listener {
                 .name("&3&lSpectate running games")
                 .lore(legacy("&7Browse and join active games"))
                 .onClick(e -> SpectateGuiService.getInstance().openFor((Player) e.getWhoClicked())));
+
+        // Slot 46 — Your profile
+        builder.slot(46, GuiItem.of(Material.PLAYER_HEAD)
+                .name("&3&lYour profile")
+                .lore(legacy("&7View your game statistics"))
+                .onClick(e -> PlayerProfileGuiService.getInstance().openFor((Player) e.getWhoClicked(), (Player) e.getWhoClicked())));
 
         // Slot 51 — Open current session
         builder.slot(51, GuiItem.of(Material.BOOK)

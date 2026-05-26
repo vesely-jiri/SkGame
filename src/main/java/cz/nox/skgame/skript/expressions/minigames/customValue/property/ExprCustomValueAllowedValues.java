@@ -12,7 +12,6 @@ import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @SuppressWarnings("unused")
@@ -69,18 +68,23 @@ public class ExprCustomValueAllowedValues extends SimplePropertyExpression<Custo
     public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
         CustomValue cv = getExpr().getSingle(event);
         if (cv == null) return;
-        String[] values = (delta == null) ? new String[0] :
-                Arrays.copyOf(delta, delta.length, String[].class);
+        List<String> values = new ArrayList<>();
+        if (delta != null) {
+            for (Object o : delta) {
+                if (o instanceof String s) values.add(s);
+                else if (o instanceof String[] arr) { for (String s : arr) values.add(s); }
+            }
+        }
         switch (mode) {
-            case SET -> cv.setAllowedValues(Arrays.asList(values));
+            case SET -> cv.setAllowedValues(values);
             case ADD -> {
                 List<String> list = new ArrayList<>(cv.getAllowedValues());
-                list.addAll(Arrays.asList(values));
+                list.addAll(values);
                 cv.setAllowedValues(list);
             }
             case REMOVE -> {
                 List<String> list = new ArrayList<>(cv.getAllowedValues());
-                list.removeAll(Arrays.asList(values));
+                list.removeAll(values);
                 cv.setAllowedValues(list);
             }
             case RESET, DELETE -> cv.setAllowedValues(new ArrayList<>());
