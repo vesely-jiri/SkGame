@@ -95,6 +95,9 @@ lobby:
   spawn-set: "&aGame lobby was set to your location"
 
 gui:
+  filter:
+    set: "&aText filter set to: &f{0}"
+    cleared: "&7Text filter cleared"
   main:
     title: "&6Main game menu"
   session:

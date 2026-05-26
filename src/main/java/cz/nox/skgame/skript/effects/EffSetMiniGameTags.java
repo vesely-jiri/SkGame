@@ -26,11 +26,10 @@ import java.util.Set;
 })
 @Examples({
         "register new minigame with id \"koth\":",
-        "    tags: PVP, Team",
+        "    minigame tags: PVP, Team",
         "",
-        "# Equivalent — literal 'tags:' is case-insensitive:",
-        "register new minigame with id \"koth\":",
-        "    Tags: PVP, FFA"
+        "# Or via explicit effect outside a section:",
+        "set tags of event-minigame to \"PVP\", \"FFA\""
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")
@@ -42,7 +41,7 @@ public class EffSetMiniGameTags extends Effect {
 
     static {
         Skript.registerEffect(EffSetMiniGameTags.class,
-                "tags: %strings%",
+                "minigame tags: %strings%",
                 "set [minigame] tags of %minigame% to %strings%"
         );
     }

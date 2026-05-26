@@ -21,15 +21,12 @@ import cz.nox.skgame.core.gui.services.PlayerProfileGuiService;
 import cz.nox.skgame.core.gui.services.SessionGuiService;
 import cz.nox.skgame.core.gui.services.SpectateGuiService;
 import cz.nox.skgame.core.storage.DatabaseManager;
-import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
@@ -61,7 +58,6 @@ public class MainGuiService implements Listener {
     private static MainGuiService instance;
     private final Set<UUID> activeViewers = new HashSet<>();
     private final java.util.Map<UUID, String> viewerFilters = new ConcurrentHashMap<>();
-    private final Set<UUID> awaitingFilterInput = ConcurrentHashMap.newKeySet();
     private final java.util.Map<UUID, Set<MinigameTag>> viewerTagFilters = new ConcurrentHashMap<>();
 
     private MainGuiService() {}
@@ -119,22 +115,7 @@ public class MainGuiService implements Listener {
     @EventHandler
     public void onGameStop(GameStopEvent event) { update(); }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public void onChat(AsyncChatEvent event) {
-        Player p = event.getPlayer();
-        if (!awaitingFilterInput.remove(p.getUniqueId())) return;
-        event.setCancelled(true);
-        event.viewers().clear(); // belt-and-suspenders: drop all recipients regardless of cancel semantics
-        String text = PlainTextComponentSerializer.plainText().serialize(event.message()).trim();
-        if (text.equalsIgnoreCase("clear") || text.isEmpty()) {
-            viewerFilters.remove(p.getUniqueId());
-        } else {
-            viewerFilters.put(p.getUniqueId(), text);
-        }
-        Bukkit.getScheduler().runTask(SkGame.getInstance(), () -> openFor(p));
-    }
-
-    // ─── Filter API (used by ExprMainGuiFilter Skript expression) ────────────
+    // ─── Filter API (used by ExprMainGuiFilter Skript expression and /game filter) ─
 
     public @Nullable String getFilter(Player player) {
         return viewerFilters.get(player.getUniqueId());
@@ -250,7 +231,7 @@ public class MainGuiService implements Listener {
             filterLore.add(legacy("&7Tags: &f" + tagStr));
         }
         filterLore.add(legacy("&aLeft-click &7to pick tags"));
-        filterLore.add(legacy("&eShift-click &7to type text filter"));
+        filterLore.add(legacy("&7Use &e/game filter <text> &7to set text filter"));
         if (hasAnyFilter) filterLore.add(legacy("&cRight-click &7to clear all"));
 
         builder.slot(4, GuiItem.of(Material.HOPPER)
@@ -264,13 +245,7 @@ public class MainGuiService implements Listener {
                         openFor(p);
                         return;
                     }
-                    if (e.getClick().isShiftClick()) {
-                        p.closeInventory();
-                        awaitingFilterInput.add(p.getUniqueId());
-                        p.sendMessage(legacy("&eType a filter (minigame, host, or map). Type &cclear &eto reset:"));
-                        return;
-                    }
-                    // Left-click — open tag picker
+                    // Left-click (or shift-left) — open tag picker
                     Set<MinigameTag> activeTags = viewerTagFilters.getOrDefault(p.getUniqueId(), Set.of());
                     FilterPickerGuiService.getInstance().openFor(p, activeTags);
                 }));
