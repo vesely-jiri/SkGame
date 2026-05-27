@@ -1,47 +1,52 @@
 package cz.nox.skgame.skript.sections;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.ScriptLoader;
+import ch.njol.skript.Skript;
+import ch.njol.skript.config.Node;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
+import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.Literal;
-import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.Trigger;
 import ch.njol.skript.lang.TriggerItem;
 import ch.njol.skript.lang.parser.ParserInstance;
+import ch.njol.skript.lang.util.SimpleEvent;
 import ch.njol.skript.registrations.EventValues;
 import cz.nox.skgame.api.game.event.MiniGameRegisterEvent;
 import cz.nox.skgame.api.game.model.MiniGame;
+import cz.nox.skgame.api.game.model.MinigameTag;
 import cz.nox.skgame.core.game.MiniGameManager;
 import org.bukkit.event.Event;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.lang.entry.EntryContainer;
 import org.skriptlang.skript.lang.structure.Structure;
 import org.skriptlang.skript.registration.DefaultSyntaxInfos.Structure.NodeType;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Name("Register MiniGame")
 @Description({
         "Registers a new minigame with the given ID at script load time.",
         "Use at the top level of a .sk file — no 'on load:' wrapper needed.",
-        "The optional body runs immediately with event-minigame available.",
-        "All shorthand effects (name:, author:, min players:, minigame tags:, ...) work inside the body.",
+        "The optional body accepts entry shorthand: name, icon, description, author, min players, minigame tags.",
         "Valid forms: register/create [new] minigame with/from id \"<id>\""
 })
 @Examples({
         "register minigame with id \"koth\":",
         "    name: \"King of the Hill\"",
         "    author: \"JuraJ_Player\"",
+        "    icon: red banner",
         "    min players: 2",
         "    minigame tags: PVP, Team",
         "",
         "create new minigame from id \"bomberman\":",
-        "    set minigame name of event-minigame to \"&cBomberMan\""
+        "    name: \"&cBomberMan\""
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")
@@ -50,11 +55,17 @@ public class StrucRegisterMiniGame extends Structure {
     private static final MiniGameManager miniGameManager = MiniGameManager.getInstance();
 
     private Literal<String> id;
-    private @Nullable SectionNode sectionNode;
     private @Nullable Trigger trigger;
 
+    private @Nullable Expression<String>      nameExpr;
+    private @Nullable Expression<ItemStack>   iconExpr;
+    private @Nullable Expression<String>      descriptionExpr;
+    private @Nullable Expression<String>      authorExpr;
+    private @Nullable Expression<Number>      minPlayersExpr;
+    private @Nullable Expression<MinigameTag> tagsExpr;
+
     static {
-        Skript.registerStructure(StrucRegisterMiniGame.class, null, NodeType.BOTH,
+        Skript.registerStructure(StrucRegisterMiniGame.class, MiniGameEntryHelper.MIXED, NodeType.BOTH,
                 "(register|create) [new] minigame (with|from) id %string%"
         );
         EventValues.registerEventValue(MiniGameRegisterEvent.class, MiniGame.class,
@@ -67,41 +78,37 @@ public class StrucRegisterMiniGame extends Structure {
                         @Nullable EntryContainer entryContainer) {
         this.id = (Literal<String>) args[0];
         if (entryContainer != null) {
-            this.sectionNode = entryContainer.getSource();
+            nameExpr        = MiniGameEntryHelper.readName(entryContainer);
+            iconExpr        = MiniGameEntryHelper.readIcon(entryContainer);
+            descriptionExpr = MiniGameEntryHelper.readDescription(entryContainer);
+            authorExpr      = MiniGameEntryHelper.readAuthor(entryContainer);
+            minPlayersExpr  = MiniGameEntryHelper.readMinPlayers(entryContainer);
+            tagsExpr        = MiniGameEntryHelper.readTags(entryContainer);
+
+            List<Node> unhandled = entryContainer.getUnhandledNodes();
+            if (!unhandled.isEmpty()) {
+                SectionNode source = entryContainer.getSource();
+                List<Node> all = new ArrayList<>();
+                for (Node node : source) all.add(node);
+                for (Node node : all) source.remove(node);
+                for (Node node : unhandled) source.add(node);
+
+                ParserInstance parser = getParser();
+                ParserInstance.Backup backup = parser.backup();
+                parser.reset();
+                parser.setCurrentEvent("register minigame", MiniGameRegisterEvent.class);
+                SimpleEvent dummyEvent = new SimpleEvent();
+                parser.setCurrentStructure(dummyEvent);
+                List<TriggerItem> items = ScriptLoader.loadItems(source);
+                parser.restoreBackup(backup);
+                trigger = new Trigger(parser.getCurrentScript(), "register minigame " + id.getSingle(null), dummyEvent, items);
+            }
         }
         return true;
     }
 
     @Override
     public boolean load() {
-        if (sectionNode == null) return true;
-
-        ParserInstance parser = getParser();
-        // Replicate Section.loadCode(): backup → reset → set event context → loadItems → restore
-        ParserInstance.Backup backup = parser.backup();
-        parser.reset();
-        parser.setCurrentEvent("minigame register", MiniGameRegisterEvent.class);
-
-        SkriptEvent placeholder = new SkriptEvent() {
-            @Override
-            public boolean init(Literal<?>[] args, int matchedPattern, ParseResult parseResult) {
-                return false;
-            }
-            @Override
-            public boolean check(Event event) {
-                return false;
-            }
-            @Override
-            public String toString(@Nullable Event event, boolean debug) {
-                return "minigame register";
-            }
-        };
-        parser.setCurrentStructure(placeholder);
-
-        List<TriggerItem> items = ScriptLoader.loadItems(sectionNode);
-        trigger = new Trigger(parser.getCurrentScript(), "minigame register", placeholder, items);
-
-        parser.restoreBackup(backup);
         return true;
     }
 
@@ -110,9 +117,10 @@ public class StrucRegisterMiniGame extends Structure {
         String minigameId = id.getSingle(null);
         if (minigameId == null) return false;
         MiniGame mg = miniGameManager.registerMiniGame(minigameId);
+        MiniGameEntryHelper.apply(mg, nameExpr, iconExpr, descriptionExpr, authorExpr, minPlayersExpr, tagsExpr);
         if (trigger != null) {
-            MiniGameRegisterEvent event = new MiniGameRegisterEvent(mg);
-            trigger.execute(event);
+            MiniGameRegisterEvent registerEvent = new MiniGameRegisterEvent(mg);
+            TriggerItem.walk(trigger, registerEvent);
         }
         return true;
     }
