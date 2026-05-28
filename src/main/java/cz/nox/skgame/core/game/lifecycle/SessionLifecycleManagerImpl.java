@@ -102,6 +102,10 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             plugin.getLogUtil().info("joinSession: " + player.getName() + " already in session " + session.getId());
             return false;
         }
+        if (session.getState() != SessionState.LOBBY) {
+            Messages.send(player, "session.error.game-in-progress");
+            return false;
+        }
         session.addLobbyMember(player); // fires GamePlayerSessionJoin
         LobbyEnterEvent event = new LobbyEnterEvent(player, session);
         Bukkit.getPluginManager().callEvent(event);

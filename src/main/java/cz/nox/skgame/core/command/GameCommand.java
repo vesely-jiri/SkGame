@@ -133,6 +133,9 @@ public class GameCommand implements CommandExecutor, TabCompleter {
             Messages.send(player, "command.profile.not-found", args[1]);
             return;
         }
+        if (session.getRole(target) != null) {
+            return;
+        }
         session.addInvitedPlayer(target.getUniqueId());
         Messages.send(player, "session.invite.sent", target.getName());
         String joinCmd = "/game join " + session.getId();

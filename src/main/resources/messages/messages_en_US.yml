@@ -21,6 +21,7 @@ session:
   error:
     already-in-session: "&cYou are already in a session"
     mid-game-locked: "&cCannot change session settings while game is running"
+    game-in-progress: "&cThis game is already in progress"
   spectator:
     queued-join: "&aYou will join the party after this game"
     queued-leave: "&7You will not join the party after this game"

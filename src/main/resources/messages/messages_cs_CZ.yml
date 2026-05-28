@@ -15,6 +15,7 @@ session:
   error:
     already-in-session: "&cJiž jsi v session"
     mid-game-locked: "&cBěhem hry nelze měnit nastavení session"
+    game-in-progress: "&cTato hra již probíhá"
   spectator:
     queued-join: "&aPo skončení hry se připojíš do party"
     queued-leave: "&7Po skončení hry session opustíš"
