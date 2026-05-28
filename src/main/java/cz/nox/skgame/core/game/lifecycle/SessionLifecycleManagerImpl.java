@@ -28,6 +28,7 @@ import cz.nox.skgame.util.PlayerResetter;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -446,8 +447,9 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
     }
 
     /** Called from SkGame.setMaintenanceMode(true): server-wide broadcast + clear lobby ready states. */
-    public void onMaintenanceEnabled() {
+    public void onMaintenanceEnabled(@Nullable CommandSender exclude) {
         for (Player player : Bukkit.getOnlinePlayers()) {
+            if (player.equals(exclude)) continue;
             Messages.send(player, "maintenance.broadcast.enabled");
         }
         for (Session session : sessionManager.getAllSessions()) {
@@ -460,8 +462,9 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
     }
 
     /** Called from SkGame.setMaintenanceMode(false): server-wide broadcast. */
-    public void onMaintenanceDisabled() {
+    public void onMaintenanceDisabled(@Nullable CommandSender exclude) {
         for (Player player : Bukkit.getOnlinePlayers()) {
+            if (player.equals(exclude)) continue;
             Messages.send(player, "maintenance.broadcast.disabled");
         }
     }

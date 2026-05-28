@@ -324,13 +324,17 @@ public class SkGame extends JavaPlugin implements TabCompleter {
     }
 
     public void setMaintenanceMode(boolean value) {
+        setMaintenanceMode(value, null);
+    }
+
+    public void setMaintenanceMode(boolean value, @Nullable org.bukkit.command.CommandSender exclude) {
         this.maintenanceMode = value;
         cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl lifecycle =
                 cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl.getInstance();
         if (value) {
-            lifecycle.onMaintenanceEnabled();
+            lifecycle.onMaintenanceEnabled(exclude);
         } else {
-            lifecycle.onMaintenanceDisabled();
+            lifecycle.onMaintenanceDisabled(exclude);
         }
     }
 
@@ -411,7 +415,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
                 String sub = args.length >= 2 ? args[1].toLowerCase() : "status";
                 switch (sub) {
                     case "on" -> {
-                        setMaintenanceMode(true);
+                        setMaintenanceMode(true, sender);
                         Messages.send(sender, "command.maintenance.enabled");
                         var sessions = SessionManager.getInstance().getAllSessions();
                         int totalSessions = sessions.length;
@@ -424,7 +428,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
                                 Bukkit.getOnlinePlayers().size());
                     }
                     case "off" -> {
-                        setMaintenanceMode(false);
+                        setMaintenanceMode(false, sender);
                         Messages.send(sender, "command.maintenance.disabled");
                     }
                     default -> Messages.send(sender, maintenanceMode
