@@ -4,6 +4,7 @@ import cz.nox.skgame.SkGame;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.type.SessionRole;
 import cz.nox.skgame.core.game.SessionManager;
+import cz.nox.skgame.core.gui.services.MainGuiService;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -28,6 +29,7 @@ public class ChatIsolationListener implements Listener {
         if (!plugin.getConfig().getBoolean("session.chat.isolation", false)) return;
 
         Player sender = event.getPlayer();
+        if (MainGuiService.getInstance().isAwaitingChatInput(sender)) return;
         Session senderSession = SessionManager.getInstance().getSession(sender);
         String senderRoom = senderSession != null ? senderSession.getId() : null;
         boolean spectatorIsolation = plugin.getConfig().getBoolean("session.chat.spectator-isolation", false);

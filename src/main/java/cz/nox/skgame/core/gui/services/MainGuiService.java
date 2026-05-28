@@ -24,7 +24,6 @@ import cz.nox.skgame.core.storage.DatabaseManager;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -119,27 +118,28 @@ public class MainGuiService implements Listener {
     @EventHandler
     public void onGameStop(GameStopEvent event) { update(); }
 
-    // Both chat events cancelled so CMI (which uses legacy AsyncPlayerChatEvent) also suppressed.
-    // setCancelled + clear happen in both handlers; processFilterInput uses remove() for idempotency.
+    // Legacy handler (LOWEST) is the sole filter processor. Cancels + clears recipients, then defers
+    // flag removal + GUI reopen to main thread so the flag stays set through LOW — ChatIsolationListener
+    // sees isAwaitingChatInput=true and skips re-delivery. Paper handler (LOWEST) only suppresses
+    // native Paper delivery; no processing, no flag change.
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.LOWEST)
     public void onPaperChat(AsyncChatEvent event) {
         Player p = event.getPlayer();
         if (!awaitingFilterInput.contains(p.getUniqueId())) return;
         event.setCancelled(true);
         event.viewers().clear();
-        String text = PlainTextComponentSerializer.plainText().serialize(event.message()).trim();
-        processFilterInput(p, text);
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = false)
     @SuppressWarnings("deprecation")
     public void onLegacyChat(org.bukkit.event.player.AsyncPlayerChatEvent event) {
         Player p = event.getPlayer();
         if (!awaitingFilterInput.contains(p.getUniqueId())) return;
         event.setCancelled(true);
         event.getRecipients().clear();
-        processFilterInput(p, event.getMessage().trim());
+        String text = event.getMessage().trim();
+        Bukkit.getScheduler().runTask(SkGame.getInstance(), () -> processFilterInput(p, text));
     }
 
     private void processFilterInput(Player p, String text) {
@@ -149,10 +149,14 @@ public class MainGuiService implements Listener {
         } else {
             viewerFilters.put(p.getUniqueId(), text);
         }
-        Bukkit.getScheduler().runTask(SkGame.getInstance(), () -> openFor(p));
+        openFor(p);
     }
 
     // ─── Filter API (used by ExprMainGuiFilter Skript expression) ────────────
+
+    public boolean isAwaitingChatInput(Player player) {
+        return awaitingFilterInput.contains(player.getUniqueId());
+    }
 
     public @Nullable String getFilter(Player player) {
         return viewerFilters.get(player.getUniqueId());
