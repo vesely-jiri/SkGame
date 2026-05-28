@@ -14,6 +14,7 @@ import org.bukkit.event.Listener;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.logging.Logger;
 
 /**
  * Room-based chat isolation when session.chat.isolation is enabled.
@@ -25,14 +26,38 @@ public class ChatIsolationListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onAsyncChat(AsyncChatEvent event) {
+        // TEMP DEBUG — revert after diagnosis
         SkGame plugin = SkGame.getInstance();
-        if (!plugin.getConfig().getBoolean("session.chat.isolation", false)) return;
+        Logger log = plugin.getLogger();
+
+        boolean isolationEnabled = plugin.getConfig().getBoolean("session.chat.isolation", false);
+        log.warning("[DEBUG-ISOLATION] handler fired | isolation-enabled=" + isolationEnabled
+                + " | sender=" + event.getPlayer().getName());
+        if (!isolationEnabled) return;
 
         Player sender = event.getPlayer();
         Session senderSession = SessionManager.getInstance().getSession(sender);
         String senderRoom = senderSession != null ? senderSession.getId() : null;
         boolean spectatorIsolation = plugin.getConfig().getBoolean("session.chat.spectator-isolation", false);
         SessionRole senderRole = senderSession != null ? senderSession.getRole(sender) : null;
+
+        log.warning("[DEBUG-ISOLATION] sender=" + sender.getName()
+                + " senderRoom=" + senderRoom
+                + " spectatorIsolation=" + spectatorIsolation
+                + " senderRole=" + senderRole);
+
+        int viewersBefore = event.viewers().size();
+        StringBuilder viewerDetail = new StringBuilder();
+        for (Audience audience : event.viewers()) {
+            if (audience instanceof Player p) {
+                Session ps = SessionManager.getInstance().getSession(p);
+                String pr = ps != null ? ps.getId() : null;
+                viewerDetail.append(p.getName()).append("(room=").append(pr).append(") ");
+            } else {
+                viewerDetail.append("[non-player:").append(audience.getClass().getSimpleName()).append("] ");
+            }
+        }
+        log.warning("[DEBUG-ISOLATION] viewers before=" + viewersBefore + " | " + viewerDetail.toString().trim());
 
         Set<Audience> toRemove = new HashSet<>();
         for (Audience audience : event.viewers()) {
@@ -50,6 +75,10 @@ public class ChatIsolationListener implements Listener {
                 if (senderIsSpec != recipientIsSpec) toRemove.add(audience);
             }
         }
+
+        log.warning("[DEBUG-ISOLATION] toRemove.size=" + toRemove.size());
         event.viewers().removeAll(toRemove);
+        log.warning("[DEBUG-ISOLATION] viewers after=" + event.viewers().size());
+        // END TEMP DEBUG
     }
 }
