@@ -215,6 +215,8 @@ public class SkGame extends JavaPlugin implements TabCompleter {
 
         saveDefaultConfig();
         migrateConfig();
+        cz.nox.skgame.util.ConfigAutoMerge.run(this);
+        reloadConfig();
         // Defer world resolution to first tick — Bukkit.getWorld() returns null during onEnable on Paper.
         Bukkit.getScheduler().runTask(this, this::loadLobbySpawn);
 

@@ -17,11 +17,18 @@ repositories {
     maven("https://jitpack.io")
 }
 
+configurations.all {
+    resolutionStrategy {
+        force("org.jetbrains:annotations:23.0.0")
+    }
+}
+
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT")
     compileOnly("com.github.SkriptLang:Skript:2.13.0")
     implementation("com.zaxxer:HikariCP:5.1.0")
     implementation("org.xerial:sqlite-jdbc:3.45.3.0")
+    implementation("dev.dejvokep:boosted-yaml:1.3.7")
 }
 
 val gitSha: String = try {
@@ -54,6 +61,7 @@ tasks {
         archiveBaseName.set("SkGame")
         archiveClassifier.set("")
         archiveVersion.set("")
+        relocate("dev.dejvokep.boostedyaml", "cz.nox.skgame.lib.boostedyaml")
         //Comment/uncomment this to copy the jar to the plugins folder
         finalizedBy("copyToPlugins")
     }
