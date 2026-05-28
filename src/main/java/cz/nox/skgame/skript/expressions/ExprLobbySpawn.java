@@ -50,7 +50,7 @@ public class ExprLobbySpawn extends SimpleExpression<Location> {
     }
 
     @Override
-    public Class<?> @Nullable [] acceptChange(ChangeMode mode) {
+    public @Nullable Class<?>[] acceptChange(ChangeMode mode) {
         return switch (mode) {
             case SET -> CollectionUtils.array(Location.class);
             case DELETE, RESET -> CollectionUtils.array();
@@ -59,7 +59,7 @@ public class ExprLobbySpawn extends SimpleExpression<Location> {
     }
 
     @Override
-    public void change(Event event, Object @Nullable [] delta, ChangeMode mode) {
+    public void change(Event event, @Nullable Object[] delta, ChangeMode mode) {
         switch (mode) {
             case SET -> {
                 if (delta == null || delta[0] == null) return;

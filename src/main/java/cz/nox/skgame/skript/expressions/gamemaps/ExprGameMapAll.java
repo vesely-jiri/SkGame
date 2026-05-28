@@ -55,7 +55,7 @@ public class ExprGameMapAll extends SimpleExpression<GameMap> {
     }
 
     @Override
-    protected GameMap @Nullable [] get(Event event) {
+    protected @Nullable GameMap[] get(Event event) {
         return switch (mark) {
             case 0 ->  manager.getGameMaps(GameMapFilter.AVAILABLE);
             case 1 -> manager.getGameMaps(GameMapFilter.CLAIMED);

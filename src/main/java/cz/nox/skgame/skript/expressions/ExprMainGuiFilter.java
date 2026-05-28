@@ -65,7 +65,7 @@ public class ExprMainGuiFilter extends SimpleExpression<String> {
     }
 
     @Override
-    public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
+    public void change(Event event, @Nullable Object[] delta, Changer.ChangeMode mode) {
         Player p = player.getSingle(event);
         if (p == null) return;
         switch (mode) {

@@ -41,7 +41,7 @@ public class ExprParty extends SimpleExpression<Player> {
     }
 
     @Override
-    protected Player @Nullable [] get(Event event) {
+    protected @Nullable Player[] get(Event event) {
         Session s = this.session.getSingle(event);
         if (s == null) return new Player[0];
         return s.getLobbyMembers().toArray(new Player[0]);

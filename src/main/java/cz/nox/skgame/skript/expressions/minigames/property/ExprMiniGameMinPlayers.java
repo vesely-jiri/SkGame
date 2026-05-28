@@ -37,7 +37,7 @@ public class ExprMiniGameMinPlayers extends SimplePropertyExpression<MiniGame, N
     }
 
     @Override
-    public Class<? extends Number> @Nullable [] acceptChange(Changer.ChangeMode mode) {
+    public @Nullable Class<? extends Number>[] acceptChange(Changer.ChangeMode mode) {
         return switch (mode) {
             case SET -> CollectionUtils.array(Number.class);
             case RESET, DELETE -> CollectionUtils.array();
@@ -46,7 +46,7 @@ public class ExprMiniGameMinPlayers extends SimplePropertyExpression<MiniGame, N
     }
 
     @Override
-    public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
+    public void change(Event event, @Nullable Object[] delta, Changer.ChangeMode mode) {
         MiniGame mg = getExpr().getSingle(event);
         if (mg == null) return;
         switch (mode) {

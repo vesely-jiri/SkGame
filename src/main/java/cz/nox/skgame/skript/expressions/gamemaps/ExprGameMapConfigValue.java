@@ -69,7 +69,7 @@ public class ExprGameMapConfigValue extends SimpleExpression<Object> {
     }
 
     @Override
-    public Class<?> @Nullable [] acceptChange(Changer.ChangeMode mode) {
+    public @Nullable Class<?>[] acceptChange(Changer.ChangeMode mode) {
         return switch (mode) {
             case SET, ADD, REMOVE -> {
                 if (isList) yield CollectionUtils.array(Object[].class);
@@ -98,7 +98,7 @@ public class ExprGameMapConfigValue extends SimpleExpression<Object> {
     }
 
     @Override
-    public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
+    public void change(Event event, @Nullable Object[] delta, Changer.ChangeMode mode) {
         String k = key.getSingle(event);
         if (k == null) return;
         GameMap map = resolveMap(event);

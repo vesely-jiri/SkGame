@@ -71,7 +71,7 @@ public class ExprMiniGameValue extends SimpleExpression<Object> implements KeyPr
     }
 
     @Override
-    protected Object @Nullable [] get(Event e) {
+    protected @Nullable Object[] get(Event e) {
         MiniGame mg = miniGame.getSingle(e);
         if (mg == null) return null;
         switch (pattern) {
@@ -91,7 +91,7 @@ public class ExprMiniGameValue extends SimpleExpression<Object> implements KeyPr
     }
 
     @Override
-    public Class<?> @Nullable [] acceptChange(Changer.ChangeMode mode) {
+    public @Nullable Class<?>[] acceptChange(Changer.ChangeMode mode) {
         return switch (mode) {
             case SET           -> {
                 if (isList) yield CollectionUtils.array(Object[].class);
@@ -103,7 +103,7 @@ public class ExprMiniGameValue extends SimpleExpression<Object> implements KeyPr
     }
 
     @Override
-    public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
+    public void change(Event event, @Nullable Object[] delta, Changer.ChangeMode mode) {
         MiniGame mg = miniGame.getSingle(event);
         if (mg == null) return;
         switch (mode) {
@@ -129,7 +129,7 @@ public class ExprMiniGameValue extends SimpleExpression<Object> implements KeyPr
     }
 
     @Override
-    public @NotNull String @NotNull [] getArrayKeys(Event e) throws IllegalStateException {
+    public @NotNull String[] getArrayKeys(Event e) throws IllegalStateException {
         MiniGame mg = miniGame.getSingle(e);
         assert mg != null;
         return mg.getKeys();

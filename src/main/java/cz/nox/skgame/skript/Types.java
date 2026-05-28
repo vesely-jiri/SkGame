@@ -162,7 +162,7 @@ public class Types {
                 })
                 .changer(new Changer<GameMap>() {
                     @Override
-                    public Class<?> @Nullable [] acceptChange(ChangeMode mode) {
+                    public @Nullable Class<?>[] acceptChange(ChangeMode mode) {
                         if (mode == ChangeMode.DELETE) {
                             return CollectionUtils.array();
                         }
@@ -170,7 +170,7 @@ public class Types {
                     }
 
                     @Override
-                    public void change(GameMap[] gameMaps, Object @Nullable [] delta, ChangeMode mode) {
+                    public void change(GameMap[] gameMaps, @Nullable Object[] delta, ChangeMode mode) {
                         if (mode == ChangeMode.DELETE) {
                             for (GameMap map : gameMaps) {
                                 gameMapManager.unregisterGameMap(map.getId());
@@ -234,7 +234,7 @@ public class Types {
                 })
                 .changer(new Changer<MiniGame>() {
                     @Override
-                    public Class<?> @Nullable [] acceptChange(ChangeMode mode) {
+                    public @Nullable Class<?>[] acceptChange(ChangeMode mode) {
                         if (mode == ChangeMode.DELETE) {
                             return CollectionUtils.array();
                         }
@@ -242,7 +242,7 @@ public class Types {
                     }
 
                     @Override
-                    public void change(MiniGame[] miniGames, Object @Nullable [] delta, ChangeMode mode) {
+                    public void change(MiniGame[] miniGames, @Nullable Object[] delta, ChangeMode mode) {
                         if (mode == ChangeMode.DELETE) {
                             for (MiniGame mg : miniGames) {
                                 miniGameManager.unregisterMiniGame(mg.getId());

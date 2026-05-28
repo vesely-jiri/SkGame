@@ -48,7 +48,7 @@ public class ExprGamePlayerSession extends SimpleExpression<Session> {
     }
 
     @Override
-    protected Session @Nullable [] get(Event event) {
+    protected @Nullable Session[] get(Event event) {
         Player player = this.player.getSingle(event);
         if (player == null) return null;
         if (all) {

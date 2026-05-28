@@ -39,7 +39,7 @@ public class ExprSessionVisibility extends SimplePropertyExpression<Session, Ses
     }
 
     @Override
-    public Class<? extends SessionVisibility> @Nullable [] acceptChange(Changer.ChangeMode mode) {
+    public @Nullable Class<? extends SessionVisibility>[] acceptChange(Changer.ChangeMode mode) {
         return switch (mode) {
             case SET -> CollectionUtils.array(SessionVisibility.class);
             default  -> null;
@@ -47,7 +47,7 @@ public class ExprSessionVisibility extends SimplePropertyExpression<Session, Ses
     }
 
     @Override
-    public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
+    public void change(Event event, @Nullable Object[] delta, Changer.ChangeMode mode) {
         Session session = getExpr().getSingle(event);
         if (session == null || delta == null || delta[0] == null) return;
         session.setVisibility((SessionVisibility) delta[0]);

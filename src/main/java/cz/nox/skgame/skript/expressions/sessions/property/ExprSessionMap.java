@@ -48,7 +48,7 @@ public class ExprSessionMap extends SimplePropertyExpression<Session, GameMap> {
 
 
     @Override
-    public Class<? extends GameMap> @Nullable [] acceptChange(ChangeMode mode) {
+    public @Nullable Class<? extends GameMap>[] acceptChange(ChangeMode mode) {
         return switch (mode) {
             case SET   -> CollectionUtils.array(GameMap.class);
             case RESET -> CollectionUtils.array();
@@ -57,7 +57,7 @@ public class ExprSessionMap extends SimplePropertyExpression<Session, GameMap> {
     }
 
     @Override
-    public void change(Event event, Object @Nullable [] delta, ChangeMode mode) {
+    public void change(Event event, @Nullable Object[] delta, ChangeMode mode) {
         Session session = getExpr().getSingle(event);
         if (session == null) return;
         switch (mode) {

@@ -52,7 +52,7 @@ public class ExprMaintenanceMode extends SimpleExpression<Boolean> {
     }
 
     @Override
-    public Class<? extends Boolean> @Nullable [] acceptChange(Changer.ChangeMode mode) {
+    public @Nullable Class<? extends Boolean>[] acceptChange(Changer.ChangeMode mode) {
         return switch (mode) {
             case SET -> CollectionUtils.array(Boolean.class);
             default  -> null;
@@ -60,7 +60,7 @@ public class ExprMaintenanceMode extends SimpleExpression<Boolean> {
     }
 
     @Override
-    public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
+    public void change(Event event, @Nullable Object[] delta, Changer.ChangeMode mode) {
         if (delta == null || delta[0] == null) return;
         SkGame.getInstance().setMaintenanceMode((Boolean) delta[0]);
     }

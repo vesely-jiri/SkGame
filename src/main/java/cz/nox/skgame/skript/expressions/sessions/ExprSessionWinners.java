@@ -63,7 +63,7 @@ public class ExprSessionWinners extends SimpleExpression<Player> {
     }
 
     @Override
-    public Class<?> @Nullable [] acceptChange(Changer.ChangeMode mode) {
+    public @Nullable Class<?>[] acceptChange(Changer.ChangeMode mode) {
         return switch (mode) {
             case SET -> CollectionUtils.array(Player[].class);
             case RESET, DELETE -> CollectionUtils.array();
@@ -72,7 +72,7 @@ public class ExprSessionWinners extends SimpleExpression<Player> {
     }
 
     @Override
-    public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
+    public void change(Event event, @Nullable Object[] delta, Changer.ChangeMode mode) {
         Session s = session.getSingle(event);
         if (s == null) return;
         switch (mode) {

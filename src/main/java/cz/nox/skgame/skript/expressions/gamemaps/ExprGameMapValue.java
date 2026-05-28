@@ -71,7 +71,7 @@ public class ExprGameMapValue extends SimpleExpression<Object> implements KeyPro
 
 
     @Override
-    public Class<?> @Nullable [] acceptChange(Changer.ChangeMode mode) {
+    public @Nullable Class<?>[] acceptChange(Changer.ChangeMode mode) {
         return switch (mode) {
             case SET           -> {
                 if (isList) yield CollectionUtils.array(Object[].class);
@@ -104,7 +104,7 @@ public class ExprGameMapValue extends SimpleExpression<Object> implements KeyPro
     }
 
     @Override
-    public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
+    public void change(Event event, @Nullable Object[] delta, Changer.ChangeMode mode) {
         GameMap map = this.gameMap.getSingle(event);
         if (map == null) return;
         switch (mode) {
@@ -149,7 +149,7 @@ public class ExprGameMapValue extends SimpleExpression<Object> implements KeyPro
     }
 
     @Override
-    public @NotNull String @NotNull [] getArrayKeys(Event e) throws IllegalStateException {
+    public @NotNull String[] getArrayKeys(Event e) throws IllegalStateException {
         GameMap map = this.gameMap.getSingle(e);
         assert map != null;
         return map.getKeys();

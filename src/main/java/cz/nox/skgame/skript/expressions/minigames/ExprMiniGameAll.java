@@ -44,7 +44,7 @@ public class ExprMiniGameAll extends SimpleExpression<MiniGame> {
     }
 
     @Override
-    protected MiniGame @Nullable [] get(Event event) {
+    protected @Nullable MiniGame[] get(Event event) {
         return miniGameManager.getAllMiniGames();
     }
 

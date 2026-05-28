@@ -74,7 +74,7 @@ public class ExprGameMapMiniGameValue extends SimpleExpression<Object> implement
     }
 
     @Override
-    public Class<?> @Nullable [] acceptChange(Changer.ChangeMode mode) {
+    public @Nullable Class<?>[] acceptChange(Changer.ChangeMode mode) {
         return switch (mode) {
             case SET, ADD, REMOVE -> {
                 if (isList) yield CollectionUtils.array(Object[].class);
@@ -109,7 +109,7 @@ public class ExprGameMapMiniGameValue extends SimpleExpression<Object> implement
     }
 
     @Override
-    public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
+    public void change(Event event, @Nullable Object[] delta, Changer.ChangeMode mode) {
         GameMap map = gameMap.getSingle(event);
         MiniGame mg = miniGame.getSingle(event);
         if (map == null || mg == null) return;
@@ -178,7 +178,7 @@ public class ExprGameMapMiniGameValue extends SimpleExpression<Object> implement
     }
 
     @Override
-    public @NotNull String @NotNull [] getArrayKeys(Event e) throws IllegalStateException {
+    public @NotNull String[] getArrayKeys(Event e) throws IllegalStateException {
         GameMap gm = this.gameMap.getSingle(e);
         MiniGame mg = this.miniGame.getSingle(e);
         assert gm != null && mg != null;

@@ -62,7 +62,7 @@ public class ExprSecCustomValue extends SectionExpression<CustomValue> {
     }
 
     @Override
-    protected CustomValue @Nullable [] get(Event e) {
+    protected @Nullable CustomValue[] get(Event e) {
         CustomValue customValue = new CustomValue();
         CreateCustomValueEvent createCustomValueEvent = new CreateCustomValueEvent(customValue);
         Variables.withLocalVariables(e, createCustomValueEvent, () -> TriggerItem.walk(trigger,createCustomValueEvent));

@@ -38,7 +38,7 @@ public class ExprSessionHost extends SimplePropertyExpression<Session, Player> {
     }
 
     @Override
-    public Class<? extends Player> @Nullable [] acceptChange(Changer.ChangeMode mode) {
+    public @Nullable Class<? extends Player>[] acceptChange(Changer.ChangeMode mode) {
         return switch (mode) {
             case SET   -> CollectionUtils.array(Player.class);
             case RESET, DELETE -> CollectionUtils.array();
@@ -47,7 +47,7 @@ public class ExprSessionHost extends SimplePropertyExpression<Session, Player> {
     }
 
     @Override
-    public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
+    public void change(Event event, @Nullable Object[] delta, Changer.ChangeMode mode) {
         Session session = getExpr().getSingle(event);
         if (session == null) return;
         switch (mode) {

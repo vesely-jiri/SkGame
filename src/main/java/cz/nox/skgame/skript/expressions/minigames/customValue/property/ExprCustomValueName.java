@@ -48,7 +48,7 @@ public class ExprCustomValueName extends SimplePropertyExpression<CustomValue, S
     }
 
     @Override
-    public Class<?> @Nullable [] acceptChange(Changer.ChangeMode mode) {
+    public @Nullable Class<?>[] acceptChange(Changer.ChangeMode mode) {
         return switch (mode) {
             case SET -> CollectionUtils.array(String.class);
             case RESET, DELETE -> CollectionUtils.array();
@@ -57,7 +57,7 @@ public class ExprCustomValueName extends SimplePropertyExpression<CustomValue, S
     }
 
     @Override
-    public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
+    public void change(Event event, @Nullable Object[] delta, Changer.ChangeMode mode) {
         CustomValue v = getExpr().getSingle(event);
         if (v == null || delta == null || delta[0] == null) return;
         String name = (String) delta[0];

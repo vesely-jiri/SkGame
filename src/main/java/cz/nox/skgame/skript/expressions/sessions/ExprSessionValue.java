@@ -82,7 +82,7 @@ public class ExprSessionValue extends SimpleExpression<Object> implements KeyPro
     }
 
     @Override
-    protected Object @Nullable [] get(Event e) {
+    protected @Nullable Object[] get(Event e) {
         Object raw = session.getSingle(e);
         if (!(raw instanceof Session s)) return null;
         switch (pattern) {
@@ -102,7 +102,7 @@ public class ExprSessionValue extends SimpleExpression<Object> implements KeyPro
     }
 
     @Override
-    public Class<?> @Nullable [] acceptChange(Changer.ChangeMode mode) {
+    public @Nullable Class<?>[] acceptChange(Changer.ChangeMode mode) {
         return switch (mode) {
             case SET -> {
                 if (isList) yield CollectionUtils.array(Object[].class);
@@ -114,7 +114,7 @@ public class ExprSessionValue extends SimpleExpression<Object> implements KeyPro
     }
 
     @Override
-    public void change(Event e, Object @Nullable [] delta, Changer.ChangeMode mode) {
+    public void change(Event e, @Nullable Object[] delta, Changer.ChangeMode mode) {
         Object raw = session.getSingle(e);
         if (!(raw instanceof Session s)) return;
         switch (mode) {
@@ -140,7 +140,7 @@ public class ExprSessionValue extends SimpleExpression<Object> implements KeyPro
     }
 
     @Override
-    public @NotNull String @NotNull [] getArrayKeys(Event e) throws IllegalStateException {
+    public @NotNull String[] getArrayKeys(Event e) throws IllegalStateException {
         Object raw = session.getSingle(e);
         if (!(raw instanceof Session s)) return new String[0];
         return s.getKeys(isTemporary);

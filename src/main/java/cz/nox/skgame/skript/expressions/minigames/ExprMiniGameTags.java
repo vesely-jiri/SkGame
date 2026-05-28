@@ -43,7 +43,7 @@ public class ExprMiniGameTags extends SimpleExpression<MinigameTag> {
     }
 
     @Override
-    protected MinigameTag @Nullable [] get(Event event) {
+    protected @Nullable MinigameTag[] get(Event event) {
         MiniGame mg = minigameExpr.getSingle(event);
         if (mg == null) return new MinigameTag[0];
         return mg.getTags().toArray(new MinigameTag[0]);

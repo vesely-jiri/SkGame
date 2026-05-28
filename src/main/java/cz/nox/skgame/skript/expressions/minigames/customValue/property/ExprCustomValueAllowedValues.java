@@ -56,7 +56,7 @@ public class ExprCustomValueAllowedValues extends SimplePropertyExpression<Custo
     }
 
     @Override
-    public Class<?> @Nullable [] acceptChange(Changer.ChangeMode mode) {
+    public @Nullable Class<?>[] acceptChange(Changer.ChangeMode mode) {
         return switch (mode) {
             case SET, ADD, REMOVE -> CollectionUtils.array(String[].class);
             case RESET, DELETE    -> CollectionUtils.array();
@@ -65,7 +65,7 @@ public class ExprCustomValueAllowedValues extends SimplePropertyExpression<Custo
     }
 
     @Override
-    public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
+    public void change(Event event, @Nullable Object[] delta, Changer.ChangeMode mode) {
         CustomValue cv = getExpr().getSingle(event);
         if (cv == null) return;
         List<String> values = new ArrayList<>();

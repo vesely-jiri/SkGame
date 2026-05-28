@@ -46,7 +46,7 @@ public class ExprSessionMiniGame extends SimplePropertyExpression<Session, MiniG
     }
 
     @Override
-    public Class<? extends MiniGame> @Nullable [] acceptChange(ChangeMode mode) {
+    public @Nullable Class<? extends MiniGame>[] acceptChange(ChangeMode mode) {
         return switch (mode) {
             case SET   -> CollectionUtils.array(MiniGame.class);
             case RESET -> CollectionUtils.array();
@@ -55,7 +55,7 @@ public class ExprSessionMiniGame extends SimplePropertyExpression<Session, MiniG
     }
 
     @Override
-    public void change(Event event, Object @Nullable [] delta, ChangeMode mode) {
+    public void change(Event event, @Nullable Object[] delta, ChangeMode mode) {
         Session session = getExpr().getSingle(event);
         if (session == null) return;
         switch (mode) {

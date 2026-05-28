@@ -51,19 +51,19 @@ public class ExprSessionsAll extends SimpleExpression<Session> {
     }
 
     @Override
-    protected Session @Nullable [] get(Event event) {
+    protected @Nullable Session[] get(Event event) {
         return sessionManager.getAllSessions();
     }
 
     @Override
-    public Class<?> @Nullable [] acceptChange(Changer.ChangeMode mode) {
+    public @Nullable Class<?>[] acceptChange(Changer.ChangeMode mode) {
         if (mode == Changer.ChangeMode.RESET || mode == Changer.ChangeMode.DELETE)
             return CollectionUtils.array();
         return null;
     }
 
     @Override
-    public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
+    public void change(Event event, @Nullable Object[] delta, Changer.ChangeMode mode) {
         if (mode == Changer.ChangeMode.RESET || mode == Changer.ChangeMode.DELETE) {
             for (Session session : sessionManager.getAllSessions()) {
                 sessionManager.deleteSession(session.getId());

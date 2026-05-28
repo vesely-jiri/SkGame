@@ -49,7 +49,7 @@ public class ExprCustomValuePlurality extends SimplePropertyExpression<CustomVal
     }
 
     @Override
-    public Class<?> @Nullable [] acceptChange(Changer.ChangeMode mode) {
+    public @Nullable Class<?>[] acceptChange(Changer.ChangeMode mode) {
         return switch (mode) {
             case SET           -> CollectionUtils.array(CustomValuePlurality.class);
             case RESET, DELETE -> CollectionUtils.array();
@@ -58,7 +58,7 @@ public class ExprCustomValuePlurality extends SimplePropertyExpression<CustomVal
     }
 
     @Override
-    public void change(Event e, Object @Nullable [] delta, Changer.ChangeMode mode) {
+    public void change(Event e, @Nullable Object[] delta, Changer.ChangeMode mode) {
         CustomValue expr = getExpr().getSingle(e);
         if (expr == null) return;
         switch (mode) {

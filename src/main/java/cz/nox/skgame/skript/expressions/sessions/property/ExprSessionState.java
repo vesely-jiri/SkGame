@@ -52,7 +52,7 @@ public class ExprSessionState extends SimplePropertyExpression<Session, SessionS
     }
 
     @Override
-    public Class<? extends SessionState> @Nullable [] acceptChange(ChangeMode mode) {
+    public @Nullable Class<? extends SessionState>[] acceptChange(ChangeMode mode) {
         return switch (mode) {
             case SET   -> CollectionUtils.array(SessionState.class);
             case RESET -> CollectionUtils.array();
@@ -61,7 +61,7 @@ public class ExprSessionState extends SimplePropertyExpression<Session, SessionS
     }
 
     @Override
-    public void change(Event event, Object @Nullable [] delta, ChangeMode mode) {
+    public void change(Event event, @Nullable Object[] delta, ChangeMode mode) {
         Session session = getExpr().getSingle(event);
         if (session == null) return;
         switch (mode) {

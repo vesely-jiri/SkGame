@@ -36,12 +36,12 @@ public class ExprSessionTotalRounds extends SimplePropertyExpression<Session, Nu
     }
 
     @Override
-    public Class<? extends Number> @Nullable [] acceptChange(Changer.ChangeMode mode) {
+    public @Nullable Class<? extends Number>[] acceptChange(Changer.ChangeMode mode) {
         return mode == Changer.ChangeMode.SET ? CollectionUtils.array(Number.class) : null;
     }
 
     @Override
-    public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
+    public void change(Event event, @Nullable Object[] delta, Changer.ChangeMode mode) {
         Session session = getExpr().getSingle(event);
         if (session == null || delta == null || delta[0] == null) return;
         session.setTotalRounds(((Number) delta[0]).intValue());

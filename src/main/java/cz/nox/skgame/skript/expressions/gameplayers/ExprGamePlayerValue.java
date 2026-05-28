@@ -74,7 +74,7 @@ public class ExprGamePlayerValue extends SimpleExpression<Object> implements Key
     }
 
     @Override
-    protected Object @Nullable [] get(Event e) {
+    protected @Nullable Object[] get(Event e) {
         if (player == null) return null;
         Object raw = player.getSingle(e);
         if (!(raw instanceof Player p)) return null;
@@ -97,7 +97,7 @@ public class ExprGamePlayerValue extends SimpleExpression<Object> implements Key
     }
 
     @Override
-    public Class<?> @Nullable [] acceptChange(Changer.ChangeMode mode) {
+    public @Nullable Class<?>[] acceptChange(Changer.ChangeMode mode) {
         return switch (mode) {
             case SET -> {
                 if (isList) yield CollectionUtils.array(Object[].class);
@@ -109,7 +109,7 @@ public class ExprGamePlayerValue extends SimpleExpression<Object> implements Key
     }
 
     @Override
-    public void change(Event e, Object @Nullable [] delta, Changer.ChangeMode mode) {
+    public void change(Event e, @Nullable Object[] delta, Changer.ChangeMode mode) {
         if (player == null) return;
         Object raw = player.getSingle(e);
         if (!(raw instanceof Player p)) return;
@@ -138,7 +138,7 @@ public class ExprGamePlayerValue extends SimpleExpression<Object> implements Key
     }
 
     @Override
-    public @NotNull String @NotNull [] getArrayKeys(Event e) throws IllegalStateException {
+    public @NotNull String[] getArrayKeys(Event e) throws IllegalStateException {
         Object raw = player.getSingle(e);
         if (!(raw instanceof Player p)) return new String[0];
         GamePlayer gp = playerManager.getPlayer(p);

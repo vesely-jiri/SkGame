@@ -37,7 +37,7 @@ public class ExprSessionShuffle extends SimplePropertyExpression<Session, Boolea
     }
 
     @Override
-    public Class<? extends Boolean> @Nullable [] acceptChange(Changer.ChangeMode mode) {
+    public @Nullable Class<? extends Boolean>[] acceptChange(Changer.ChangeMode mode) {
         return switch (mode) {
             case SET -> CollectionUtils.array(Boolean.class);
             default  -> null;
@@ -45,7 +45,7 @@ public class ExprSessionShuffle extends SimplePropertyExpression<Session, Boolea
     }
 
     @Override
-    public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
+    public void change(Event event, @Nullable Object[] delta, Changer.ChangeMode mode) {
         Session session = getExpr().getSingle(event);
         if (session == null || delta == null || delta[0] == null) return;
         session.setShuffle((Boolean) delta[0]);
