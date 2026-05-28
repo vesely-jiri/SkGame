@@ -44,6 +44,9 @@ session:
     isolation: false
     # When true, spectators only see spectator-side chat within the session.
     spectator-isolation: false
+    # When true, pre-game (LOBBY) session members are isolated to their own session.
+    # When false (default), pre-game members chat globally; isolation activates only once STARTED.
+    isolate-lobby: false
 
 # --- Spectate browser ---
 spectate:

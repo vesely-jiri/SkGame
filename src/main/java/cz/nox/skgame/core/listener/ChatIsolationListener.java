@@ -3,6 +3,7 @@ package cz.nox.skgame.core.listener;
 import cz.nox.skgame.SkGame;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.type.SessionRole;
+import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.gui.services.MainGuiService;
 import org.bukkit.entity.Player;
@@ -28,17 +29,19 @@ public class ChatIsolationListener implements Listener {
         SkGame plugin = SkGame.getInstance();
         if (!plugin.getConfig().getBoolean("session.chat.isolation", false)) return;
 
+        boolean isolateLobby = plugin.getConfig().getBoolean("session.chat.isolate-lobby", false);
+        boolean spectatorIsolation = plugin.getConfig().getBoolean("session.chat.spectator-isolation", false);
+
         Player sender = event.getPlayer();
         if (MainGuiService.getInstance().isAwaitingChatInput(sender)) return;
         Session senderSession = SessionManager.getInstance().getSession(sender);
-        String senderRoom = senderSession != null ? senderSession.getId() : null;
-        boolean spectatorIsolation = plugin.getConfig().getBoolean("session.chat.spectator-isolation", false);
+        String senderRoom = roomOf(senderSession, isolateLobby);
         SessionRole senderRole = senderSession != null ? senderSession.getRole(sender) : null;
 
         Set<Player> allowed = new HashSet<>();
         for (Player recipient : event.getRecipients()) {
             Session recipientSession = SessionManager.getInstance().getSession(recipient);
-            String recipientRoom = recipientSession != null ? recipientSession.getId() : null;
+            String recipientRoom = roomOf(recipientSession, isolateLobby);
             if (!Objects.equals(senderRoom, recipientRoom)) continue;
             if (spectatorIsolation && senderRoom != null && senderRole != null) {
                 SessionRole recipientRole = senderSession.getRole(recipient);
@@ -62,5 +65,11 @@ public class ChatIsolationListener implements Listener {
         } catch (Exception e) {
             return "<" + event.getPlayer().getDisplayName() + "> " + event.getMessage();
         }
+    }
+
+    private static String roomOf(Session session, boolean isolateLobby) {
+        if (session == null) return null;
+        if (session.getState() == SessionState.STARTED) return session.getId();
+        return isolateLobby ? session.getId() : null;
     }
 }
