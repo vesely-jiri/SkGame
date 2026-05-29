@@ -100,8 +100,9 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
     @Override
     public @Nullable Session createSession(Player host) {
         String id = UUID.randomUUID().toString();
-        Session session = sessionManager.createSession(id); // fires SessionCreateEvent, registers in map
+        Session session = sessionManager.registerSession(id); // registers in map, does NOT fire event yet
         session.setHost(host);
+        Bukkit.getPluginManager().callEvent(new SessionCreateEvent(session)); // host is set — event contract correct
         session.addLobbyMember(host); // fires GamePlayerSessionJoin
         LobbyEnterEvent lobbyEvent = new LobbyEnterEvent(host, session);
         Bukkit.getPluginManager().callEvent(lobbyEvent);

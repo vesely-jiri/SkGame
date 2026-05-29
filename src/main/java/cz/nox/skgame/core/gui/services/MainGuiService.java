@@ -102,8 +102,7 @@ public class MainGuiService implements Listener {
 
     @EventHandler
     public void onSessionCreate(SessionCreateEvent event) {
-        // SessionCreateEvent fires before setHost() in SessionLifecycleManagerImpl — defer by one tick
-        Bukkit.getScheduler().runTask(SkGame.getInstance(), this::update);
+        update(); // SessionCreateEvent now fires after full initialization (setHost already called)
     }
 
     @EventHandler

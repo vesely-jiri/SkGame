@@ -17,6 +17,7 @@ import ch.njol.util.Kleenean;
 import cz.nox.skgame.api.game.event.SessionCreateEvent;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.core.game.SessionManager;
+import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,12 +74,17 @@ public class EffSecCreateSession extends EffectSection {
         String rawId = this.id != null ? this.id.getSingle(e) : null;
         String id = rawId != null ? rawId : UUID.randomUUID().toString();
         Session session = sessionManager.getSessionById(id);
-        if (session == null) {
-            session = sessionManager.createSession(id);
+        boolean justCreated = (session == null);
+        if (justCreated) {
+            session = sessionManager.registerSession(id);
+        }
+        // Fire public event exactly once for newly created sessions (host stays null for Skript-created sessions)
+        SessionCreateEvent createEvent = new SessionCreateEvent(session);
+        if (justCreated) {
+            Bukkit.getPluginManager().callEvent(createEvent);
         }
         if (hasSection()) {
-            SessionCreateEvent createEvent = new SessionCreateEvent(session);
-            Variables.setLocalVariables(createEvent, localVars);
+            Variables.setLocalVariables(createEvent, localVars); // reuse as section context for event-session
             TriggerItem.walk(this.trigger, createEvent);
             Variables.setLocalVariables(e, Variables.copyLocalVariables(createEvent));
             Variables.removeLocals(createEvent);

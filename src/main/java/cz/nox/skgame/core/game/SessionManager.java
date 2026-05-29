@@ -31,15 +31,28 @@ public class SessionManager implements Listener {
         return manager;
     }
 
-    public Session createSession(String id) {
-        Session session;
+    /**
+     * Register a new session in the map without firing SessionCreateEvent.
+     * Callers that need the event fire it themselves after full initialization.
+     * If a session with this id already exists, returns the existing session.
+     */
+    public Session registerSession(String id) {
         if (!sessions.containsKey(id)) {
-            session = new Session(id);
+            Session session = new Session(id);
             sessions.put(id, session);
             setLastCreatedSession(session);
+            return session;
+        }
+        return sessions.get(id);
+    }
+
+    /** @deprecated Use registerSession(id) + fire SessionCreateEvent after initialization. */
+    @Deprecated
+    public Session createSession(String id) {
+        boolean isNew = !sessions.containsKey(id);
+        Session session = registerSession(id);
+        if (isNew) {
             Bukkit.getPluginManager().callEvent(new SessionCreateEvent(session));
-        } else {
-            session = sessions.get(id);
         }
         return session;
     }

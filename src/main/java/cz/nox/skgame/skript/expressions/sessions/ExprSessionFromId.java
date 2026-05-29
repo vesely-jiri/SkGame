@@ -10,8 +10,10 @@ import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
+import cz.nox.skgame.api.game.event.SessionCreateEvent;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.core.game.SessionManager;
+import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +63,8 @@ public class ExprSessionFromId extends SimpleExpression<Session> {
                 .map(id -> {
                     Session session = sessionManager.getSessionById(id);
                     if (session == null && this.create) {
-                        session = sessionManager.createSession(id);
+                        session = sessionManager.registerSession(id);
+                        Bukkit.getPluginManager().callEvent(new SessionCreateEvent(session));
                     }
                     return session;
                 })
