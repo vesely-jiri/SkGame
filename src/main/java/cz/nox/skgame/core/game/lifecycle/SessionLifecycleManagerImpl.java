@@ -22,9 +22,11 @@ import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.core.util.GamePlayerKeys;
 import cz.nox.skgame.api.region.Region;
 import cz.nox.skgame.core.game.PlayerManager;
+import cz.nox.skgame.core.game.GameMapManager;
 import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.region.ArenaSlot;
 import cz.nox.skgame.api.messages.Messages;
+import cz.nox.skgame.core.team.MapVoteItem;
 import cz.nox.skgame.core.team.TeamPickerItem;
 import cz.nox.skgame.util.PlayerResetter;
 import org.bukkit.inventory.ItemStack;
@@ -52,8 +54,11 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.event.player.PlayerJoinEvent;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Random;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -72,7 +77,9 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
     private final PartyManager partyManager;
     private final Map<UUID, RejoinSnapshot> rejoinSnapshots = new ConcurrentHashMap<>();
     private static final int PICKER_SLOT = 4;
+    private static final int VOTE_SLOT = 5;
     private final Map<UUID, ItemStack> pickerSlotBackup = new ConcurrentHashMap<>();
+    private final Map<UUID, ItemStack> voteSlotBackup = new ConcurrentHashMap<>();
 
     private SessionLifecycleManagerImpl(SkGame plugin) {
         this.sessionManager = SessionManager.getInstance();
@@ -249,7 +256,9 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
 
         if (stateBeforeLeave == SessionState.PREPARATION && role == SessionRole.LOBBY) {
             removePicker(player);
+            removeVoteItem(player);
             session.setTeam(player, null);
+            session.setMapVote(player, null);
         }
 
         if (role == SessionRole.PLAYER || role == SessionRole.SPECTATOR) {
@@ -280,8 +289,9 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         if (session.getState() != SessionState.LOBBY) return false;
         MiniGame miniGame = session.getMiniGame();
         GameMap gameMap = session.getGameMap();
-        if (miniGame == null || gameMap == null) return false;
-        if (!gameMap.supportsMiniGame(miniGame)) return false;
+        if (miniGame == null) return false;
+        if (gameMap == null && !session.isMapVoting()) return false;
+        if (gameMap != null && !gameMap.supportsMiniGame(miniGame)) return false;
 
         if (plugin.isMaintenanceMode()) {
             for (Player p : session.getLobbyMembers()) {
@@ -290,7 +300,14 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             return false;
         }
 
-        if (needsPreparation(session)) { enterPreparation(session); return true; }
+        if (needsPreparation(session)) {
+            if (session.isMapVoting() && getCandidateMaps(session).isEmpty()) {
+                Messages.send(session.getHost(), "session.error.no-maps-for-minigame");
+                return false;
+            }
+            enterPreparation(session);
+            return true;
+        }
 
         if (reason != GameStartReason.AUTO_NEXT_ROUND) {
             session.setCurrentRound(1);
@@ -348,6 +365,14 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
     }
 
     private boolean needsPreparation(Session session) {
+        if (session.isMapVoting()) return true;
+        MiniGame mg = session.getMiniGame();
+        if (mg == null || mg.getTeams().isEmpty()) return false;
+        TeamAssignmentMode mode = mg.getTeamAssignment();
+        return mode == TeamAssignmentMode.SELF_SELECT || mode == TeamAssignmentMode.BOTH;
+    }
+
+    private boolean needsTeamPicker(Session session) {
         MiniGame mg = session.getMiniGame();
         if (mg == null || mg.getTeams().isEmpty()) return false;
         TeamAssignmentMode mode = mg.getTeamAssignment();
@@ -372,7 +397,25 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
 
     private void enterPreparation(Session session) {
         session.setState(SessionState.PREPARATION);
-        for (Player p : session.getLobbyMembers()) givePicker(p);
+
+        // Map vote setup (must happen before team picker so both can coexist)
+        if (session.isMapVoting()) {
+            List<GameMap> candidates = getCandidateMaps(session);
+            if (candidates.size() == 1) {
+                // Auto-pick the only map — no vote UI needed
+                session.setGameMap(candidates.get(0));
+                session.setMapVoting(false);
+            } else {
+                // 2+ candidates: clear any previous winner, give vote items
+                session.setGameMap(null);
+                for (Player p : session.getLobbyMembers()) giveVoteItem(p);
+            }
+        }
+
+        // Team picker (only when self-select/both mode)
+        if (needsTeamPicker(session)) {
+            for (Player p : session.getLobbyMembers()) givePicker(p);
+        }
 
         long windowSeconds = plugin.getConfig().getLong("session.preparation.window-seconds", 20L);
         String sessionId = session.getId();
@@ -393,7 +436,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
                 long secs = remaining[0];
                 if (secs <= 5 || secs % 10 == 0) {
                     Component bar = LegacyComponentSerializer.legacyAmpersand()
-                            .deserialize("&eTeam selection: &a" + secs + "s &eremaining");
+                            .deserialize("&ePreparation: &a" + secs + "s &eremaining");
                     for (Player p : current.getLobbyMembers()) p.sendActionBar(bar);
                 }
                 remaining[0]--;
@@ -405,15 +448,32 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
     // PREPARATION → LOBBY (cancel / all-leave / under-min)
     private void cancelPreparation(Session session) {
         sessionManager.cancelCountdownTask(session.getId());
-        for (Player p : new HashSet<>(session.getLobbyMembers())) removePicker(p);
+        Set<Player> members = new HashSet<>(session.getLobbyMembers());
+        for (Player p : members) { removePicker(p); removeVoteItem(p); }
         session.clearTeams();
+        session.clearMapVotes();
         session.setState(SessionState.LOBBY);
     }
 
     @Override
     public void finishPreparation(Session session) {
         sessionManager.cancelCountdownTask(session.getId());
-        for (Player p : new HashSet<>(session.getLobbyMembers())) removePicker(p);
+        Set<Player> members = new HashSet<>(session.getLobbyMembers());
+        for (Player p : members) { removePicker(p); removeVoteItem(p); }
+
+        // Resolve map vote before auto-fill and start
+        if (session.isMapVoting()) {
+            GameMap winner = tallyMapVotes(session);
+            session.setGameMap(winner);
+            session.setMapVoting(false);
+            session.clearMapVotes();
+            if (winner != null) {
+                for (Player p : session.getLobbyMembers()) {
+                    Messages.send(p, "session.preparation.map-vote-result", winner.getId());
+                }
+            }
+        }
+
         autoFillUnpickedTeams(session);
         startImmediately(session);
     }
@@ -451,9 +511,57 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
                 player.getInventory().setItem(i, null);
             }
         }
-        // Restore slot 4 to its original content (null = empty slot)
         ItemStack backup = pickerSlotBackup.remove(player.getUniqueId());
         player.getInventory().setItem(PICKER_SLOT, backup);
+    }
+
+    private void giveVoteItem(Player player) {
+        MapVoteItem item = MapVoteItem.getInstance();
+        ItemStack existing = player.getInventory().getItem(VOTE_SLOT);
+        if (item.isVoteItem(existing)) return;
+        voteSlotBackup.put(player.getUniqueId(), existing);
+        player.getInventory().setItem(VOTE_SLOT, item.create());
+    }
+
+    private void removeVoteItem(Player player) {
+        MapVoteItem item = MapVoteItem.getInstance();
+        for (int i = 0; i < player.getInventory().getSize(); i++) {
+            if (item.isVoteItem(player.getInventory().getItem(i))) {
+                player.getInventory().setItem(i, null);
+            }
+        }
+        ItemStack backup = voteSlotBackup.remove(player.getUniqueId());
+        player.getInventory().setItem(VOTE_SLOT, backup);
+    }
+
+    // Returns maps supporting the minigame that are available for voting.
+    // Non-slotted claimed maps are excluded (setGameMap silently no-ops for them).
+    // Slotted maps are always included — claimSlot creates overflow if needed.
+    private List<GameMap> getCandidateMaps(Session session) {
+        MiniGame mg = session.getMiniGame();
+        if (mg == null) return List.of();
+        GameMapManager gmm = GameMapManager.getInstance();
+        return Arrays.stream(gmm.getGameMaps())
+                .filter(m -> m.supportsMiniGame(mg))
+                .filter(m -> m.hasArenaSlots() || !gmm.isMapClaimed(m.getId()))
+                .collect(Collectors.toList());
+    }
+
+    // Tally votes; no votes → random; ties → random among tied winners.
+    // Known edge case: a non-slotted winner could be claimed by another session between
+    // vote-start and tally (rare race); setGameMap silently no-ops in that case.
+    private GameMap tallyMapVotes(Session session) {
+        List<GameMap> candidates = getCandidateMaps(session);
+        if (candidates.isEmpty()) return null;
+        Map<String, Integer> tally = new HashMap<>();
+        candidates.forEach(m -> tally.put(m.getId(), 0));
+        session.getMapVotes().values()
+                .forEach(votedId -> tally.computeIfPresent(votedId, (k, v) -> v + 1));
+        int max = Collections.max(tally.values());
+        List<GameMap> topMaps = candidates.stream()
+                .filter(m -> tally.getOrDefault(m.getId(), 0) == max)
+                .collect(Collectors.toList());
+        return topMaps.get(new Random().nextInt(topMaps.size()));
     }
 
     @Override
@@ -515,6 +623,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         }
         session.clearWinners();
         session.clearTeams();
+        session.clearMapVotes();
 
         // Auto-cleanup after scripts have run, before role transitions
         if (arena != null && arena.getWorld() != null) {

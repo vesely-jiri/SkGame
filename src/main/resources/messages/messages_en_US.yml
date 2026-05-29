@@ -22,6 +22,9 @@ session:
     already-in-session: "&cYou are already in a session"
     mid-game-locked: "&cCannot change session settings while game is running"
     game-in-progress: "&cThis game is already in progress"
+    no-maps-for-minigame: "&cNo maps support this minigame — cannot start"
+  preparation:
+    map-vote-result: "&6Map decided by vote: &e{0}"
   spectator:
     queued-join: "&aYou will join the party after this game"
     queued-leave: "&7You will not join the party after this game"

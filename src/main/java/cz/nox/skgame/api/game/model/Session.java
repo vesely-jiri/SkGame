@@ -40,6 +40,8 @@ public class Session {
     private final Set<UUID> invitedPlayers = new HashSet<>();
     @Nullable private String joinCode;
     private final Map<UUID, String> teamAssignments = new HashMap<>();
+    private boolean mapVoting = false;
+    private final Map<UUID, String> mapVotes = new HashMap<>();
 
     public Session(String id, Player host, MiniGame miniGame,
                    SessionState state, GameMap map, Set<Player> players, Set<Player> spectators,
@@ -235,6 +237,16 @@ public class Session {
         if (spectators.contains(player)) return SessionRole.SPECTATOR;
         return null;
     }
+
+    public boolean isMapVoting() { return mapVoting; }
+    public void setMapVoting(boolean mapVoting) { this.mapVoting = mapVoting; }
+    public @Nullable String getMapVote(Player player) { return mapVotes.get(player.getUniqueId()); }
+    public void setMapVote(Player player, @Nullable String mapId) {
+        if (mapId == null) mapVotes.remove(player.getUniqueId());
+        else mapVotes.put(player.getUniqueId(), mapId);
+    }
+    public void clearMapVotes() { mapVotes.clear(); }
+    public Map<UUID, String> getMapVotes() { return java.util.Collections.unmodifiableMap(mapVotes); }
 
     public @Nullable String getTeam(Player player) {
         return teamAssignments.get(player.getUniqueId());

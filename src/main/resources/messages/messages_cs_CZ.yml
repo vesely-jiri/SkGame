@@ -16,6 +16,9 @@ session:
     already-in-session: "&cJiž jsi v session"
     mid-game-locked: "&cBěhem hry nelze měnit nastavení session"
     game-in-progress: "&cTato hra již probíhá"
+    no-maps-for-minigame: "&cŽádná mapa nepodporuje tuto minihru — nelze spustit"
+  preparation:
+    map-vote-result: "&6Mapa rozhodnuta hlasováním: &e{0}"
   spectator:
     queued-join: "&aPo skončení hry se připojíš do party"
     queued-leave: "&7Po skončení hry session opustíš"
