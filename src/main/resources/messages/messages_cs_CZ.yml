@@ -199,6 +199,11 @@ admin:
     deleted: "&aMapa {0} odstraněna"
     already-exists: "&cMapa {0} již existuje"
 
+minigame:
+  disable:
+    notice: "&7Tato minihra byla deaktivována administrátorem — aktuální hry dohrají, nové nezačnou."
+    terminated: "&cTato minihra byla deaktivována administrátorem."
+
 quickplay:
   queued: "&aHledám hru... &7(použij &c/game quickplay cancel &7pro zrušení)"
   queued-with-tags: "&aHledám hru s tagy: &f{0} &7(použij &c/game quickplay cancel &7pro zrušení)"

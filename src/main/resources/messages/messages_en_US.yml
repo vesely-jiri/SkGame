@@ -270,6 +270,11 @@ admin:
   action:
     canceled: "&cAction canceled"
 
+minigame:
+  disable:
+    notice: "&7This minigame was disabled by an administrator — current games finish, no new ones start."
+    terminated: "&cThis minigame was disabled by an administrator."
+
 quickplay:
   queued: "&aSearching for a game... &7(use &c/game quickplay cancel &7to cancel)"
   queued-with-tags: "&aSearching for a game with tags: &f{0} &7(use &c/game quickplay cancel &7to cancel)"

@@ -481,31 +481,30 @@ public class SkGame extends JavaPlugin implements TabCompleter {
         } else if (action.equals("disable")) {
             boolean force = args.length >= 4
                     && (args[3].equalsIgnoreCase("--force") || args[3].equalsIgnoreCase("-f"));
-            if (!force) {
-                long count = java.util.Arrays.stream(SessionManager.getInstance().getAllSessions())
-                        .filter(s -> s.getMiniGame() != null && mgId.equals(s.getMiniGame().getId()))
-                        .count();
-                if (count > 0) {
-                    sender.sendMessage(ChatColor.RED + "" + count + " running session(s) use this minigame — use --force to disable anyway.");
-                    return;
-                }
-            }
             mgm.disableMinigame(mgId);
+
+            cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl lifecycle =
+                    cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl.getInstance();
+            java.util.List<cz.nox.skgame.api.game.model.Session> activeSessions =
+                    java.util.Arrays.stream(SessionManager.getInstance().getAllSessions())
+                            .filter(s -> s.getMiniGame() != null && mgId.equals(s.getMiniGame().getId()))
+                            .filter(s -> s.getState() == cz.nox.skgame.api.game.model.type.SessionState.STARTED
+                                    || s.getState() == cz.nox.skgame.api.game.model.type.SessionState.STARTING
+                                    || s.getState() == cz.nox.skgame.api.game.model.type.SessionState.PREPARATION)
+                            .collect(java.util.stream.Collectors.toList());
+
             if (force) {
+                // Notify players before terminating so they see the reason
+                for (cz.nox.skgame.api.game.model.Session s : activeSessions) {
+                    for (org.bukkit.entity.Player p : s.getMembers()) {
+                        Messages.send(p, "minigame.disable.terminated");
+                    }
+                }
                 // Immediately terminate all running sessions of this minigame
-                cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl lifecycle =
-                        cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl.getInstance();
-                java.util.List<cz.nox.skgame.api.game.model.Session> toTerminate =
-                        java.util.Arrays.stream(SessionManager.getInstance().getAllSessions())
-                                .filter(s -> s.getMiniGame() != null && mgId.equals(s.getMiniGame().getId()))
-                                .filter(s -> s.getState() == cz.nox.skgame.api.game.model.type.SessionState.STARTED
-                                        || s.getState() == cz.nox.skgame.api.game.model.type.SessionState.STARTING
-                                        || s.getState() == cz.nox.skgame.api.game.model.type.SessionState.PREPARATION)
-                                .collect(java.util.stream.Collectors.toList());
-                for (cz.nox.skgame.api.game.model.Session s : toTerminate) {
+                for (cz.nox.skgame.api.game.model.Session s : activeSessions) {
                     lifecycle.endGame(s, "minigame-disabled");
                 }
-                int terminated = toTerminate.size();
+                int terminated = activeSessions.size();
                 sender.sendMessage(Component.text("Minigame '").color(NamedTextColor.YELLOW)
                         .append(Component.text(mgId).color(NamedTextColor.WHITE))
                         .append(Component.text("' disabled ").color(NamedTextColor.YELLOW))
@@ -515,6 +514,12 @@ public class SkGame extends JavaPlugin implements TabCompleter {
                                                 .appendNewline()
                                                 .append(Component.text(terminated + " running session(s) were force-terminated.").color(NamedTextColor.GRAY))))));
             } else {
+                // Graceful: notify running sessions, let them finish naturally
+                for (cz.nox.skgame.api.game.model.Session s : activeSessions) {
+                    for (org.bukkit.entity.Player p : s.getMembers()) {
+                        Messages.send(p, "minigame.disable.notice");
+                    }
+                }
                 sender.sendMessage(Component.text("Minigame '").color(NamedTextColor.YELLOW)
                         .append(Component.text(mgId).color(NamedTextColor.WHITE))
                         .append(Component.text("' disabled ").color(NamedTextColor.YELLOW))
