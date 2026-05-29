@@ -21,33 +21,38 @@ import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.UUID;
 
 @Name("Create Game Session")
 @Description({
-        "Creates a new game session with a specified ID.",
+        "Creates a new game session, optionally with a specific id.",
+        "When no id is given, a random UUID is generated.",
+        "If a session with the given id already exists, the existing session is returned silently.",
         "",
-        "Useful for initializing players, maps, or other session-specific properties upon creation.",
+        "Sessions are transient runtime objects — not persisted across server restarts.",
+        "The 'register' verb is intentionally absent; contrast 'register minigame' / 'register map',",
+        "which are persistent. Use 'create session' only.",
         "",
-        "Supports: SECTION (code block).",
-        "Supports: event-session"
+        "Supports: SECTION (code block). event-session is available inside the block."
 })
 @Examples({
-        "create game session with id \"hello\"",
-        "create game session:",
-        "\tset players of event-session to {_players::*}",
-        "\tset map of event-session to gamemap with id \"arena\""
+        "create game session",
+        "create game session with id \"arena_1\"",
+        "create game session with uuid \"my-session\":",
+        "\tset session map of event-session to gamemap with id \"arena\"",
+        "\tset session players of event-session to {_players::*}"
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")
 public class EffSecCreateSession extends EffectSection {
 
     private static final SessionManager sessionManager = SessionManager.getInstance();
-    private Expression<String> id;
+    @Nullable private Expression<String> id;
     private Trigger trigger;
 
     static {
         Skript.registerSection(EffSecCreateSession.class,
-                "create [new] [game] session (with|from) id %string%");
+                "create [new] [game] session [(with|from) [uu]id %string%]");
         EventValues.registerEventValue(SessionCreateEvent.class, Session.class, SessionCreateEvent::getSession);
     }
 
@@ -65,23 +70,24 @@ public class EffSecCreateSession extends EffectSection {
     @Override
     protected @Nullable TriggerItem walk(Event e) {
         Object localVars = Variables.copyLocalVariables(e);
-        String id = this.id.getSingle(e);
+        String rawId = this.id != null ? this.id.getSingle(e) : null;
+        String id = rawId != null ? rawId : UUID.randomUUID().toString();
         Session session = sessionManager.getSessionById(id);
         if (session == null) {
             session = sessionManager.createSession(id);
         }
         if (hasSection()) {
             SessionCreateEvent createEvent = new SessionCreateEvent(session);
-            Variables.setLocalVariables(createEvent,localVars);
-            TriggerItem.walk(this.trigger,createEvent);
-            Variables.setLocalVariables(e,Variables.copyLocalVariables(createEvent));
+            Variables.setLocalVariables(createEvent, localVars);
+            TriggerItem.walk(this.trigger, createEvent);
+            Variables.setLocalVariables(e, Variables.copyLocalVariables(createEvent));
             Variables.removeLocals(createEvent);
         }
-        return super.walk(e,false);
+        return super.walk(e, false);
     }
 
     @Override
     public String toString(@Nullable Event e, boolean b) {
-        return "create session with id " + this.id.toString(e,b);
+        return "create session" + (this.id != null ? " with id " + this.id.toString(e, b) : "");
     }
 }
