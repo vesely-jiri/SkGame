@@ -74,6 +74,9 @@ public class AdminGuiService implements Listener {
         return instance;
     }
 
+    /** Number of admins currently in wand-setup mode (each runs a 1t LocationBeam task). */
+    public int getActiveSetupSessionCount() { return states.size(); }
+
     // ─── Public API ───────────────────────────────────────────────────────────
 
     public void openAdminGui(Player player) {

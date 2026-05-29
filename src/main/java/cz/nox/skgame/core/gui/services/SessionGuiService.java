@@ -99,6 +99,8 @@ public class SessionGuiService implements Listener {
         }
     }
 
+    public int getTotalViewerCount() { return viewers.values().stream().mapToInt(Set::size).sum(); }
+
     // ─── Event listeners ──────────────────────────────────────────────────────
 
     @EventHandler public void onSessionDisband(SessionDisbandEvent e) { closeFor(e.getSession()); }

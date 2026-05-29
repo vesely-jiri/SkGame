@@ -96,6 +96,8 @@ class PartyManager {
                 ? DisbandReason.EMPTY_PARTY : DisbandReason.HOST_LEAVE;
     }
 
+    int getIdleTimerCount() { return idleTimers.size(); }
+
     void onSessionDisbanded(String sessionId) {
         cancelIdleTimer(sessionId);
     }

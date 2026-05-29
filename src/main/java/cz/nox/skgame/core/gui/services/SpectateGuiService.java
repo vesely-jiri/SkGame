@@ -87,6 +87,8 @@ public class SpectateGuiService implements Listener {
         }
     }
 
+    public int getViewerCount() { return activeViewers.size(); }
+
     @EventHandler public void onSessionCreate(SessionCreateEvent e)  { update(); }
     @EventHandler public void onSessionDisband(SessionDisbandEvent e) { update(); }
     @EventHandler public void onGameStart(GameStartEvent e)           { update(); }

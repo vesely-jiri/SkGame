@@ -915,6 +915,9 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         Messages.send(host, "session.ban.confirmed", target.getName());
     }
 
+    public int getRejoinSnapshotCount() { return rejoinSnapshots.size(); }
+    public int getIdleTimerCount() { return partyManager.getIdleTimerCount(); }
+
     /** Called from SkGame.onDisable — ends running games then disbands all sessions. */
     public void shutdown() {
         for (Session session : sessionManager.getAllSessions()) {

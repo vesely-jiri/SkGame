@@ -71,6 +71,8 @@ public class MinigamesGuiService implements Listener {
         viewers.computeIfAbsent(session.getId(), k -> new HashSet<>()).add(player.getUniqueId());
     }
 
+    public int getTotalViewerCount() { return viewers.values().stream().mapToInt(Set::size).sum(); }
+
     public void closeFor(Session session) {
         Set<UUID> vset = viewers.remove(session.getId());
         if (vset == null) return;

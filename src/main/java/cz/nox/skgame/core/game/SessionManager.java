@@ -56,6 +56,8 @@ public class SessionManager implements Listener {
         }
         return session;
     }
+    public int getCountdownTaskCount() { return countdownTasks.size(); }
+
     public void deleteSession(String id) {
         Session session = sessions.get(id);
         if (session == null) return;

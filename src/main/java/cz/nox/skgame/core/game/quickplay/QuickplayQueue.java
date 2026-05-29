@@ -42,6 +42,8 @@ public class QuickplayQueue {
         return instance;
     }
 
+    public boolean isSearchActive() { return searchTask != null; }
+
     public void enqueue(Player player, Set<MinigameTag> tags) {
         entries.put(player.getUniqueId(), new QuickplayEntry(player.getUniqueId(), tags));
         ensureTaskRunning();

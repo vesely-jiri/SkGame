@@ -78,6 +78,8 @@ public class MainGuiService implements Listener {
         activeViewers.add(viewer.getUniqueId());
     }
 
+    public int getViewerCount() { return activeViewers.size(); }
+
     public void update() {
         for (UUID uuid : new HashSet<>(activeViewers)) {
             Player p = Bukkit.getPlayer(uuid);

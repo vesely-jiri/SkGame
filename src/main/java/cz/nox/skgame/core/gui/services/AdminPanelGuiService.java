@@ -334,6 +334,8 @@ public class AdminPanelGuiService implements Listener {
                 });
     }
 
+    public int getPanelViewerCount() { return panelViewers.size(); }
+
     // ─── Listener ────────────────────────────────────────────────────────────
 
     @EventHandler public void onSessionCreate(SessionCreateEvent e)   { refreshPanelViewers(); }

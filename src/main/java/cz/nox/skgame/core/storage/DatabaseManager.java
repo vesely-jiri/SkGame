@@ -78,6 +78,9 @@ public class DatabaseManager {
     public boolean isAvailable() {
         return dataSource != null && !dataSource.isClosed();
     }
+    public @Nullable com.zaxxer.hikari.HikariPoolMXBean getHikariPoolMXBean() {
+        return dataSource != null ? dataSource.getHikariPoolMXBean() : null;
+    }
 
     public @Nullable File getDbFile() {
         return dbFile;

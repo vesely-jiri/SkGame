@@ -26,4 +26,5 @@ public class PlayerManager {
     public GamePlayer getPlayer(Player player) {
         return players.computeIfAbsent(player.getUniqueId(), uuid -> new GamePlayer(Bukkit.getPlayer(uuid)));
     }
+    public int getTrackedPlayerCount() { return players.size(); }
 }

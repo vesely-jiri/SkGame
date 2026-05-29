@@ -474,6 +474,13 @@ public class SkGame extends JavaPlugin implements TabCompleter {
                 }
                 handleDebugCommand(sender, args);
             }
+            case "perf" -> {
+                if (!sender.hasPermission("skgame.admin")) {
+                    sender.sendMessage(ChatColor.RED + "You do not have permission.");
+                    return true;
+                }
+                handlePerfCommand(sender);
+            }
             default -> sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame <info|reload|maintenance|stats|panel|minigame> [args]");
         }
         return true;
@@ -608,7 +615,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             List<String> opts = new ArrayList<>();
             if (sender.hasPermission("skgame.info")) opts.add("info");
             if (sender.hasPermission("skgame.admin.reload")) opts.add("reload");
-            if (sender.hasPermission("skgame.admin")) { opts.add("maintenance"); opts.add("stats"); opts.add("panel"); opts.add("minigame"); opts.add("debug"); }
+            if (sender.hasPermission("skgame.admin")) { opts.add("maintenance"); opts.add("stats"); opts.add("panel"); opts.add("minigame"); opts.add("debug"); opts.add("perf"); }
             return StringUtil.copyPartialMatches(args[0], opts, new ArrayList<>());
         }
         if (args.length == 2) {
@@ -645,6 +652,105 @@ public class SkGame extends JavaPlugin implements TabCompleter {
         }
         return Collections.emptyList();
     }
+
+    @SuppressWarnings({"deprecation", "UnstableApiUsage"})
+    private void handlePerfCommand(CommandSender sender) {
+        // TPS
+        double[] tps = Bukkit.getTPS();
+        sender.sendMessage(ChatColor.GOLD + "─── SkGame Perf ───────────────────────────");
+        sender.sendMessage(ChatColor.GRAY + "TPS: "
+                + tpsCol(tps[0]) + tpsFmt(tps[0]) + ChatColor.GRAY + " / "
+                + tpsCol(tps[1]) + tpsFmt(tps[1]) + ChatColor.GRAY + " / "
+                + tpsCol(tps[2]) + tpsFmt(tps[2])
+                + ChatColor.DARK_GRAY + "  (1m/5m/15m)");
+
+        // Sessions + players
+        cz.nox.skgame.core.game.SessionManager sm = cz.nox.skgame.core.game.SessionManager.getInstance();
+        cz.nox.skgame.api.game.model.Session[] all = sm.getAllSessions();
+        long sLobby = 0, sStarting = 0, sStarted = 0, sPrep = 0;
+        int totalPlayers = 0;
+        for (cz.nox.skgame.api.game.model.Session s : all) {
+            switch (s.getState()) {
+                case LOBBY       -> sLobby++;
+                case STARTING    -> sStarting++;
+                case STARTED     -> sStarted++;
+                case PREPARATION -> sPrep++;
+                default          -> {}
+            }
+            totalPlayers += s.getMembers().size();
+        }
+        sender.sendMessage(ChatColor.GRAY + "Sessions: " + ChatColor.WHITE + all.length
+                + ChatColor.DARK_GRAY + "  (lobby:" + sLobby + " starting:" + sStarting
+                + " started:" + sStarted + " prep:" + sPrep + ")");
+        sender.sendMessage(ChatColor.GRAY + "Players in sessions: " + ChatColor.WHITE + totalPlayers
+                + ChatColor.GRAY + "  |  Quickplay queue: " + ChatColor.WHITE
+                + cz.nox.skgame.core.game.quickplay.QuickplayQueue.getInstance().getEntries().size());
+
+        // Task breakdown
+        int countdownTasks = sm.getCountdownTaskCount();
+        int idleTimers = cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl.getInstance().getIdleTimerCount();
+        int wandSessions = cz.nox.skgame.core.gui.services.AdminGuiService.getInstance().getActiveSetupSessionCount();
+        boolean qpActive = cz.nox.skgame.core.game.quickplay.QuickplayQueue.getInstance().isSearchActive();
+        long totalSkGameTasks = Bukkit.getScheduler().getPendingTasks().stream()
+                .filter(t -> t.getOwner() == this).count();
+        sender.sendMessage(ChatColor.YELLOW + "Tasks:");
+        sender.sendMessage(ChatColor.GRAY + "  countdown/prep: " + ChatColor.WHITE + countdownTasks
+                + ChatColor.GRAY + "  idle-disband: " + ChatColor.WHITE + idleTimers);
+        sender.sendMessage(ChatColor.GRAY + "  wand-setup (1t tasks): " + ChatColor.WHITE + wandSessions
+                + ChatColor.GRAY + "  quickplay: "
+                + (qpActive ? ChatColor.GREEN + "running" : ChatColor.RED + "stopped"));
+        sender.sendMessage(ChatColor.DARK_GRAY + "  total SkGame Bukkit tasks: " + totalSkGameTasks);
+
+        // GUI viewers
+        int mainV    = cz.nox.skgame.core.gui.services.MainGuiService.getInstance().getViewerCount();
+        int sessionV = cz.nox.skgame.core.gui.services.SessionGuiService.getInstance().getTotalViewerCount();
+        int spectateV= cz.nox.skgame.core.gui.services.SpectateGuiService.getInstance().getViewerCount();
+        int panelV   = cz.nox.skgame.core.gui.services.AdminPanelGuiService.getInstance().getPanelViewerCount();
+        int mgV      = cz.nox.skgame.core.gui.services.MinigamesGuiService.getInstance().getTotalViewerCount();
+        sender.sendMessage(ChatColor.YELLOW + "GUI viewers:"
+                + ChatColor.GRAY + "  main=" + ChatColor.WHITE + mainV
+                + ChatColor.GRAY + "  session=" + ChatColor.WHITE + sessionV
+                + ChatColor.GRAY + "  spectate=" + ChatColor.WHITE + spectateV
+                + ChatColor.GRAY + "  panel=" + ChatColor.WHITE + panelV
+                + ChatColor.GRAY + "  minigames=" + ChatColor.WHITE + mgV);
+
+        // Tracked objects
+        int playerCache = cz.nox.skgame.core.game.PlayerManager.getInstance().getTrackedPlayerCount();
+        int rejoinSnaps = cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl.getInstance().getRejoinSnapshotCount();
+        sender.sendMessage(ChatColor.YELLOW + "Tracked objects:"
+                + ChatColor.GRAY + "  player-cache=" + ChatColor.WHITE + playerCache
+                + ChatColor.DARK_GRAY + " (unbounded, see backlog)"
+                + ChatColor.GRAY + "  rejoin-snapshots=" + ChatColor.WHITE + rejoinSnaps);
+
+        // DB pool
+        cz.nox.skgame.core.storage.DatabaseManager db = cz.nox.skgame.core.storage.DatabaseManager.getInstance();
+        if (db.isAvailable()) {
+            com.zaxxer.hikari.HikariPoolMXBean pool = db.getHikariPoolMXBean();
+            if (pool != null) {
+                sender.sendMessage(ChatColor.YELLOW + "DB pool:"
+                        + ChatColor.GRAY + "  active=" + ChatColor.WHITE + pool.getActiveConnections()
+                        + ChatColor.GRAY + "  idle=" + ChatColor.WHITE + pool.getIdleConnections()
+                        + ChatColor.GRAY + "  waiting=" + ChatColor.WHITE + pool.getThreadsAwaitingConnection());
+            }
+        } else {
+            sender.sendMessage(ChatColor.YELLOW + "DB pool: " + ChatColor.RED + "disabled");
+        }
+
+        // Heap
+        Runtime rt = Runtime.getRuntime();
+        long usedMB = (rt.totalMemory() - rt.freeMemory()) / (1024 * 1024);
+        long maxMB  = rt.maxMemory() / (1024 * 1024);
+        sender.sendMessage(ChatColor.YELLOW + "Heap: "
+                + ChatColor.WHITE + usedMB + " MB " + ChatColor.GRAY + "used / "
+                + ChatColor.WHITE + maxMB + " MB " + ChatColor.GRAY + "max");
+    }
+
+    private static String tpsCol(double tps) {
+        if (tps >= 19.5) return ChatColor.GREEN.toString();
+        if (tps >= 18.0) return ChatColor.YELLOW.toString();
+        return ChatColor.RED.toString();
+    }
+    private static String tpsFmt(double tps) { return String.format("%.1f", Math.min(tps, 20.0)); }
 
     @SuppressWarnings("deprecation")
     private void handleDebugCommand(CommandSender sender, String[] args) {
