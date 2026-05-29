@@ -219,7 +219,7 @@ public class AdminPanelGuiService implements Listener {
         if (session.getState() == SessionState.PREPARATION) {
             builder.slot(46, GuiItem.of(Material.LIME_CONCRETE)
                     .name(Messages.getComponent("gui.admin-panel.force-start", admin))
-                    .lore(List.of(legacy("&7Skips team selection")))
+                    .lore(List.of(legacy("&7Bypasses the ready-check")))
                     .onClick(e -> {
                         Player p = (Player) e.getWhoClicked();
                         Session s = SessionManager.getInstance().getSessionById(sessionId);
