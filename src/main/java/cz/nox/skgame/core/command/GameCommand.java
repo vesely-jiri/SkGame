@@ -90,6 +90,7 @@ public class GameCommand implements CommandExecutor, TabCompleter {
             case "uninvite" -> handleUninvite(player, args);
             case "kick"     -> handleKick(player, args);
             case "ban"      -> handleBan(player, args);
+            case "unban"    -> handleUnban(player, args);
             default         -> Messages.send(player, "command.error.unknown-subcommand");
         }
         return true;
@@ -166,6 +167,26 @@ public class GameCommand implements CommandExecutor, TabCompleter {
         Messages.send(player, "session.invite.revoked", target.getName());
     }
 
+    private void handleUnban(Player player, String[] args) {
+        if (args.length < 2) return;
+        Session session = SessionManager.getInstance().getSession(player);
+        if (session == null || !player.equals(session.getHost())) {
+            Messages.send(player, "gui.session.error.not-host");
+            return;
+        }
+        String targetName = args[1];
+        java.util.UUID targetUuid = null;
+        for (java.util.Map.Entry<java.util.UUID, String> e : session.getBannedEntries().entrySet()) {
+            if (e.getValue().equalsIgnoreCase(targetName)) { targetUuid = e.getKey(); break; }
+        }
+        if (targetUuid == null) {
+            Messages.send(player, "session.unban.error.not-banned", targetName);
+            return;
+        }
+        session.removeBan(targetUuid);
+        Messages.send(player, "session.unban.unbanned", targetName);
+    }
+
     private void handleKick(Player player, String[] args) {
         if (args.length < 2) return;
         Player target = Bukkit.getPlayerExact(args[1]);
@@ -195,6 +216,7 @@ public class GameCommand implements CommandExecutor, TabCompleter {
                 opts.add("uninvite");
                 opts.add("kick");
                 opts.add("ban");
+                if (!ps.getBannedEntries().isEmpty()) opts.add("unban");
             }
             String partial = args[0].toLowerCase();
             return opts.stream().filter(s -> s.startsWith(partial)).collect(Collectors.toList());
@@ -224,6 +246,14 @@ public class GameCommand implements CommandExecutor, TabCompleter {
                     yield ks.getMembers().stream()
                             .filter(m -> !m.equals(player))
                             .map(Player::getName)
+                            .filter(n -> n.toLowerCase(java.util.Locale.ROOT).startsWith(partial))
+                            .collect(Collectors.toList());
+                }
+                case "unban" -> {
+                    Session us = SessionManager.getInstance().getSession(player);
+                    if (us == null || !player.equals(us.getHost())) yield List.of();
+                    String partial = args[1].toLowerCase(java.util.Locale.ROOT);
+                    yield us.getBannedEntries().values().stream()
                             .filter(n -> n.toLowerCase(java.util.Locale.ROOT).startsWith(partial))
                             .collect(Collectors.toList());
                 }

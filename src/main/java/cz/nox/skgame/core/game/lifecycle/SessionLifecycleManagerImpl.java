@@ -909,7 +909,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             Messages.send(host, "session.kick.error.not-member", target.getName());
             return;
         }
-        session.addBan(target.getUniqueId()); // ban before removal — no rejoin window
+        session.addBan(target.getUniqueId(), target.getName()); // ban before removal — no rejoin window
         Messages.send(target, "session.ban.banned");
         leaveSession(target);
         Messages.send(host, "session.ban.confirmed", target.getName());

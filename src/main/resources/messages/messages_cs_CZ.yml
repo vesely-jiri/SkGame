@@ -35,6 +35,10 @@ session:
   ban:
     banned: "&cByl jsi zabanován v této session."
     confirmed: "&aZabanován {0} v session."
+  unban:
+    unbanned: "&aOdbanován {0} ze session."
+    error:
+      not-banned: "&c{0} není zabanován v této session."
   preparation:
     map-vote-result: "&6Mapa rozhodnuta hlasováním: &e{0}"
     pick-team: "&eVyber svůj tým!"

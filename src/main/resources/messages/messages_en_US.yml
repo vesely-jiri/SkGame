@@ -42,6 +42,10 @@ session:
   ban:
     banned: "&cYou were banned from this session."
     confirmed: "&aBanned {0} from the session."
+  unban:
+    unbanned: "&aUnbanned {0} from the session."
+    error:
+      not-banned: "&c{0} is not banned from this session."
   preparation:
     map-vote-result: "&6Map decided by vote: &e{0}"
     pick-team: "&ePick your team!"

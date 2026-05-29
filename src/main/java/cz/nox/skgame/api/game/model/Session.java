@@ -42,8 +42,8 @@ public class Session {
     private final Map<UUID, String> teamAssignments = new HashMap<>();
     private boolean mapVoting = false;
     private final Map<UUID, String> mapVotes = new HashMap<>();
-    /** Transient per-session ban set. Cleared when the session is disbanded. */
-    private final Set<UUID> bannedPlayers = new HashSet<>();
+    /** Transient per-session bans. UUID → name captured at ban time (no OfflinePlayer lookups needed). */
+    private final java.util.LinkedHashMap<UUID, String> bannedPlayers = new java.util.LinkedHashMap<>();
 
     public Session(String id, Player host, MiniGame miniGame,
                    SessionState state, GameMap map, Set<Player> players, Set<Player> spectators,
@@ -261,9 +261,11 @@ public class Session {
         teamAssignments.clear();
     }
 
-    public void addBan(UUID uuid) { bannedPlayers.add(uuid); }
-    public boolean isBanned(UUID uuid) { return bannedPlayers.contains(uuid); }
+    public void addBan(UUID uuid, String name) { bannedPlayers.put(uuid, name); }
+    public boolean isBanned(UUID uuid) { return bannedPlayers.containsKey(uuid); }
     public void removeBan(UUID uuid) { bannedPlayers.remove(uuid); }
+    /** Returns an unmodifiable view of banned UUID → name for tab-complete and display. */
+    public java.util.Map<UUID, String> getBannedEntries() { return java.util.Collections.unmodifiableMap(bannedPlayers); }
 
     /**
      * Change a session member's role and fire {@link PlayerRoleChangeEvent}.
