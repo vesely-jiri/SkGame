@@ -123,10 +123,16 @@ public class AdminPanelGuiService implements Listener {
 
     private GuiItem buildSessionCard(Session session, Player admin) {
         Player host = session.getHost();
-        String hostName = host != null ? host.getName() : "?";
+        // Resolve current online Player by UUID — guards against stale reference after reconnect
+        if (host != null) {
+            Player current = Bukkit.getPlayer(host.getUniqueId());
+            if (current != null) host = current;
+        }
+        // Fallback: no host set (session created outside lifecycle manager)
+        String hostName = host != null ? host.getName() : session.getId().substring(0, Math.min(8, session.getId().length())) + "…";
 
         ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
-        if (host != null) {
+        if (host != null && host.isOnline()) {
             SkullMeta meta = (SkullMeta) skull.getItemMeta();
             if (meta != null) { meta.setPlayerProfile(host.getPlayerProfile()); skull.setItemMeta(meta); }
         }

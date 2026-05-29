@@ -763,8 +763,9 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             }
         }
         partyManager.onSessionDisbanded(session.getId());
-        Bukkit.getPluginManager().callEvent(new SessionDisbandEvent(session, reason));
+        // Delete before firing event so listeners (e.g. admin panel) see the session already gone
         sessionManager.deleteSession(session.getId());
+        Bukkit.getPluginManager().callEvent(new SessionDisbandEvent(session, reason));
     }
 
     /** Called from SkGame.onDisable — ends running games then disbands all sessions. */
