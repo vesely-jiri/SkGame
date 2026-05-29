@@ -30,6 +30,7 @@ import cz.nox.skgame.core.region.ArenaSlot;
 import cz.nox.skgame.api.messages.Messages;
 import cz.nox.skgame.core.team.MapVoteItem;
 import cz.nox.skgame.core.team.TeamPickerItem;
+import cz.nox.skgame.util.Debug;
 import cz.nox.skgame.util.PlayerResetter;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.Bukkit;
@@ -138,6 +139,10 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             return false;
         }
         partyManager.registerActivity(session);
+        if (session.getMiniGame() != null) {
+            final MiniGame _mg = session.getMiniGame();
+            Debug.logMiniGame(_mg.getId(), "player-join", () -> player.getName() + " session=" + session.getId());
+        }
         return true;
     }
 
@@ -282,6 +287,13 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
 
         playerManager.getPlayer(player).removeValues(true);
 
+        if (session.getMiniGame() != null) {
+            final MiniGame _mg = session.getMiniGame();
+            final SessionRole _role = role;
+            Debug.logMiniGame(_mg.getId(), "player-leave", () ->
+                player.getName() + " role=" + _role + " explicit=" + explicitLeave + " session=" + session.getId());
+        }
+
         Messages.send(player, "session.leave.notification");
 
         Player hostBefore = session.getHost();
@@ -374,6 +386,15 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         }
 
         Bukkit.getPluginManager().callEvent(new GameStartEvent(session, session.getMiniGame(), gameMap));
+        if (session.getMiniGame() != null) {
+            final MiniGame _mg = session.getMiniGame();
+            final GameMap _map = gameMap;
+            final int _cnt = session.getPlayers().size();
+            Debug.logMiniGame(_mg.getId(), "game-start", () ->
+                "session=" + session.getId() + " map=" + (_map != null ? _map.getId() : "none") + " players=" + _cnt);
+            Debug.logMiniGame(_mg.getId(), "event-dispatch", () ->
+                "GameStartEvent fired session=" + session.getId());
+        }
     }
 
     private void startWithCountdown(Session session, long ticks) {
@@ -420,10 +441,22 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             session.setTeam(p, smallest);
             counts.merge(smallest, 1, Integer::sum);
         }
+        Debug.logMiniGame(mg.getId(), "team-assign", () -> {
+            StringBuilder sb = new StringBuilder("auto:");
+            for (Player p : session.getPlayers()) {
+                String t = session.getTeam(p);
+                sb.append(' ').append(p.getName()).append('→').append(t != null ? t : "?");
+            }
+            return sb.toString();
+        });
     }
 
     private void enterPreparation(Session session) {
         session.setState(SessionState.PREPARATION);
+        if (session.getMiniGame() != null) {
+            final MiniGame _mg = session.getMiniGame();
+            Debug.logMiniGame(_mg.getId(), "preparation-start", () -> "session=" + session.getId());
+        }
 
         // Map vote setup (must happen before team picker so both can coexist)
         if (session.isMapVoting()) {
@@ -509,6 +542,10 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
     @Override
     public void finishPreparation(Session session) {
         sessionManager.cancelCountdownTask(session.getId());
+        if (session.getMiniGame() != null) {
+            final MiniGame _mg = session.getMiniGame();
+            Debug.logMiniGame(_mg.getId(), "preparation-end", () -> "session=" + session.getId());
+        }
         Set<Player> members = new HashSet<>(session.getLobbyMembers());
         for (Player p : members) { removePicker(p); removeVoteItem(p); }
 
@@ -632,7 +669,18 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         List<GameMap> topMaps = candidates.stream()
                 .filter(m -> tally.getOrDefault(m.getId(), 0) == max)
                 .collect(Collectors.toList());
-        return topMaps.get(new Random().nextInt(topMaps.size()));
+        GameMap winner = topMaps.get(new Random().nextInt(topMaps.size()));
+        if (session.getMiniGame() != null && winner != null) {
+            final MiniGame _mg = session.getMiniGame();
+            final GameMap _winner = winner;
+            Debug.logMiniGame(_mg.getId(), "map-vote", () -> {
+                StringBuilder sb = new StringBuilder("tally:");
+                tally.forEach((id, v) -> sb.append(' ').append(id).append('=').append(v));
+                sb.append(" winner=").append(_winner.getId());
+                return sb.toString();
+            });
+        }
+        return winner;
     }
 
     @Override
@@ -691,6 +739,11 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             for (Player member : session.getMembers()) {
                 Messages.send(member, winKey, names.toString());
             }
+        }
+        if (miniGame != null) {
+            final java.util.List<String> _wnames = sessionWinners.stream().map(Player::getName).collect(Collectors.toList());
+            Debug.logMiniGame(miniGame.getId(), "game-stop", () ->
+                "session=" + session.getId() + " reason=" + reason + " winners=[" + String.join(",", _wnames) + "]");
         }
         session.clearWinners();
         session.clearTeams();
@@ -793,6 +846,10 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
 
     @Override
     public void disbandSession(Session session, DisbandReason reason) {
+        if (session.getMiniGame() != null) {
+            final MiniGame _mg = session.getMiniGame();
+            Debug.logMiniGame(_mg.getId(), "disband", () -> "session=" + session.getId() + " reason=" + reason);
+        }
         // Teardown running game first so scripts clean up, players are reset and teleported
         SessionState stateAtDisband = session.getState();
         if (stateAtDisband == SessionState.STARTED || stateAtDisband == SessionState.STARTING) {

@@ -185,6 +185,21 @@ public class SkGame extends JavaPlugin implements TabCompleter {
 
     private volatile boolean maintenanceMode = false;
     private long pluginStartTime;
+    // Per-minigame debug state (transient — resets on restart)
+    private final java.util.Set<String> debuggedMinigames = new java.util.HashSet<>();
+    private final java.util.Map<String, java.util.UUID> debugWatcher = new java.util.HashMap<>();
+
+    public boolean isMinigameDebugged(String id) { return debuggedMinigames.contains(id); }
+    public @Nullable java.util.UUID getDebugWatcher(String id) { return debugWatcher.get(id); }
+    public void setMinigameDebug(String id, boolean enabled, @Nullable java.util.UUID adminUuid) {
+        if (enabled) {
+            debuggedMinigames.add(id);
+            if (adminUuid != null) debugWatcher.put(id, adminUuid);
+        } else {
+            debuggedMinigames.remove(id);
+            debugWatcher.remove(id);
+        }
+    }
 
     public static SkGame getInstance() {
         return instance;
@@ -452,6 +467,13 @@ public class SkGame extends JavaPlugin implements TabCompleter {
                 }
                 handleMinigameCommand(sender, args);
             }
+            case "debug" -> {
+                if (!sender.hasPermission("skgame.admin")) {
+                    sender.sendMessage(ChatColor.RED + "You do not have permission.");
+                    return true;
+                }
+                handleDebugCommand(sender, args);
+            }
             default -> sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame <info|reload|maintenance|stats|panel|minigame> [args]");
         }
         return true;
@@ -586,7 +608,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             List<String> opts = new ArrayList<>();
             if (sender.hasPermission("skgame.info")) opts.add("info");
             if (sender.hasPermission("skgame.admin.reload")) opts.add("reload");
-            if (sender.hasPermission("skgame.admin")) { opts.add("maintenance"); opts.add("stats"); opts.add("panel"); opts.add("minigame"); }
+            if (sender.hasPermission("skgame.admin")) { opts.add("maintenance"); opts.add("stats"); opts.add("panel"); opts.add("minigame"); opts.add("debug"); }
             return StringUtil.copyPartialMatches(args[0], opts, new ArrayList<>());
         }
         if (args.length == 2) {
@@ -600,6 +622,12 @@ public class SkGame extends JavaPlugin implements TabCompleter {
                 case "minigame" -> sender.hasPermission("skgame.admin")
                         ? StringUtil.copyPartialMatches(args[1], List.of("enable", "disable"), new ArrayList<>())
                         : Collections.emptyList();
+                case "debug" -> {
+                    if (!sender.hasPermission("skgame.admin")) yield Collections.emptyList();
+                    String[] ids = java.util.Arrays.stream(cz.nox.skgame.core.game.MiniGameManager.getInstance().getAllMiniGames())
+                            .map(cz.nox.skgame.api.game.model.MiniGame::getId).toArray(String[]::new);
+                    yield StringUtil.copyPartialMatches(args[1], java.util.Arrays.asList(ids), new ArrayList<>());
+                }
                 default -> Collections.emptyList();
             };
         }
@@ -612,7 +640,44 @@ public class SkGame extends JavaPlugin implements TabCompleter {
                 && args[1].equalsIgnoreCase("disable") && sender.hasPermission("skgame.admin")) {
             return StringUtil.copyPartialMatches(args[3], List.of("--force", "-f"), new ArrayList<>());
         }
+        if (args.length == 3 && args[0].equalsIgnoreCase("debug") && sender.hasPermission("skgame.admin")) {
+            return StringUtil.copyPartialMatches(args[2], List.of("on", "off", "status"), new ArrayList<>());
+        }
         return Collections.emptyList();
+    }
+
+    @SuppressWarnings("deprecation")
+    private void handleDebugCommand(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            if (debuggedMinigames.isEmpty()) {
+                sender.sendMessage(ChatColor.YELLOW + "No minigames are currently in debug mode.");
+            } else {
+                sender.sendMessage(ChatColor.YELLOW + "Debug-enabled minigames: " + String.join(", ", debuggedMinigames));
+            }
+            return;
+        }
+        String mgId = args[1].toLowerCase();
+        if (cz.nox.skgame.core.game.MiniGameManager.getInstance().getMiniGameById(mgId) == null) {
+            sender.sendMessage(ChatColor.RED + "Unknown minigame: " + mgId);
+            return;
+        }
+        String sub = args.length >= 3 ? args[2].toLowerCase() : "status";
+        java.util.UUID adminUuid = (sender instanceof org.bukkit.entity.Player p) ? p.getUniqueId() : null;
+        switch (sub) {
+            case "on" -> {
+                setMinigameDebug(mgId, true, adminUuid);
+                sender.sendMessage(ChatColor.GREEN + "Debug enabled for minigame '" + mgId + "'.");
+            }
+            case "off" -> {
+                setMinigameDebug(mgId, false, null);
+                sender.sendMessage(ChatColor.YELLOW + "Debug disabled for minigame '" + mgId + "'.");
+            }
+            default -> {
+                boolean on = isMinigameDebugged(mgId);
+                sender.sendMessage(ChatColor.YELLOW + "Minigame '" + mgId + "' debug: "
+                        + (on ? ChatColor.GREEN + "ON" : ChatColor.RED + "OFF"));
+            }
+        }
     }
 
     @SuppressWarnings("deprecation")
