@@ -56,6 +56,9 @@ public class AdminPanelGuiService implements Listener {
     private final java.util.Map<UUID, String> panelFilters = new ConcurrentHashMap<>();
     // tracks which admins currently have the panel list open for live refresh
     private final Set<UUID> panelViewers = ConcurrentHashMap.newKeySet();
+    // stores the exact Inventory ref for each viewer's open panel — used to distinguish
+    // the panel-list from sub-GUIs (detail view, player profile) during live refresh
+    private final java.util.Map<UUID, Inventory> panelInventories = new ConcurrentHashMap<>();
 
     private AdminPanelGuiService() {}
 
@@ -68,7 +71,9 @@ public class AdminPanelGuiService implements Listener {
 
     public void openPanel(Player admin) {
         panelViewers.add(admin.getUniqueId());
-        admin.openInventory(buildPanel(admin));
+        Inventory inv = buildPanel(admin);
+        panelInventories.put(admin.getUniqueId(), inv);
+        admin.openInventory(inv);
     }
 
     private Inventory buildPanel(Player admin) {
@@ -342,7 +347,9 @@ public class AdminPanelGuiService implements Listener {
         // OPEN_NEW: inventory replaced programmatically (refresh/navigation) — keep tracking.
         // Genuine closes (PLAYER/PLUGIN/DISCONNECT) still untrack.
         if (event.getReason() == org.bukkit.event.inventory.InventoryCloseEvent.Reason.OPEN_NEW) return;
-        panelViewers.remove(event.getPlayer().getUniqueId());
+        UUID uuid = event.getPlayer().getUniqueId();
+        panelViewers.remove(uuid);
+        panelInventories.remove(uuid);  // prevent stale Inventory ref leak on genuine close
         // Panel filter state is intentionally preserved across open/close
     }
 
@@ -350,9 +357,13 @@ public class AdminPanelGuiService implements Listener {
         for (UUID uuid : new HashSet<>(panelViewers)) {
             Player p = Bukkit.getPlayer(uuid);
             if (p == null || !p.isOnline()) { panelViewers.remove(uuid); continue; }
-            if (p.getOpenInventory().getTopInventory().getHolder() instanceof GuiHolder) {
+            Inventory tracked = panelInventories.get(uuid);
+            if (tracked == null) { panelViewers.remove(uuid); continue; } // null-guard: no stored ref
+            if (p.getOpenInventory().getTopInventory() == tracked) {
+                // Admin is viewing the panel list specifically — safe to rebuild
                 openPanel(p);
             } else {
+                // Admin moved to a sub-GUI (detail view, player profile, etc.) — skip, don't yank
                 panelViewers.remove(uuid);
             }
         }
