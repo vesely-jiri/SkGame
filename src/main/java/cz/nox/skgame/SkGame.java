@@ -351,6 +351,11 @@ public class SkGame extends JavaPlugin implements TabCompleter {
         return getConfig().getString("spectate.bypass-permission", "skgame.spectate.bypass");
     }
 
+    /** True if the player may spectate the session: either allowSpectate is on, or player has the bypass permission. */
+    public boolean canSpectate(org.bukkit.entity.Player player, cz.nox.skgame.api.game.model.Session session) {
+        return session.isAllowSpectate() || player.hasPermission(getSpectateBypassPermission());
+    }
+
     public GameMode getDefaultGameMode() {
         String raw = getConfig().getString("defaults.gamemode", "adventure");
         try {

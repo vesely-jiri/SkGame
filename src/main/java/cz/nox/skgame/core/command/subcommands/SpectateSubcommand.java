@@ -33,8 +33,7 @@ public class SpectateSubcommand {
             Messages.send(player, "spectator.already-in-session");
             return;
         }
-        if (!session.isAllowSpectate()
-                && !player.hasPermission(SkGame.getInstance().getSpectateBypassPermission())) {
+        if (!SkGame.getInstance().canSpectate(player, session)) {
             Messages.send(player, "command.error.session-no-spectate");
             return;
         }

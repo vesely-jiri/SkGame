@@ -1,5 +1,6 @@
 package cz.nox.skgame.core.gui.services;
 
+import cz.nox.skgame.SkGame;
 import cz.nox.skgame.api.game.event.GameStartEvent;
 import cz.nox.skgame.api.game.event.GameStopEvent;
 import cz.nox.skgame.api.game.event.PlayerRoleChangeEvent;
@@ -117,7 +118,7 @@ public class SpectateGuiService implements Listener {
 
         // Active spectatable sessions (STARTED + allowSpectate), sorted oldest-first
         List<Session> spectatable = Arrays.stream(sm.getAllSessions())
-                .filter(s -> s.getState() == SessionState.STARTED && s.isAllowSpectate())
+                .filter(s -> s.getState() == SessionState.STARTED && SkGame.getInstance().canSpectate(viewer, s))
                 .sorted(Comparator.comparingLong(Session::getCreatedAt))
                 .collect(Collectors.toList());
 
@@ -134,6 +135,10 @@ public class SpectateGuiService implements Listener {
                     if (clicked == null) return;
                     if (sm.getSession(p) != null) {
                         Messages.send(p, "spectator.already-in-session");
+                        return;
+                    }
+                    if (!SkGame.getInstance().canSpectate(p, clicked)) {
+                        Messages.send(p, "command.error.session-no-spectate");
                         return;
                     }
                     boolean joined = lifecycle.joinAsSpectator(p, clicked);
