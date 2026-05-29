@@ -499,8 +499,10 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
     private void givePicker(Player player) {
         TeamPickerItem picker = TeamPickerItem.getInstance();
         ItemStack existing = player.getInventory().getItem(PICKER_SLOT);
-        if (picker.isPicker(existing)) return; // already has it (e.g. re-enter prep)
-        pickerSlotBackup.put(player.getUniqueId(), existing); // null if slot was empty
+        if (picker.isPicker(existing)) return;
+        if (existing != null && !existing.getType().isAir()) {
+            pickerSlotBackup.put(player.getUniqueId(), existing);
+        }
         player.getInventory().setItem(PICKER_SLOT, picker.create());
     }
 
@@ -511,15 +513,18 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
                 player.getInventory().setItem(i, null);
             }
         }
+        // Restore slot 4 only if something was displaced; otherwise the strip already cleared it
         ItemStack backup = pickerSlotBackup.remove(player.getUniqueId());
-        player.getInventory().setItem(PICKER_SLOT, backup);
+        if (backup != null) player.getInventory().setItem(PICKER_SLOT, backup);
     }
 
     private void giveVoteItem(Player player) {
         MapVoteItem item = MapVoteItem.getInstance();
         ItemStack existing = player.getInventory().getItem(VOTE_SLOT);
         if (item.isVoteItem(existing)) return;
-        voteSlotBackup.put(player.getUniqueId(), existing);
+        if (existing != null && !existing.getType().isAir()) {
+            voteSlotBackup.put(player.getUniqueId(), existing);
+        }
         player.getInventory().setItem(VOTE_SLOT, item.create());
     }
 
@@ -530,8 +535,9 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
                 player.getInventory().setItem(i, null);
             }
         }
+        // Restore slot 5 only if something was displaced; otherwise the strip already cleared it
         ItemStack backup = voteSlotBackup.remove(player.getUniqueId());
-        player.getInventory().setItem(VOTE_SLOT, backup);
+        if (backup != null) player.getInventory().setItem(VOTE_SLOT, backup);
     }
 
     // Returns maps supporting the minigame that are available for voting.
