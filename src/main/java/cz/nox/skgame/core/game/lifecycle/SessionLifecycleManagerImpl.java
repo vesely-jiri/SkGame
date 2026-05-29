@@ -754,6 +754,14 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
 
     @Override
     public void disbandSession(Session session, DisbandReason reason) {
+        // Teardown running game first so scripts clean up, players are reset and teleported
+        SessionState stateAtDisband = session.getState();
+        if (stateAtDisband == SessionState.STARTED || stateAtDisband == SessionState.STARTING) {
+            endGame(session, "disband");
+        } else if (stateAtDisband == SessionState.PREPARATION) {
+            cancelPreparation(session);
+        }
+
         for (Player member : session.getMembers()) {
             if (reason == DisbandReason.SHUTDOWN) {
                 Messages.send(member, "session.disband.shutdown");

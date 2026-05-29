@@ -122,19 +122,27 @@ public class AdminPanelGuiService implements Listener {
     }
 
     private GuiItem buildSessionCard(Session session, Player admin) {
-        Player host = session.getHost();
-        // Resolve current online Player by UUID — guards against stale reference after reconnect
-        if (host != null) {
-            Player current = Bukkit.getPlayer(host.getUniqueId());
-            if (current != null) host = current;
+        Player storedHost = session.getHost();
+        java.util.UUID hostUuid = storedHost != null ? storedHost.getUniqueId() : null;
+
+        // Resolve current online player by UUID (single authoritative lookup for both name + skull)
+        Player onlineHost = hostUuid != null ? Bukkit.getPlayer(hostUuid) : null;
+
+        // Name: current online > offline last-known > session-ID prefix fallback
+        String hostName;
+        if (onlineHost != null) {
+            hostName = onlineHost.getName();
+        } else if (hostUuid != null) {
+            String offlineName = Bukkit.getOfflinePlayer(hostUuid).getName();
+            hostName = offlineName != null ? offlineName : session.getId().substring(0, Math.min(8, session.getId().length())) + "…";
+        } else {
+            hostName = session.getId().substring(0, Math.min(8, session.getId().length())) + "…";
         }
-        // Fallback: no host set (session created outside lifecycle manager)
-        String hostName = host != null ? host.getName() : session.getId().substring(0, Math.min(8, session.getId().length())) + "…";
 
         ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
-        if (host != null && host.isOnline()) {
+        if (onlineHost != null) {
             SkullMeta meta = (SkullMeta) skull.getItemMeta();
-            if (meta != null) { meta.setPlayerProfile(host.getPlayerProfile()); skull.setItemMeta(meta); }
+            if (meta != null) { meta.setPlayerProfile(onlineHost.getPlayerProfile()); skull.setItemMeta(meta); }
         }
 
         List<Component> lore = new ArrayList<>();
