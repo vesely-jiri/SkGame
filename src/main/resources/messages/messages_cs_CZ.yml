@@ -9,6 +9,9 @@ session:
   created: "&aSession vytvořena"
   leave:
     notification: "&7Opustil jsi session"
+  host:
+    left: "&7Hostitel &f{0} &7odešel."
+    promoted: "&aJsi nyní hostitel."
   disband:
     notification: "&7Session zanikla ({0})"
     explicit: "&7Session rozpustil hostitel."

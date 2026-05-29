@@ -15,6 +15,9 @@ session:
   created: "&aSession created"
   leave:
     notification: "&7You left the session"
+  host:
+    left: "&7Host &f{0} &7left."
+    promoted: "&aYou are now the host."
   disband:
     notification: "&7Session disbanded ({0})"
     explicit: "&7Session disbanded by the host."

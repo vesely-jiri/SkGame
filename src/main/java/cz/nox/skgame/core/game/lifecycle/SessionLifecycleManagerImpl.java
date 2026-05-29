@@ -276,11 +276,21 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
 
         Messages.send(player, "session.leave.notification");
 
+        Player hostBefore = session.getHost();
         if (!partyManager.tryPromoteHost(session, player, explicitLeave)) {
             if (stateBeforeLeave == SessionState.STARTED) endGame(session, "abandoned");
             else if (stateBeforeLeave == SessionState.PREPARATION) cancelPreparation(session);
             disbandSession(session, partyManager.disbandReasonForHostLeave());
             return;
+        }
+        // Notify on actual promotion (new host set, different from the one who just left)
+        Player hostAfter = session.getHost();
+        if (hostAfter != null && !hostAfter.equals(hostBefore)) {
+            String leavingName = player.getName();
+            for (Player member : session.getMembers()) {
+                Messages.send(member, "session.host.left", leavingName);
+            }
+            if (hostAfter.isOnline()) Messages.send(hostAfter, "session.host.promoted");
         }
         if (partyManager.shouldAutoDisband(session)) {
             if (stateBeforeLeave == SessionState.STARTED) endGame(session, "abandoned");
