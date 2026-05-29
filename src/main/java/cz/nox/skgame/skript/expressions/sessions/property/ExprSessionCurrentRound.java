@@ -15,13 +15,14 @@ import org.jetbrains.annotations.Nullable;
         "Supports: GET only."
 })
 @Examples({
-        "broadcast \"Round %current round of event-session% of %rounds of event-session%\""
+        "broadcast \"Round %session current round of event-session% of %session rounds of event-session%\""
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")
 public class ExprSessionCurrentRound extends SimplePropertyExpression<Session, Number> {
 
     static {
+        register(ExprSessionCurrentRound.class, Number.class, "[session] current round", "session");
         register(ExprSessionCurrentRound.class, Number.class, "current [session] round", "session");
     }
 

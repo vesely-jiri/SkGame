@@ -44,7 +44,7 @@ public class ExprSessionFromId extends SimpleExpression<Session> {
 
     static {
         Skript.registerExpression(ExprSessionFromId.class, Session.class, ExpressionType.COMBINED,
-                "[:new] session[s] (with|from) [[uu]id][s] %strings%");
+                "[:new] session[s] (with|from) [[uu]id[s]] %strings%");
     }
 
     @SuppressWarnings("unchecked")

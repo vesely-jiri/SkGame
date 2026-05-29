@@ -37,7 +37,7 @@ public class ExprMiniGameFromId extends SimpleExpression<MiniGame> {
 
     static {
         Skript.registerExpression(ExprMiniGameFromId.class, MiniGame.class, ExpressionType.COMBINED,
-                "minigame[s] (with|from) [[uu]id][s] %strings%"
+                "minigame[s] (with|from) [[uu]id[s]] %strings%"
         );
     }
 

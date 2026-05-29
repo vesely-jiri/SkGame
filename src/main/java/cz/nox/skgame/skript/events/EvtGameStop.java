@@ -38,8 +38,8 @@ public class EvtGameStop extends SkriptEvent {
 
     static {
         Skript.registerEvent("GameStop", EvtGameStop.class, GameStopEvent.class,
-                "[%string%] game stop",
-                "game [%string%] stop"
+                "[%string%] [mini]game stop",
+                "[mini]game [%string%] stop"
         );
         EventValues.registerEventValue(GameStopEvent.class, Session.class, GameStopEvent::getSession, EventValues.TIME_NOW);
         EventValues.registerEventValue(GameStopEvent.class, MiniGame.class, GameStopEvent::getMiniGame, EventValues.TIME_NOW);
