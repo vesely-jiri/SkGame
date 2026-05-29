@@ -140,7 +140,6 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             "cz.nox.skgame.skript.expressions.gamemaps.ExprGameMapMiniGames",
             "cz.nox.skgame.skript.expressions.gamemaps.ExprGameMapAll",
             "cz.nox.skgame.skript.expressions.gamemaps.ExprGameMapValue",
-            "cz.nox.skgame.skript.expressions.gamemaps.ExprGameMapMiniGameValue",
             "cz.nox.skgame.skript.expressions.gamemaps.ExprGameMapConfigValue",
             "cz.nox.skgame.skript.expressions.gamemaps.ExprGameMapRegion",
             "cz.nox.skgame.skript.expressions.gamemaps.ExprGameMapArenaSlotCount",
