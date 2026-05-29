@@ -78,7 +78,8 @@ public class ChatIsolationListener implements Listener {
 
     private static String roomOf(Session session, boolean isolateLobby) {
         if (session == null) return null;
-        if (session.getState() == SessionState.STARTED) return session.getId();
+        if (session.getState() == SessionState.STARTED
+                || session.getState() == SessionState.PREPARATION) return session.getId();
         return isolateLobby ? session.getId() : null;
     }
 }

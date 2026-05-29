@@ -44,6 +44,10 @@ session:
     enabled: true
     # How long (in seconds) the rejoin offer remains valid after disconnect.
     window-seconds: 60
+  # PREPARATION window — team self-select, map voting, map preview before game start.
+  # Only active for minigames that declare teams (Batch 4). Inactive in M1.
+  preparation:
+    window-seconds: 20
   # Chat isolation — restrict session members' chat to their own session.
   chat:
     isolation: false

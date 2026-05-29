@@ -153,7 +153,8 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
                 SessionRole role = session.getRole(player);
                 SessionState state = session.getState();
                 if (role == SessionRole.PLAYER
-                        && (state == SessionState.STARTING || state == SessionState.STARTED)) {
+                        && (state == SessionState.STARTING || state == SessionState.STARTED
+                            || state == SessionState.PREPARATION)) {
                     rejoinSnapshots.put(player.getUniqueId(),
                             new RejoinSnapshot(player.getUniqueId(), session.getId(), System.currentTimeMillis()));
                 }
@@ -175,7 +176,8 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         }
         Session session = sessionManager.getSessionById(snapshot.sessionId());
         if (session == null
-                || (session.getState() != SessionState.STARTING && session.getState() != SessionState.STARTED)) {
+                || (session.getState() != SessionState.STARTING && session.getState() != SessionState.STARTED
+                    && session.getState() != SessionState.PREPARATION)) {
             rejoinSnapshots.remove(player.getUniqueId());
             return;
         }
@@ -205,7 +207,8 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         }
         Session session = sessionManager.getSessionById(sessionId);
         if (session == null
-                || (session.getState() != SessionState.STARTING && session.getState() != SessionState.STARTED)) {
+                || (session.getState() != SessionState.STARTING && session.getState() != SessionState.STARTED
+                    && session.getState() != SessionState.PREPARATION)) {
             rejoinSnapshots.remove(player.getUniqueId());
             Messages.send(player, "session.rejoin.expired");
             return;
@@ -248,11 +251,13 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
 
         if (!partyManager.tryPromoteHost(session, player, explicitLeave)) {
             if (stateBeforeLeave == SessionState.STARTED) endGame(session, "abandoned");
+            else if (stateBeforeLeave == SessionState.PREPARATION) cancelPreparation(session);
             disbandSession(session, partyManager.disbandReasonForHostLeave());
             return;
         }
         if (partyManager.shouldAutoDisband(session)) {
             if (stateBeforeLeave == SessionState.STARTED) endGame(session, "abandoned");
+            else if (stateBeforeLeave == SessionState.PREPARATION) cancelPreparation(session);
             disbandSession(session, DisbandReason.EMPTY_PARTY);
         }
     }
@@ -271,6 +276,8 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             }
             return false;
         }
+
+        if (needsPreparation(session)) { enterPreparation(session); return true; }
 
         if (reason != GameStartReason.AUTO_NEXT_ROUND) {
             session.setCurrentRound(1);
@@ -323,6 +330,24 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             }
         }.runTaskLater(plugin, ticks);
         sessionManager.setCountdownTask(sessionId, task);
+    }
+
+    // M1: always false — PREPARATION never entered; M2 checks for teams declaration
+    private boolean needsPreparation(Session session) {
+        return false;
+    }
+
+    // M1 stub — dead code until M2 activates the gate
+    private void enterPreparation(Session session) {
+        session.setState(SessionState.PREPARATION);
+        // M2: schedule BukkitRunnable for session.preparation.window-seconds,
+        //     wire auto-balance + map vote finalization on expiry
+    }
+
+    // PREPARATION → LOBBY (cancel / all-leave / under-min)
+    private void cancelPreparation(Session session) {
+        sessionManager.cancelCountdownTask(session.getId());
+        session.setState(SessionState.LOBBY);
     }
 
     @Override
@@ -498,7 +523,8 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
     public void shutdown() {
         for (Session session : sessionManager.getAllSessions()) {
             SessionState state = session.getState();
-            if (state == SessionState.STARTED || state == SessionState.STARTING) {
+            if (state == SessionState.STARTED || state == SessionState.STARTING
+                    || state == SessionState.PREPARATION) {
                 endGame(session, "SHUTDOWN");
             }
         }
