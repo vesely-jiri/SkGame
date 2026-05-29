@@ -17,7 +17,11 @@ session:
     notification: "&7You left the session"
   disband:
     notification: "&7Session disbanded ({0})"
-    shutdown: "&cServer shutting down — session disbanded"
+    explicit: "&7Session disbanded by the host."
+    empty-party: "&7Session disbanded — the party emptied."
+    host-leave: "&7Session disbanded — the host left."
+    idle-timeout: "&7Session disbanded due to inactivity."
+    shutdown: "&7Session disbanded — server shutting down."
   error:
     already-in-session: "&cYou are already in a session"
     mid-game-locked: "&cCannot change session settings while game is running"

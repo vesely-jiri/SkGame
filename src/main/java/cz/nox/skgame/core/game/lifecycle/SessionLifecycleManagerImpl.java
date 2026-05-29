@@ -778,13 +778,15 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             cancelPreparation(session);
         }
 
+        String disbandKey = switch (reason) {
+            case EXPLICIT_DISBAND -> "session.disband.explicit";
+            case EMPTY_PARTY      -> "session.disband.empty-party";
+            case HOST_LEAVE       -> "session.disband.host-leave";
+            case IDLE_TIMEOUT     -> "session.disband.idle-timeout";
+            case SHUTDOWN         -> "session.disband.shutdown";
+        };
         for (Player member : session.getMembers()) {
-            if (reason == DisbandReason.SHUTDOWN) {
-                Messages.send(member, "session.disband.shutdown");
-            } else {
-                String reasonName = reason.name().toLowerCase().replace('_', ' ');
-                Messages.send(member, "session.disband.notification", reasonName);
-            }
+            Messages.send(member, disbandKey);
         }
         partyManager.onSessionDisbanded(session.getId());
         // Delete before firing event so listeners (e.g. admin panel) see the session already gone

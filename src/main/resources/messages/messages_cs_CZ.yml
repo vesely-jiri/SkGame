@@ -11,7 +11,11 @@ session:
     notification: "&7Opustil jsi session"
   disband:
     notification: "&7Session zanikla ({0})"
-    shutdown: "&cServer se vypíná — session zanikla"
+    explicit: "&7Session rozpustil hostitel."
+    empty-party: "&7Session zanikla — party se vyprázdnila."
+    host-leave: "&7Session zanikla — hostitel odešel."
+    idle-timeout: "&7Session zanikla z důvodu nečinnosti."
+    shutdown: "&7Session zanikla — server se vypíná."
   error:
     already-in-session: "&cJiž jsi v session"
     mid-game-locked: "&cBěhem hry nelze měnit nastavení session"
