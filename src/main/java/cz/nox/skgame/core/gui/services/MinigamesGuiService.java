@@ -22,6 +22,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 
+import cz.nox.skgame.api.game.model.MinigameTag;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class MinigamesGuiService implements Listener {
 
@@ -138,6 +140,32 @@ public class MinigamesGuiService implements Listener {
         return builder.build();
     }
 
+    /** Shared lore: description + author + tags. Used by both the picker and the session-GUI display. */
+    static List<Component> buildMinigameLore(MiniGame mg) {
+        List<Component> lore = new ArrayList<>();
+        Object descObj = mg.getValue("description");
+        if (descObj instanceof String s && !s.isEmpty()) {
+            lore.add(legacy("&7" + s));
+        } else if (descObj instanceof Object[] arr) {
+            for (Object line : arr) {
+                String str = String.valueOf(line);
+                if (!str.isEmpty()) lore.add(legacy("&7" + str));
+            }
+        }
+        Object authorObj = mg.getValue("author");
+        if (authorObj != null) {
+            lore.add(legacy("&8by &f" + authorObj));
+        }
+        Set<MinigameTag> tags = mg.getTags();
+        if (!tags.isEmpty()) {
+            String tagStr = tags.stream()
+                    .map(t -> t.name().toLowerCase())
+                    .collect(Collectors.joining(", "));
+            lore.add(legacy("&8Tags: &f" + tagStr));
+        }
+        return lore;
+    }
+
     private GuiItem buildMinigameItem(MiniGame mg, boolean disabled) {
         Object iconObj = mg.getValue("icon");
         Object nameObj = mg.getValue("name");
@@ -151,23 +179,7 @@ public class MinigamesGuiService implements Listener {
         }
         if (mat == null || mat == Material.AIR) mat = Material.BARRIER;
 
-        List<Component> lore = new ArrayList<>();
-        // Description (single String or Object[] from multi-line set)
-        Object descObj = mg.getValue("description");
-        if (descObj instanceof String s && !s.isEmpty()) {
-            lore.add(legacy("&7" + s));
-        } else if (descObj instanceof Object[] arr) {
-            for (Object line : arr) {
-                String str = String.valueOf(line);
-                if (!str.isEmpty()) lore.add(legacy("&7" + str));
-            }
-        }
-        // Author
-        Object authorObj = mg.getValue("author");
-        if (authorObj != null) {
-            lore.add(legacy("&8by &f" + authorObj));
-        }
-
+        List<Component> lore = new ArrayList<>(buildMinigameLore(mg));
         if (disabled) lore.add(legacy("&c[Disabled]"));
         GuiItem item = GuiItem.of(mat).name(disabled ? "&8" + displayName : displayName);
         if (!lore.isEmpty()) item.lore(lore);

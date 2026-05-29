@@ -400,7 +400,10 @@ public class SessionGuiService implements Listener {
                 mat = Material.matchMaterial(iconObj.toString());
             }
             if (mat != null && mat != Material.AIR) {
-                return GuiItem.of(mat).name(displayName);
+                GuiItem item = GuiItem.of(mat).name(displayName);
+                List<Component> lore = MinigamesGuiService.buildMinigameLore(mg);
+                if (!lore.isEmpty()) item.lore(lore);
+                return item;
             }
         }
         return GuiItem.of(Material.LIGHT_GRAY_BUNDLE).name("&7&lMinigames");
