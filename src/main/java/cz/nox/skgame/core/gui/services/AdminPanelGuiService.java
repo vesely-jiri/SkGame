@@ -1,6 +1,9 @@
 package cz.nox.skgame.core.gui.services;
 
-import cz.nox.skgame.SkGame;
+import cz.nox.skgame.api.game.event.GameStartEvent;
+import cz.nox.skgame.api.game.event.GameStopEvent;
+import cz.nox.skgame.api.game.event.SessionCreateEvent;
+import cz.nox.skgame.api.game.event.SessionDisbandEvent;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.type.DisbandReason;
@@ -28,8 +31,10 @@ import org.bukkit.inventory.meta.SkullMeta;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -49,6 +54,8 @@ public class AdminPanelGuiService implements Listener {
 
     // per-viewer filter state for the panel
     private final java.util.Map<UUID, String> panelFilters = new ConcurrentHashMap<>();
+    // tracks which admins currently have the panel list open for live refresh
+    private final Set<UUID> panelViewers = ConcurrentHashMap.newKeySet();
 
     private AdminPanelGuiService() {}
 
@@ -60,6 +67,7 @@ public class AdminPanelGuiService implements Listener {
     // ─── Panel (session list) ────────────────────────────────────────────────
 
     public void openPanel(Player admin) {
+        panelViewers.add(admin.getUniqueId());
         admin.openInventory(buildPanel(admin));
     }
 
@@ -228,7 +236,10 @@ public class AdminPanelGuiService implements Listener {
                 .onClick(e -> {
                     Session s = SessionManager.getInstance().getSessionById(sessionId);
                     if (s != null && s.getTotalRounds() > 1) s.setTotalRounds(s.getTotalRounds() - 1);
-                    if (s != null) openDetailFor((Player) e.getWhoClicked(), s);
+                    if (s != null) {
+                        SessionGuiService.getInstance().update(s);
+                        openDetailFor((Player) e.getWhoClicked(), s);
+                    }
                 }));
         builder.slot(50, GuiItem.of(Material.LIME_STAINED_GLASS_PANE)
                 .name("&a&l+ Round")
@@ -236,7 +247,10 @@ public class AdminPanelGuiService implements Listener {
                 .onClick(e -> {
                     Session s = SessionManager.getInstance().getSessionById(sessionId);
                     if (s != null) s.setTotalRounds(s.getTotalRounds() + 1);
-                    if (s != null) openDetailFor((Player) e.getWhoClicked(), s);
+                    if (s != null) {
+                        SessionGuiService.getInstance().update(s);
+                        openDetailFor((Player) e.getWhoClicked(), s);
+                    }
                 }));
 
         // Force disband
@@ -292,10 +306,28 @@ public class AdminPanelGuiService implements Listener {
 
     // ─── Listener ────────────────────────────────────────────────────────────
 
+    @EventHandler public void onSessionCreate(SessionCreateEvent e)   { refreshPanelViewers(); }
+    @EventHandler public void onSessionDisband(SessionDisbandEvent e) { refreshPanelViewers(); }
+    @EventHandler public void onGameStart(GameStartEvent e)           { refreshPanelViewers(); }
+    @EventHandler public void onGameStop(GameStopEvent e)             { refreshPanelViewers(); }
+
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
         if (!(event.getInventory().getHolder() instanceof GuiHolder)) return;
+        panelViewers.remove(event.getPlayer().getUniqueId());
         // Panel filter state is intentionally preserved across open/close
+    }
+
+    private void refreshPanelViewers() {
+        for (UUID uuid : new HashSet<>(panelViewers)) {
+            Player p = Bukkit.getPlayer(uuid);
+            if (p == null || !p.isOnline()) { panelViewers.remove(uuid); continue; }
+            if (p.getOpenInventory().getTopInventory().getHolder() instanceof GuiHolder) {
+                openPanel(p);
+            } else {
+                panelViewers.remove(uuid);
+            }
+        }
     }
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
