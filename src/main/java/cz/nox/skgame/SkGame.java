@@ -366,7 +366,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
     @SuppressWarnings("deprecation")
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 0) {
-            sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame <info|reload|maintenance|stats|panel> [args]");
+            sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame <info|reload|maintenance|stats|panel|minigame> [args]");
             return true;
         }
         switch (args[0].toLowerCase()) {
@@ -437,9 +437,53 @@ public class SkGame extends JavaPlugin implements TabCompleter {
                             : "command.maintenance.status-off");
                 }
             }
-            default -> sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame <info|reload|maintenance|stats|panel> [args]");
+            case "minigame" -> {
+                if (!sender.hasPermission("skgame.admin")) {
+                    sender.sendMessage(ChatColor.RED + "You do not have permission.");
+                    return true;
+                }
+                handleMinigameCommand(sender, args);
+            }
+            default -> sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame <info|reload|maintenance|stats|panel|minigame> [args]");
         }
         return true;
+    }
+
+    @SuppressWarnings("deprecation")
+    private void handleMinigameCommand(CommandSender sender, String[] args) {
+        if (args.length < 3) {
+            sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame minigame <enable|disable> <id> [--force|-f]");
+            return;
+        }
+        String action = args[1].toLowerCase();
+        String mgId = args[2].toLowerCase();
+        cz.nox.skgame.core.game.MiniGameManager mgm = cz.nox.skgame.core.game.MiniGameManager.getInstance();
+        if (mgm.getMiniGameById(mgId) == null) {
+            sender.sendMessage(ChatColor.RED + "Unknown minigame: " + mgId);
+            return;
+        }
+        if (action.equals("enable")) {
+            mgm.enableMinigame(mgId);
+            sender.sendMessage(ChatColor.GREEN + "Minigame '" + mgId + "' enabled.");
+            sender.sendMessage(ChatColor.YELLOW + "Note: disabled state is runtime-only and resets on server restart.");
+        } else if (action.equals("disable")) {
+            boolean force = args.length >= 4
+                    && (args[3].equalsIgnoreCase("--force") || args[3].equalsIgnoreCase("-f"));
+            if (!force) {
+                long count = java.util.Arrays.stream(SessionManager.getInstance().getAllSessions())
+                        .filter(s -> s.getMiniGame() != null && mgId.equals(s.getMiniGame().getId()))
+                        .count();
+                if (count > 0) {
+                    sender.sendMessage(ChatColor.RED + "" + count + " running session(s) use this minigame — use --force to disable anyway.");
+                    return;
+                }
+            }
+            mgm.disableMinigame(mgId);
+            sender.sendMessage(ChatColor.YELLOW + "Minigame '" + mgId + "' disabled. Running sessions will finish naturally.");
+            sender.sendMessage(ChatColor.YELLOW + "Note: disabled state is runtime-only and resets on server restart.");
+        } else {
+            sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame minigame <enable|disable> <id> [--force|-f]");
+        }
     }
 
     @SuppressWarnings("deprecation")
@@ -494,7 +538,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             List<String> opts = new ArrayList<>();
             if (sender.hasPermission("skgame.info")) opts.add("info");
             if (sender.hasPermission("skgame.admin.reload")) opts.add("reload");
-            if (sender.hasPermission("skgame.admin")) { opts.add("maintenance"); opts.add("stats"); opts.add("panel"); }
+            if (sender.hasPermission("skgame.admin")) { opts.add("maintenance"); opts.add("stats"); opts.add("panel"); opts.add("minigame"); }
             return StringUtil.copyPartialMatches(args[0], opts, new ArrayList<>());
         }
         if (args.length == 2) {
@@ -505,8 +549,20 @@ public class SkGame extends JavaPlugin implements TabCompleter {
                 case "maintenance" -> sender.hasPermission("skgame.admin")
                         ? StringUtil.copyPartialMatches(args[1], List.of("on", "off", "status"), new ArrayList<>())
                         : Collections.emptyList();
+                case "minigame" -> sender.hasPermission("skgame.admin")
+                        ? StringUtil.copyPartialMatches(args[1], List.of("enable", "disable"), new ArrayList<>())
+                        : Collections.emptyList();
                 default -> Collections.emptyList();
             };
+        }
+        if (args.length == 3 && args[0].equalsIgnoreCase("minigame") && sender.hasPermission("skgame.admin")) {
+            String[] ids = java.util.Arrays.stream(cz.nox.skgame.core.game.MiniGameManager.getInstance().getAllMiniGames())
+                    .map(cz.nox.skgame.api.game.model.MiniGame::getId).toArray(String[]::new);
+            return StringUtil.copyPartialMatches(args[2], java.util.Arrays.asList(ids), new ArrayList<>());
+        }
+        if (args.length == 4 && args[0].equalsIgnoreCase("minigame")
+                && args[1].equalsIgnoreCase("disable") && sender.hasPermission("skgame.admin")) {
+            return StringUtil.copyPartialMatches(args[3], List.of("--force", "-f"), new ArrayList<>());
         }
         return Collections.emptyList();
     }

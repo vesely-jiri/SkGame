@@ -24,6 +24,7 @@ import cz.nox.skgame.api.gui.GuiHolder;
 import cz.nox.skgame.api.region.Region;
 import cz.nox.skgame.core.game.PlayerManager;
 import cz.nox.skgame.core.game.GameMapManager;
+import cz.nox.skgame.core.game.MiniGameManager;
 import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.region.ArenaSlot;
 import cz.nox.skgame.api.messages.Messages;
@@ -294,6 +295,10 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         MiniGame miniGame = session.getMiniGame();
         GameMap gameMap = session.getGameMap();
         if (miniGame == null) return false;
+        if (MiniGameManager.getInstance().isMinigameDisabled(miniGame.getId())) {
+            for (Player p : session.getLobbyMembers()) Messages.send(p, "session.error.minigame-disabled");
+            return false;
+        }
         if (gameMap == null && !session.isMapVoting()) return false;
         if (gameMap != null && !gameMap.supportsMiniGame(miniGame)) return false;
 

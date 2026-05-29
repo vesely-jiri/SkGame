@@ -27,6 +27,7 @@ session:
     mid-game-locked: "&cCannot change session settings while game is running"
     game-in-progress: "&cThis game is already in progress"
     no-maps-for-minigame: "&cNo maps support this minigame — cannot start"
+    minigame-disabled: "&cThis minigame is currently disabled."
   preparation:
     map-vote-result: "&6Map decided by vote: &e{0}"
     pick-team: "&ePick your team!"

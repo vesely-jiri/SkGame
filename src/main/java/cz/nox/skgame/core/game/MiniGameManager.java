@@ -8,7 +8,9 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class MiniGameManager {
 
@@ -16,6 +18,8 @@ public class MiniGameManager {
     private Map<String, MiniGame> miniGames = new HashMap<>();
     private MiniGame lastCreatedMiniGame;
     private File storageFile;
+    /** Runtime-only disabled set — NOT persisted across restarts. */
+    private final Set<String> disabledMinigames = new HashSet<>();
 
     public static MiniGameManager getInstance() {
         if (miniGameManager == null) miniGameManager = new MiniGameManager();
@@ -28,6 +32,10 @@ public class MiniGameManager {
     public MiniGame[] getAllMiniGames() {
         return miniGames.values().toArray(new MiniGame[0]);
     }
+
+    public boolean isMinigameDisabled(String id) { return disabledMinigames.contains(id.toLowerCase()); }
+    public void disableMinigame(String id) { disabledMinigames.add(id.toLowerCase()); }
+    public void enableMinigame(String id) { disabledMinigames.remove(id.toLowerCase()); }
 
     public void save() {
         if (storageFile != null) saveToFile(storageFile);

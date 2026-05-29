@@ -113,15 +113,21 @@ public class MinigamesGuiService implements Listener {
                 .onClick(e -> SessionGuiService.getInstance().openFor((Player) e.getWhoClicked())));
 
         // Dynamic minigame list
-        MiniGame[] minigames = MiniGameManager.getInstance().getAllMiniGames();
+        MiniGameManager mgm = MiniGameManager.getInstance();
+        MiniGame[] minigames = mgm.getAllMiniGames();
         for (int i = 0; i < Math.min(minigames.length, ITEM_SLOTS.length); i++) {
             MiniGame mg = minigames[i];
             String mgId = mg.getId();
-            builder.slot(ITEM_SLOTS[i], buildMinigameItem(mg).onClick(e -> {
+            boolean disabled = mgm.isMinigameDisabled(mgId);
+            builder.slot(ITEM_SLOTS[i], buildMinigameItem(mg, disabled).onClick(e -> {
                 Player p = (Player) e.getWhoClicked();
+                if (mgm.isMinigameDisabled(mgId)) {
+                    Messages.send(p, "session.error.minigame-disabled");
+                    return;
+                }
                 Session s = SessionManager.getInstance().getSession(p);
                 if (s == null) return;
-                MiniGame clicked = MiniGameManager.getInstance().getMiniGameById(mgId);
+                MiniGame clicked = mgm.getMiniGameById(mgId);
                 if (clicked == null) return;
                 s.setMiniGame(clicked);
                 SessionGuiService.getInstance().update(s);
@@ -132,7 +138,7 @@ public class MinigamesGuiService implements Listener {
         return builder.build();
     }
 
-    private GuiItem buildMinigameItem(MiniGame mg) {
+    private GuiItem buildMinigameItem(MiniGame mg, boolean disabled) {
         Object iconObj = mg.getValue("icon");
         Object nameObj = mg.getValue("name");
         String displayName = nameObj != null ? nameObj.toString() : mg.getId();
@@ -162,7 +168,8 @@ public class MinigamesGuiService implements Listener {
             lore.add(legacy("&8by &f" + authorObj));
         }
 
-        GuiItem item = GuiItem.of(mat).name(displayName);
+        if (disabled) lore.add(legacy("&c[Disabled]"));
+        GuiItem item = GuiItem.of(mat).name(disabled ? "&8" + displayName : displayName);
         if (!lore.isEmpty()) item.lore(lore);
         return item;
     }
