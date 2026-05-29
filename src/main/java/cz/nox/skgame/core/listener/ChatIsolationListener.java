@@ -6,6 +6,7 @@ import cz.nox.skgame.api.game.model.type.SessionRole;
 import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.gui.services.MainGuiService;
+import cz.nox.skgame.util.Debug;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -15,6 +16,7 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Room-based chat isolation on AsyncPlayerChatEvent (CMI delivery path).
@@ -38,6 +40,10 @@ public class ChatIsolationListener implements Listener {
         String senderRoom = roomOf(senderSession, isolateLobby);
         SessionRole senderRole = senderSession != null ? senderSession.getRole(sender) : null;
 
+        Debug.log("chat-isolation", () -> "sender=" + sender.getName()
+                + " room=" + senderRoom + " role=" + senderRole
+                + " recipients-before=" + event.getRecipients().size());
+
         Set<Player> allowed = new HashSet<>();
         for (Player recipient : event.getRecipients()) {
             Session recipientSession = SessionManager.getInstance().getSession(recipient);
@@ -51,6 +57,9 @@ public class ChatIsolationListener implements Listener {
             }
             allowed.add(recipient);
         }
+
+        Debug.log("chat-isolation", () -> "allowed=" + allowed.size()
+                + " [" + allowed.stream().map(Player::getName).collect(Collectors.joining(", ")) + "]");
 
         event.setCancelled(true);
         String formatted = formatMessage(event);

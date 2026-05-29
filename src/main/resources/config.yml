@@ -1,5 +1,10 @@
 # SkGame configuration
 
+# --- Debug ---
+# Set to true to enable verbose per-subsystem debug logging (INFO level).
+# Safe to leave on in production but noisy — disable unless diagnosing issues.
+debug: false
+
 # --- Modules ---
 # Enable/disable user-facing components independently.
 # Disabling a module prevents its Skript syntaxes, vanilla scripts, and listeners from loading.
