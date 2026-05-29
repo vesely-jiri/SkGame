@@ -25,6 +25,8 @@ session:
     no-maps-for-minigame: "&cNo maps support this minigame — cannot start"
   preparation:
     map-vote-result: "&6Map decided by vote: &e{0}"
+    pick-team: "&ePick your team!"
+    pick-map: "&eVote for a map!"
   spectator:
     queued-join: "&aYou will join the party after this game"
     queued-leave: "&7You will not join the party after this game"

@@ -49,10 +49,12 @@ import cz.nox.skgame.core.game.RejoinSnapshot;
 import cz.nox.skgame.core.storage.GameResultsRepository;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.title.Title;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.event.player.PlayerJoinEvent;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -416,6 +418,30 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         if (needsTeamPicker(session)) {
             for (Player p : session.getLobbyMembers()) givePicker(p);
         }
+
+        // Deferred close + hint — must be one tick later; start was inside an InventoryClickEvent
+        Set<Player> prepMembers = new HashSet<>(session.getLobbyMembers());
+        boolean showTeamHint = needsTeamPicker(session);
+        boolean showMapHint = session.isMapVoting();
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            prepMembers.forEach(Player::closeInventory);
+            if (showTeamHint || showMapHint) {
+                Title.Times times = Title.Times.times(
+                        Duration.ofMillis(200), Duration.ofSeconds(2), Duration.ofMillis(500));
+                prepMembers.forEach(p -> {
+                    Component titleComp = (showTeamHint && showMapHint)
+                            ? LegacyComponentSerializer.legacyAmpersand()
+                                    .deserialize(Messages.get("session.preparation.pick-team", p))
+                            : Component.empty();
+                    Component subtitleComp = showMapHint
+                            ? LegacyComponentSerializer.legacyAmpersand()
+                                    .deserialize(Messages.get("session.preparation.pick-map", p))
+                            : LegacyComponentSerializer.legacyAmpersand()
+                                    .deserialize(Messages.get("session.preparation.pick-team", p));
+                    p.showTitle(Title.title(titleComp, subtitleComp, times));
+                });
+            }
+        });
 
         long windowSeconds = plugin.getConfig().getLong("session.preparation.window-seconds", 20L);
         String sessionId = session.getId();
