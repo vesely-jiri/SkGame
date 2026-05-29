@@ -159,7 +159,6 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             "cz.nox.skgame.skript.expressions.ExprParty",
             "cz.nox.skgame.skript.expressions.ExprMainGuiFilter",
             // Minigame tags
-            "cz.nox.skgame.skript.effects.EffSetMiniGameTags",
             "cz.nox.skgame.skript.expressions.minigames.ExprMiniGameTags",
             // Quickplay
             "cz.nox.skgame.skript.conditions.CondIsInQuickplayQueue"
