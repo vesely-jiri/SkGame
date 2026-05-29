@@ -29,6 +29,7 @@ session:
     vote-success: "&aPlayers successfully voted to stop the game"
     no-players: "&cThere are no players. Stopping game"
     unknown-error: "&cUnknown error. Stopping game"
+    admin-ended: "&cAn admin force-ended this game"
     summary-separator: "&6------------------------------------"
     summary-finished: "&6Game of &e{0} &6on map &e{1} &6has finished"
   start:

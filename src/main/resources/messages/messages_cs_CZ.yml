@@ -23,6 +23,7 @@ session:
     vote-success: "&aHráči úspěšně odhlasovali ukončení hry"
     no-players: "&cŽádní hráči. Ukončuji hru"
     unknown-error: "&cNeznámá chyba. Ukončuji hru"
+    admin-ended: "&cHru násilně ukončil administrátor"
   start:
     maintenance: "&cServer je v režimu údržby — žádné nové hry nemohou začít"
   rejoin:

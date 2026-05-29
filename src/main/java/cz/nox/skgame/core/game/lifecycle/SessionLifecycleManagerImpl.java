@@ -346,6 +346,12 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             Bukkit.getPluginManager().callEvent(new GameStopEvent(miniGame, session, reason));
         }
 
+        if ("admin".equals(reason)) {
+            for (Player member : session.getMembers()) {
+                Messages.send(member, "session.stop.admin-ended");
+            }
+        }
+
         // Broadcast winners (set by scripts during GameStopEvent)
         var sessionWinners = session.getWinners();
 
