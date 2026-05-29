@@ -339,6 +339,9 @@ public class AdminPanelGuiService implements Listener {
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
         if (!(event.getInventory().getHolder() instanceof GuiHolder)) return;
+        // OPEN_NEW: inventory replaced programmatically (refresh/navigation) — keep tracking.
+        // Genuine closes (PLAYER/PLUGIN/DISCONNECT) still untrack.
+        if (event.getReason() == org.bukkit.event.inventory.InventoryCloseEvent.Reason.OPEN_NEW) return;
         panelViewers.remove(event.getPlayer().getUniqueId());
         // Panel filter state is intentionally preserved across open/close
     }
