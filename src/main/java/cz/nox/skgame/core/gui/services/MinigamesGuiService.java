@@ -22,8 +22,12 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -141,6 +145,29 @@ public class MinigamesGuiService implements Listener {
         }
         if (mat == null || mat == Material.AIR) mat = Material.BARRIER;
 
-        return GuiItem.of(mat).name(displayName);
+        List<Component> lore = new ArrayList<>();
+        // Description (single String or Object[] from multi-line set)
+        Object descObj = mg.getValue("description");
+        if (descObj instanceof String s && !s.isEmpty()) {
+            lore.add(legacy("&7" + s));
+        } else if (descObj instanceof Object[] arr) {
+            for (Object line : arr) {
+                String str = String.valueOf(line);
+                if (!str.isEmpty()) lore.add(legacy("&7" + str));
+            }
+        }
+        // Author
+        Object authorObj = mg.getValue("author");
+        if (authorObj != null) {
+            lore.add(legacy("&8by &f" + authorObj));
+        }
+
+        GuiItem item = GuiItem.of(mat).name(displayName);
+        if (!lore.isEmpty()) item.lore(lore);
+        return item;
+    }
+
+    private static Component legacy(String text) {
+        return LegacyComponentSerializer.legacyAmpersand().deserialize(text);
     }
 }
