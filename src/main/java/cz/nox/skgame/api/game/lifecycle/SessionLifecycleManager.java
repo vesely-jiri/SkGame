@@ -30,6 +30,9 @@ public interface SessionLifecycleManager {
     /** Tear down session completely. Fires SessionDisbandEvent with reason. */
     void disbandSession(Session session, DisbandReason reason);
 
+    /** End the PREPARATION window early: auto-fill unpicked players and start immediately. */
+    void finishPreparation(Session session);
+
     @Nullable SessionRole getRole(Player player);
 
     default boolean startGame(Session session, GameStartReason reason) {

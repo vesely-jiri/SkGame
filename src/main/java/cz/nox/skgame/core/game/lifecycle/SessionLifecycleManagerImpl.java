@@ -25,7 +25,9 @@ import cz.nox.skgame.core.game.PlayerManager;
 import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.region.ArenaSlot;
 import cz.nox.skgame.api.messages.Messages;
+import cz.nox.skgame.core.team.TeamPickerItem;
 import cz.nox.skgame.util.PlayerResetter;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -69,6 +71,8 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
     private final SkGame plugin;
     private final PartyManager partyManager;
     private final Map<UUID, RejoinSnapshot> rejoinSnapshots = new ConcurrentHashMap<>();
+    private static final int PICKER_SLOT = 4;
+    private final Map<UUID, ItemStack> pickerSlotBackup = new ConcurrentHashMap<>();
 
     private SessionLifecycleManagerImpl(SkGame plugin) {
         this.sessionManager = SessionManager.getInstance();
@@ -243,6 +247,11 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             }
         }
 
+        if (stateBeforeLeave == SessionState.PREPARATION && role == SessionRole.LOBBY) {
+            removePicker(player);
+            session.setTeam(player, null);
+        }
+
         if (role == SessionRole.PLAYER || role == SessionRole.SPECTATOR) {
             PlayerResetter.reset(player, plugin.getDefaultGameMode());
             Location lobbySpawn = plugin.getLobbySpawn();
@@ -338,10 +347,11 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         sessionManager.setCountdownTask(sessionId, task);
     }
 
-    // M1/M2: AUTO assigns at startImmediately — no PREPARATION window needed.
-    // M3+: return true for SELF_SELECT/BOTH modes when teams are declared.
     private boolean needsPreparation(Session session) {
-        return false;
+        MiniGame mg = session.getMiniGame();
+        if (mg == null || mg.getTeams().isEmpty()) return false;
+        TeamAssignmentMode mode = mg.getTeamAssignment();
+        return mode == TeamAssignmentMode.SELF_SELECT || mode == TeamAssignmentMode.BOTH;
     }
 
     private void autoAssignTeams(Session session) {
@@ -360,17 +370,90 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         }
     }
 
-    // M1 stub — dead code until M2 activates the gate
     private void enterPreparation(Session session) {
         session.setState(SessionState.PREPARATION);
-        // M2: schedule BukkitRunnable for session.preparation.window-seconds,
-        //     wire auto-balance + map vote finalization on expiry
+        for (Player p : session.getLobbyMembers()) givePicker(p);
+
+        long windowSeconds = plugin.getConfig().getLong("session.preparation.window-seconds", 20L);
+        String sessionId = session.getId();
+        final long[] remaining = {windowSeconds};
+
+        BukkitTask task = new BukkitRunnable() {
+            @Override
+            public void run() {
+                Session current = sessionManager.getSessionById(sessionId);
+                if (current == null || current.getState() != SessionState.PREPARATION) {
+                    cancel(); return;
+                }
+                if (remaining[0] <= 0) {
+                    cancel();
+                    finishPreparation(current);
+                    return;
+                }
+                long secs = remaining[0];
+                if (secs <= 5 || secs % 10 == 0) {
+                    Component bar = LegacyComponentSerializer.legacyAmpersand()
+                            .deserialize("&eTeam selection: &a" + secs + "s &eremaining");
+                    for (Player p : current.getLobbyMembers()) p.sendActionBar(bar);
+                }
+                remaining[0]--;
+            }
+        }.runTaskTimer(plugin, 0L, 20L);
+        sessionManager.setCountdownTask(sessionId, task);
     }
 
     // PREPARATION → LOBBY (cancel / all-leave / under-min)
     private void cancelPreparation(Session session) {
         sessionManager.cancelCountdownTask(session.getId());
+        for (Player p : new HashSet<>(session.getLobbyMembers())) removePicker(p);
+        session.clearTeams();
         session.setState(SessionState.LOBBY);
+    }
+
+    @Override
+    public void finishPreparation(Session session) {
+        sessionManager.cancelCountdownTask(session.getId());
+        for (Player p : new HashSet<>(session.getLobbyMembers())) removePicker(p);
+        autoFillUnpickedTeams(session);
+        startImmediately(session);
+    }
+
+    private void autoFillUnpickedTeams(Session session) {
+        MiniGame mg = session.getMiniGame();
+        if (mg == null || mg.getTeams().isEmpty()) return;
+        List<String> teams = new ArrayList<>(mg.getTeams());
+        Map<String, Integer> counts = new HashMap<>();
+        teams.forEach(t -> counts.put(t, 0));
+        for (Player p : session.getLobbyMembers()) {
+            String team = session.getTeam(p);
+            if (team != null && counts.containsKey(team)) counts.merge(team, 1, Integer::sum);
+        }
+        for (Player p : new ArrayList<>(session.getLobbyMembers())) {
+            if (session.getTeam(p) != null) continue;
+            String smallest = teams.stream().min(Comparator.comparingInt(counts::get)).orElseThrow();
+            session.setTeam(p, smallest);
+            counts.merge(smallest, 1, Integer::sum);
+        }
+    }
+
+    private void givePicker(Player player) {
+        TeamPickerItem picker = TeamPickerItem.getInstance();
+        ItemStack existing = player.getInventory().getItem(PICKER_SLOT);
+        if (picker.isPicker(existing)) return; // already has it (e.g. re-enter prep)
+        pickerSlotBackup.put(player.getUniqueId(), existing); // null if slot was empty
+        player.getInventory().setItem(PICKER_SLOT, picker.create());
+    }
+
+    private void removePicker(Player player) {
+        TeamPickerItem picker = TeamPickerItem.getInstance();
+        for (int i = 0; i < player.getInventory().getSize(); i++) {
+            if (picker.isPicker(player.getInventory().getItem(i))) {
+                player.getInventory().setItem(i, null);
+            }
+        }
+        // Restore slot 4 to its original content (null = empty slot)
+        ItemStack backup = pickerSlotBackup.remove(player.getUniqueId());
+        player.getInventory().setItem(PICKER_SLOT, backup);
     }
 
     @Override
