@@ -273,7 +273,7 @@ public class SessionGuiService implements Listener {
             boolean isHost = member.equals(session.getHost());
             boolean rawReady = Boolean.TRUE.equals(pm.getPlayer(member).getValue(GamePlayerKeys.READY, true));
             boolean isReady = state != SessionState.LOBBY || rawReady;
-            builder.slot(PLAYER_SLOTS[idx++], buildPlayerHead(member, isHost, isReady, viewer));
+            builder.slot(PLAYER_SLOTS[idx++], buildPlayerHead(member, isHost, isReady, viewer, session));
         }
 
         return builder.build();
@@ -431,7 +431,7 @@ public class SessionGuiService implements Listener {
                       legacy("&8Right-click: enable map vote"));
     }
 
-    private GuiItem buildPlayerHead(Player member, boolean isHost, boolean isReady, Player viewer) {
+    private GuiItem buildPlayerHead(Player member, boolean isHost, boolean isReady, Player viewer, Session session) {
         ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
         SkullMeta meta = (SkullMeta) skull.getItemMeta();
         if (meta != null) {
@@ -440,9 +440,36 @@ public class SessionGuiService implements Listener {
         }
         GuiItem item = GuiItem.of(skull)
                 .name((isReady ? "&a✓ " : "&c✗ ") + member.getName());
-        if (isHost) {
+
+        boolean viewerIsHost = viewer.equals(session.getHost());
+        boolean isSelf = member.equals(viewer);
+
+        if (viewerIsHost && !isSelf) {
+            // Host sees kick/ban actions on other members
+            java.util.List<net.kyori.adventure.text.Component> lore = new java.util.ArrayList<>();
+            if (isHost) lore.add(Messages.getComponent("gui.session.host-label", viewer));
+            lore.add(legacy("&7Right-click: &fKick"));
+            lore.add(legacy("&cShift+right-click: &cBan"));
+            item.lore(lore);
+
+            java.util.UUID memberUuid = member.getUniqueId();
+            item.onRightClick(e -> {
+                Player host = (Player) e.getWhoClicked();
+                org.bukkit.entity.Player target = org.bukkit.Bukkit.getPlayer(memberUuid);
+                if (target == null) return;
+                cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl.getInstance().kickMember(host, target);
+            });
+            item.onShiftClick(e -> {
+                if (e.getClick() != ClickType.SHIFT_RIGHT) return;
+                Player host = (Player) e.getWhoClicked();
+                org.bukkit.entity.Player target = org.bukkit.Bukkit.getPlayer(memberUuid);
+                if (target == null) return;
+                cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl.getInstance().banMember(host, target);
+            });
+        } else if (isHost) {
             item.lore(Messages.getComponent("gui.session.host-label", viewer));
         }
+
         return item;
     }
 

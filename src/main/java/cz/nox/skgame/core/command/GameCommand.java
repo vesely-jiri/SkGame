@@ -168,54 +168,16 @@ public class GameCommand implements CommandExecutor, TabCompleter {
 
     private void handleKick(Player player, String[] args) {
         if (args.length < 2) return;
-        Session session = SessionManager.getInstance().getSession(player);
-        if (session == null || !player.equals(session.getHost())) {
-            Messages.send(player, "gui.session.error.not-host");
-            return;
-        }
         Player target = Bukkit.getPlayerExact(args[1]);
-        if (target == null) {
-            Messages.send(player, "command.profile.not-found", args[1]);
-            return;
-        }
-        if (target.equals(player)) {
-            Messages.send(player, "session.kick.error.self");
-            return;
-        }
-        if (session.getRole(target) == null) {
-            Messages.send(player, "session.kick.error.not-member", target.getName());
-            return;
-        }
-        Messages.send(target, "session.kick.kicked");
-        SessionLifecycleManagerImpl.getInstance().leaveSession(target);
-        Messages.send(player, "session.kick.confirmed", target.getName());
+        if (target == null) { Messages.send(player, "command.profile.not-found", args[1]); return; }
+        SessionLifecycleManagerImpl.getInstance().kickMember(player, target);
     }
 
     private void handleBan(Player player, String[] args) {
         if (args.length < 2) return;
-        Session session = SessionManager.getInstance().getSession(player);
-        if (session == null || !player.equals(session.getHost())) {
-            Messages.send(player, "gui.session.error.not-host");
-            return;
-        }
         Player target = Bukkit.getPlayerExact(args[1]);
-        if (target == null) {
-            Messages.send(player, "command.profile.not-found", args[1]);
-            return;
-        }
-        if (target.equals(player)) {
-            Messages.send(player, "session.kick.error.self");
-            return;
-        }
-        if (session.getRole(target) == null) {
-            Messages.send(player, "session.kick.error.not-member", target.getName());
-            return;
-        }
-        // Ban before removal — no rejoin window
-        session.addBan(target.getUniqueId());
-        Messages.send(target, "session.ban.banned");
-        SessionLifecycleManagerImpl.getInstance().leaveSession(target);
-        Messages.send(player, "session.ban.confirmed", target.getName());
+        if (target == null) { Messages.send(player, "command.profile.not-found", args[1]); return; }
+        SessionLifecycleManagerImpl.getInstance().banMember(player, target);
     }
 
     @Override

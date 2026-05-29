@@ -817,6 +817,47 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         Bukkit.getPluginManager().callEvent(new SessionDisbandEvent(session, reason));
     }
 
+    /** Kick a member from their session. All validation included — safe to call from command and GUI. */
+    public void kickMember(Player host, Player target) {
+        Session session = sessionManager.getSession(host);
+        if (session == null || !host.equals(session.getHost())) {
+            Messages.send(host, "gui.session.error.not-host");
+            return;
+        }
+        if (target.equals(host)) {
+            Messages.send(host, "session.kick.error.self");
+            return;
+        }
+        if (session.getRole(target) == null) {
+            Messages.send(host, "session.kick.error.not-member", target.getName());
+            return;
+        }
+        Messages.send(target, "session.kick.kicked");
+        leaveSession(target);
+        Messages.send(host, "session.kick.confirmed", target.getName());
+    }
+
+    /** Ban and remove a member from their session. All validation included. */
+    public void banMember(Player host, Player target) {
+        Session session = sessionManager.getSession(host);
+        if (session == null || !host.equals(session.getHost())) {
+            Messages.send(host, "gui.session.error.not-host");
+            return;
+        }
+        if (target.equals(host)) {
+            Messages.send(host, "session.kick.error.self");
+            return;
+        }
+        if (session.getRole(target) == null) {
+            Messages.send(host, "session.kick.error.not-member", target.getName());
+            return;
+        }
+        session.addBan(target.getUniqueId()); // ban before removal — no rejoin window
+        Messages.send(target, "session.ban.banned");
+        leaveSession(target);
+        Messages.send(host, "session.ban.confirmed", target.getName());
+    }
+
     /** Called from SkGame.onDisable — ends running games then disbands all sessions. */
     public void shutdown() {
         for (Session session : sessionManager.getAllSessions()) {
