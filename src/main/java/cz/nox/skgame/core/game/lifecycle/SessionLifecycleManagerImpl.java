@@ -20,6 +20,7 @@ import cz.nox.skgame.api.game.model.type.GameStartReason;
 import cz.nox.skgame.api.game.model.type.SessionRole;
 import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.core.util.GamePlayerKeys;
+import cz.nox.skgame.api.gui.GuiHolder;
 import cz.nox.skgame.api.region.Region;
 import cz.nox.skgame.core.game.PlayerManager;
 import cz.nox.skgame.core.game.GameMapManager;
@@ -487,6 +488,20 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         sessionManager.cancelCountdownTask(session.getId());
         Set<Player> members = new HashSet<>(session.getLobbyMembers());
         for (Player p : members) { removePicker(p); removeVoteItem(p); }
+
+        // Close any open SkGame GUI (team picker, map vote) on all session members before
+        // game starts. Synchronous closeInventory() is safe here because the only click-context
+        // trigger (AdminPanelGuiService force-start) is a server admin who is NOT a member of
+        // the target session — we never close the triggering player's inventory inside their own
+        // InventoryClickEvent. NOTE: if a host-side in-session force-start (member triggers from
+        // a click) is ever added, this block must move to a 1-tick Bukkit.getScheduler().runTask
+        // defer to avoid client desync, mirroring the enterPreparation close from ad5c250.
+        for (Player p : session.getMembers()) {
+            if (p.isOnline()
+                    && p.getOpenInventory().getTopInventory().getHolder() instanceof GuiHolder) {
+                p.closeInventory();
+            }
+        }
 
         // Resolve map vote before auto-fill and start
         if (session.isMapVoting()) {
