@@ -15,6 +15,7 @@ import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.SessionVisibility;
 import cz.nox.skgame.api.game.model.type.CustomValuePlurality;
 import cz.nox.skgame.api.game.model.type.SessionState;
+import cz.nox.skgame.api.game.model.type.TeamAssignmentMode;
 import cz.nox.skgame.api.region.Region;
 import cz.nox.skgame.api.statistics.GameResult;
 import cz.nox.skgame.core.game.GameMapManager;
@@ -358,6 +359,36 @@ public class Types {
                     @Override
                     public String toVariableNameString(MinigameTag tag) {
                         return "minigameTag:" + tag.name();
+                    }
+                })
+        );
+
+        Classes.registerClass(new EnumClassInfo<>(TeamAssignmentMode.class, "teamassignmentmode", "team assignment modes",
+                        new SimpleLiteral<>(TeamAssignmentMode.AUTO, true))
+                .user("team ?assignment ?modes?")
+                .name("Team Assignment Mode")
+                .description("How players are assigned to teams: auto (framework assigns), self-select (players choose), both (players choose + unpicked auto-balanced).")
+                .since("1.0.0")
+                .parser(new Parser<>() {
+                    @Override
+                    public @Nullable TeamAssignmentMode parse(String input, ParseContext context) {
+                        return switch (input.trim().toLowerCase()) {
+                            case "auto"        -> TeamAssignmentMode.AUTO;
+                            case "self-select" -> TeamAssignmentMode.SELF_SELECT;
+                            case "both"        -> TeamAssignmentMode.BOTH;
+                            default -> {
+                                try { yield TeamAssignmentMode.valueOf(input.trim().toUpperCase()); }
+                                catch (IllegalArgumentException e) { yield null; }
+                            }
+                        };
+                    }
+                    @Override
+                    public String toString(TeamAssignmentMode mode, int flags) {
+                        return mode.name().toLowerCase().replace('_', '-');
+                    }
+                    @Override
+                    public String toVariableNameString(TeamAssignmentMode mode) {
+                        return "teamAssignmentMode:" + mode.name();
                     }
                 })
         );

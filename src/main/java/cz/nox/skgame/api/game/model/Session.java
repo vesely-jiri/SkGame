@@ -39,6 +39,7 @@ public class Session {
     private List<Player> winners = new ArrayList<>();
     private final Set<UUID> invitedPlayers = new HashSet<>();
     @Nullable private String joinCode;
+    private final Map<UUID, String> teamAssignments = new HashMap<>();
 
     public Session(String id, Player host, MiniGame miniGame,
                    SessionState state, GameMap map, Set<Player> players, Set<Player> spectators,
@@ -233,6 +234,17 @@ public class Session {
         if (players.contains(player)) return SessionRole.PLAYER;
         if (spectators.contains(player)) return SessionRole.SPECTATOR;
         return null;
+    }
+
+    public @Nullable String getTeam(Player player) {
+        return teamAssignments.get(player.getUniqueId());
+    }
+    public void setTeam(Player player, @Nullable String team) {
+        if (team == null) teamAssignments.remove(player.getUniqueId());
+        else teamAssignments.put(player.getUniqueId(), team);
+    }
+    public void clearTeams() {
+        teamAssignments.clear();
     }
 
     /**

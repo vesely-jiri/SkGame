@@ -15,6 +15,7 @@ import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.type.DisbandReason;
+import cz.nox.skgame.api.game.model.type.TeamAssignmentMode;
 import cz.nox.skgame.api.game.model.type.GameStartReason;
 import cz.nox.skgame.api.game.model.type.SessionRole;
 import cz.nox.skgame.api.game.model.type.SessionState;
@@ -48,6 +49,9 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.event.player.PlayerJoinEvent;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -301,6 +305,8 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             session.setRole(p, SessionRole.PLAYER);
         }
 
+        autoAssignTeams(session);
+
         session.setState(SessionState.STARTED);
         session.setStartedAt(System.currentTimeMillis());
 
@@ -332,9 +338,26 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         sessionManager.setCountdownTask(sessionId, task);
     }
 
-    // M1: always false — PREPARATION never entered; M2 checks for teams declaration
+    // M1/M2: AUTO assigns at startImmediately — no PREPARATION window needed.
+    // M3+: return true for SELF_SELECT/BOTH modes when teams are declared.
     private boolean needsPreparation(Session session) {
         return false;
+    }
+
+    private void autoAssignTeams(Session session) {
+        MiniGame mg = session.getMiniGame();
+        if (mg == null || mg.getTeams().isEmpty()) return;
+        if (mg.getTeamAssignment() != TeamAssignmentMode.AUTO) return;
+        List<String> teams = new ArrayList<>(mg.getTeams());
+        Map<String, Integer> counts = new HashMap<>();
+        teams.forEach(t -> counts.put(t, 0));
+        for (Player p : new ArrayList<>(session.getPlayers())) {
+            String smallest = teams.stream()
+                    .min(Comparator.comparingInt(counts::get))
+                    .orElseThrow();
+            session.setTeam(p, smallest);
+            counts.merge(smallest, 1, Integer::sum);
+        }
     }
 
     // M1 stub — dead code until M2 activates the gate
@@ -408,6 +431,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             }
         }
         session.clearWinners();
+        session.clearTeams();
 
         // Auto-cleanup after scripts have run, before role transitions
         if (arena != null && arena.getWorld() != null) {

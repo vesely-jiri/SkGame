@@ -4,22 +4,29 @@ import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Serializer;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.variables.SerializedVariable;
+import cz.nox.skgame.api.game.model.type.TeamAssignmentMode;
 import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class MiniGame implements ConfigurationSerializable {
     private String id;
     private Map<String, Object> values;
     private Map<String, CustomValue> gameMapValueDefs = new LinkedHashMap<>();
     private Set<MinigameTag> tags = EnumSet.noneOf(MinigameTag.class);
+    private List<String> teams = new ArrayList<>();
+    private TeamAssignmentMode teamAssignment = TeamAssignmentMode.AUTO;
 
     public MiniGame(String id,Map<String, Object> values) {
         this.id = id;
@@ -85,6 +92,20 @@ public class MiniGame implements ConfigurationSerializable {
         tags.remove(tag);
     }
 
+    public List<String> getTeams() {
+        return teams;
+    }
+    public void setTeams(List<String> teams) {
+        this.teams = teams != null ? new ArrayList<>(teams) : new ArrayList<>();
+    }
+
+    public TeamAssignmentMode getTeamAssignment() {
+        return teamAssignment;
+    }
+    public void setTeamAssignment(TeamAssignmentMode mode) {
+        this.teamAssignment = mode != null ? mode : TeamAssignmentMode.AUTO;
+    }
+
     @Override
     public @NotNull Map<String, Object> serialize() {
         Map<String, Object> gm = new HashMap<>();
@@ -116,6 +137,13 @@ public class MiniGame implements ConfigurationSerializable {
         if (!tags.isEmpty()) {
             gm.put("tags", tags.stream().map(MinigameTag::name)
                     .reduce((a, b) -> a + "," + b).orElse(""));
+        }
+
+        if (!teams.isEmpty()) {
+            gm.put("teams", String.join(",", teams));
+        }
+        if (teamAssignment != TeamAssignmentMode.AUTO) {
+            gm.put("team-assignment", teamAssignment.name());
         }
 
         return gm;
@@ -195,6 +223,16 @@ public class MiniGame implements ConfigurationSerializable {
                 try { tagSet.add(MinigameTag.valueOf(part.trim())); } catch (IllegalArgumentException ignored) {}
             }
             newGm.setTags(tagSet);
+        }
+
+        Object rawTeams = gm.get("teams");
+        if (rawTeams instanceof String s && !s.isEmpty()) {
+            newGm.setTeams(Arrays.stream(s.split(",")).map(String::trim).collect(Collectors.toList()));
+        }
+        Object rawMode = gm.get("team-assignment");
+        if (rawMode instanceof String s) {
+            try { newGm.setTeamAssignment(TeamAssignmentMode.valueOf(s)); }
+            catch (IllegalArgumentException ignored) {}
         }
 
         return newGm;
