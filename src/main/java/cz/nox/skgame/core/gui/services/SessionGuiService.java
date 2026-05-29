@@ -176,13 +176,23 @@ public class SessionGuiService implements Listener {
         // Slot 26 — Visibility cycle: PUBLIC → INVITE_ONLY → CODE → PUBLIC (host-only)
         builder.slot(26, buildVisibilitySlot(session, viewer));
 
-        // Slot 33 — Maps (host-only; no-op if minigame not yet selected)
-        builder.slot(33, buildMapsSlot(session).onClick(e -> {
-            Player p = (Player) e.getWhoClicked();
-            if (isMidGameLocked(session, p)) return;
-            if (!isHostOnly(p, session)) return;
-            MapsGuiService.getInstance().openFor(p);
-        }));
+        // Slot 33 — Maps (host-only): left-click = specific map, right-click = toggle map vote
+        builder.slot(33, buildMapsSlot(session)
+            .onLeftClick(e -> {
+                Player p = (Player) e.getWhoClicked();
+                if (isMidGameLocked(session, p)) return;
+                if (!isHostOnly(p, session)) return;
+                if (!session.isMapVoting()) MapsGuiService.getInstance().openFor(p);
+            })
+            .onRightClick(e -> {
+                Player p = (Player) e.getWhoClicked();
+                if (isMidGameLocked(session, p)) return;
+                if (!isHostOnly(p, session)) return;
+                boolean newMode = !session.isMapVoting();
+                session.setMapVoting(newMode);
+                if (newMode) session.setGameMap(null);
+                update(session);
+            }));
 
         // Slot 35 — Rounds (host-only; left=+1, right=-1)
         builder.slot(35, GuiItem.of(Material.REPEATER)
@@ -217,7 +227,7 @@ public class SessionGuiService implements Listener {
                         Messages.send(p, "gui.session.error.no-minigame");
                         return;
                     }
-                    if (session.getGameMap() == null) {
+                    if (session.getGameMap() == null && !session.isMapVoting()) {
                         Messages.send(p, "gui.session.error.no-map");
                         return;
                     }
@@ -404,9 +414,18 @@ public class SessionGuiService implements Listener {
             return GuiItem.of(Material.PAPER).name("&7&l" + mapName);
         }
         if (session.getMiniGame() == null) {
-            return GuiItem.of(Material.BARRIER).name("&7&lMaps").lore(legacy("&c- Choose an addon"));
+            return GuiItem.of(Material.BARRIER).name("&7&lMaps").lore(legacy("&c- Choose a minigame first"));
         }
-        return GuiItem.of(Material.BARRIER).name("&7&lMaps").lore(legacy("&c- Choose a map"));
+        if (session.isMapVoting()) {
+            return GuiItem.of(Material.FILLED_MAP)
+                    .name("&b&lMap Vote")
+                    .lore(legacy("&7Map decided by players during prep"),
+                          legacy("&8Right-click to disable voting"));
+        }
+        return GuiItem.of(Material.BARRIER)
+                .name("&7&lMaps")
+                .lore(legacy("&7Left-click: choose a specific map"),
+                      legacy("&8Right-click: enable map vote"));
     }
 
     private GuiItem buildPlayerHead(Player member, boolean isHost, boolean isReady, Player viewer) {
