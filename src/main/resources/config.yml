@@ -84,6 +84,12 @@ arena:
     primed-tnt: true
 
 # --- Storage ---
+# Bundled SQLite native libraries cover:
+#   64-bit Linux with glibc (most distros), 64-bit Linux with musl/Alpine,
+#   64-bit Windows, macOS Intel (x86_64) and Apple Silicon (aarch64).
+# NOT bundled: 32-bit Linux/Windows, FreeBSD, Android/Termux, PowerPC, Windows-on-ARM.
+# On an unsupported platform the database module will log a SEVERE message and
+# disable stats/leaderboards; all other minigame functionality continues normally.
 storage:
   type: sqlite    # Supported: sqlite. Future: mysql, postgres.
   sqlite:

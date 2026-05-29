@@ -6,7 +6,6 @@ import cz.nox.skgame.core.gui.services.LeaderboardGuiService;
 import cz.nox.skgame.core.storage.DatabaseManager;
 import org.bukkit.Bukkit;
 
-import java.sql.SQLException;
 import java.util.List;
 
 /** Phase 7: SQLite backend, statistics API, leaderboards GUI. */
@@ -31,9 +30,20 @@ public class DatabaseModule implements SkGameModule {
     public void onEnable(SkGame plugin) {
         try {
             DatabaseManager.getInstance().initialize(plugin);
-        } catch (SQLException e) {
-            plugin.getLogUtil().warning("DatabaseModule: failed to initialize — " + e.getMessage()
-                    + ". Game results will not be persisted.");
+        } catch (Throwable e) {
+            // Walk the cause chain to detect missing native library (unsupported platform).
+            Throwable root = e;
+            while (root.getCause() != null) root = root.getCause();
+            if (root instanceof UnsatisfiedLinkError) {
+                plugin.getLogger().severe(
+                        "SQLite native library unavailable on this platform ("
+                        + System.getProperty("os.name") + "/" + System.getProperty("os.arch")
+                        + ") — leaderboards & stats disabled."
+                        + " See config storage section for supported platforms.");
+            } else {
+                plugin.getLogUtil().warning("DatabaseModule: failed to initialize — " + e.getMessage()
+                        + ". Game results will not be persisted.");
+            }
         }
         Bukkit.getPluginManager().registerEvents(LeaderboardGuiService.getInstance(), plugin);
     }
