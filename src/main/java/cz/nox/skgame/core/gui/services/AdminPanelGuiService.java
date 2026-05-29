@@ -205,7 +205,7 @@ public class AdminPanelGuiService implements Listener {
                 .name("&a&lBack to panel")
                 .onClick(e -> openPanel((Player) e.getWhoClicked())));
 
-        // Force start (LOBBY only)
+        // Force start (LOBBY only) / force-finish prep (PREPARATION only)
         if (session.getState() == SessionState.LOBBY) {
             builder.slot(46, GuiItem.of(Material.LIME_CONCRETE)
                     .name(Messages.getComponent("gui.admin-panel.force-start", admin))
@@ -213,6 +213,17 @@ public class AdminPanelGuiService implements Listener {
                         Player p = (Player) e.getWhoClicked();
                         Session s = SessionManager.getInstance().getSessionById(sessionId);
                         if (s != null) lifecycle.startGame(s, GameStartReason.ADMIN_FORCE, null);
+                        openPanel(p);
+                    }));
+        }
+        if (session.getState() == SessionState.PREPARATION) {
+            builder.slot(46, GuiItem.of(Material.LIME_CONCRETE)
+                    .name(Messages.getComponent("gui.admin-panel.force-start", admin))
+                    .lore(List.of(legacy("&7Skips team selection")))
+                    .onClick(e -> {
+                        Player p = (Player) e.getWhoClicked();
+                        Session s = SessionManager.getInstance().getSessionById(sessionId);
+                        if (s != null && s.getState() == SessionState.PREPARATION) lifecycle.finishPreparation(s);
                         openPanel(p);
                     }));
         }
