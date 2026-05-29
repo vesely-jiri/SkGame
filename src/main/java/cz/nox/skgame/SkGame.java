@@ -515,6 +515,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
     private void doReloadConfig(CommandSender sender) {
         reloadConfig();
         sender.sendMessage(ChatColor.GREEN + "config.yml reloaded.");
+        sender.sendMessage(ChatColor.YELLOW + "Note: module enable/disable and storage.sqlite.file require a full server restart to take effect.");
     }
 
     @SuppressWarnings("deprecation")

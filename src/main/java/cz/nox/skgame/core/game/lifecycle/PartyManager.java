@@ -21,16 +21,12 @@ class PartyManager {
     private final SessionLifecycleManagerImpl lifecycle;
     private final SessionManager sessionManager;
     private final SkGame plugin;
-    private final boolean autoPromoteHost;
-    private final int idleTimeoutSeconds;
     private final Map<String, BukkitTask> idleTimers = new HashMap<>();
 
     PartyManager(SessionLifecycleManagerImpl lifecycle, SessionManager sessionManager, SkGame plugin) {
         this.lifecycle = lifecycle;
         this.sessionManager = sessionManager;
         this.plugin = plugin;
-        this.autoPromoteHost = plugin.getConfig().getBoolean("session.auto-promote-host", true);
-        this.idleTimeoutSeconds = plugin.getConfig().getInt("session.idle-disband-timeout", 600);
     }
 
     /**
@@ -39,14 +35,15 @@ class PartyManager {
      */
     void registerActivity(Session session) {
         cancelIdleTimer(session.getId());
-        if (idleTimeoutSeconds <= 0) return;
+        int timeoutSeconds = plugin.getConfig().getInt("session.idle-disband-timeout", 600);
+        if (timeoutSeconds <= 0) return;
         if (session.getState() != SessionState.LOBBY) return;
         String sessionId = session.getId();
         BukkitTask task = plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             Session s = sessionManager.getSessionById(sessionId);
             if (s == null || s.getState() != SessionState.LOBBY) return;
             lifecycle.disbandSession(s, DisbandReason.IDLE_TIMEOUT);
-        }, (long) idleTimeoutSeconds * 20L);
+        }, (long) timeoutSeconds * 20L);
         idleTimers.put(sessionId, task);
     }
 
@@ -61,8 +58,9 @@ class PartyManager {
      */
     boolean tryPromoteHost(Session session, Player leaving, boolean explicitLeave) {
         if (!leaving.equals(session.getHost())) return true;
+        boolean autoPromote = plugin.getConfig().getBoolean("session.auto-promote-host", true);
         if (session.getState() != SessionState.LOBBY) {
-            if (explicitLeave && autoPromoteHost) {
+            if (explicitLeave && autoPromote) {
                 Set<Player> players = session.getPlayers();
                 if (!players.isEmpty()) {
                     session.setHost(players.iterator().next());
@@ -74,7 +72,7 @@ class PartyManager {
             session.setHost(null);
             return true;
         }
-        if (autoPromoteHost) {
+        if (autoPromote) {
             Set<Player> lobby = session.getLobbyMembers();
             if (!lobby.isEmpty()) {
                 session.setHost(lobby.iterator().next());
@@ -94,7 +92,8 @@ class PartyManager {
      * EMPTY_PARTY otherwise (auto-promote enabled but no lobby members remain).
      */
     DisbandReason disbandReasonForHostLeave() {
-        return autoPromoteHost ? DisbandReason.EMPTY_PARTY : DisbandReason.HOST_LEAVE;
+        return plugin.getConfig().getBoolean("session.auto-promote-host", true)
+                ? DisbandReason.EMPTY_PARTY : DisbandReason.HOST_LEAVE;
     }
 
     void onSessionDisbanded(String sessionId) {
