@@ -102,8 +102,8 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         String id = UUID.randomUUID().toString();
         Session session = sessionManager.registerSession(id); // registers in map, does NOT fire event yet
         session.setHost(host);
-        Bukkit.getPluginManager().callEvent(new SessionCreateEvent(session)); // host is set — event contract correct
-        session.addLobbyMember(host); // fires GamePlayerSessionJoin
+        session.addLobbyMember(host); // fires GamePlayerSessionJoin; host is LOBBY member before announce
+        Bukkit.getPluginManager().callEvent(new SessionCreateEvent(session)); // host set + 1 member — fully formed
         LobbyEnterEvent lobbyEvent = new LobbyEnterEvent(host, session);
         Bukkit.getPluginManager().callEvent(lobbyEvent);
         if (lobbyEvent.isCancelled()) {
