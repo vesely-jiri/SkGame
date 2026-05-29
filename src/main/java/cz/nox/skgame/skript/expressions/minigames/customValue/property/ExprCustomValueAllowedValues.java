@@ -32,7 +32,7 @@ public class ExprCustomValueAllowedValues extends SimplePropertyExpression<Custo
 
     static {
         registerDefault(ExprCustomValueAllowedValues.class, String.class,
-                "allowed values", "customvalue");
+                "[value] allowed values", "customvalue");
     }
 
     @Override

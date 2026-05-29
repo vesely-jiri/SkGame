@@ -37,7 +37,7 @@ public class EvtSessionCreate extends SkriptEvent {
     private static final SessionManager sessionManager = SessionManager.getInstance();
 
     static {
-        Skript.registerEvent("SessionCreateDisband", EvtSessionCreate.class, SessionCreateEvent.class,
+        Skript.registerEvent("SessionCreate", EvtSessionCreate.class, SessionCreateEvent.class,
                 "session create"
         );
         EventValues.registerEventValue(SessionCreateEvent.class, Session.class, SessionCreateEvent::getSession, EventValues.TIME_NOW);

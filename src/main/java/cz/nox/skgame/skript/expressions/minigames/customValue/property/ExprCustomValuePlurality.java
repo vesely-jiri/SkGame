@@ -40,7 +40,7 @@ public class ExprCustomValuePlurality extends SimplePropertyExpression<CustomVal
 
     static {
         registerDefault(ExprCustomValuePlurality.class, CustomValuePlurality.class,
-                "plurality", "customvalue");
+                "[value] plurality", "customvalue");
     }
 
     @Override
