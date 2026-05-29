@@ -8,6 +8,7 @@ debug: false
 # --- Modules ---
 # Enable/disable user-facing components independently.
 # Disabling a module prevents its Skript syntaxes, vanilla scripts, and listeners from loading.
+# NOTE: changes to modules.*.enabled require a full server restart (/skgame reload config does NOT re-enable/disable modules).
 modules:
   gui:
     enabled: true
@@ -33,7 +34,7 @@ defaults:
 # --- Session party ---
 session:
   # Seconds of LOBBY inactivity before auto-disbanding the party. 0 = disabled.
-  idle-disband-timeout: 600
+  idle-disband-timeout: 1200
   # When true, the first LOBBY member (insertion order) becomes host if current host leaves.
   # When false, any host departure immediately disbands the party (HOST_LEAVE reason).
   auto-promote-host: true
