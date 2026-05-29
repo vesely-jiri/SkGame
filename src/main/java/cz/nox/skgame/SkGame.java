@@ -13,6 +13,9 @@ import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.module.ModuleRegistry;
 import cz.nox.skgame.core.module.ResourceInstaller;
 import cz.nox.skgame.util.LogUtil;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -469,8 +472,12 @@ public class SkGame extends JavaPlugin implements TabCompleter {
         }
         if (action.equals("enable")) {
             mgm.enableMinigame(mgId);
-            sender.sendMessage(ChatColor.GREEN + "Minigame '" + mgId + "' enabled.");
-            sender.sendMessage(ChatColor.YELLOW + "Note: disabled state is runtime-only and resets on server restart.");
+            sender.sendMessage(Component.text("Minigame '").color(NamedTextColor.GREEN)
+                    .append(Component.text(mgId).color(NamedTextColor.WHITE))
+                    .append(Component.text("' enabled ").color(NamedTextColor.GREEN))
+                    .append(Component.text("(i)").color(NamedTextColor.GRAY)
+                            .hoverEvent(HoverEvent.showText(
+                                    Component.text("Transient: re-enables on server restart.").color(NamedTextColor.GRAY)))));
         } else if (action.equals("disable")) {
             boolean force = args.length >= 4
                     && (args[3].equalsIgnoreCase("--force") || args[3].equalsIgnoreCase("-f"));
@@ -484,8 +491,39 @@ public class SkGame extends JavaPlugin implements TabCompleter {
                 }
             }
             mgm.disableMinigame(mgId);
-            sender.sendMessage(ChatColor.YELLOW + "Minigame '" + mgId + "' disabled. Running sessions will finish naturally.");
-            sender.sendMessage(ChatColor.YELLOW + "Note: disabled state is runtime-only and resets on server restart.");
+            if (force) {
+                // Immediately terminate all running sessions of this minigame
+                cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl lifecycle =
+                        cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl.getInstance();
+                java.util.List<cz.nox.skgame.api.game.model.Session> toTerminate =
+                        java.util.Arrays.stream(SessionManager.getInstance().getAllSessions())
+                                .filter(s -> s.getMiniGame() != null && mgId.equals(s.getMiniGame().getId()))
+                                .filter(s -> s.getState() == cz.nox.skgame.api.game.model.type.SessionState.STARTED
+                                        || s.getState() == cz.nox.skgame.api.game.model.type.SessionState.STARTING
+                                        || s.getState() == cz.nox.skgame.api.game.model.type.SessionState.PREPARATION)
+                                .collect(java.util.stream.Collectors.toList());
+                for (cz.nox.skgame.api.game.model.Session s : toTerminate) {
+                    lifecycle.endGame(s, "minigame-disabled");
+                }
+                int terminated = toTerminate.size();
+                sender.sendMessage(Component.text("Minigame '").color(NamedTextColor.YELLOW)
+                        .append(Component.text(mgId).color(NamedTextColor.WHITE))
+                        .append(Component.text("' disabled ").color(NamedTextColor.YELLOW))
+                        .append(Component.text("(i)").color(NamedTextColor.GRAY)
+                                .hoverEvent(HoverEvent.showText(
+                                        Component.text("Transient: re-enables on server restart.").color(NamedTextColor.GRAY)
+                                                .appendNewline()
+                                                .append(Component.text(terminated + " running session(s) were force-terminated.").color(NamedTextColor.GRAY))))));
+            } else {
+                sender.sendMessage(Component.text("Minigame '").color(NamedTextColor.YELLOW)
+                        .append(Component.text(mgId).color(NamedTextColor.WHITE))
+                        .append(Component.text("' disabled ").color(NamedTextColor.YELLOW))
+                        .append(Component.text("(i)").color(NamedTextColor.GRAY)
+                                .hoverEvent(HoverEvent.showText(
+                                        Component.text("Transient: re-enables on server restart.").color(NamedTextColor.GRAY)
+                                                .appendNewline()
+                                                .append(Component.text("Running sessions will finish naturally.").color(NamedTextColor.GRAY))))));
+            }
         } else {
             sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame minigame <enable|disable> <id> [--force|-f]");
         }
