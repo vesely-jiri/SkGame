@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExprAllowSpectate extends SimplePropertyExpression<Session, Boolean> {
 
     static {
-        register(ExprAllowSpectate.class, Boolean.class, "allow spectate", "session");
+        register(ExprAllowSpectate.class, Boolean.class, "[session] allow spectate", "session");
     }
 
     @Override

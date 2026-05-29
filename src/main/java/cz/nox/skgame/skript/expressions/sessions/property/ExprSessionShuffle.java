@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExprSessionShuffle extends SimplePropertyExpression<Session, Boolean> {
 
     static {
-        register(ExprSessionShuffle.class, Boolean.class, "shuffle", "session");
+        register(ExprSessionShuffle.class, Boolean.class, "[session] shuffle", "session");
     }
 
     @Override

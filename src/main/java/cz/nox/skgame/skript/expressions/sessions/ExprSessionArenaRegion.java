@@ -39,7 +39,7 @@ public class ExprSessionArenaRegion extends SimpleExpression<Region> {
 
     static {
         Skript.registerExpression(ExprSessionArenaRegion.class, Region.class, ExpressionType.COMBINED,
-                "arena of %session%",           // 0 — primary
+                "[session] arena of %session%",  // 0 — primary
                 "arena region of %session%"     // 1 — deprecated alias
         );
     }

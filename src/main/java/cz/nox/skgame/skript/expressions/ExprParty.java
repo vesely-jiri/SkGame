@@ -29,7 +29,7 @@ public class ExprParty extends SimpleExpression<Player> {
 
     static {
         Skript.registerExpression(ExprParty.class, Player.class, ExpressionType.PROPERTY,
-                "[the] party of %session%"
+                "[the] [session] party of %session%"
         );
     }
 

@@ -45,7 +45,7 @@ public class ExprSessionWinners extends SimpleExpression<Player> {
 
     static {
         Skript.registerExpression(ExprSessionWinners.class, Player.class, ExpressionType.PROPERTY,
-                "winners of %session%");
+                "[session] winners of %session%");
     }
 
     @SuppressWarnings("unchecked")

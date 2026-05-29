@@ -29,7 +29,7 @@ public class ExprSessionHost extends SimplePropertyExpression<Session, Player> {
 
     static {
         register(ExprSessionHost.class, Player.class,
-                "session host","session");
+                "[session] host","session");
     }
 
     @Override

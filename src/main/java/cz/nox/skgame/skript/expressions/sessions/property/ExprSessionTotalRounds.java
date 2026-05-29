@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExprSessionTotalRounds extends SimplePropertyExpression<Session, Number> {
 
     static {
-        register(ExprSessionTotalRounds.class, Number.class, "session rounds", "session");
+        register(ExprSessionTotalRounds.class, Number.class, "[session] rounds", "session");
     }
 
     @Override

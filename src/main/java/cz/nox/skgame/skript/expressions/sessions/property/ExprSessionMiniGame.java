@@ -37,7 +37,7 @@ public class ExprSessionMiniGame extends SimplePropertyExpression<Session, MiniG
 
     static {
         register(ExprSessionMiniGame.class, MiniGame.class,
-                "session minigame","session");
+                "[session] minigame","session");
     }
 
     @Override

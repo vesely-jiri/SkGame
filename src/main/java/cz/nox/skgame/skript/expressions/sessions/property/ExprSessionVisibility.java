@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExprSessionVisibility extends SimplePropertyExpression<Session, SessionVisibility> {
 
     static {
-        register(ExprSessionVisibility.class, SessionVisibility.class, "session visibility", "session");
+        register(ExprSessionVisibility.class, SessionVisibility.class, "[session] visibility", "session");
     }
 
     @Override
@@ -54,7 +54,7 @@ public class ExprSessionVisibility extends SimplePropertyExpression<Session, Ses
     }
 
     @Override
-    protected String getPropertyName() { return "session visibility"; }
+    protected String getPropertyName() { return "visibility"; }
 
     @Override
     public Class<? extends SessionVisibility> getReturnType() { return SessionVisibility.class; }
