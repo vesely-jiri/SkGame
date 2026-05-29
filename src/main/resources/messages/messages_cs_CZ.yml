@@ -24,6 +24,17 @@ session:
     mid-game-locked: "&cBěhem hry nelze měnit nastavení session"
     game-in-progress: "&cTato hra již probíhá"
     no-maps-for-minigame: "&cŽádná mapa nepodporuje tuto minihru — nelze spustit"
+  join-denied:
+    banned: "&cJsi zabanován v této session."
+  kick:
+    kicked: "&cByl jsi vyhozen ze session."
+    confirmed: "&aVyhozen {0} ze session."
+    error:
+      self: "&cNemůžeš vyhodit sám sebe."
+      not-member: "&c{0} není v tvé session."
+  ban:
+    banned: "&cByl jsi zabanován v této session."
+    confirmed: "&aZabanován {0} v session."
   preparation:
     map-vote-result: "&6Mapa rozhodnuta hlasováním: &e{0}"
     pick-team: "&eVyber svůj tým!"

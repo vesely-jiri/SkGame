@@ -31,6 +31,17 @@ session:
     game-in-progress: "&cThis game is already in progress"
     no-maps-for-minigame: "&cNo maps support this minigame — cannot start"
     minigame-disabled: "&cThis minigame is currently disabled."
+  join-denied:
+    banned: "&cYou are banned from this session."
+  kick:
+    kicked: "&cYou were kicked from the session."
+    confirmed: "&aKicked {0} from the session."
+    error:
+      self: "&cYou can't kick yourself."
+      not-member: "&c{0} is not in your session."
+  ban:
+    banned: "&cYou were banned from this session."
+    confirmed: "&aBanned {0} from the session."
   preparation:
     map-vote-result: "&6Map decided by vote: &e{0}"
     pick-team: "&ePick your team!"

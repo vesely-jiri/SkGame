@@ -88,6 +88,8 @@ public class GameCommand implements CommandExecutor, TabCompleter {
             case "history"  -> handleHistory(player, args);
             case "invite"   -> handleInvite(player, args);
             case "uninvite" -> handleUninvite(player, args);
+            case "kick"     -> handleKick(player, args);
+            case "ban"      -> handleBan(player, args);
             default         -> Messages.send(player, "command.error.unknown-subcommand");
         }
         return true;
@@ -164,6 +166,58 @@ public class GameCommand implements CommandExecutor, TabCompleter {
         Messages.send(player, "session.invite.revoked", target.getName());
     }
 
+    private void handleKick(Player player, String[] args) {
+        if (args.length < 2) return;
+        Session session = SessionManager.getInstance().getSession(player);
+        if (session == null || !player.equals(session.getHost())) {
+            Messages.send(player, "gui.session.error.not-host");
+            return;
+        }
+        Player target = Bukkit.getPlayerExact(args[1]);
+        if (target == null) {
+            Messages.send(player, "command.profile.not-found", args[1]);
+            return;
+        }
+        if (target.equals(player)) {
+            Messages.send(player, "session.kick.error.self");
+            return;
+        }
+        if (session.getRole(target) == null) {
+            Messages.send(player, "session.kick.error.not-member", target.getName());
+            return;
+        }
+        Messages.send(target, "session.kick.kicked");
+        SessionLifecycleManagerImpl.getInstance().leaveSession(target);
+        Messages.send(player, "session.kick.confirmed", target.getName());
+    }
+
+    private void handleBan(Player player, String[] args) {
+        if (args.length < 2) return;
+        Session session = SessionManager.getInstance().getSession(player);
+        if (session == null || !player.equals(session.getHost())) {
+            Messages.send(player, "gui.session.error.not-host");
+            return;
+        }
+        Player target = Bukkit.getPlayerExact(args[1]);
+        if (target == null) {
+            Messages.send(player, "command.profile.not-found", args[1]);
+            return;
+        }
+        if (target.equals(player)) {
+            Messages.send(player, "session.kick.error.self");
+            return;
+        }
+        if (session.getRole(target) == null) {
+            Messages.send(player, "session.kick.error.not-member", target.getName());
+            return;
+        }
+        // Ban before removal — no rejoin window
+        session.addBan(target.getUniqueId());
+        Messages.send(target, "session.ban.banned");
+        SessionLifecycleManagerImpl.getInstance().leaveSession(target);
+        Messages.send(player, "session.ban.confirmed", target.getName());
+    }
+
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (!(sender instanceof Player player)) return List.of();
@@ -177,6 +231,8 @@ public class GameCommand implements CommandExecutor, TabCompleter {
             if (ps != null && player.equals(ps.getHost())) {
                 opts.add("invite");
                 opts.add("uninvite");
+                opts.add("kick");
+                opts.add("ban");
             }
             String partial = args[0].toLowerCase();
             return opts.stream().filter(s -> s.startsWith(partial)).collect(Collectors.toList());
@@ -199,6 +255,16 @@ public class GameCommand implements CommandExecutor, TabCompleter {
                         ? onlineNames(args[1]) : List.of();
                 case "profile"   -> player.hasPermission("skgame.profile.others")
                         ? onlineNames(args[1]) : List.of();
+                case "kick", "ban" -> {
+                    Session ks = SessionManager.getInstance().getSession(player);
+                    if (ks == null || !player.equals(ks.getHost())) yield List.of();
+                    String partial = args[1].toLowerCase(java.util.Locale.ROOT);
+                    yield ks.getMembers().stream()
+                            .filter(m -> !m.equals(player))
+                            .map(Player::getName)
+                            .filter(n -> n.toLowerCase(java.util.Locale.ROOT).startsWith(partial))
+                            .collect(Collectors.toList());
+                }
                 default          -> List.of();
             };
         }

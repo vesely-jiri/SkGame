@@ -122,6 +122,10 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             plugin.getLogUtil().info("joinSession: " + player.getName() + " already in session " + session.getId());
             return false;
         }
+        if (session.isBanned(player.getUniqueId())) {
+            Messages.send(player, "session.join-denied.banned");
+            return false;
+        }
         if (session.getState() != SessionState.LOBBY) {
             Messages.send(player, "session.error.game-in-progress");
             return false;
@@ -141,6 +145,10 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
     public boolean joinAsSpectator(Player player, Session session) {
         if (session.getRole(player) != null) {
             plugin.getLogUtil().info("joinAsSpectator: " + player.getName() + " already in session, use setRole");
+            return false;
+        }
+        if (session.isBanned(player.getUniqueId())) {
+            Messages.send(player, "session.join-denied.banned");
             return false;
         }
         SpectatorJoinEvent joinEvent = new SpectatorJoinEvent(player, session);

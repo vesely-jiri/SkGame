@@ -42,6 +42,8 @@ public class Session {
     private final Map<UUID, String> teamAssignments = new HashMap<>();
     private boolean mapVoting = false;
     private final Map<UUID, String> mapVotes = new HashMap<>();
+    /** Transient per-session ban set. Cleared when the session is disbanded. */
+    private final Set<UUID> bannedPlayers = new HashSet<>();
 
     public Session(String id, Player host, MiniGame miniGame,
                    SessionState state, GameMap map, Set<Player> players, Set<Player> spectators,
@@ -258,6 +260,10 @@ public class Session {
     public void clearTeams() {
         teamAssignments.clear();
     }
+
+    public void addBan(UUID uuid) { bannedPlayers.add(uuid); }
+    public boolean isBanned(UUID uuid) { return bannedPlayers.contains(uuid); }
+    public void removeBan(UUID uuid) { bannedPlayers.remove(uuid); }
 
     /**
      * Change a session member's role and fire {@link PlayerRoleChangeEvent}.

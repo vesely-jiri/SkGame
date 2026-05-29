@@ -108,7 +108,7 @@ public class QuickplayQueue {
             QuickplayEntry qe = e.getValue();
             int elapsed = (int)((now - qe.joinedAt) / 1000);
 
-            Session match = findMatch(qe.tags, sm);
+            Session match = findMatch(qe.tags, sm, player);
             if (match != null) {
                 it.remove();
                 if (lifecycle.joinSession(player, match)) {
@@ -134,10 +134,11 @@ public class QuickplayQueue {
         }
     }
 
-    private @org.jetbrains.annotations.Nullable Session findMatch(Set<MinigameTag> requiredTags, SessionManager sm) {
+    private @org.jetbrains.annotations.Nullable Session findMatch(Set<MinigameTag> requiredTags, SessionManager sm, Player player) {
         for (Session s : sm.getAllSessions()) {
             if (s.getState() != SessionState.LOBBY) continue;
             if (s.getVisibility() != SessionVisibility.PUBLIC) continue;
+            if (s.isBanned(player.getUniqueId())) continue; // skip sessions the player is banned from
             if (requiredTags.isEmpty()) return s;
             if (s.getMiniGame() == null) continue;
             for (MinigameTag t : requiredTags) {
