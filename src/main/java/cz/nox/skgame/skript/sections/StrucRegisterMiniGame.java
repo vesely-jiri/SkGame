@@ -19,6 +19,7 @@ import ch.njol.skript.registrations.EventValues;
 import cz.nox.skgame.api.game.event.MiniGameRegisterEvent;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.MinigameTag;
+import cz.nox.skgame.api.game.model.type.TeamAssignmentMode;
 import cz.nox.skgame.core.game.MiniGameManager;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
@@ -57,12 +58,14 @@ public class StrucRegisterMiniGame extends Structure {
     private Literal<String> id;
     private @Nullable Trigger trigger;
 
-    private @Nullable Expression<String>      nameExpr;
-    private @Nullable Expression<ItemStack>   iconExpr;
-    private @Nullable Expression<String>      descriptionExpr;
-    private @Nullable Expression<String>      authorExpr;
-    private @Nullable Expression<Number>      minPlayersExpr;
-    private @Nullable Expression<MinigameTag> tagsExpr;
+    private @Nullable Expression<String>             nameExpr;
+    private @Nullable Expression<ItemStack>          iconExpr;
+    private @Nullable Expression<String>             descriptionExpr;
+    private @Nullable Expression<String>             authorExpr;
+    private @Nullable Expression<Number>             minPlayersExpr;
+    private @Nullable Expression<MinigameTag>        tagsExpr;
+    private @Nullable Expression<String>             teamsExpr;
+    private @Nullable Expression<TeamAssignmentMode> teamAssignmentExpr;
 
     static {
         Skript.registerStructure(StrucRegisterMiniGame.class, MiniGameEntryHelper.MIXED, NodeType.BOTH,
@@ -82,8 +85,10 @@ public class StrucRegisterMiniGame extends Structure {
             iconExpr        = MiniGameEntryHelper.readIcon(entryContainer);
             descriptionExpr = MiniGameEntryHelper.readDescription(entryContainer);
             authorExpr      = MiniGameEntryHelper.readAuthor(entryContainer);
-            minPlayersExpr  = MiniGameEntryHelper.readMinPlayers(entryContainer);
-            tagsExpr        = MiniGameEntryHelper.readTags(entryContainer);
+            minPlayersExpr     = MiniGameEntryHelper.readMinPlayers(entryContainer);
+            tagsExpr           = MiniGameEntryHelper.readTags(entryContainer);
+            teamsExpr          = MiniGameEntryHelper.readTeams(entryContainer);
+            teamAssignmentExpr = MiniGameEntryHelper.readTeamAssignment(entryContainer);
 
             List<Node> unhandled = entryContainer.getUnhandledNodes();
             if (!unhandled.isEmpty()) {
@@ -117,7 +122,7 @@ public class StrucRegisterMiniGame extends Structure {
         String minigameId = id.getSingle(null);
         if (minigameId == null) return false;
         MiniGame mg = miniGameManager.registerMiniGame(minigameId);
-        MiniGameEntryHelper.apply(mg, nameExpr, iconExpr, descriptionExpr, authorExpr, minPlayersExpr, tagsExpr);
+        MiniGameEntryHelper.apply(mg, nameExpr, iconExpr, descriptionExpr, authorExpr, minPlayersExpr, tagsExpr, teamsExpr, teamAssignmentExpr);
         if (trigger != null) {
             MiniGameRegisterEvent registerEvent = new MiniGameRegisterEvent(mg);
             TriggerItem.walk(trigger, registerEvent);

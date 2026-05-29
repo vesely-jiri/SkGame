@@ -3,6 +3,7 @@ package cz.nox.skgame.skript.sections;
 import ch.njol.skript.lang.Expression;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.MinigameTag;
+import cz.nox.skgame.api.game.model.type.TeamAssignmentMode;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.lang.entry.EntryContainer;
@@ -19,13 +20,15 @@ import java.util.EnumSet;
 final class MiniGameEntryHelper {
 
     // Individual constants so callers can use canCreateWith/getValue for manual iteration.
-    static final ExpressionEntryData<String>     NAME_ENTRY          = new ExpressionEntryData<>("name",          null, true, String.class);
-    static final ExpressionEntryData<ItemStack>  ICON_ENTRY          = new ExpressionEntryData<>("icon",          null, true, ItemStack.class);
-    static final ExpressionEntryData<String>     DESCRIPTION_ENTRY   = new ExpressionEntryData<>("description",   null, true, String.class);
-    static final ExpressionEntryData<String>      AUTHOR_ENTRY        = new ExpressionEntryData<>("author",        null, true, String.class);
-    static final ExpressionEntryData<Number>      MIN_PLAYERS_ENTRY   = new ExpressionEntryData<>("min players",   null, true, Number.class);
-    static final ExpressionEntryData<MinigameTag> MINIGAME_TAGS_ENTRY = new ExpressionEntryData<>("minigame tags", null, true, MinigameTag.class);
-    static final ExpressionEntryData<MinigameTag> TAGS_ENTRY          = new ExpressionEntryData<>("tags",          null, true, MinigameTag.class);
+    static final ExpressionEntryData<String>             NAME_ENTRY            = new ExpressionEntryData<>("name",            null, true, String.class);
+    static final ExpressionEntryData<ItemStack>          ICON_ENTRY            = new ExpressionEntryData<>("icon",            null, true, ItemStack.class);
+    static final ExpressionEntryData<String>             DESCRIPTION_ENTRY     = new ExpressionEntryData<>("description",     null, true, String.class);
+    static final ExpressionEntryData<String>             AUTHOR_ENTRY          = new ExpressionEntryData<>("author",          null, true, String.class);
+    static final ExpressionEntryData<Number>             MIN_PLAYERS_ENTRY     = new ExpressionEntryData<>("min players",     null, true, Number.class);
+    static final ExpressionEntryData<MinigameTag>        MINIGAME_TAGS_ENTRY   = new ExpressionEntryData<>("minigame tags",   null, true, MinigameTag.class);
+    static final ExpressionEntryData<MinigameTag>        TAGS_ENTRY            = new ExpressionEntryData<>("tags",            null, true, MinigameTag.class);
+    static final ExpressionEntryData<String>             TEAMS_ENTRY           = new ExpressionEntryData<>("teams",           null, true, String.class);
+    static final ExpressionEntryData<TeamAssignmentMode> TEAM_ASSIGNMENT_ENTRY = new ExpressionEntryData<>("team assignment", null, true, TeamAssignmentMode.class);
 
     /**
      * MIXED validator — passed to Skript.registerStructure() and used manually in EffSecRegisterMiniGame.
@@ -39,6 +42,8 @@ final class MiniGameEntryHelper {
             .addEntryData(MIN_PLAYERS_ENTRY)
             .addEntryData(MINIGAME_TAGS_ENTRY)
             .addEntryData(TAGS_ENTRY)
+            .addEntryData(TEAMS_ENTRY)
+            .addEntryData(TEAM_ASSIGNMENT_ENTRY)
             .unexpectedNodeTester(node -> false)
             .build();
 
@@ -74,13 +79,25 @@ final class MiniGameEntryHelper {
         return v;
     }
 
+    @SuppressWarnings("unchecked")
+    static @Nullable Expression<String> readTeams(EntryContainer c) {
+        return (Expression<String>) c.getOptional("teams", false);
+    }
+
+    @SuppressWarnings("unchecked")
+    static @Nullable Expression<TeamAssignmentMode> readTeamAssignment(EntryContainer c) {
+        return (Expression<TeamAssignmentMode>) c.getOptional("team assignment", false);
+    }
+
     static void apply(MiniGame mg,
-                      @Nullable Expression<String>      nameExpr,
-                      @Nullable Expression<ItemStack>   iconExpr,
-                      @Nullable Expression<String>      descriptionExpr,
-                      @Nullable Expression<String>      authorExpr,
-                      @Nullable Expression<Number>      minPlayersExpr,
-                      @Nullable Expression<MinigameTag> tagsExpr) {
+                      @Nullable Expression<String>             nameExpr,
+                      @Nullable Expression<ItemStack>          iconExpr,
+                      @Nullable Expression<String>             descriptionExpr,
+                      @Nullable Expression<String>             authorExpr,
+                      @Nullable Expression<Number>             minPlayersExpr,
+                      @Nullable Expression<MinigameTag>        tagsExpr,
+                      @Nullable Expression<String>             teamsExpr,
+                      @Nullable Expression<TeamAssignmentMode> teamAssignmentExpr) {
         if (nameExpr != null) {
             String v = nameExpr.getSingle(null);
             if (v != null) mg.setValue("name", v);
@@ -104,6 +121,14 @@ final class MiniGameEntryHelper {
         if (tagsExpr != null) {
             MinigameTag[] tags = tagsExpr.getArray(null);
             if (tags.length > 0) mg.setTags(EnumSet.copyOf(Arrays.asList(tags)));
+        }
+        if (teamsExpr != null) {
+            String[] names = teamsExpr.getArray(null);
+            if (names.length > 0) mg.setTeams(Arrays.asList(names));
+        }
+        if (teamAssignmentExpr != null) {
+            TeamAssignmentMode mode = teamAssignmentExpr.getSingle(null);
+            if (mode != null) mg.setTeamAssignment(mode);
         }
     }
 

@@ -14,6 +14,7 @@ import ch.njol.util.Kleenean;
 import cz.nox.skgame.api.game.event.MiniGameRegisterEvent;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.MinigameTag;
+import cz.nox.skgame.api.game.model.type.TeamAssignmentMode;
 import cz.nox.skgame.core.game.MiniGameManager;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
@@ -54,12 +55,14 @@ public class EffSecRegisterMiniGame extends EffectSection {
     private Expression<String> id;
     private @Nullable Trigger trigger;
 
-    private @Nullable Expression<String>      nameExpr;
-    private @Nullable Expression<ItemStack>   iconExpr;
-    private @Nullable Expression<String>      descriptionExpr;
-    private @Nullable Expression<String>      authorExpr;
-    private @Nullable Expression<Number>      minPlayersExpr;
-    private @Nullable Expression<MinigameTag> tagsExpr;
+    private @Nullable Expression<String>             nameExpr;
+    private @Nullable Expression<ItemStack>          iconExpr;
+    private @Nullable Expression<String>             descriptionExpr;
+    private @Nullable Expression<String>             authorExpr;
+    private @Nullable Expression<Number>             minPlayersExpr;
+    private @Nullable Expression<MinigameTag>        tagsExpr;
+    private @Nullable Expression<String>             teamsExpr;
+    private @Nullable Expression<TeamAssignmentMode> teamAssignmentExpr;
 
     static {
         Skript.registerSection(EffSecRegisterMiniGame.class,
@@ -93,7 +96,11 @@ public class EffSecRegisterMiniGame extends EffectSection {
                 else if (MiniGameEntryHelper.MINIGAME_TAGS_ENTRY.canCreateWith(node)) {
                     if (tagsExpr == null)
                         tagsExpr = (Expression<MinigameTag>) MiniGameEntryHelper.MINIGAME_TAGS_ENTRY.getValue(node);
-                } else {
+                } else if (MiniGameEntryHelper.TEAMS_ENTRY.canCreateWith(node))
+                    teamsExpr = (Expression<String>) MiniGameEntryHelper.TEAMS_ENTRY.getValue(node);
+                else if (MiniGameEntryHelper.TEAM_ASSIGNMENT_ENTRY.canCreateWith(node))
+                    teamAssignmentExpr = (Expression<TeamAssignmentMode>) MiniGameEntryHelper.TEAM_ASSIGNMENT_ENTRY.getValue(node);
+                else {
                     freeForm.add(node);
                 }
             }
@@ -117,7 +124,7 @@ public class EffSecRegisterMiniGame extends EffectSection {
 
         MiniGame mg = miniGameManager.registerMiniGame(minigameId);
 
-        MiniGameEntryHelper.apply(mg, nameExpr, iconExpr, descriptionExpr, authorExpr, minPlayersExpr, tagsExpr);
+        MiniGameEntryHelper.apply(mg, nameExpr, iconExpr, descriptionExpr, authorExpr, minPlayersExpr, tagsExpr, teamsExpr, teamAssignmentExpr);
 
         if (trigger != null) {
             MiniGameRegisterEvent registerEvent = new MiniGameRegisterEvent(mg);

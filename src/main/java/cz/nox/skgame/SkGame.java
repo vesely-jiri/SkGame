@@ -105,6 +105,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             "cz.nox.skgame.skript.expressions.sessions.ExprSessionValue",
             "cz.nox.skgame.skript.expressions.sessions.ExprSessionActivePlayers",
             "cz.nox.skgame.skript.expressions.sessions.ExprSessionWinners",
+            "cz.nox.skgame.skript.expressions.sessions.ExprPlayerTeam",
             "cz.nox.skgame.skript.expressions.sessions.ExprSessionArenaRegion",
             "cz.nox.skgame.skript.expressions.sessions.ExprSessionMembers",
             "cz.nox.skgame.skript.expressions.sessions.property.ExprSessionId",
