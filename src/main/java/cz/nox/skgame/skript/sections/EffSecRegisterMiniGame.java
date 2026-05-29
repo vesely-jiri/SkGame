@@ -14,6 +14,7 @@ import ch.njol.util.Kleenean;
 import cz.nox.skgame.api.game.event.MiniGameRegisterEvent;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.MinigameTag;
+import cz.nox.skgame.api.game.model.TeamEntry;
 import cz.nox.skgame.api.game.model.type.TeamAssignmentMode;
 import cz.nox.skgame.core.game.MiniGameManager;
 import org.bukkit.event.Event;
@@ -61,7 +62,7 @@ public class EffSecRegisterMiniGame extends EffectSection {
     private @Nullable Expression<String>             authorExpr;
     private @Nullable Expression<Number>             minPlayersExpr;
     private @Nullable Expression<MinigameTag>        tagsExpr;
-    private @Nullable Expression<String>             teamsExpr;
+    private @Nullable List<TeamEntry>                parsedTeams;
     private @Nullable Expression<TeamAssignmentMode> teamAssignmentExpr;
 
     static {
@@ -96,9 +97,10 @@ public class EffSecRegisterMiniGame extends EffectSection {
                 else if (MiniGameEntryHelper.MINIGAME_TAGS_ENTRY.canCreateWith(node)) {
                     if (tagsExpr == null)
                         tagsExpr = (Expression<MinigameTag>) MiniGameEntryHelper.MINIGAME_TAGS_ENTRY.getValue(node);
-                } else if (MiniGameEntryHelper.TEAMS_ENTRY.canCreateWith(node))
-                    teamsExpr = (Expression<String>) MiniGameEntryHelper.TEAMS_ENTRY.getValue(node);
-                else if (MiniGameEntryHelper.TEAM_ASSIGNMENT_ENTRY.canCreateWith(node))
+                } else if (MiniGameEntryHelper.TEAMS_SECTION_ENTRY.canCreateWith(node)) {
+                    SectionNode teamsSectionNode = (SectionNode) MiniGameEntryHelper.TEAMS_SECTION_ENTRY.getValue(node);
+                    if (teamsSectionNode != null) parsedTeams = MiniGameEntryHelper.parseTeams(teamsSectionNode);
+                } else if (MiniGameEntryHelper.TEAM_ASSIGNMENT_ENTRY.canCreateWith(node))
                     teamAssignmentExpr = (Expression<TeamAssignmentMode>) MiniGameEntryHelper.TEAM_ASSIGNMENT_ENTRY.getValue(node);
                 else {
                     freeForm.add(node);
@@ -124,7 +126,7 @@ public class EffSecRegisterMiniGame extends EffectSection {
 
         MiniGame mg = miniGameManager.registerMiniGame(minigameId);
 
-        MiniGameEntryHelper.apply(mg, nameExpr, iconExpr, descriptionExpr, authorExpr, minPlayersExpr, tagsExpr, teamsExpr, teamAssignmentExpr);
+        MiniGameEntryHelper.apply(mg, nameExpr, iconExpr, descriptionExpr, authorExpr, minPlayersExpr, tagsExpr, parsedTeams, teamAssignmentExpr);
 
         if (trigger != null) {
             MiniGameRegisterEvent registerEvent = new MiniGameRegisterEvent(mg);

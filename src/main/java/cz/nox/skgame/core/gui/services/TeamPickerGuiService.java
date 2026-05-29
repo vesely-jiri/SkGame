@@ -2,6 +2,7 @@ package cz.nox.skgame.core.gui.services;
 
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
+import cz.nox.skgame.api.game.model.TeamEntry;
 import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.api.gui.GuiBuilder;
 import cz.nox.skgame.api.gui.GuiItem;
@@ -11,6 +12,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -69,8 +71,13 @@ public class TeamPickerGuiService implements Listener {
             String teamName = teams.get(i);
             boolean mine = teamName.equals(currentTeam);
             int count = counts.getOrDefault(teamName, 0);
-            builder.slot(i, GuiItem.of(TEAM_WOOLS[i % TEAM_WOOLS.length])
-                    .name((mine ? "&a✔ " : "&f") + teamName)
+            TeamEntry entry = mg.getTeamEntry(teamName);
+            ItemStack icon = (entry != null && entry.getIcon() != null)
+                    ? entry.getIcon()
+                    : new ItemStack(TEAM_WOOLS[i % TEAM_WOOLS.length]);
+            String displayName = entry != null ? entry.getDisplayName() : teamName;
+            builder.slot(i, GuiItem.of(icon)
+                    .name((mine ? "&a✔ " : "&f") + displayName)
                     .lore(legacy("&7" + count + " player" + (count != 1 ? "s" : "")))
                     .onClick(e -> {
                         Player p = (Player) e.getWhoClicked();

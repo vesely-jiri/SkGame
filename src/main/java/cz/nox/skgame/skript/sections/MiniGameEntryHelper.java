@@ -1,17 +1,26 @@
 package cz.nox.skgame.skript.sections;
 
+import ch.njol.skript.Skript;
+import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.lang.Expression;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.MinigameTag;
+import cz.nox.skgame.api.game.model.TeamEntry;
 import cz.nox.skgame.api.game.model.type.TeamAssignmentMode;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.lang.entry.EntryContainer;
 import org.skriptlang.skript.lang.entry.EntryValidator;
+import org.skriptlang.skript.lang.entry.SectionEntryData;
 import org.skriptlang.skript.lang.entry.util.ExpressionEntryData;
+import ch.njol.skript.config.Node;
+import ch.njol.skript.config.SectionNode;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 /**
  * Shared entry definitions and apply logic for register-minigame syntax elements.
@@ -27,8 +36,14 @@ final class MiniGameEntryHelper {
     static final ExpressionEntryData<Number>             MIN_PLAYERS_ENTRY     = new ExpressionEntryData<>("min players",     null, true, Number.class);
     static final ExpressionEntryData<MinigameTag>        MINIGAME_TAGS_ENTRY   = new ExpressionEntryData<>("minigame tags",   null, true, MinigameTag.class);
     static final ExpressionEntryData<MinigameTag>        TAGS_ENTRY            = new ExpressionEntryData<>("tags",            null, true, MinigameTag.class);
-    static final ExpressionEntryData<String>             TEAMS_ENTRY           = new ExpressionEntryData<>("teams",           null, true, String.class);
+    static final SectionEntryData                        TEAMS_SECTION_ENTRY   = new SectionEntryData("teams", null, true);
     static final ExpressionEntryData<TeamAssignmentMode> TEAM_ASSIGNMENT_ENTRY = new ExpressionEntryData<>("team assignment", null, true, TeamAssignmentMode.class);
+
+    /** Validator for an individual team body (name: / icon:). */
+    static final EntryValidator TEAM_BODY_VALIDATOR = EntryValidator.builder()
+            .addEntryData(new ExpressionEntryData<>("name", null, true, String.class))
+            .addEntryData(new ExpressionEntryData<>("icon", null, true, ItemStack.class))
+            .build();
 
     /**
      * MIXED validator — passed to Skript.registerStructure() and used manually in EffSecRegisterMiniGame.
@@ -42,7 +57,7 @@ final class MiniGameEntryHelper {
             .addEntryData(MIN_PLAYERS_ENTRY)
             .addEntryData(MINIGAME_TAGS_ENTRY)
             .addEntryData(TAGS_ENTRY)
-            .addEntryData(TEAMS_ENTRY)
+            .addEntryData(TEAMS_SECTION_ENTRY)
             .addEntryData(TEAM_ASSIGNMENT_ENTRY)
             .unexpectedNodeTester(node -> false)
             .build();
@@ -79,14 +94,52 @@ final class MiniGameEntryHelper {
         return v;
     }
 
-    @SuppressWarnings("unchecked")
-    static @Nullable Expression<String> readTeams(EntryContainer c) {
-        return (Expression<String>) c.getOptional("teams", false);
+    /** Returns the raw SectionNode for the "teams:" entry, or null if absent. */
+    static @Nullable SectionNode readTeamsSectionNode(EntryContainer c) {
+        Object raw = c.getOptional("teams", false);
+        return raw instanceof SectionNode sn ? sn : null;
     }
 
     @SuppressWarnings("unchecked")
     static @Nullable Expression<TeamAssignmentMode> readTeamAssignment(EntryContainer c) {
         return (Expression<TeamAssignmentMode>) c.getOptional("team assignment", false);
+    }
+
+    /**
+     * Parse a "teams:" SectionNode into a list of TeamEntry.
+     * Each child node's key is the team id; if the child is a SectionNode its body
+     * may contain "name:" and "icon:" entries. Returns null (and logs an error) on
+     * duplicate team ids. Returns empty list for an empty section.
+     */
+    @SuppressWarnings("unchecked")
+    static @Nullable List<TeamEntry> parseTeams(SectionNode teamsSection) {
+        List<TeamEntry> entries = new ArrayList<>();
+        LinkedHashSet<String> seenIds = new LinkedHashSet<>();
+        for (Node child : teamsSection) {
+            if (child.getKey() == null) continue;
+            String teamId = ScriptLoader.replaceOptions(child.getKey());
+            if (!seenIds.add(teamId)) {
+                Skript.error("Duplicate team id in register block: \"" + teamId + "\"");
+                return null;
+            }
+            String displayName = null;
+            ItemStack icon = null;
+            if (child instanceof SectionNode teamSection) {
+                EntryContainer teamBody = TEAM_BODY_VALIDATOR.validate(teamSection);
+                if (teamBody != null) {
+                    Expression<String> nameExpr = (Expression<String>) teamBody.getOptional("name", false);
+                    if (nameExpr != null) displayName = nameExpr.getSingle(null);
+                    Expression<ItemStack> iconExpr = (Expression<ItemStack>) teamBody.getOptional("icon", false);
+                    if (iconExpr != null) {
+                        ItemStack v = iconExpr.getSingle(null);
+                        if (v != null) icon = v;
+                    }
+                }
+            }
+            // non-section child = id-only (name/icon default)
+            entries.add(new TeamEntry(teamId, displayName, icon));
+        }
+        return entries;
     }
 
     static void apply(MiniGame mg,
@@ -96,7 +149,7 @@ final class MiniGameEntryHelper {
                       @Nullable Expression<String>             authorExpr,
                       @Nullable Expression<Number>             minPlayersExpr,
                       @Nullable Expression<MinigameTag>        tagsExpr,
-                      @Nullable Expression<String>             teamsExpr,
+                      @Nullable List<TeamEntry>                parsedTeams,
                       @Nullable Expression<TeamAssignmentMode> teamAssignmentExpr) {
         if (nameExpr != null) {
             String v = nameExpr.getSingle(null);
@@ -122,9 +175,8 @@ final class MiniGameEntryHelper {
             MinigameTag[] tags = tagsExpr.getArray(null);
             if (tags.length > 0) mg.setTags(EnumSet.copyOf(Arrays.asList(tags)));
         }
-        if (teamsExpr != null) {
-            String[] names = teamsExpr.getArray(null);
-            if (names.length > 0) mg.setTeams(Arrays.asList(names));
+        if (parsedTeams != null) {
+            mg.setTeamEntries(parsedTeams);
         }
         if (teamAssignmentExpr != null) {
             TeamAssignmentMode mode = teamAssignmentExpr.getSingle(null);

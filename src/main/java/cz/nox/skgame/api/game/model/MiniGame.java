@@ -7,11 +7,13 @@ import ch.njol.skript.variables.SerializedVariable;
 import cz.nox.skgame.api.game.model.type.TeamAssignmentMode;
 import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -25,7 +27,7 @@ public class MiniGame implements ConfigurationSerializable {
     private Map<String, Object> values;
     private Map<String, CustomValue> gameMapValueDefs = new LinkedHashMap<>();
     private Set<MinigameTag> tags = EnumSet.noneOf(MinigameTag.class);
-    private List<String> teams = new ArrayList<>();
+    private List<TeamEntry> teams = new ArrayList<>();
     private TeamAssignmentMode teamAssignment = TeamAssignmentMode.AUTO;
 
     public MiniGame(String id,Map<String, Object> values) {
@@ -92,11 +94,19 @@ public class MiniGame implements ConfigurationSerializable {
         tags.remove(tag);
     }
 
+    /** Derived view — returns team ids in declaration order. All existing callers unchanged. */
     public List<String> getTeams() {
-        return teams;
+        return teams.stream().map(TeamEntry::getId).toList();
     }
-    public void setTeams(List<String> teams) {
-        this.teams = teams != null ? new ArrayList<>(teams) : new ArrayList<>();
+    public List<TeamEntry> getTeamEntries() {
+        return Collections.unmodifiableList(teams);
+    }
+    public @Nullable TeamEntry getTeamEntry(String id) {
+        for (TeamEntry t : teams) if (t.getId().equals(id)) return t;
+        return null;
+    }
+    public void setTeamEntries(List<TeamEntry> entries) {
+        this.teams = entries != null ? new ArrayList<>(entries) : new ArrayList<>();
     }
 
     public TeamAssignmentMode getTeamAssignment() {
@@ -140,7 +150,14 @@ public class MiniGame implements ConfigurationSerializable {
         }
 
         if (!teams.isEmpty()) {
-            gm.put("teams", String.join(",", teams));
+            Map<String, Object> teamsMap = new LinkedHashMap<>();
+            for (TeamEntry te : teams) {
+                Map<String, Object> td = new LinkedHashMap<>();
+                if (te.getRawDisplayName() != null) td.put("name", te.getRawDisplayName());
+                if (te.getIcon() != null) td.put("icon", te.getIcon().serialize());
+                teamsMap.put(te.getId(), td);
+            }
+            gm.put("teams", teamsMap);
         }
         if (teamAssignment != TeamAssignmentMode.AUTO) {
             gm.put("team-assignment", teamAssignment.name());
@@ -225,10 +242,48 @@ public class MiniGame implements ConfigurationSerializable {
             newGm.setTags(tagSet);
         }
 
+        // Teams: new section format, with CSV fallback for legacy data
         Object rawTeams = gm.get("teams");
         if (rawTeams instanceof String s && !s.isEmpty()) {
-            newGm.setTeams(Arrays.stream(s.split(",")).map(String::trim).collect(Collectors.toList()));
+            // Legacy CSV — id-only TeamEntry, no name/icon
+            List<TeamEntry> entries = new ArrayList<>();
+            for (String part : s.split(",")) entries.add(new TeamEntry(part.trim(), null, null));
+            newGm.setTeamEntries(entries);
+        } else {
+            Map<String, Object> teamsMap = null;
+            if (rawTeams instanceof MemorySection sec) teamsMap = sec.getValues(false);
+            else if (rawTeams instanceof Map<?, ?> m) //noinspection unchecked
+                teamsMap = (Map<String, Object>) m;
+            if (teamsMap != null) {
+                List<TeamEntry> entries = new ArrayList<>();
+                for (Map.Entry<String, Object> e : teamsMap.entrySet()) {
+                    String teamId = e.getKey();
+                    String displayName = null;
+                    ItemStack icon = null;
+                    Object v = e.getValue();
+                    if (v instanceof MemorySection sec) {
+                        displayName = sec.getString("name");
+                        Object iconRaw = sec.get("icon");
+                        if (iconRaw instanceof MemorySection iconSec) {
+                            try { icon = ItemStack.deserialize(iconSec.getValues(false)); } catch (Exception ignored) {}
+                        }
+                    } else if (v instanceof Map<?, ?> td) {
+                        Object nameObj = td.get("name");
+                        if (nameObj instanceof String) displayName = (String) nameObj;
+                        Object iconObj = td.get("icon");
+                        if (iconObj instanceof Map<?, ?>) {
+                            try {
+                                //noinspection unchecked
+                                icon = ItemStack.deserialize((Map<String, Object>) iconObj);
+                            } catch (Exception ignored) {}
+                        }
+                    }
+                    entries.add(new TeamEntry(teamId, displayName, icon));
+                }
+                newGm.setTeamEntries(entries);
+            }
         }
+
         Object rawMode = gm.get("team-assignment");
         if (rawMode instanceof String s) {
             try { newGm.setTeamAssignment(TeamAssignmentMode.valueOf(s)); }
