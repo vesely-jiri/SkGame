@@ -25,6 +25,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -320,7 +321,8 @@ public class AdminPanelGuiService implements Listener {
                 .name("&f" + member.getName() + (isHost ? " &6[Host]" : ""))
                 .lore(List.of(legacy("&7Role: &f" + roleStr),
                         legacy("&eLeft-click: &7View profile"),
-                        legacy("&cRight-click: &7Kick from session")))
+                        legacy("&cRight-click: &7Kick from session"),
+                        legacy("&cShift+right-click: &7Ban from session")))
                 .onClick(e -> {
                     Player p = (Player) e.getWhoClicked();
                     if (e.getClick().isRightClick()) {
@@ -332,6 +334,19 @@ public class AdminPanelGuiService implements Listener {
                     } else {
                         PlayerProfileGuiService.getInstance().openFor(p, member);
                     }
+                })
+                .onShiftClick(e -> {
+                    if (e.getClick() != ClickType.SHIFT_RIGHT) return;
+                    Player p = (Player) e.getWhoClicked();
+                    Session s = SessionManager.getInstance().getSessionById(sessionId);
+                    if (s == null) { openPanel(p); return; }
+                    s.addBan(member.getUniqueId(), member.getName());
+                    if (member.isOnline()) {
+                        Messages.send(member, "session.ban.banned");
+                        SessionLifecycleManagerImpl.getInstance().leaveSession(member);
+                    }
+                    Session refreshed = SessionManager.getInstance().getSessionById(sessionId);
+                    if (refreshed != null) openDetailFor(p, refreshed); else openPanel(p);
                 });
     }
 
