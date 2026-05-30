@@ -5,6 +5,7 @@ import cz.nox.skgame.api.game.event.GamePlayerSessionJoin;
 import cz.nox.skgame.api.game.event.GamePlayerSessionLeave;
 import cz.nox.skgame.api.game.event.GameStartEvent;
 import cz.nox.skgame.api.game.event.GameStopEvent;
+import cz.nox.skgame.api.game.event.RoundEndEvent;
 import cz.nox.skgame.api.game.event.LobbyEnterEvent;
 import cz.nox.skgame.api.game.event.PlayerRoleChangeEvent;
 import cz.nox.skgame.api.game.event.SessionCreateEvent;
@@ -83,6 +84,9 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
     private final Map<UUID, RejoinSnapshot> rejoinSnapshots = new ConcurrentHashMap<>();
     private static final int PICKER_SLOT = 4;
     private static final int VOTE_SLOT = 5;
+    // Reasons that indicate forced teardown rather than natural round completion.
+    private static final Set<String> TEARDOWN_REASONS = Set.of(
+            "disband", "shutdown", "abandoned", "admin", "minigame-disabled", "no-players");
     private final Map<UUID, ItemStack> pickerSlotBackup = new ConcurrentHashMap<>();
     private final Map<UUID, ItemStack> voteSlotBackup = new ConcurrentHashMap<>();
 
@@ -809,6 +813,12 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
 
         int cur = session.getCurrentRound();
         int total = session.getTotalRounds();
+
+        if (!TEARDOWN_REASONS.contains(reason.toLowerCase())) {
+            boolean hasNextRound = !plugin.isMaintenanceMode() && cur > 0 && cur < total;
+            Bukkit.getPluginManager().callEvent(new RoundEndEvent(session, cur, total, hasNextRound, reason));
+        }
+
         if (!plugin.isMaintenanceMode() && cur > 0 && cur < total) {
             session.setCurrentRound(cur + 1);
             Bukkit.getScheduler().runTaskLater(plugin, () -> {

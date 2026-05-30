@@ -80,6 +80,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             "cz.nox.skgame.skript.events.EvtPlayerSessionLeave",
             "cz.nox.skgame.skript.events.EvtPlayerSessionJoin",
             "cz.nox.skgame.skript.events.EvtGameStop",
+            "cz.nox.skgame.skript.events.EvtRoundEnd",
             "cz.nox.skgame.skript.events.EvtGameStart",
             "cz.nox.skgame.skript.events.EvtSessionDisband",
             "cz.nox.skgame.skript.events.EvtSpectatorJoin",
