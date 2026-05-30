@@ -4,6 +4,7 @@ import cz.nox.skgame.api.game.event.GameStartEvent;
 import cz.nox.skgame.api.game.event.GameStopEvent;
 import cz.nox.skgame.api.game.event.SessionCreateEvent;
 import cz.nox.skgame.api.game.event.SessionDisbandEvent;
+import cz.nox.skgame.api.game.event.SessionSettingsChangedEvent;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.type.DisbandReason;
@@ -338,10 +339,11 @@ public class AdminPanelGuiService implements Listener {
 
     // ─── Listener ────────────────────────────────────────────────────────────
 
-    @EventHandler public void onSessionCreate(SessionCreateEvent e)   { refreshPanelViewers(); }
-    @EventHandler public void onSessionDisband(SessionDisbandEvent e) { refreshPanelViewers(); }
-    @EventHandler public void onGameStart(GameStartEvent e)           { refreshPanelViewers(); }
-    @EventHandler public void onGameStop(GameStopEvent e)             { refreshPanelViewers(); }
+    @EventHandler public void onSessionCreate(SessionCreateEvent e)        { refreshPanelViewers(); }
+    @EventHandler public void onSessionDisband(SessionDisbandEvent e)      { refreshPanelViewers(); }
+    @EventHandler public void onGameStart(GameStartEvent e)                { refreshPanelViewers(); }
+    @EventHandler public void onGameStop(GameStopEvent e)                  { refreshPanelViewers(); }
+    @EventHandler public void onSettingsChanged(SessionSettingsChangedEvent e) { refreshPanelViewers(); }
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {

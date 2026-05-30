@@ -3,6 +3,7 @@ package cz.nox.skgame.core.gui.services;
 import cz.nox.skgame.api.game.event.GamePlayerSessionLeave;
 import cz.nox.skgame.api.game.event.GameStartEvent;
 import cz.nox.skgame.api.game.event.SessionDisbandEvent;
+import cz.nox.skgame.api.game.event.SessionSettingsChangedEvent;
 import cz.nox.skgame.api.gui.event.MinigamesGuiOpenEvent;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
@@ -134,6 +135,7 @@ public class MinigamesGuiService implements Listener {
                 MiniGame clicked = mgm.getMiniGameById(mgId);
                 if (clicked == null) return;
                 s.setMiniGame(clicked);
+                Bukkit.getPluginManager().callEvent(new SessionSettingsChangedEvent(s, "minigame"));
                 SessionGuiService.getInstance().update(s);
                 SessionGuiService.getInstance().openFor(p);
             }));

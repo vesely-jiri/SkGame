@@ -7,8 +7,10 @@ import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.util.coll.CollectionUtils;
+import cz.nox.skgame.api.game.event.SessionSettingsChangedEvent;
 import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.game.model.Session;
+import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,8 +67,12 @@ public class ExprSessionMap extends SimplePropertyExpression<Session, GameMap> {
                 if (delta == null || delta[0] == null) return;
                 GameMap map = (GameMap) delta[0];
                 session.setGameMap(map);
+                Bukkit.getPluginManager().callEvent(new SessionSettingsChangedEvent(session, "map"));
             }
-            case RESET -> session.setGameMap(null);
+            case RESET -> {
+                session.setGameMap(null);
+                Bukkit.getPluginManager().callEvent(new SessionSettingsChangedEvent(session, "map"));
+            }
         }
     }
 

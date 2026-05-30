@@ -7,8 +7,10 @@ import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.util.coll.CollectionUtils;
+import cz.nox.skgame.api.game.event.SessionSettingsChangedEvent;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.SessionVisibility;
+import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,6 +53,7 @@ public class ExprSessionVisibility extends SimplePropertyExpression<Session, Ses
         Session session = getExpr().getSingle(event);
         if (session == null || delta == null || delta[0] == null) return;
         session.setVisibility((SessionVisibility) delta[0]);
+        Bukkit.getPluginManager().callEvent(new SessionSettingsChangedEvent(session, "visibility"));
     }
 
     @Override

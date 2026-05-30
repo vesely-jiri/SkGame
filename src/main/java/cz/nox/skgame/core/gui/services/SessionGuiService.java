@@ -6,6 +6,7 @@ import cz.nox.skgame.api.game.event.GamePlayerSessionLeave;
 import cz.nox.skgame.api.game.event.GameStartEvent;
 import cz.nox.skgame.api.game.event.PlayerRoleChangeEvent;
 import cz.nox.skgame.api.game.event.SessionDisbandEvent;
+import cz.nox.skgame.api.game.event.SessionSettingsChangedEvent;
 import cz.nox.skgame.api.gui.event.SessionGuiOpenEvent;
 import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.game.model.MiniGame;
@@ -164,6 +165,7 @@ public class SessionGuiService implements Listener {
                     if (isMidGameLocked(session, p)) return;
                     if (!isHostOnly(p, session)) return;
                     session.setShuffle(!session.isShuffle());
+                    Bukkit.getPluginManager().callEvent(new SessionSettingsChangedEvent(session, "shuffle"));
                     update(session);
                 }));
 
@@ -193,6 +195,7 @@ public class SessionGuiService implements Listener {
                 boolean newMode = !session.isMapVoting();
                 session.setMapVoting(newMode);
                 if (newMode) session.setGameMap(null);
+                Bukkit.getPluginManager().callEvent(new SessionSettingsChangedEvent(session, "map"));
                 update(session);
             }));
 
@@ -205,6 +208,7 @@ public class SessionGuiService implements Listener {
                     if (isMidGameLocked(session, p)) return;
                     if (!isHostOnly(p, session)) return;
                     session.setTotalRounds(Math.min(getRounds(session) + 1, MAX_ROUNDS));
+                    Bukkit.getPluginManager().callEvent(new SessionSettingsChangedEvent(session, "rounds"));
                     update(session);
                 })
                 .onRightClick(e -> {
@@ -212,6 +216,7 @@ public class SessionGuiService implements Listener {
                     if (isMidGameLocked(session, p)) return;
                     if (!isHostOnly(p, session)) return;
                     session.setTotalRounds(Math.max(getRounds(session) - 1, 1));
+                    Bukkit.getPluginManager().callEvent(new SessionSettingsChangedEvent(session, "rounds"));
                     update(session);
                 }));
 
@@ -302,6 +307,7 @@ public class SessionGuiService implements Listener {
                         default          -> SessionVisibility.PUBLIC;
                     };
                     session.setVisibility(next);
+                    Bukkit.getPluginManager().callEvent(new SessionSettingsChangedEvent(session, "visibility"));
                     if (next == SessionVisibility.CODE && session.getJoinCode() == null) {
                         String code = generateJoinCode();
                         session.setJoinCode(code);
@@ -385,6 +391,7 @@ public class SessionGuiService implements Listener {
                         return;
                     }
                     s.setAllowSpectate(!s.isAllowSpectate());
+                    Bukkit.getPluginManager().callEvent(new SessionSettingsChangedEvent(s, "allow-spectate"));
                     update(s);
                 });
     }

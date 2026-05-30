@@ -3,6 +3,7 @@ package cz.nox.skgame.core.gui.services;
 import cz.nox.skgame.api.game.event.GamePlayerSessionLeave;
 import cz.nox.skgame.api.game.event.GameStartEvent;
 import cz.nox.skgame.api.game.event.SessionDisbandEvent;
+import cz.nox.skgame.api.game.event.SessionSettingsChangedEvent;
 import cz.nox.skgame.api.gui.event.MapsGuiOpenEvent;
 import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.game.model.MiniGame;
@@ -136,6 +137,7 @@ public class MapsGuiService implements Listener {
                         GameMap clicked = GameMapManager.getInstance().getGameMapById(mapId);
                         if (clicked == null) return;
                         s.setGameMap(clicked);
+                        Bukkit.getPluginManager().callEvent(new SessionSettingsChangedEvent(s, "map"));
                         SessionGuiService.getInstance().update(s);
                         SessionGuiService.getInstance().openFor(p);
                     }));

@@ -7,7 +7,9 @@ import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.util.coll.CollectionUtils;
+import cz.nox.skgame.api.game.event.SessionSettingsChangedEvent;
 import cz.nox.skgame.api.game.model.Session;
+import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +51,7 @@ public class ExprSessionShuffle extends SimplePropertyExpression<Session, Boolea
         Session session = getExpr().getSingle(event);
         if (session == null || delta == null || delta[0] == null) return;
         session.setShuffle((Boolean) delta[0]);
+        Bukkit.getPluginManager().callEvent(new SessionSettingsChangedEvent(session, "shuffle"));
     }
 
     @Override
