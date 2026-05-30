@@ -40,7 +40,7 @@ public class EvtSessionSettingsChanged extends SkriptEvent {
     static {
         Skript.registerEvent("SessionSettingsChanged", EvtSessionSettingsChanged.class,
                 SessionSettingsChangedEvent.class,
-                "session [settings] change[d]"
+                "session [(config|settings)] change[d]"
         );
         EventValues.registerEventValue(SessionSettingsChangedEvent.class, Session.class,
                 SessionSettingsChangedEvent::getSession, EventValues.TIME_NOW);
