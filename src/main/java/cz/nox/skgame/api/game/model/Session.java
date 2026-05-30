@@ -4,6 +4,7 @@ import cz.nox.skgame.SkGame;
 import cz.nox.skgame.api.game.event.GamePlayerSessionJoin;
 import cz.nox.skgame.api.game.event.GamePlayerSessionLeave;
 import cz.nox.skgame.api.game.event.PlayerRoleChangeEvent;
+import cz.nox.skgame.api.game.model.type.MapSelectionMode;
 import cz.nox.skgame.api.game.model.type.SessionRole;
 import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.api.region.Region;
@@ -40,7 +41,7 @@ public class Session {
     private final Set<UUID> invitedPlayers = new HashSet<>();
     @Nullable private String joinCode;
     private final Map<UUID, String> teamAssignments = new HashMap<>();
-    private boolean mapVoting = false;
+    private MapSelectionMode mapSelectionMode = MapSelectionMode.SPECIFIC;
     private boolean persistent = false;
     private final Map<UUID, String> mapVotes = new HashMap<>();
     /** Transient per-session bans. UUID → name captured at ban time (no OfflinePlayer lookups needed). */
@@ -241,8 +242,12 @@ public class Session {
         return null;
     }
 
-    public boolean isMapVoting() { return mapVoting; }
-    public void setMapVoting(boolean mapVoting) { this.mapVoting = mapVoting; }
+    public MapSelectionMode getMapSelectionMode() { return mapSelectionMode; }
+    public void setMapSelectionMode(MapSelectionMode mode) { this.mapSelectionMode = mode; }
+    /** Derived compat — all existing call-sites unchanged. */
+    public boolean isMapVoting() { return mapSelectionMode == MapSelectionMode.VOTE; }
+    /** Compat wrapper: true → VOTE, false → SPECIFIC. Does not set RANDOM. */
+    public void setMapVoting(boolean vote) { mapSelectionMode = vote ? MapSelectionMode.VOTE : MapSelectionMode.SPECIFIC; }
     public boolean isPersistent() { return persistent; }
     public void setPersistent(boolean persistent) { this.persistent = persistent; }
     public @Nullable String getMapVote(Player player) { return mapVotes.get(player.getUniqueId()); }

@@ -14,6 +14,7 @@ import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.SessionVisibility;
 import cz.nox.skgame.api.game.model.type.DisbandReason;
 import cz.nox.skgame.api.game.model.type.GameStartReason;
+import cz.nox.skgame.api.game.model.type.MapSelectionMode;
 import cz.nox.skgame.api.game.model.type.SessionRole;
 import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.api.gui.GuiBuilder;
@@ -180,21 +181,25 @@ public class SessionGuiService implements Listener {
         // Slot 26 — Visibility cycle: PUBLIC → INVITE_ONLY → CODE → PUBLIC (host-only)
         builder.slot(26, buildVisibilitySlot(session, viewer));
 
-        // Slot 33 — Maps (host-only): left-click = specific map, right-click = toggle map vote
+        // Slot 33 — Maps (host-only): left-click = specific map browser, right-click = cycle SPECIFIC→VOTE→RANDOM→SPECIFIC
         builder.slot(33, buildMapsSlot(session)
             .onLeftClick(e -> {
                 Player p = (Player) e.getWhoClicked();
                 if (isMidGameLocked(session, p)) return;
                 if (!isHostOnly(p, session)) return;
-                if (!session.isMapVoting()) MapsGuiService.getInstance().openFor(p);
+                MapsGuiService.getInstance().openFor(p); // always open browser; MapsGuiService resets mode to SPECIFIC on pick
             })
             .onRightClick(e -> {
                 Player p = (Player) e.getWhoClicked();
                 if (isMidGameLocked(session, p)) return;
                 if (!isHostOnly(p, session)) return;
-                boolean newMode = !session.isMapVoting();
-                session.setMapVoting(newMode);
-                if (newMode) session.setGameMap(null);
+                MapSelectionMode next = switch (session.getMapSelectionMode()) {
+                    case SPECIFIC -> MapSelectionMode.VOTE;
+                    case VOTE     -> MapSelectionMode.RANDOM;
+                    case RANDOM   -> MapSelectionMode.SPECIFIC;
+                };
+                if (session.getMapSelectionMode() == MapSelectionMode.SPECIFIC) session.setGameMap(null);
+                session.setMapSelectionMode(next);
                 Bukkit.getPluginManager().callEvent(new SessionSettingsChangedEvent(session, "map"));
                 update(session);
             }));
@@ -234,7 +239,7 @@ public class SessionGuiService implements Listener {
                         Messages.send(p, "gui.session.error.no-minigame");
                         return;
                     }
-                    if (session.getGameMap() == null && !session.isMapVoting()) {
+                    if (session.getGameMap() == null && session.getMapSelectionMode() == MapSelectionMode.SPECIFIC) {
                         Messages.send(p, "gui.session.error.no-map");
                         return;
                     }
@@ -428,16 +433,22 @@ public class SessionGuiService implements Listener {
         if (session.getMiniGame() == null) {
             return GuiItem.of(Material.BARRIER).name("&7&lMaps").lore(legacy("&c- Choose a minigame first"));
         }
-        if (session.isMapVoting()) {
+        if (session.getMapSelectionMode() == MapSelectionMode.VOTE) {
             return GuiItem.of(Material.FILLED_MAP)
                     .name("&b&lMap Vote")
                     .lore(legacy("&7Map decided by players during prep"),
-                          legacy("&8Right-click to disable voting"));
+                          legacy("&8Right-click to cycle"));
+        }
+        if (session.getMapSelectionMode() == MapSelectionMode.RANDOM) {
+            return GuiItem.of(Material.COMPASS)
+                    .name("&a&lRandom Map")
+                    .lore(legacy("&7Server picks randomly at game start"),
+                          legacy("&8Right-click to cycle"));
         }
         return GuiItem.of(Material.BARRIER)
                 .name("&7&lMaps")
                 .lore(legacy("&7Left-click: choose a specific map"),
-                      legacy("&8Right-click: enable map vote"));
+                      legacy("&8Right-click: cycle map selection mode"));
     }
 
     private GuiItem buildPlayerHead(Player member, boolean isHost, boolean isReady, Player viewer, Session session) {

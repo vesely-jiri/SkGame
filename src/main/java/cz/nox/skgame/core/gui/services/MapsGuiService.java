@@ -136,6 +136,7 @@ public class MapsGuiService implements Listener {
                         if (s == null) return;
                         GameMap clicked = GameMapManager.getInstance().getGameMapById(mapId);
                         if (clicked == null) return;
+                        s.setMapVoting(false); // ensure mode = SPECIFIC when a specific map is chosen
                         s.setGameMap(clicked);
                         Bukkit.getPluginManager().callEvent(new SessionSettingsChangedEvent(s, "map"));
                         SessionGuiService.getInstance().update(s);

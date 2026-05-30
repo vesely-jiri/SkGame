@@ -16,6 +16,7 @@ import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.type.DisbandReason;
+import cz.nox.skgame.api.game.model.type.MapSelectionMode;
 import cz.nox.skgame.api.game.model.type.TeamAssignmentMode;
 import cz.nox.skgame.api.game.model.type.GameStartReason;
 import cz.nox.skgame.api.game.model.type.SessionRole;
@@ -335,7 +336,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             for (Player p : session.getLobbyMembers()) Messages.send(p, "session.error.minigame-disabled");
             return false;
         }
-        if (gameMap == null && !session.isMapVoting()) return false;
+        if (gameMap == null && session.getMapSelectionMode() == MapSelectionMode.SPECIFIC) return false;
         if (gameMap != null && !gameMap.supportsMiniGame(miniGame)) return false;
 
         if (plugin.isMaintenanceMode()) {
@@ -353,6 +354,17 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             }
             enterPreparation(session);
             return true;
+        }
+
+        if (session.getMapSelectionMode() == MapSelectionMode.RANDOM && session.getGameMap() == null) {
+            List<GameMap> candidates = getCandidateMaps(session);
+            if (candidates.isEmpty()) {
+                for (Player p : session.getLobbyMembers())
+                    Messages.send(p, "session.error.no-maps-for-minigame");
+                return false;
+            }
+            Collections.shuffle(candidates);
+            session.setGameMap(candidates.get(0));
         }
 
         if (reason != GameStartReason.AUTO_NEXT_ROUND) {
