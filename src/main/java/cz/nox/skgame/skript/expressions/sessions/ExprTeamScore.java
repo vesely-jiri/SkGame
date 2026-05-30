@@ -1,0 +1,119 @@
+package cz.nox.skgame.skript.expressions.sessions;
+
+import ch.njol.skript.Skript;
+import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
+import ch.njol.skript.lang.SkriptParser;
+import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.util.Kleenean;
+import ch.njol.util.coll.CollectionUtils;
+import cz.nox.skgame.api.game.model.Session;
+import org.bukkit.event.Event;
+import org.jetbrains.annotations.Nullable;
+
+@Name("Team Score")
+@Description({
+        "Gets or changes a team's score in a session.",
+        "",
+        "Score is stored as an integer under the reserved plugin key 'skgame.team.score.<teamId>'.",
+        "It is a temporary session value — cleared at game end, survives round transitions.",
+        "Fractional values are truncated. No floor clamp: negative scores are allowed.",
+        "No event is fired on change (use ExprPlayerScore + EvtScoreChange for per-player events).",
+        "",
+        "Supports: GET / SET / ADD / REMOVE / DELETE."
+})
+@Examples({
+        "set team score of \"red\" in event-session to 0",
+        "add 1 to team score of \"yellow\" in event-session",
+        "remove 1 from team score of \"green\" in event-session",
+        "broadcast \"Red team: %team score of \"red\" in event-session%\"",
+        "delete team score of \"red\" in event-session"
+})
+@Since("1.0.0")
+@SuppressWarnings("unused")
+public class ExprTeamScore extends SimpleExpression<Number> {
+
+    private static final String KEY_PREFIX = "skgame.team.score.";
+
+    private Expression<String> teamIdExpr;
+    private Expression<Session> sessionExpr;
+
+    static {
+        Skript.registerExpression(ExprTeamScore.class, Number.class, ExpressionType.COMBINED,
+                "[skgame] team score of %string% in %session%");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed,
+                        SkriptParser.ParseResult parseResult) {
+        teamIdExpr  = (Expression<String>) exprs[0];
+        sessionExpr = (Expression<Session>) exprs[1];
+        return true;
+    }
+
+    @Override
+    protected @Nullable Number[] get(Event e) {
+        String teamId = teamIdExpr.getSingle(e);
+        if (teamId == null) return null;
+        Session session = sessionExpr.getSingle(e);
+        if (session == null) return null;
+        return new Number[]{scoreOf(session, teamId)};
+    }
+
+    @Override
+    public @Nullable Class<?>[] acceptChange(ChangeMode mode) {
+        return switch (mode) {
+            case SET, ADD, REMOVE -> CollectionUtils.array(Number.class);
+            case DELETE, RESET    -> CollectionUtils.array();
+            default               -> null;
+        };
+    }
+
+    @Override
+    public void change(Event e, @Nullable Object[] delta, ChangeMode mode) {
+        String teamId = teamIdExpr.getSingle(e);
+        if (teamId == null) return;
+        Session session = sessionExpr.getSingle(e);
+        if (session == null) return;
+
+        String key = KEY_PREFIX + teamId;
+
+        if (mode == ChangeMode.DELETE || mode == ChangeMode.RESET) {
+            session.removeValue(key, true);
+            return;
+        }
+
+        if (delta == null || delta[0] == null) return;
+        int old = scoreOf(session, teamId);
+        int amount = ((Number) delta[0]).intValue();
+        int newVal = switch (mode) {
+            case SET    -> amount;
+            case ADD    -> old + amount;
+            case REMOVE -> old - amount;
+            default     -> old;
+        };
+        session.setValue(key, newVal, true);
+    }
+
+    private static int scoreOf(Session session, String teamId) {
+        Object v = session.getValue(KEY_PREFIX + teamId, true);
+        return v instanceof Number n ? n.intValue() : 0;
+    }
+
+    @Override
+    public boolean isSingle() { return true; }
+
+    @Override
+    public Class<? extends Number> getReturnType() { return Number.class; }
+
+    @Override
+    public String toString(@Nullable Event e, boolean b) {
+        return "team score of " + teamIdExpr.toString(e, b) + " in " + sessionExpr.toString(e, b);
+    }
+}
