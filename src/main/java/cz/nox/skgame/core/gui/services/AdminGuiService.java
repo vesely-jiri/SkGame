@@ -9,6 +9,7 @@ import cz.nox.skgame.api.gui.GuiBuilder;
 import cz.nox.skgame.api.gui.GuiItem;
 import cz.nox.skgame.core.admin.AdminSetupState;
 import cz.nox.skgame.core.admin.AdminWand;
+import cz.nox.skgame.core.admin.BoundaryPreview;
 import cz.nox.skgame.core.admin.LocationBeam;
 import cz.nox.skgame.core.admin.PositionIndicator;
 import cz.nox.skgame.core.game.GameMapManager;
@@ -452,6 +453,11 @@ public class AdminGuiService implements Listener {
             ind.start();
             state.setPos2(loc, ind);
             player.sendMessage(ADMIN_PREFIX + "Position 2 set to " + formatLoc(loc));
+        }
+        if (state.hasRegion()) {
+            BoundaryPreview preview = new BoundaryPreview(player, state.getPos1(), state.getPos2(), SkGame.getInstance());
+            state.setBoundaryPreview(preview);
+            preview.start();
         }
     }
 

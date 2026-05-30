@@ -10,6 +10,7 @@ public class AdminSetupState {
     private Location pos2;
     private PositionIndicator indicator1;
     private PositionIndicator indicator2;
+    private BoundaryPreview boundaryPreview;
 
     private ResponseMode responseMode = ResponseMode.NONE;
     private String currentMapId;
@@ -32,9 +33,15 @@ public class AdminSetupState {
         indicator2 = indicator;
     }
 
+    public void setBoundaryPreview(BoundaryPreview preview) {
+        if (boundaryPreview != null) boundaryPreview.stop();
+        boundaryPreview = preview;
+    }
+
     public void clearPositions() {
         if (indicator1 != null) { indicator1.stop(); indicator1 = null; }
         if (indicator2 != null) { indicator2.stop(); indicator2 = null; }
+        if (boundaryPreview != null) { boundaryPreview.stop(); boundaryPreview = null; }
         pos1 = null;
         pos2 = null;
     }
