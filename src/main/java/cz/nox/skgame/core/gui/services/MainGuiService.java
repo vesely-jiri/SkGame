@@ -318,7 +318,7 @@ public class MainGuiService implements Listener {
     private GuiItem buildSessionItem(Session session, SessionLifecycleManagerImpl lifecycle,
                                      SessionManager sm) {
         Player host = session.getHost();
-        String hostName = host != null ? host.getName() : "?";
+        String hostName = host != null ? host.getName() : "Server";
         String sessionId = session.getId();
 
         List<Component> lore = session.getLobbyMembers().stream()

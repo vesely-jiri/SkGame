@@ -158,7 +158,7 @@ public class SpectateGuiService implements Listener {
 
     private GuiItem buildSessionCard(Session session, Player viewer) {
         Player host = session.getHost();
-        String hostName = host != null ? host.getName() : "?";
+        String hostName = host != null ? host.getName() : "Server";
 
         MiniGame mg = session.getMiniGame();
         GameMap map = session.getGameMap();

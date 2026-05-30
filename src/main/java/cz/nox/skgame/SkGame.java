@@ -123,6 +123,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             "cz.nox.skgame.skript.expressions.sessions.property.ExprSessionCurrentRound",
             "cz.nox.skgame.skript.expressions.sessions.property.ExprAllowSpectate",
             "cz.nox.skgame.skript.expressions.sessions.property.ExprSessionShuffle",
+            "cz.nox.skgame.skript.expressions.sessions.property.ExprSessionPersistent",
             "cz.nox.skgame.skript.expressions.sessions.property.ExprSessionVisibility",
             "cz.nox.skgame.skript.expressions.sessions.ExprShuffledSessionPlayers",
             "cz.nox.skgame.skript.expressions.sessions.ExprTeamScore",

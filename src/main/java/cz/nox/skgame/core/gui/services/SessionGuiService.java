@@ -137,7 +137,7 @@ public class SessionGuiService implements Listener {
         SkGame plugin = SkGame.getInstance();
 
         Player host = session.getHost();
-        String hostName = host != null ? host.getName() : "?";
+        String hostName = host != null ? host.getName() : "Server";
 
         GuiBuilder builder = new GuiBuilder()
                 .size(6)

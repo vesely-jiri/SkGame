@@ -41,6 +41,7 @@ public class Session {
     @Nullable private String joinCode;
     private final Map<UUID, String> teamAssignments = new HashMap<>();
     private boolean mapVoting = false;
+    private boolean persistent = false;
     private final Map<UUID, String> mapVotes = new HashMap<>();
     /** Transient per-session bans. UUID → name captured at ban time (no OfflinePlayer lookups needed). */
     private final java.util.LinkedHashMap<UUID, String> bannedPlayers = new java.util.LinkedHashMap<>();
@@ -242,6 +243,8 @@ public class Session {
 
     public boolean isMapVoting() { return mapVoting; }
     public void setMapVoting(boolean mapVoting) { this.mapVoting = mapVoting; }
+    public boolean isPersistent() { return persistent; }
+    public void setPersistent(boolean persistent) { this.persistent = persistent; }
     public @Nullable String getMapVote(Player player) { return mapVotes.get(player.getUniqueId()); }
     public void setMapVote(Player player, @Nullable String mapId) {
         if (mapId == null) mapVotes.remove(player.getUniqueId());

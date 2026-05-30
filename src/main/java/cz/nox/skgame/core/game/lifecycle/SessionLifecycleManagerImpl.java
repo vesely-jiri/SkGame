@@ -302,6 +302,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
 
         Player hostBefore = session.getHost();
         if (!partyManager.tryPromoteHost(session, player, explicitLeave)) {
+            if (session.isPersistent()) { session.setHost(null); return; }
             if (stateBeforeLeave == SessionState.STARTED) endGame(session, "abandoned");
             else if (stateBeforeLeave == SessionState.PREPARATION) cancelPreparation(session);
             disbandSession(session, partyManager.disbandReasonForHostLeave());
@@ -317,6 +318,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             if (hostAfter.isOnline()) Messages.send(hostAfter, "session.host.promoted");
         }
         if (partyManager.shouldAutoDisband(session)) {
+            if (session.isPersistent()) return;
             if (stateBeforeLeave == SessionState.STARTED) endGame(session, "abandoned");
             else if (stateBeforeLeave == SessionState.PREPARATION) cancelPreparation(session);
             disbandSession(session, DisbandReason.EMPTY_PARTY);

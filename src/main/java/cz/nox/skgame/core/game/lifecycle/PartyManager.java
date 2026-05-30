@@ -42,6 +42,7 @@ class PartyManager {
         BukkitTask task = plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             Session s = sessionManager.getSessionById(sessionId);
             if (s == null || s.getState() != SessionState.LOBBY) return;
+            if (s.isPersistent()) return;
             lifecycle.disbandSession(s, DisbandReason.IDLE_TIMEOUT);
         }, (long) timeoutSeconds * 20L);
         idleTimers.put(sessionId, task);
