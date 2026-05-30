@@ -345,7 +345,8 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
 
         if (needsPreparation(session)) {
             if (session.isMapVoting() && getCandidateMaps(session).isEmpty()) {
-                Messages.send(session.getHost(), "session.error.no-maps-for-minigame");
+                for (Player p : session.getLobbyMembers())
+                    Messages.send(p, "session.error.no-maps-for-minigame");
                 return false;
             }
             enterPreparation(session);
