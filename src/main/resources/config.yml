@@ -5,6 +5,10 @@
 # Safe to leave on in production but noisy — disable unless diagnosing issues.
 debug: false
 
+# --- Update checker ---
+update-checker:
+  enabled: true
+
 # --- Modules ---
 # Enable/disable user-facing components independently.
 # Disabling a module prevents its Skript syntaxes, vanilla scripts, and listeners from loading.

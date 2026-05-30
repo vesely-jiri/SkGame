@@ -113,6 +113,14 @@ public class InfoSubcommand {
         } else {
             send(sender, c("&7Database: &cdisconnected"));
         }
+
+        // Update checker result
+        String updateVer = plugin.getUpdateAvailableVersion();
+        if (updateVer != null) {
+            String updateUrl = plugin.getUpdateHtmlUrl();
+            send(sender, c("&eUpdate available: &a" + updateVer
+                    + " &7— " + (updateUrl != null ? updateUrl : GITHUB_URL)));
+        }
     }
 
     private static String formatUptime(long ms) {

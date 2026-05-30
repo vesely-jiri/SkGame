@@ -190,6 +190,8 @@ public class SkGame extends JavaPlugin implements TabCompleter {
 
     private volatile boolean maintenanceMode = false;
     private long pluginStartTime;
+    private volatile @Nullable String updateAvailableVersion = null;
+    private volatile @Nullable String updateHtmlUrl = null;
     // Per-minigame debug state (transient — resets on restart)
     private final java.util.Set<String> debuggedMinigames = new java.util.HashSet<>();
     private final java.util.Map<String, java.util.UUID> debugWatcher = new java.util.HashMap<>();
@@ -205,6 +207,9 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             debugWatcher.remove(id);
         }
     }
+
+    public @Nullable String getUpdateAvailableVersion() { return updateAvailableVersion; }
+    public @Nullable String getUpdateHtmlUrl() { return updateHtmlUrl; }
 
     public static SkGame getInstance() {
         return instance;
@@ -296,6 +301,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
         }
 
         logUtil.info("SkGame enabled in " + (System.currentTimeMillis() - s) + "ms");
+        scheduleUpdateCheck();
     }
 
     public void onDisable() {
@@ -318,6 +324,65 @@ public class SkGame extends JavaPlugin implements TabCompleter {
         }
 
         logUtil.info("SkGame disabled in " + (System.currentTimeMillis() - s) + "ms");
+    }
+
+    private void scheduleUpdateCheck() {
+        if (!getConfig().getBoolean("update-checker.enabled", true)) return;
+        Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
+            try {
+                java.net.URL url = new java.net.URL(
+                        "https://api.github.com/repos/vesely-jiri/SkGame/releases/latest");
+                java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.setConnectTimeout(5000);
+                conn.setReadTimeout(5000);
+                conn.setRequestProperty("User-Agent", "SkGame-UpdateChecker");
+                int code = conn.getResponseCode();
+                boolean dbg = getConfig().getBoolean("debug", false);
+                if (code == 404) { if (dbg) logUtil.info("Update checker: no releases yet (404)"); return; }
+                if (code != 200) { if (dbg) logUtil.info("Update checker: HTTP " + code); return; }
+                String body = new String(
+                        conn.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                String tagName = extractJsonString(body, "tag_name");
+                String htmlUrl  = extractJsonString(body, "html_url");
+                if (tagName == null) { if (dbg) logUtil.info("Update checker: no tag_name in response"); return; }
+                String latestVer = tagName.startsWith("v") ? tagName.substring(1) : tagName;
+                String currentVer = getDescription().getVersion();
+                if (isNewerVersion(latestVer, currentVer)) {
+                    updateAvailableVersion = latestVer;
+                    updateHtmlUrl = htmlUrl;
+                    logUtil.info("Update available: " + latestVer
+                            + " (current: " + currentVer + ") — " + htmlUrl);
+                }
+            } catch (Exception e) {
+                if (getConfig().getBoolean("debug", false))
+                    logUtil.info("Update checker: " + e.getMessage());
+            }
+        });
+    }
+
+    private static @Nullable String extractJsonString(String json, String key) {
+        String search = "\"" + key + "\":\"";
+        int idx = json.indexOf(search);
+        if (idx < 0) return null;
+        int start = idx + search.length();
+        int end = json.indexOf('"', start);
+        return end < 0 ? null : json.substring(start, end);
+    }
+
+    private static boolean isNewerVersion(String latest, String current) {
+        try {
+            String[] l = latest.split("\\.");
+            String[] c = current.split("\\.");
+            int len = Math.max(l.length, c.length);
+            for (int i = 0; i < len; i++) {
+                int lv = i < l.length ? Integer.parseInt(l[i].replaceAll("[^0-9]", "")) : 0;
+                int cv = i < c.length ? Integer.parseInt(c[i].replaceAll("[^0-9]", "")) : 0;
+                if (lv > cv) return true;
+                if (lv < cv) return false;
+            }
+            return false;
+        } catch (Exception e) { return false; }
     }
 
     @Nullable
