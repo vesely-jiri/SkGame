@@ -82,6 +82,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             "cz.nox.skgame.skript.events.EvtGameStop",
             "cz.nox.skgame.skript.events.EvtRoundEnd",
             "cz.nox.skgame.skript.events.EvtSessionSettingsChanged",
+            "cz.nox.skgame.skript.events.EvtScoreChange",
             "cz.nox.skgame.skript.events.EvtGameStart",
             "cz.nox.skgame.skript.events.EvtSessionDisband",
             "cz.nox.skgame.skript.events.EvtSpectatorJoin",
@@ -153,6 +154,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             // Expressions — gameplayers
             "cz.nox.skgame.skript.expressions.gameplayers.ExprGamePlayerValue",
             "cz.nox.skgame.skript.expressions.gameplayers.ExprGamePlayerSession",
+            "cz.nox.skgame.skript.expressions.gameplayers.ExprPlayerScore",
             // Expressions — regions (core subset, excludes SkBee and WG adapters)
             "cz.nox.skgame.skript.expressions.regions.ExprRegionPlayers",
             "cz.nox.skgame.skript.expressions.regions.ExprRegionEntities",
