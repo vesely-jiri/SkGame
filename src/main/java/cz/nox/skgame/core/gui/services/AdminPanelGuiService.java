@@ -466,8 +466,15 @@ public class AdminPanelGuiService implements Listener {
         panelViewers.remove(uuid);
         panelInventories.remove(uuid);  // prevent stale Inventory ref leak on genuine close
         // Panel filter state is intentionally preserved across open/close
-        // If admin closes GUI while pending a force-end message, cancel the pending input
-        pendingForceEndSessions.remove(uuid);
+        // NOTE: do NOT remove pendingForceEndSessions here — this event fires when we
+        // programmatically close the inventory (reason=PLUGIN) as part of the force-end
+        // flow, clearing the pending state before the admin types. Cleanup is in the
+        // chat handler (success path) and PlayerQuitEvent (disconnect path).
+    }
+
+    @EventHandler
+    public void onPlayerQuit(org.bukkit.event.player.PlayerQuitEvent event) {
+        pendingForceEndSessions.remove(event.getPlayer().getUniqueId());
     }
 
     // ─── Chat handlers for force-end-with-message flow ───────────────────────
