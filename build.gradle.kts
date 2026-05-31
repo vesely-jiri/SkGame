@@ -45,6 +45,11 @@ val gitSha: String = try {
 
 tasks {
 
+    val customBuildDir = providers.gradleProperty("skgameBuildDir").orNull
+    if (customBuildDir != null) {
+        layout.buildDirectory.set(file(customBuildDir))
+    }
+
     processResources {
         filesMatching("plugin.yml") {
             expand("version" to project.version)
