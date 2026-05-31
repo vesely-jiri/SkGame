@@ -51,6 +51,7 @@ import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.Nullable;
 
 import cz.nox.skgame.core.game.RejoinSnapshot;
+import cz.nox.skgame.core.scoreboard.ScoreboardService;
 import cz.nox.skgame.core.storage.GameResultsRepository;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -275,6 +276,11 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
                 session.removeSpectators(player);
                 Bukkit.getPluginManager().callEvent(new GamePlayerSessionLeave(player, session));
             }
+        }
+
+        // Restore player's scoreboard if they had a session board shown
+        if (stateBeforeLeave == SessionState.STARTED || stateBeforeLeave == SessionState.ENDED) {
+            ScoreboardService.getInstance().hideFromIfPresent(player, session);
         }
 
         if (stateBeforeLeave == SessionState.PREPARATION && role == SessionRole.LOBBY) {
@@ -730,9 +736,12 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         }
 
         if ("admin".equals(reason)) {
-            for (Player member : session.getMembers()) {
+            for (Player member : session.getMembers())
                 Messages.send(member, "session.stop.admin-ended");
-            }
+        } else if (reason.startsWith("admin:")) {
+            String customMsg = reason.substring(6);
+            Component adminMsgComp = LegacyComponentSerializer.legacyAmpersand().deserialize(customMsg);
+            for (Player member : session.getMembers()) member.sendMessage(adminMsgComp);
         }
 
         // Broadcast winners (set by scripts during GameStopEvent)
@@ -785,10 +794,22 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
     }
 
     private void runDeferredBlock(Session session, String reason, @Nullable Region arena) {
+        // Apply admin-queued config changes before clearing game state
+        Map<String, Object> pending = session.drainPendingAdminChanges();
+        if (pending.containsKey("map-mode"))
+            session.setMapSelectionMode((MapSelectionMode) pending.get("map-mode"));
+        if (pending.containsKey("map-id")) {
+            String mapId = (String) pending.get("map-id");
+            session.setGameMap(mapId != null ? GameMapManager.getInstance().getGameMapById(mapId) : null);
+        }
+
         // Moved from sync part — winners/teams data must persist through the window for scripters.
         session.clearWinners();
         session.clearTeams();
         session.clearMapVotes();
+
+        // Dispose session scoreboard and restore all players' captured boards
+        ScoreboardService.getInstance().disposeIfPresent(session);
 
         // Auto-cleanup after scripts have run, before role transitions
         if (arena != null && arena.getWorld() != null) {

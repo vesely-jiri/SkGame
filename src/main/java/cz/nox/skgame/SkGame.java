@@ -861,6 +861,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
     @SuppressWarnings("deprecation")
     private void doReloadConfig(CommandSender sender) {
         reloadConfig();
+        cz.nox.skgame.core.scoreboard.ScoreboardService.getInstance().reload(this);
         sender.sendMessage(ChatColor.GREEN + "config.yml reloaded.");
     }
 

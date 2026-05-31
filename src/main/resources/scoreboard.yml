@@ -1,0 +1,13 @@
+# SkGame — sidebar scoreboard template
+# Applied to all sessions whose minigame declares: set minigame value "scoreboard" of event-minigame to "per-session"
+#
+# Exactly one line must contain the {content} marker.
+# Content lines injected by scripts (set scoreboard content of %session% to ...) replace it.
+# Missing {content} marker: content appended after all lines + one-time warning logged.
+# Total rendered lines (header + content + footer) capped at 15 — overflow content lines dropped.
+
+title: "&6Event Server"
+lines:
+  - "&6----------------"
+  - "{content}"
+  - "&6----------------"

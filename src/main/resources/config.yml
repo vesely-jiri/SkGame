@@ -29,7 +29,7 @@ modules:
   database:
     enabled: false
   scoreboard:
-    enabled: false
+    enabled: true
 
 # --- Defaults ---
 defaults:
