@@ -49,7 +49,8 @@ public class ChatIsolationListener implements Listener {
             Session recipientSession = SessionManager.getInstance().getSession(recipient);
             String recipientRoom = roomOf(recipientSession, isolateLobby);
             if (!Objects.equals(senderRoom, recipientRoom)) continue;
-            if (spectatorIsolation && senderRoom != null && senderRole != null) {
+            if (spectatorIsolation && senderRoom != null && senderRole != null
+                    && senderSession.getState() != SessionState.ENDED) {
                 SessionRole recipientRole = senderSession.getRole(recipient);
                 boolean senderIsSpec = senderRole == SessionRole.SPECTATOR;
                 boolean recipientIsSpec = recipientRole == SessionRole.SPECTATOR;
