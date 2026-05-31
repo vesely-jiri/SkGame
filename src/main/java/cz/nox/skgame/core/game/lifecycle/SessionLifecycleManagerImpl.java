@@ -89,6 +89,12 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
     // Reasons that indicate forced teardown rather than natural round completion.
     private static final Set<String> TEARDOWN_REASONS = Set.of(
             "disband", "shutdown", "abandoned", "admin", "minigame-disabled", "no-players");
+
+    /** True for any abort/teardown reason: exact match in TEARDOWN_REASONS, or "admin:" prefix variants. */
+    private static boolean isAbortReason(String reason) {
+        String lower = reason.toLowerCase();
+        return lower.startsWith("admin:") || TEARDOWN_REASONS.contains(lower);
+    }
     private final Map<UUID, ItemStack> pickerSlotBackup = new ConcurrentHashMap<>();
     private final Map<UUID, ItemStack> voteSlotBackup = new ConcurrentHashMap<>();
 
@@ -786,7 +792,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
                 "session=" + session.getId() + " reason=" + reason + " winners=[" + String.join(",", _wnames) + "]");
         }
         long windowTicks = plugin.getConfig().getLong("session.post-game.window-seconds", 0L) * 20L;
-        if (windowTicks > 0 && !TEARDOWN_REASONS.contains(reason.toLowerCase())) {
+        if (windowTicks > 0 && !isAbortReason(reason)) {
             Region capturedArena = arena;
             String sessionId = session.getId();
             BukkitTask windowTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
@@ -880,7 +886,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         int total = session.getTotalRounds();
         long windowTicks = plugin.getConfig().getLong("session.post-game.window-seconds", 0L) * 20L;
 
-        if (!TEARDOWN_REASONS.contains(reason.toLowerCase())) {
+        if (!isAbortReason(reason)) {
             boolean hasNextRound = !plugin.isMaintenanceMode() && cur > 0 && cur < total;
             Bukkit.getPluginManager().callEvent(new RoundEndEvent(session, cur, total, hasNextRound, reason));
         }
