@@ -260,18 +260,28 @@ public class AdminPanelGuiService implements Listener {
                     }));
         }
 
-        // Force end (STARTED only) — opens chat-input flow for custom broadcast message
+        // Force end (STARTED only): left = immediate no-reason, right = chat input for custom reason
         if (session.getState() == SessionState.STARTED) {
             builder.slot(48, GuiItem.of(Material.RED_CONCRETE)
                     .name(Messages.getComponent("gui.admin-panel.force-end", admin))
-                    .lore(List.of(legacy("&7Type a message to broadcast to session")))
-                    .onClick(e -> {
+                    .lore(List.of(
+                            legacy("&eLeft-click: &7End immediately (default message)"),
+                            legacy("&eRight-click: &7End with custom reason (chat input)")))
+                    .onLeftClick(e -> {
+                        Player p = (Player) e.getWhoClicked();
+                        Session s = SessionManager.getInstance().getSessionById(sessionId);
+                        if (s == null || s.getState() != SessionState.STARTED) { openPanel(p); return; }
+                        SessionLifecycleManagerImpl.getInstance().endGame(s, "admin:");
+                        Messages.send(p, "admin.force-end.confirm", s.getId());
+                        openPanel(p);
+                    })
+                    .onRightClick(e -> {
                         Player p = (Player) e.getWhoClicked();
                         Session s = SessionManager.getInstance().getSessionById(sessionId);
                         if (s == null || s.getState() != SessionState.STARTED) { openPanel(p); return; }
                         pendingForceEndSessions.put(p.getUniqueId(), sessionId);
                         p.closeInventory();
-                        p.sendMessage(legacy("&eType a broadcast message (or &7cancel&e to abort):"));
+                        p.sendMessage(legacy("&eType a broadcast reason (or &7cancel&e to abort):"));
                     }));
         }
 
@@ -497,10 +507,16 @@ public class AdminPanelGuiService implements Listener {
         String msg = event.getMessage().trim();
         Bukkit.getScheduler().runTask(SkGame.getInstance(), () -> {
             pendingForceEndSessions.remove(p.getUniqueId());
-            if ("cancel".equalsIgnoreCase(msg)) { openPanel(p); return; }
+            if ("cancel".equalsIgnoreCase(msg)) {
+                Messages.send(p, "admin.force-end.cancelled");
+                openPanel(p);
+                return;
+            }
             Session s = SessionManager.getInstance().getSessionById(sessionId);
-            if (s != null && s.getState() == SessionState.STARTED)
+            if (s != null && s.getState() == SessionState.STARTED) {
                 SessionLifecycleManagerImpl.getInstance().endGame(s, "admin:" + msg);
+                Messages.send(p, "admin.force-end.confirm-reason", s.getId(), msg);
+            }
             openPanel(p);
         });
     }

@@ -285,6 +285,12 @@ admin:
       show: "&9[&bShow&9]"
       show-hover: "&bMark saved locations"
       header: "&6List of &7values {0} &6for &7map {1} &6of &7addon {2}"
+  force-end:
+    broadcast: "&cThis game was ended by an administrator."
+    broadcast-reason: "&cThis game was ended by an administrator. &7Reason: &f{0}"
+    confirm: "&aYou ended session {0}."
+    confirm-reason: "&aYou ended session {0} &7(reason: &f{1}&7)."
+    cancelled: "&7Force-end cancelled."
   action:
     canceled: "&cAction canceled"
 

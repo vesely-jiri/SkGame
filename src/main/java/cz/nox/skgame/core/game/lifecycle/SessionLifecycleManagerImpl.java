@@ -735,13 +735,19 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             Bukkit.getPluginManager().callEvent(new GameStopEvent(miniGame, session, reason));
         }
 
-        if ("admin".equals(reason)) {
-            for (Player member : session.getMembers())
-                Messages.send(member, "session.stop.admin-ended");
-        } else if (reason.startsWith("admin:")) {
+        if (reason.startsWith("admin:")) {
             String customMsg = reason.substring(6);
-            Component adminMsgComp = LegacyComponentSerializer.legacyAmpersand().deserialize(customMsg);
-            for (Player member : session.getMembers()) member.sendMessage(adminMsgComp);
+            if (customMsg.isEmpty()) {
+                for (Player member : session.getMembers())
+                    Messages.send(member, "admin.force-end.broadcast");
+            } else {
+                for (Player member : session.getMembers())
+                    Messages.send(member, "admin.force-end.broadcast-reason", customMsg);
+            }
+        } else if ("admin".equals(reason)) {
+            // Legacy plain "admin" reason — keep existing behaviour
+            for (Player member : session.getMembers())
+                Messages.send(member, "admin.force-end.broadcast");
         }
 
         // Broadcast winners (set by scripts during GameStopEvent)

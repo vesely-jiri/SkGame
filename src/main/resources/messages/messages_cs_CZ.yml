@@ -209,6 +209,12 @@ maintenance:
     disabled: "&aRežim údržby &7VYPNUT&a. Server se vrací do normálního provozu."
 
 admin:
+  force-end:
+    broadcast: "&cTato hra byla ukončena administrátorem."
+    broadcast-reason: "&cTato hra byla ukončena administrátorem. &7Důvod: &f{0}"
+    confirm: "&aUkončil jsi session {0}."
+    confirm-reason: "&aUkončil jsi session {0} &7(důvod: &f{1}&7)."
+    cancelled: "&7Force-end zrušen."
   setup:
     enabled: "&aRežim úprav aktivován"
     disabled: "&cRežim úprav deaktivován"
