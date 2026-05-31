@@ -120,7 +120,7 @@ public class SpectateGuiService implements Listener {
 
         // Active spectatable sessions (STARTED + allowSpectate), sorted oldest-first
         List<Session> spectatable = Arrays.stream(sm.getAllSessions())
-                .filter(s -> s.getState() == SessionState.STARTED && SkGame.getInstance().canSpectate(viewer, s))
+                .filter(s -> (s.getState() == SessionState.STARTED || s.getState() == SessionState.ENDED) && SkGame.getInstance().canSpectate(viewer, s))
                 .sorted(Comparator.comparingLong(Session::getCreatedAt))
                 .collect(Collectors.toList());
 

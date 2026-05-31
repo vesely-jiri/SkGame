@@ -85,7 +85,8 @@ public class AdminPanelGuiService implements Listener {
         Session[] sessions = Arrays.stream(sm.getAllSessions())
                 .filter(s -> switch (filter) {
                     case FILTER_LOBBY   -> s.getState() == SessionState.LOBBY;
-                    case FILTER_RUNNING -> s.getState() == SessionState.STARTING || s.getState() == SessionState.STARTED;
+                    case FILTER_RUNNING -> s.getState() == SessionState.STARTING || s.getState() == SessionState.STARTED
+                            || s.getState() == SessionState.ENDED;
                     default             -> true;
                 })
                 .toArray(Session[]::new);

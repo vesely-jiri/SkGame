@@ -590,7 +590,8 @@ public class SkGame extends JavaPlugin implements TabCompleter {
                             .filter(s -> s.getMiniGame() != null && mgId.equals(s.getMiniGame().getId()))
                             .filter(s -> s.getState() == cz.nox.skgame.api.game.model.type.SessionState.STARTED
                                     || s.getState() == cz.nox.skgame.api.game.model.type.SessionState.STARTING
-                                    || s.getState() == cz.nox.skgame.api.game.model.type.SessionState.PREPARATION)
+                                    || s.getState() == cz.nox.skgame.api.game.model.type.SessionState.PREPARATION
+                                    || s.getState() == cz.nox.skgame.api.game.model.type.SessionState.ENDED)
                             .collect(java.util.stream.Collectors.toList());
 
             if (force) {

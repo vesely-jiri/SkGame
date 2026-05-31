@@ -81,7 +81,8 @@ public class InfoSubcommand {
         Session[] all = SessionManager.getInstance().getAllSessions();
         long lobby = Arrays.stream(all).filter(s -> s.getState() == SessionState.LOBBY).count();
         long running = Arrays.stream(all)
-                .filter(s -> s.getState() == SessionState.STARTED || s.getState() == SessionState.STARTING)
+                .filter(s -> s.getState() == SessionState.STARTED || s.getState() == SessionState.STARTING
+                        || s.getState() == SessionState.ENDED)
                 .count();
         send(sender, c("&7Sessions: &f" + all.length
                 + " &8(lobby: &f" + lobby + "&8, running: &f" + running + "&8)"));

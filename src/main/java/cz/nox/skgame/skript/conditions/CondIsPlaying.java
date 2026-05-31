@@ -60,7 +60,7 @@ public class CondIsPlaying extends Condition {
             MiniGame sessionMg = session.getMiniGame();
             return sessionMg != null
                     && sessionMg.getId().equals(miniGame.getId())
-                    && session.getState() == SessionState.STARTED;
+                    && (session.getState() == SessionState.STARTED || session.getState() == SessionState.ENDED);
         }, isNegated());
     }
 

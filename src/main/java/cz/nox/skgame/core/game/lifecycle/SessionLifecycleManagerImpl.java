@@ -304,7 +304,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         Player hostBefore = session.getHost();
         if (!partyManager.tryPromoteHost(session, player, explicitLeave)) {
             if (session.isPersistent()) { session.setHost(null); return; }
-            if (stateBeforeLeave == SessionState.STARTED) endGame(session, "abandoned");
+            if (stateBeforeLeave == SessionState.STARTED || stateBeforeLeave == SessionState.ENDED) endGame(session, "abandoned");
             else if (stateBeforeLeave == SessionState.PREPARATION) cancelPreparation(session);
             disbandSession(session, partyManager.disbandReasonForHostLeave());
             return;
@@ -320,7 +320,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         }
         if (partyManager.shouldAutoDisband(session)) {
             if (session.isPersistent()) return;
-            if (stateBeforeLeave == SessionState.STARTED) endGame(session, "abandoned");
+            if (stateBeforeLeave == SessionState.STARTED || stateBeforeLeave == SessionState.ENDED) endGame(session, "abandoned");
             else if (stateBeforeLeave == SessionState.PREPARATION) cancelPreparation(session);
             disbandSession(session, DisbandReason.EMPTY_PARTY);
         }
@@ -706,6 +706,12 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
     public void endGame(Session session, String reason) {
         sessionManager.cancelCountdownTask(session.getId());
 
+        // Re-entry guard: ENDED means window is active. Task already cancelled above; run deferred cleanup only.
+        if (session.getState() == SessionState.ENDED) {
+            runDeferredBlock(session, reason, null);
+            return;
+        }
+
         Region arena = session.getArenaRegion();
 
         // Release arena slot
@@ -715,9 +721,9 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             session.setArenaRegion(null);
         }
 
-        session.setState(SessionState.LOBBY);
+        session.setState(SessionState.ENDED);
 
-        // Fire GameStopEvent while players are still in PLAYER role (preserve pre-Phase9 handler visibility)
+        // Fire GameStopEvent while players are still in PLAYER role, state=ENDED (semantically correct)
         MiniGame miniGame = session.getMiniGame();
         if (miniGame != null) {
             Bukkit.getPluginManager().callEvent(new GameStopEvent(miniGame, session, reason));
@@ -764,6 +770,22 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             Debug.logMiniGame(miniGame.getId(), "game-stop", () ->
                 "session=" + session.getId() + " reason=" + reason + " winners=[" + String.join(",", _wnames) + "]");
         }
+        long windowTicks = plugin.getConfig().getLong("session.post-game.window-seconds", 0L) * 20L;
+        if (windowTicks > 0 && !TEARDOWN_REASONS.contains(reason.toLowerCase())) {
+            Region capturedArena = arena;
+            String sessionId = session.getId();
+            BukkitTask windowTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (sessionManager.getSessionById(sessionId) != null)
+                    runDeferredBlock(session, reason, capturedArena);
+            }, windowTicks);
+            sessionManager.setCountdownTask(session.getId(), windowTask);
+        } else {
+            runDeferredBlock(session, reason, arena);
+        }
+    }
+
+    private void runDeferredBlock(Session session, String reason, @Nullable Region arena) {
+        // Moved from sync part — winners/teams data must persist through the window for scripters.
         session.clearWinners();
         session.clearTeams();
         session.clearMapVotes();
@@ -824,10 +846,12 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             if (lobbySpawn != null) p.teleport(lobbySpawn);
         }
 
+        session.setState(SessionState.LOBBY);
         partyManager.registerActivity(session);
 
         int cur = session.getCurrentRound();
         int total = session.getTotalRounds();
+        long windowTicks = plugin.getConfig().getLong("session.post-game.window-seconds", 0L) * 20L;
 
         if (!TEARDOWN_REASONS.contains(reason.toLowerCase())) {
             boolean hasNextRound = !plugin.isMaintenanceMode() && cur > 0 && cur < total;
@@ -836,11 +860,13 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
 
         if (!plugin.isMaintenanceMode() && cur > 0 && cur < total) {
             session.setCurrentRound(cur + 1);
+            // Window was the inter-round pause; if disabled, keep the legacy 40-tick buffer.
+            long delay = windowTicks > 0 ? 1L : 40L;
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 if (sessionManager.getSessionById(session.getId()) != null) {
                     startGame(session, GameStartReason.AUTO_NEXT_ROUND, null);
                 }
-            }, 40L);
+            }, delay);
         } else {
             session.setCurrentRound(0);
         }
@@ -877,7 +903,8 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         }
         // Teardown running game first so scripts clean up, players are reset and teleported
         SessionState stateAtDisband = session.getState();
-        if (stateAtDisband == SessionState.STARTED || stateAtDisband == SessionState.STARTING) {
+        if (stateAtDisband == SessionState.STARTED || stateAtDisband == SessionState.STARTING
+                || stateAtDisband == SessionState.ENDED) {
             endGame(session, "disband");
         } else if (stateAtDisband == SessionState.PREPARATION) {
             cancelPreparation(session);
@@ -948,7 +975,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         for (Session session : sessionManager.getAllSessions()) {
             SessionState state = session.getState();
             if (state == SessionState.STARTED || state == SessionState.STARTING
-                    || state == SessionState.PREPARATION) {
+                    || state == SessionState.PREPARATION || state == SessionState.ENDED) {
                 endGame(session, "SHUTDOWN");
             }
         }

@@ -44,6 +44,9 @@ session:
   auto-promote-host: true
   # When false (default), host cannot change minigame/map/rounds while game is STARTING or STARTED.
   allow-mid-game-changes: false
+  # Post-game celebration window — players stay in arena after game ends. 0 = disabled (current behavior).
+  post-game:
+    window-seconds: 0
   # Rejoin offer after disconnect — shown to players who were mid-game when they disconnected.
   rejoin:
     enabled: true

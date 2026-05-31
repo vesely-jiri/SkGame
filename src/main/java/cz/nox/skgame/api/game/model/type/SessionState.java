@@ -5,5 +5,7 @@ public enum SessionState {
     LOBBY,
     PREPARATION,
     STARTING,
-    STARTED
+    STARTED,
+    /** Post-game celebration/results window. Players still in PLAYER role, arena intact. */
+    ENDED
 }

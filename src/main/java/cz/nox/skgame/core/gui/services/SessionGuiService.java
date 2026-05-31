@@ -498,7 +498,7 @@ public class SessionGuiService implements Listener {
     private boolean isMidGameLocked(Session session, Player player) {
         SessionState st = session.getState();
         if (st != SessionState.STARTING && st != SessionState.STARTED
-                && st != SessionState.PREPARATION) return false;
+                && st != SessionState.PREPARATION && st != SessionState.ENDED) return false;
         if (SkGame.getInstance().isAllowMidGameChanges()) return false;
         Messages.send(player, "session.error.mid-game-locked");
         return true;
