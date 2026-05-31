@@ -8,8 +8,6 @@ public class AdminSetupState {
 
     private Location pos1;
     private Location pos2;
-    private PositionIndicator indicator1;
-    private PositionIndicator indicator2;
     private BoundaryPreview boundaryPreview;
 
     private ResponseMode responseMode = ResponseMode.NONE;
@@ -21,17 +19,8 @@ public class AdminSetupState {
     public Location getPos2() { return pos2; }
     public boolean hasRegion() { return pos1 != null && pos2 != null; }
 
-    public void setPos1(Location loc, PositionIndicator indicator) {
-        if (indicator1 != null) indicator1.stop();
-        pos1 = loc;
-        indicator1 = indicator;
-    }
-
-    public void setPos2(Location loc, PositionIndicator indicator) {
-        if (indicator2 != null) indicator2.stop();
-        pos2 = loc;
-        indicator2 = indicator;
-    }
+    public void setPos1(Location loc) { pos1 = loc; }
+    public void setPos2(Location loc) { pos2 = loc; }
 
     public void setBoundaryPreview(BoundaryPreview preview) {
         if (boundaryPreview != null) boundaryPreview.stop();
@@ -39,8 +28,6 @@ public class AdminSetupState {
     }
 
     public void clearPositions() {
-        if (indicator1 != null) { indicator1.stop(); indicator1 = null; }
-        if (indicator2 != null) { indicator2.stop(); indicator2 = null; }
         if (boundaryPreview != null) { boundaryPreview.stop(); boundaryPreview = null; }
         pos1 = null;
         pos2 = null;

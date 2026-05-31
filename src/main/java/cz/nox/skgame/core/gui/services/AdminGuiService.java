@@ -11,7 +11,6 @@ import cz.nox.skgame.core.admin.AdminSetupState;
 import cz.nox.skgame.core.admin.AdminWand;
 import cz.nox.skgame.core.admin.BoundaryPreview;
 import cz.nox.skgame.core.admin.LocationBeam;
-import cz.nox.skgame.core.admin.PositionIndicator;
 import cz.nox.skgame.core.game.GameMapManager;
 import cz.nox.skgame.core.game.MiniGameManager;
 import cz.nox.skgame.core.region.CuboidRegion;
@@ -444,18 +443,16 @@ public class AdminGuiService implements Listener {
         Location loc = block.getLocation();
 
         if (e.getAction() == Action.LEFT_CLICK_BLOCK) {
-            PositionIndicator ind = new PositionIndicator(loc, SkGame.getInstance());
-            ind.start();
-            state.setPos1(loc, ind);
+            state.setPos1(loc);
             player.sendMessage(ADMIN_PREFIX + "Position 1 set to " + formatLoc(loc));
         } else if (e.getAction() == Action.RIGHT_CLICK_BLOCK) {
-            PositionIndicator ind = new PositionIndicator(loc, SkGame.getInstance());
-            ind.start();
-            state.setPos2(loc, ind);
+            state.setPos2(loc);
             player.sendMessage(ADMIN_PREFIX + "Position 2 set to " + formatLoc(loc));
         }
-        if (state.hasRegion()) {
-            BoundaryPreview preview = new BoundaryPreview(player, state.getPos1(), state.getPos2(), SkGame.getInstance());
+        // Refresh preview after every corner change (starts as soon as pos1 is set)
+        if (state.getPos1() != null) {
+            BoundaryPreview preview = new BoundaryPreview(
+                    player, state.getPos1(), state.getPos2(), SkGame.getInstance());
             state.setBoundaryPreview(preview);
             preview.start();
         }
