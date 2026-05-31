@@ -94,11 +94,12 @@ public class TabManager implements Listener {
         String name = teamName(sessionId);
         Scoreboard board = mainBoard();
         Team team = board.getTeam(name);
-        if (team == null) {
-            team = board.registerNewTeam(name);
-            int idx = sessionColorIdx.getOrDefault(sessionId, 0) % PALETTE.size();
-            team.color(PALETTE.get(idx));
-        }
+        if (team == null) team = board.registerNewTeam(name);
+        // Assign color lazily on first call for this session (computeIfAbsent = once, stable).
+        // Always re-apply — handles the case where the team pre-existed without a color.
+        int idx = sessionColorIdx.computeIfAbsent(sessionId,
+                k -> colorCounter.getAndIncrement() % PALETTE.size());
+        team.color(PALETTE.get(idx));
         return team;
     }
 
@@ -144,13 +145,11 @@ public class TabManager implements Listener {
 
     // ─── Event handlers ───────────────────────────────────────────────────────
 
-    /** Session registered → assign palette color + create team on main scoreboard. */
+    /** Session registered → pre-create team with stable color (best-effort; ensureTeam is lazy fallback). */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onSessionCreate(SessionCreateEvent e) {
         if (!enabled()) return;
-        String id = e.getSession().getId();
-        sessionColorIdx.put(id, colorCounter.getAndIncrement() % PALETTE.size());
-        ensureTeam(id);
+        ensureTeam(e.getSession().getId());
     }
 
     /**
