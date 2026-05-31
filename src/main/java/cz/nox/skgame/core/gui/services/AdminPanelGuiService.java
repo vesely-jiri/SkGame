@@ -1,5 +1,6 @@
 package cz.nox.skgame.core.gui.services;
 
+import cz.nox.skgame.SkGame;
 import cz.nox.skgame.api.game.event.GameStartEvent;
 import cz.nox.skgame.api.game.event.GameStopEvent;
 import cz.nox.skgame.api.game.event.SessionCreateEvent;
@@ -7,8 +8,10 @@ import cz.nox.skgame.api.game.event.SessionDisbandEvent;
 import cz.nox.skgame.api.game.event.SessionSettingsChangedEvent;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
+import cz.nox.skgame.api.game.model.SessionVisibility;
 import cz.nox.skgame.api.game.model.type.DisbandReason;
 import cz.nox.skgame.api.game.model.type.GameStartReason;
+import cz.nox.skgame.api.game.model.type.MapSelectionMode;
 import cz.nox.skgame.api.game.model.type.SessionRole;
 import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.api.gui.GuiBuilder;
@@ -17,6 +20,7 @@ import cz.nox.skgame.api.gui.GuiItem;
 import cz.nox.skgame.api.messages.Messages;
 import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl;
+import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
@@ -24,6 +28,7 @@ import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryCloseEvent;
@@ -36,6 +41,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -61,8 +67,12 @@ public class AdminPanelGuiService implements Listener {
     // stores the exact Inventory ref for each viewer's open panel — used to distinguish
     // the panel-list from sub-GUIs (detail view, player profile) during live refresh
     private final java.util.Map<UUID, Inventory> panelInventories = new ConcurrentHashMap<>();
+    // admin UUID → session ID they're force-ending with custom message
+    private final Map<UUID, String> pendingForceEndSessions = new ConcurrentHashMap<>();
 
     private AdminPanelGuiService() {}
+
+    public boolean isPendingForceEnd(Player p) { return pendingForceEndSessions.containsKey(p.getUniqueId()); }
 
     public static synchronized AdminPanelGuiService getInstance() {
         if (instance == null) instance = new AdminPanelGuiService();
@@ -250,17 +260,102 @@ public class AdminPanelGuiService implements Listener {
                     }));
         }
 
-        // Force end (STARTED only)
+        // Force end (STARTED only) — opens chat-input flow for custom broadcast message
         if (session.getState() == SessionState.STARTED) {
             builder.slot(48, GuiItem.of(Material.RED_CONCRETE)
                     .name(Messages.getComponent("gui.admin-panel.force-end", admin))
+                    .lore(List.of(legacy("&7Type a message to broadcast to session")))
                     .onClick(e -> {
                         Player p = (Player) e.getWhoClicked();
                         Session s = SessionManager.getInstance().getSessionById(sessionId);
-                        if (s != null) lifecycle.endGame(s, "admin");
-                        openPanel(p);
+                        if (s == null || s.getState() != SessionState.STARTED) { openPanel(p); return; }
+                        pendingForceEndSessions.put(p.getUniqueId(), sessionId);
+                        p.closeInventory();
+                        p.sendMessage(legacy("&eType a broadcast message (or &7cancel&e to abort):"));
                     }));
         }
+
+        // Slot 1 — Map swap (admin override): opens map browser; applies immediately (LOBBY/PREP) or deferred (STARTED/ENDED)
+        builder.slot(1, GuiItem.of(Material.FILLED_MAP)
+                .name("&b&lMap Swap")
+                .lore(List.of(
+                        legacy("&7Current: &f" + (session.getGameMap() != null ? session.getGameMap().getId() : "none")),
+                        legacy("&eClick: &7Open map browser")))
+                .onClick(e -> {
+                    Player p = (Player) e.getWhoClicked();
+                    Session s = SessionManager.getInstance().getSessionById(sessionId);
+                    if (s == null) { openPanel(p); return; }
+                    MapsGuiService.getInstance().openFor(p);
+                }));
+
+        // Slot 47 — Map selection mode cycle (admin override; deferred during STARTED/ENDED)
+        MapSelectionMode currentMode = session.getMapSelectionMode();
+        String modeLabel = switch (currentMode) {
+            case SPECIFIC -> "&7SPECIFIC";
+            case VOTE     -> "&eVOTE";
+            case RANDOM   -> "&aRANDOM";
+        };
+        builder.slot(47, GuiItem.of(Material.COMPASS)
+                .name("&b&lMap Mode")
+                .lore(List.of(
+                        legacy("&7Current: " + modeLabel),
+                        legacy("&eClick: &7Cycle SPECIFIC→VOTE→RANDOM"),
+                        session.hasPendingAdminChanges() ? legacy("&6Pending change queued") : Component.empty()))
+                .onClick(e -> {
+                    Player p = (Player) e.getWhoClicked();
+                    Session s = SessionManager.getInstance().getSessionById(sessionId);
+                    if (s == null) { openPanel(p); return; }
+                    MapSelectionMode next = switch (s.getMapSelectionMode()) {
+                        case SPECIFIC -> MapSelectionMode.VOTE;
+                        case VOTE     -> MapSelectionMode.RANDOM;
+                        case RANDOM   -> MapSelectionMode.SPECIFIC;
+                    };
+                    if (s.getState() == SessionState.STARTED || s.getState() == SessionState.ENDED) {
+                        s.setPendingAdminChange("map-mode", next);
+                        p.sendMessage(legacy("&eMap mode queued — applies at round end."));
+                    } else {
+                        s.setMapSelectionMode(next);
+                    }
+                    SessionGuiService.getInstance().update(s);
+                    openDetailFor(p, s);
+                }));
+
+        // Slot 51 — Persistent toggle (immediate always — non-disruptive)
+        builder.slot(51, GuiItem.of(session.isPersistent() ? Material.NETHER_STAR : Material.GRAY_DYE)
+                .name("&b&lPersistent")
+                .lore(List.of(legacy(session.isPersistent() ? "&aEnabled" : "&7Disabled")))
+                .onClick(e -> {
+                    Player p = (Player) e.getWhoClicked();
+                    Session s = SessionManager.getInstance().getSessionById(sessionId);
+                    if (s == null) { openPanel(p); return; }
+                    s.setPersistent(!s.isPersistent());
+                    openDetailFor(p, s);
+                }));
+
+        // Slot 52 — Visibility cycle (immediate always — non-disruptive)
+        SessionVisibility vis = session.getVisibility();
+        String visLabel = switch (vis) {
+            case PUBLIC      -> "&aPublic";
+            case INVITE_ONLY -> "&eInvite-only";
+            case CODE        -> "&6Code";
+            default          -> vis.name();
+        };
+        builder.slot(52, GuiItem.of(Material.OMINOUS_TRIAL_KEY)
+                .name("&b&lVisibility")
+                .lore(List.of(legacy("&7Current: " + visLabel)))
+                .onClick(e -> {
+                    Player p = (Player) e.getWhoClicked();
+                    Session s = SessionManager.getInstance().getSessionById(sessionId);
+                    if (s == null) { openPanel(p); return; }
+                    SessionVisibility nextVis = switch (s.getVisibility()) {
+                        case PUBLIC      -> SessionVisibility.INVITE_ONLY;
+                        case INVITE_ONLY -> SessionVisibility.CODE;
+                        default          -> SessionVisibility.PUBLIC;
+                    };
+                    s.setVisibility(nextVis);
+                    Bukkit.getPluginManager().callEvent(new SessionSettingsChangedEvent(s, "visibility"));
+                    openDetailFor(p, s);
+                }));
 
         // Rounds − and +
         builder.slot(49, GuiItem.of(Material.RED_STAINED_GLASS_PANE)
@@ -371,6 +466,36 @@ public class AdminPanelGuiService implements Listener {
         panelViewers.remove(uuid);
         panelInventories.remove(uuid);  // prevent stale Inventory ref leak on genuine close
         // Panel filter state is intentionally preserved across open/close
+        // If admin closes GUI while pending a force-end message, cancel the pending input
+        pendingForceEndSessions.remove(uuid);
+    }
+
+    // ─── Chat handlers for force-end-with-message flow ───────────────────────
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onPaperChatForceEnd(AsyncChatEvent event) {
+        if (!pendingForceEndSessions.containsKey(event.getPlayer().getUniqueId())) return;
+        event.setCancelled(true);
+        event.viewers().clear();
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = false)
+    @SuppressWarnings("deprecation")
+    public void onLegacyChatForceEnd(org.bukkit.event.player.AsyncPlayerChatEvent event) {
+        Player p = event.getPlayer();
+        String sessionId = pendingForceEndSessions.get(p.getUniqueId());
+        if (sessionId == null) return;
+        event.setCancelled(true);
+        event.getRecipients().clear();
+        String msg = event.getMessage().trim();
+        Bukkit.getScheduler().runTask(SkGame.getInstance(), () -> {
+            pendingForceEndSessions.remove(p.getUniqueId());
+            if ("cancel".equalsIgnoreCase(msg)) { openPanel(p); return; }
+            Session s = SessionManager.getInstance().getSessionById(sessionId);
+            if (s != null && s.getState() == SessionState.STARTED)
+                SessionLifecycleManagerImpl.getInstance().endGame(s, "admin:" + msg);
+            openPanel(p);
+        });
     }
 
     private void refreshPanelViewers() {

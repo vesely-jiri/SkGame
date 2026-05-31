@@ -46,6 +46,8 @@ public class Session {
     private final Map<UUID, String> mapVotes = new HashMap<>();
     /** Transient per-session bans. UUID → name captured at ban time (no OfflinePlayer lookups needed). */
     private final java.util.LinkedHashMap<UUID, String> bannedPlayers = new java.util.LinkedHashMap<>();
+    /** Admin-queued config changes to apply at round end. Flushed in runDeferredBlock before round logic. */
+    private final Map<String, Object> pendingAdminChanges = new HashMap<>();
 
     public Session(String id, Player host, MiniGame miniGame,
                    SessionState state, GameMap map, Set<Player> players, Set<Player> spectators,
@@ -268,6 +270,14 @@ public class Session {
     public void clearTeams() {
         teamAssignments.clear();
     }
+
+    public void setPendingAdminChange(String key, Object value) { pendingAdminChanges.put(key, value); }
+    public Map<String, Object> drainPendingAdminChanges() {
+        Map<String, Object> copy = new HashMap<>(pendingAdminChanges);
+        pendingAdminChanges.clear();
+        return copy;
+    }
+    public boolean hasPendingAdminChanges() { return !pendingAdminChanges.isEmpty(); }
 
     public void addBan(UUID uuid, String name) { bannedPlayers.put(uuid, name); }
     public boolean isBanned(UUID uuid) { return bannedPlayers.containsKey(uuid); }

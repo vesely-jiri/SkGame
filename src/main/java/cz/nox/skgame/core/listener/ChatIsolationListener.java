@@ -5,6 +5,7 @@ import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.type.SessionRole;
 import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.core.game.SessionManager;
+import cz.nox.skgame.core.gui.services.AdminPanelGuiService;
 import cz.nox.skgame.core.gui.services.MainGuiService;
 import cz.nox.skgame.util.Debug;
 import org.bukkit.entity.Player;
@@ -36,6 +37,7 @@ public class ChatIsolationListener implements Listener {
 
         Player sender = event.getPlayer();
         if (MainGuiService.getInstance().isAwaitingChatInput(sender)) return;
+        if (AdminPanelGuiService.getInstance().isPendingForceEnd(sender)) return;
         Session senderSession = SessionManager.getInstance().getSession(sender);
         String senderRoom = roomOf(senderSession, isolateLobby);
         SessionRole senderRole = senderSession != null ? senderSession.getRole(sender) : null;
