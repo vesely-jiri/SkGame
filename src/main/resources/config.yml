@@ -103,6 +103,14 @@ storage:
   sqlite:
     file: skgame.db   # Relative to plugins/SkGame/storage/
 
+# --- TAB separation ---
+# When enabled: lobby players are color-coded by session in TAB; arena players (STARTED/ENDED)
+# are hidden from all non-session players and vice versa.
+# Covers both coloring and isolation — single toggle.
+tab:
+  separation:
+    enabled: false
+
 # --- Report ---
 # Player-to-admin report system (/game report <player> <reason>).
 report:
