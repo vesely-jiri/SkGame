@@ -103,6 +103,12 @@ storage:
   sqlite:
     file: skgame.db   # Relative to plugins/SkGame/storage/
 
+# --- Report ---
+# Player-to-admin report system (/game report <player> <reason>).
+report:
+  # Seconds a player must wait between submitting reports.
+  cooldown-seconds: 60
+
 # --- Quickplay ---
 quickplay:
   enabled: true

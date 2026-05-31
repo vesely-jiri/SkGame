@@ -33,6 +33,12 @@ permissions:
   skgame.history.others:
     description: View other players' game history via /game history <name>
     default: op
+  skgame.report:
+    description: Submit player reports via /game report
+    default: true
+  skgame.report.notify:
+    description: Receive report notifications in-game
+    default: op
   skgame.info:
     description: View SkGame server info via /skgame info
     default: true

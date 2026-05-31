@@ -26,6 +26,9 @@ import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class GameCommand implements CommandExecutor, TabCompleter {
@@ -34,6 +37,8 @@ public class GameCommand implements CommandExecutor, TabCompleter {
     private final JoinSubcommand joinSub = new JoinSubcommand();
     private final QuickplaySubcommand quickplaySub = new QuickplaySubcommand();
     private final SpectateSubcommand spectateSub = new SpectateSubcommand();
+    /** Reporter UUID → timestamp of last successful report (ms). Cleared on server restart only. */
+    private final Map<UUID, Long> reportCooldowns = new ConcurrentHashMap<>();
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -91,6 +96,7 @@ public class GameCommand implements CommandExecutor, TabCompleter {
             case "kick"     -> handleKick(player, args);
             case "ban"      -> handleBan(player, args);
             case "unban"    -> handleUnban(player, args);
+            case "report"   -> handleReport(player, args);
             default         -> Messages.send(player, "command.error.unknown-subcommand");
         }
         return true;
@@ -201,6 +207,60 @@ public class GameCommand implements CommandExecutor, TabCompleter {
         SessionLifecycleManagerImpl.getInstance().banMember(player, target);
     }
 
+    private void handleReport(Player reporter, String[] args) {
+        if (!reporter.hasPermission("skgame.report")) {
+            Messages.send(reporter, "command.error.no-permission");
+            return;
+        }
+        if (args.length < 3) {
+            Messages.send(reporter, "report.usage");
+            return;
+        }
+        Player target = Bukkit.getPlayerExact(args[1]);
+        if (target == null || !target.isOnline()) {
+            Messages.send(reporter, "report.player-not-found");
+            return;
+        }
+        if (target.equals(reporter)) {
+            Messages.send(reporter, "report.self");
+            return;
+        }
+        long cooldownMs = cz.nox.skgame.SkGame.getInstance().getConfig()
+                .getLong("report.cooldown-seconds", 60L) * 1000L;
+        Long last = reportCooldowns.get(reporter.getUniqueId());
+        if (last != null) {
+            long remaining = (last + cooldownMs - System.currentTimeMillis()) / 1000L;
+            if (remaining > 0) {
+                Messages.send(reporter, "report.cooldown", remaining);
+                return;
+            }
+        }
+        // Collect reason from remaining args
+        StringBuilder reasonBuilder = new StringBuilder();
+        for (int i = 2; i < args.length; i++) {
+            if (i > 2) reasonBuilder.append(' ');
+            reasonBuilder.append(args[i]);
+        }
+        String reason = reasonBuilder.toString();
+        // Determine target's session (or "-" if not in one)
+        Session targetSession = SessionManager.getInstance().getSession(target);
+        String sessionId = targetSession != null ? targetSession.getId() : "-";
+
+        reportCooldowns.put(reporter.getUniqueId(), System.currentTimeMillis());
+        Messages.send(reporter, "report.submitted", target.getName());
+
+        // Notify all online ops/holders of skgame.report.notify
+        String notifyKey = "report.notify";
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (p.hasPermission("skgame.report.notify")) {
+                Messages.send(p, notifyKey, reporter.getName(), target.getName(), sessionId, reason);
+            }
+        }
+        cz.nox.skgame.SkGame.getInstance().getLogger().info(
+                "[Report] " + reporter.getName() + " → " + target.getName()
+                + " (" + sessionId + ") | " + reason);
+    }
+
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (!(sender instanceof Player player)) return List.of();
@@ -210,6 +270,7 @@ public class GameCommand implements CommandExecutor, TabCompleter {
             if (player.hasPermission("skgame.profile")) opts.add("profile");
             if (player.hasPermission("skgame.spectate")) opts.add("spectate");
             if (player.hasPermission("skgame.admin")) opts.add("admin");
+            if (player.hasPermission("skgame.report")) opts.add("report");
             Session ps = SessionManager.getInstance().getSession(player);
             if (ps != null && player.equals(ps.getHost())) {
                 opts.add("invite");
@@ -238,6 +299,8 @@ public class GameCommand implements CommandExecutor, TabCompleter {
                 case "history"   -> player.hasPermission("skgame.history.others")
                         ? onlineNames(args[1]) : List.of();
                 case "profile"   -> player.hasPermission("skgame.profile.others")
+                        ? onlineNames(args[1]) : List.of();
+                case "report"    -> player.hasPermission("skgame.report")
                         ? onlineNames(args[1]) : List.of();
                 case "kick", "ban" -> {
                     Session ks = SessionManager.getInstance().getSession(player);

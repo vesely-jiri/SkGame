@@ -112,6 +112,14 @@ command:
       no-data: "&7Žádné hry nenalezeny pro {0}"
       player-not-found: "&cHráč nenalezen: {0}"
 
+report:
+  submitted: "&aReport na {0} odeslán."
+  notify: "&c[Report] &f{0} &7→ &f{1} &8({2}) &7| &f{3}"
+  player-not-found: "&cHráč nenalezen nebo offline."
+  self: "&cNemůžeš reportnout sám sebe."
+  cooldown: "&cPočkej {0}s před dalším reportem."
+  usage: "&cPoužití: /game report <hráč> <důvod>"
+
 lobby:
   spawn-set: "&aLobby spawn nastaven na tvou pozici"
 

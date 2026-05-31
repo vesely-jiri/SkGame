@@ -121,6 +121,14 @@ command:
       no-data: "&7No games found for {0}"
       player-not-found: "&cPlayer not found: {0}"
 
+report:
+  submitted: "&aReport submitted against {0}."
+  notify: "&c[Report] &f{0} &7→ &f{1} &8({2}) &7| &f{3}"
+  player-not-found: "&cPlayer not found or offline."
+  self: "&cYou can't report yourself."
+  cooldown: "&cWait {0}s before reporting again."
+  usage: "&cUsage: /game report <player> <reason>"
+
 lobby:
   spawn-set: "&aGame lobby was set to your location"
 
