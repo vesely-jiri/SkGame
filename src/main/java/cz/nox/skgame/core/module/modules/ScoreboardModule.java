@@ -20,10 +20,5 @@ public class ScoreboardModule implements SkGameModule {
     }
 
     @Override
-    public List<String> getSkriptClasses() {
-        return List.of(
-                "cz.nox.skgame.skript.effects.EffSetScoreboardContent",
-                "cz.nox.skgame.skript.effects.EffClearScoreboard"
-        );
-    }
+    public List<String> getSkriptClasses() { return List.of(); }
 }
