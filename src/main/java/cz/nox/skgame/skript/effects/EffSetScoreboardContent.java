@@ -27,8 +27,8 @@ import java.util.List;
         "No-op if the session has no board (scoreboard not declared for that minigame)."
 })
 @Examples({
-        "set scoreboard content of event-session to \"&aPoints: 0\"",
-        "set scoreboard content of event-session to \"&aKills: %{_kills}%\", \"&7Deaths: %{_deaths}%\""
+        "set session scoreboard content of event-session to \"&aPoints: 0\"",
+        "set session scoreboard content of event-session to \"&aKills: %{_kills}%\", \"&7Deaths: %{_deaths}%\""
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")
@@ -39,7 +39,7 @@ public class EffSetScoreboardContent extends Effect {
 
     static {
         Skript.registerEffect(EffSetScoreboardContent.class,
-                "set scoreboard content of %session% to %strings%");
+                "set session scoreboard content of %session% to %strings%");
     }
 
     @SuppressWarnings("unchecked")
@@ -62,7 +62,7 @@ public class EffSetScoreboardContent extends Effect {
 
     @Override
     public String toString(@Nullable Event e, boolean debug) {
-        return "set scoreboard content of " + sessionExpr.toString(e, debug)
+        return "set session scoreboard content of " + sessionExpr.toString(e, debug)
                 + " to " + linesExpr.toString(e, debug);
     }
 }

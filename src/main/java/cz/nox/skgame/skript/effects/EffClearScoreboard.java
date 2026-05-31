@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
         "No-op if the session has no board."
 })
 @Examples({
-        "clear scoreboard of event-session"
+        "clear session scoreboard of event-session"
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")
@@ -30,7 +30,7 @@ public class EffClearScoreboard extends Effect {
 
     static {
         Skript.registerEffect(EffClearScoreboard.class,
-                "clear scoreboard [of] %session%");
+                "clear session scoreboard [of] %session%");
     }
 
     @SuppressWarnings("unchecked")
@@ -50,6 +50,6 @@ public class EffClearScoreboard extends Effect {
 
     @Override
     public String toString(@Nullable Event e, boolean debug) {
-        return "clear scoreboard of " + sessionExpr.toString(e, debug);
+        return "clear session scoreboard of " + sessionExpr.toString(e, debug);
     }
 }
