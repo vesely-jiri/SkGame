@@ -86,7 +86,7 @@ on "bomberman" game start:
 on "bomberman" game stop:
     set {_arena} to gamemap value "arena" of event-session
     if {_arena} is set:
-        loop (blocks in region {_arena}) where [input is polished blackstone pressure plate]:
+        loop (blocks in {_arena}) where [input is polished blackstone pressure plate]:
             set loop-block to air
     # arena entity cleanup is handled automatically by SkGame (arena.cleanup config)
     set {_p::*} to Bomberman_GetPlayingPlayers(event-session)
