@@ -304,6 +304,13 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             gameCmd.setTabCompleter(gameCommand);
         }
 
+        String ver = getDescription().getVersion();
+        int modCount = enabledModules.size();
+        String bar = "════════════════════════════════";
+        logUtil.info(bar);
+        logUtil.info(" SkGame v" + ver + "  |  by nox");
+        logUtil.info(" Sessions: ready  |  Modules: " + modCount + " loaded");
+        logUtil.info(bar);
         logUtil.info("SkGame enabled in " + (System.currentTimeMillis() - s) + "ms");
         scheduleUpdateCheck();
     }
