@@ -22,15 +22,15 @@ import org.jetbrains.annotations.Nullable;
         "Supports: GET / SET / DELETE."
 })
 @Examples({
-        "set region of {_map} to {_region}",
-        "set {_r} to region of {_map}"
+        "set arena of {_map} to {_region}",
+        "set {_r} to arena of {_map}"
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")
 public class ExprGameMapRegion extends SimplePropertyExpression<GameMap, Region> {
 
     static {
-        register(ExprGameMapRegion.class, Region.class, "region", "gamemap");
+        register(ExprGameMapRegion.class, Region.class, "arena", "gamemap");
     }
 
     @Override
@@ -74,7 +74,7 @@ public class ExprGameMapRegion extends SimplePropertyExpression<GameMap, Region>
     }
 
     @Override
-    protected String getPropertyName() { return "region"; }
+    protected String getPropertyName() { return "arena"; }
 
     @Override
     public Class<? extends Region> getReturnType() { return Region.class; }
