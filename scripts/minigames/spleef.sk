@@ -1,0 +1,68 @@
+options:
+    var_prefix: game::spleef
+
+on load:
+    register minigame with id "spleef":
+        set minigame name of event-minigame to "&bSpleef"
+        set minigame description of event-minigame to "&7- Break blocks under opponents to eliminate them"
+        set minigame author of event-minigame to "SkGame"
+        set minigame icon of event-minigame to iron shovel
+        set min players of event-minigame to 2
+        tags: ffa, pvp
+        set gamemap value "spawnpoints" of event-minigame to a custom value:
+            set value name to "Spawn points"
+            set plurality to plural
+            set value type to a location
+            set description to "Player spawn locations on the spleef arena"
+        set gamemap value "arena" of event-minigame to a custom value:
+            set value name to "Arena region"
+            set value type to a region
+            set description to "The arena — players below minimum Y are eliminated"
+        set gamemap value "floor_block" of event-minigame to a custom value:
+            set value name to "Floor block"
+            set value type to a text
+            set default value to "snow block"
+            set description to "Block type that makes up the floor (players can only break this)"
+
+on "spleef" game start:
+    set {_spawns::*} to gamemap values "spawnpoints" of event-session
+    set {_arena} to gamemap value "arena" of event-session
+    set temporary session value "arena" of event-session to {_arena}
+    loop shuffled session players of event-session:
+        add 1 to {_n}
+        teleport loop-player to {_spawns::%{_n}%}
+        set gamemode of loop-player to survival
+        give loop-player 1 of iron shovel named "&bSpleef Shovel"
+        reset {_n} if {_n} is size of {_spawns::*}
+    Spleef_StartFallCheck(event-session)
+
+on "spleef" game stop:
+    loop (session players of event-session) and (session spectators of event-session):
+        set gamemode of loop-player to adventure
+        clear loop-player's inventory
+
+on break:
+    player is playing (minigame with id "spleef")
+    set {_floor} to gamemap value "floor_block" of (session of player) ? "snow block"
+    if "%type of event-block%" is not {_floor}:
+        cancel event
+
+on drop:
+    player is playing (minigame with id "spleef")
+    cancel event
+
+local function Spleef_StartFallCheck(session: session):
+    set {_arena} to temporary session value "arena" of {_session}
+    set {_minY} to y-coordinate of (minimum corner of region {_arena})
+    while (session state of {_session}) is STARTED:
+        loop session players of {_session}:
+            if (y-coordinate of loop-player) < {_minY}:
+                make loop-player a spectator in {_session}
+                send "&cYou fell out!" to loop-player
+                set {_alive::*} to session players of {_session}
+                if size of {_alive::*} is 1:
+                    set temporary session value "winner" of {_session} to {_alive::1}
+                    stop game of {_session} with reason "WIN"
+                else if size of {_alive::*} is 0:
+                    stop game of {_session} with reason "TIE"
+        wait 5 ticks

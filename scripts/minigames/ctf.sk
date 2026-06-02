@@ -1,0 +1,145 @@
+options:
+    var_prefix: game::ctf
+    capture_radius: 3
+    score_limit: 3
+
+on script load:
+    register minigame with id "ctf":
+        set minigame name of event-minigame to "&cCapture &fthe &9Flag"
+        set minigame description of event-minigame to "&7- Steal the enemy flag and return it to your base"
+        set minigame author of event-minigame to "SkGame"
+        set minigame icon of event-minigame to white banner
+        set min players of event-minigame to 4
+        tags: team, pvp
+        teams:
+            red:
+                name: "Red Team"
+                icon: red wool
+            blue:
+                name: "Blue Team"
+                icon: blue wool
+        team assignment: auto
+        set gamemap value "red_spawnpoint" of event-minigame to a custom value:
+            set value name to "Red team spawnpoint"
+            set value type to a location
+        set gamemap value "blue_spawnpoint" of event-minigame to a custom value:
+            set value name to "Blue team spawnpoint"
+            set value type to a location
+        set gamemap value "red_flag" of event-minigame to a custom value:
+            set value name to "Red flag location"
+            set value type to a location
+            set description to "Location players walk through to pick up red flag"
+        set gamemap value "blue_flag" of event-minigame to a custom value:
+            set value name to "Blue flag location"
+            set value type to a location
+            set description to "Location players walk through to pick up blue flag"
+        set gamemap value "red_base" of event-minigame to a custom value:
+            set value name to "Red capture base"
+            set value type to a location
+            set description to "Walk here with enemy flag to score a point"
+        set gamemap value "blue_base" of event-minigame to a custom value:
+            set value name to "Blue capture base"
+            set value type to a location
+            set description to "Walk here with enemy flag to score a point"
+        set gamemap value "score_limit" of event-minigame to a custom value:
+            set value name to "Score limit"
+            set value type to a number
+            set default value to 3
+            set description to "Captures needed to win"
+
+on "ctf" game start:
+    set {_red_chestplate} to leather chestplate
+    set {_blue_chestplate} to leather chestplate
+    dye {_red_chestplate} red
+    dye {_blue_chestplate} blue
+    loop session players of event-session:
+        set {_team} to skgame team of loop-player
+        if {_team} is "red":
+            teleport loop-player to (gamemap value "red_spawnpoint" of event-session)
+            set chestplate of loop-player to {_red_chestplate}
+        else if {_team} is "blue":
+            teleport loop-player to (gamemap value "blue_spawnpoint" of event-session)
+            set chestplate of loop-player to {_blue_chestplate}
+        set gamemode of loop-player to survival
+    set temporary session value "red_flag" of event-session to (gamemap value "red_flag" of event-session)
+    set temporary session value "blue_flag" of event-session to (gamemap value "blue_flag" of event-session)
+    set temporary session value "red_base" of event-session to (gamemap value "red_base" of event-session)
+    set temporary session value "blue_base" of event-session to (gamemap value "blue_base" of event-session)
+    set temporary session value "score_limit" of event-session to (gamemap value "score_limit" of event-session) ? {@score_limit}
+    Ctf_StartFlagCheck(event-session)
+    Ctf_StartScoreBar(event-session)
+
+on "ctf" game stop:
+    if event-string is "WIN":
+        set {_winner} to temporary session value "winning_team" of event-session
+        set {_winners::*} to (session players of event-session) where [skgame team of input is {_winner}]
+        set winners of event-session to {_winners::*}
+        send "&e&lTeam %{_winner}% wins the match!" to (session players of event-session) and (session spectators of event-session)
+    loop (session players of event-session) and (session spectators of event-session):
+        set gamemode of loop-player to adventure
+        clear loop-player's inventory
+
+on damage of player:
+    victim is playing (minigame with id "ctf")
+    attacker is a player
+    set {_v_team} to skgame team of victim
+    set {_a_team} to skgame team of attacker
+    if {_v_team} is {_a_team}:
+        cancel event
+
+local function Ctf_StartFlagCheck(session: session):
+    while (session state of {_session}) is STARTED:
+        set {_red_flag} to temporary session value "red_flag" of {_session}
+        set {_blue_flag} to temporary session value "blue_flag" of {_session}
+        set {_red_base} to temporary session value "red_base" of {_session}
+        set {_blue_base} to temporary session value "blue_base" of {_session}
+        set {_limit} to (temporary session value "score_limit" of {_session}) ? {@score_limit}
+        loop session players of {_session}:
+            set {_p} to loop-player
+            set {_team} to skgame team of {_p}
+            set {_carrying} to temporary player value "carries_flag" of {_p}
+            if {_carrying} is not set:
+                if {_team} is "red":
+                    if {_blue_flag} is set:
+                        if distance between location of {_p} and {_blue_flag} < {@capture_radius}:
+                            set temporary player value "carries_flag" of {_p} to "blue"
+                            send "&e%{_p}% &7picked up &9blue flag&7!" to session players of {_session}
+                else if {_team} is "blue":
+                    if {_red_flag} is set:
+                        if distance between location of {_p} and {_red_flag} < {@capture_radius}:
+                            set temporary player value "carries_flag" of {_p} to "red"
+                            send "&e%{_p}% &7picked up &cred flag&7!" to session players of {_session}
+            else:
+                if {_team} is "red":
+                    if {_red_base} is set:
+                        if distance between location of {_p} and {_red_base} < {@capture_radius}:
+                            delete temporary player value "carries_flag" of {_p}
+                            add 1 to team score of "red" in {_session}
+                            set {_score} to team score of "red" in {_session}
+                            send "&c&lRed scored! (%{_score}%/%{_limit}%)" to session players of {_session}
+                            if {_score} >= {_limit}:
+                                set temporary session value "winning_team" of {_session} to "red"
+                                stop game of {_session} with reason "WIN"
+                else if {_team} is "blue":
+                    if {_blue_base} is set:
+                        if distance between location of {_p} and {_blue_base} < {@capture_radius}:
+                            delete temporary player value "carries_flag" of {_p}
+                            add 1 to team score of "blue" in {_session}
+                            set {_score} to team score of "blue" in {_session}
+                            send "&9&lBlue scored! (%{_score}%/%{_limit}%)" to session players of {_session}
+                            if {_score} >= {_limit}:
+                                set temporary session value "winning_team" of {_session} to "blue"
+                                stop game of {_session} with reason "WIN"
+        wait 5 ticks
+
+local function Ctf_StartScoreBar(session: session):
+    while (session state of {_session}) is STARTED:
+        set {_red} to team score of "red" in {_session}
+        set {_blue} to team score of "blue" in {_session}
+        loop session players of {_session}:
+            set {_carrying} to temporary player value "carries_flag" of loop-player
+            if {_carrying} is set:
+                send action bar "&eCarrying &c%{_carrying}% flag&e! Go to your base!" to loop-player
+            else:
+                send action bar "&cRed: %{_red}% &f| &9Blue: %{_blue}%" to loop-player
+        wait 1 second
