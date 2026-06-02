@@ -16,6 +16,7 @@ import cz.nox.skgame.api.game.event.PlayerScoreChangeEvent;
 import cz.nox.skgame.api.game.model.GamePlayer;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.core.game.PlayerManager;
+import cz.nox.skgame.core.util.GamePlayerKeys;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
         "Gets or changes a player's score in a session.",
         "",
         "Score is stored as an integer under the reserved plugin key 'skgame.score'.",
-        "It is a temporary per-player value — cleared at game end, survives round transitions.",
+        "It is a temporary per-player value — auto-reset to 0 at the start of each game/round.",
         "Fractional values are truncated (e.g. set to 1.5 stores 1).",
         "No floor clamp: negative scores are allowed.",
         "",
@@ -43,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
 @SuppressWarnings("unused")
 public class ExprPlayerScore extends SimpleExpression<Number> {
 
-    private static final String SCORE_KEY = "skgame.score";
+    private static final String SCORE_KEY = GamePlayerKeys.SCORE;
     private static final PlayerManager playerManager = PlayerManager.getInstance();
 
     private Expression<Player> playerExpr;

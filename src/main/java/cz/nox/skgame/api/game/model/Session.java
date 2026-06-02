@@ -228,6 +228,9 @@ public class Session {
     public void removeValues(boolean isTemporary) {
         getMap(isTemporary).clear();
     }
+    public void removeValuesByPrefix(String prefix, boolean isTemporary) {
+        getMap(isTemporary).keySet().removeIf(k -> k.startsWith(prefix));
+    }
 
     private Map<String, Object> getMap(boolean isTemporary) {
         return isTemporary ? tempValues : values;

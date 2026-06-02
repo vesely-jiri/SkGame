@@ -13,6 +13,7 @@ import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
 import cz.nox.skgame.api.game.model.Session;
+import cz.nox.skgame.core.util.SessionKeys;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
         "Gets or changes a team's score in a session.",
         "",
         "Score is stored as an integer under the reserved plugin key 'skgame.team.score.<teamId>'.",
-        "It is a temporary session value — cleared at game end, survives round transitions.",
+        "It is a temporary session value — auto-reset to 0 at the start of each game/round.",
         "Fractional values are truncated. No floor clamp: negative scores are allowed.",
         "No event is fired on change (use ExprPlayerScore + EvtScoreChange for per-player events).",
         "",
@@ -38,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
 @SuppressWarnings("unused")
 public class ExprTeamScore extends SimpleExpression<Number> {
 
-    private static final String KEY_PREFIX = "skgame.team.score.";
+    private static final String KEY_PREFIX = SessionKeys.TEAM_SCORE_PREFIX;
 
     private Expression<String> teamIdExpr;
     private Expression<Session> sessionExpr;

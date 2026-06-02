@@ -13,6 +13,7 @@ import cz.nox.skgame.api.game.event.SessionDisbandEvent;
 import cz.nox.skgame.api.game.event.SpectatorJoinEvent;
 import cz.nox.skgame.api.game.lifecycle.SessionLifecycleManager;
 import cz.nox.skgame.api.game.model.GameMap;
+import cz.nox.skgame.api.game.model.GamePlayer;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.type.DisbandReason;
@@ -22,6 +23,7 @@ import cz.nox.skgame.api.game.model.type.GameStartReason;
 import cz.nox.skgame.api.game.model.type.SessionRole;
 import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.core.util.GamePlayerKeys;
+import cz.nox.skgame.core.util.SessionKeys;
 import cz.nox.skgame.api.gui.GuiHolder;
 import cz.nox.skgame.api.region.Region;
 import cz.nox.skgame.core.game.PlayerManager;
@@ -395,6 +397,13 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         session.clearWinners(); // fresh winners list for each game / round
         // Snapshot before mutation
         Set<Player> lobbySnapshot = session.getLobbyMembers();
+
+        // Reset per-round scores so each game starts from zero
+        for (Player p : lobbySnapshot) {
+            GamePlayer gp = playerManager.getPlayer(p);
+            if (gp != null) gp.removeValue(GamePlayerKeys.SCORE, true);
+        }
+        session.removeValuesByPrefix(SessionKeys.TEAM_SCORE_PREFIX, true);
 
         // Transition LOBBY → PLAYER (fires PlayerRoleChangeEvent per member)
         for (Player p : lobbySnapshot) {
