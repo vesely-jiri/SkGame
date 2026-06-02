@@ -83,13 +83,15 @@ tasks {
         exclude("org/sqlite/native/Windows/armv7/**")
         exclude("org/sqlite/native/Windows/x86/**")
 
-        //Comment/uncomment this to copy the jar to the plugins folder
         finalizedBy("copyToPlugins")
     }
 
+    // Auto-deploy: set skgameDeployDir=<path/to/plugins> in ~/.gradle/gradle.properties
+    val deployDir = providers.gradleProperty("skgameDeployDir").orNull
     register<Copy>("copyToPlugins") {
         dependsOn("shadowJar")
-        from(named("shadowJar").map { it.outputs.files})
-        into("F:/Projects/Minecraft/Test 1.17/plugins")
+        from(named("shadowJar").map { it.outputs.files })
+        into(deployDir ?: temporaryDir)
+        onlyIf { deployDir != null }
     }
 }
