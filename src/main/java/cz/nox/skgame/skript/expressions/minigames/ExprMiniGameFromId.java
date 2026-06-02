@@ -36,6 +36,7 @@ public class ExprMiniGameFromId extends SimpleExpression<MiniGame> {
     private Expression<String> uuids;
 
     static {
+        // COMBINED: lookup-by-id pattern, not property-of-type
         Skript.registerExpression(ExprMiniGameFromId.class, MiniGame.class, ExpressionType.COMBINED,
                 "minigame[s] (with|from) [[uu]id[s]] %strings%"
         );

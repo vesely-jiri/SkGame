@@ -35,6 +35,7 @@ public class ExprPlayerWinCount extends SimpleExpression<Number> {
     private Expression<MiniGame> minigame;
 
     static {
+        // COMBINED: two type params (%offlineplayer% + %minigame%), not property-of-one-type
         Skript.registerExpression(ExprPlayerWinCount.class, Number.class, ExpressionType.COMBINED,
                 "win[s] count of %offlineplayer% in [minigame] %minigame%"
         );

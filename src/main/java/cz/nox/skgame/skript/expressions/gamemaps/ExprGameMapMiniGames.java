@@ -39,7 +39,7 @@ public class ExprGameMapMiniGames extends SimpleExpression<Object> {
     private Expression<GameMap> map;
 
     static {
-        Skript.registerExpression(ExprGameMapMiniGames.class, Object.class, ExpressionType.COMBINED,
+        Skript.registerExpression(ExprGameMapMiniGames.class, Object.class, ExpressionType.PROPERTY,
                 "[all] [supported] [mini]games of %gamemap%"
         );
     }

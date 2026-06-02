@@ -44,6 +44,7 @@ public class ExprTeamScore extends SimpleExpression<Number> {
     private Expression<Session> sessionExpr;
 
     static {
+        // COMBINED: team id %string% + session %session% are two params, not property-of-type
         Skript.registerExpression(ExprTeamScore.class, Number.class, ExpressionType.COMBINED,
                 "[skgame] team score of %string% in %session%");
     }

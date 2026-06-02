@@ -35,6 +35,7 @@ public class ExprWorldGuardRegion extends SimpleExpression<Region> {
 
     static {
         if (Skript.classExists("com.sk89q.worldguard.WorldGuard")) {
+            // COMBINED: region-name %string% + %world% lookup params
             Skript.registerExpression(ExprWorldGuardRegion.class, Region.class, ExpressionType.COMBINED,
                     "worldguard region %string% (in|of) [world] %world%"
             );

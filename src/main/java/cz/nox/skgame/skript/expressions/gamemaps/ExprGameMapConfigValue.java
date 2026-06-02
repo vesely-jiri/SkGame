@@ -47,6 +47,7 @@ public class ExprGameMapConfigValue extends SimpleExpression<Object> {
     private boolean isList;
 
     static {
+        // COMBINED: key %string% + optional second type param make it multi-token, not pure property
         Skript.registerExpression(ExprGameMapConfigValue.class, Object.class, ExpressionType.COMBINED,
                 "gamemap value[list:s] %string% of %gamemap% for %minigame%",
                 "gamemap value[list:s] %string% of %session%"

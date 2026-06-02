@@ -59,6 +59,7 @@ public class ExprSessionValue extends SimpleExpression<Object> implements KeyPro
     private boolean isList;
 
     static {
+        // COMBINED: key %string% param + optional temp tag prevent pure property classification
         Skript.registerExpression(ExprSessionValue.class, Object.class, ExpressionType.COMBINED,
                 "[temp:temp[orary]] [session] value[list:s] %string% of %object%",
                 "[all] [temp:temp[orary]] [session] values of %object%"

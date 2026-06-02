@@ -45,6 +45,7 @@ public class ExprSessionFromId extends SimpleExpression<Session> {
     private boolean create;
 
     static {
+        // COMBINED: lookup-by-id with optional :new tag, not property-of-type
         Skript.registerExpression(ExprSessionFromId.class, Session.class, ExpressionType.COMBINED,
                 "[:new] session[s] (with|from) [[uu]id[s]] %strings%");
     }

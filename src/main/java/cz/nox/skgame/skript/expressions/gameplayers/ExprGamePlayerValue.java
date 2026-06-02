@@ -52,6 +52,7 @@ public class ExprGamePlayerValue extends SimpleExpression<Object> implements Key
     private boolean isList;
 
     static {
+        // COMBINED: key %string% param + optional temp tag prevent pure property classification
         Skript.registerExpression(ExprGamePlayerValue.class, Object.class, ExpressionType.COMBINED,
                 "[temp:temp[orary]] [player] value[list:s] %string% of %object%",
                 "[all] [temp:temp[orary]] [player] values of %object%"

@@ -44,7 +44,7 @@ public class ExprMiniGameTags extends SimpleExpression<MinigameTag> {
     private Expression<MiniGame> minigameExpr;
 
     static {
-        Skript.registerExpression(ExprMiniGameTags.class, MinigameTag.class, ExpressionType.COMBINED,
+        Skript.registerExpression(ExprMiniGameTags.class, MinigameTag.class, ExpressionType.PROPERTY,
                 "[the] [minigame] tags of %minigame%",
                 "%minigame%'[s] tags"
         );

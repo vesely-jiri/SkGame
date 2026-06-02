@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExprGameMapValueDef extends SimpleExpression<CustomValue> {
 
     static {
+        // COMBINED: key %string% param makes this lookup-by-key, not a simple property
         Skript.registerExpression(ExprGameMapValueDef.class, CustomValue.class, ExpressionType.COMBINED,
                 "[the] gamemap value def[inition] %string% of %minigame%"
         );

@@ -49,6 +49,7 @@ public class ExprTopPlayers extends SimpleExpression<OfflinePlayer> {
     private Expression<MiniGame> minigame;
 
     static {
+        // COMBINED: %number% sort-count param + minigame + sort mode variants — multi-token query
         Skript.registerExpression(ExprTopPlayers.class, OfflinePlayer.class, ExpressionType.COMBINED,
                 "top %number% players in [minigame] %minigame%",
                 "top %number% players in [minigame] %minigame% by wins",

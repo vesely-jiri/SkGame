@@ -50,6 +50,7 @@ public class ExprMiniGameValue extends SimpleExpression<Object> implements KeyPr
     private boolean isList;
 
     static {
+        // COMBINED: key %string% param + two pattern shapes prevent pure property classification
         Skript.registerExpression(ExprMiniGameValue.class, Object.class, ExpressionType.COMBINED,
                 "[[mini]game] value[list:s] %string% of %minigame%",
                 "[all] [[mini]game] values of %minigame%"

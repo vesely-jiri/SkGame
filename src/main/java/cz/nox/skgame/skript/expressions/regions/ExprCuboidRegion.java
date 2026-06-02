@@ -27,6 +27,7 @@ public class ExprCuboidRegion extends SimpleExpression<Region> {
     private Expression<Location> corner2;
 
     static {
+        // COMBINED: constructor pattern (two location params), not property-of-type
         Skript.registerExpression(ExprCuboidRegion.class, Region.class, ExpressionType.COMBINED,
                 "[a] [new] cuboid [region] (from|between) %location% (to|and) %location%"
         );

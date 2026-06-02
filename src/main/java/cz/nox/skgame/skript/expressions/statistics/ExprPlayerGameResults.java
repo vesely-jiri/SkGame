@@ -41,6 +41,7 @@ public class ExprPlayerGameResults extends SimpleExpression<GameResult> {
     private int pattern;
 
     static {
+        // COMBINED: %number% count param + optional minigame param — multi-token query
         Skript.registerExpression(ExprPlayerGameResults.class, GameResult.class, ExpressionType.COMBINED,
                 "[last] %number% game results of %offlineplayers%",
                 "[last] %number% game results of %offlineplayers% in [minigame] %minigame%"

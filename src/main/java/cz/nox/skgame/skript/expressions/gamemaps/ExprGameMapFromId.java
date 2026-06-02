@@ -36,6 +36,7 @@ public class ExprGameMapFromId extends SimpleExpression<GameMap> {
     private Expression<String> uuids;
 
     static {
+        // COMBINED: lookup-by-id pattern, not property-of-type
         Skript.registerExpression(ExprGameMapFromId.class, GameMap.class, ExpressionType.COMBINED,
                 "[game]map[s] (with|from) [[uu]id[s]] %strings%"
         );

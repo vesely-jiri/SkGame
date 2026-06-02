@@ -41,6 +41,7 @@ public class ExprPlayerTeam extends SimpleExpression<String> {
     private Expression<Player> playerExpr;
 
     static {
+        // COMBINED: "skgame" prefix disambiguates from vanilla team — multi-token by design
         Skript.registerExpression(ExprPlayerTeam.class, String.class, ExpressionType.COMBINED,
                 "skgame team of %player%",
                 "%player%'[s] skgame team"

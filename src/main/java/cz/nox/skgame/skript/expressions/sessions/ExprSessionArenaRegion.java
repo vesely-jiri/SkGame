@@ -38,6 +38,7 @@ public class ExprSessionArenaRegion extends SimpleExpression<Region> {
     private int pattern;
 
     static {
+        // COMBINED: two patterns (primary + deprecated alias); switching to PROPERTY before alias removal risks silent parse collision
         Skript.registerExpression(ExprSessionArenaRegion.class, Region.class, ExpressionType.COMBINED,
                 "[the] [session] arena of %session%",  // 0 — primary
                 "[the] arena region of %session%"     // 1 — deprecated alias
