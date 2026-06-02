@@ -56,6 +56,8 @@ public class DatabaseManager {
             stmt.execute(Schema.IDX_GAME_RESULT_MINIGAME);
             stmt.execute(Schema.IDX_PARTICIPANT_PLAYER);
             stmt.execute(Schema.IDX_PARTICIPANT_WINNER);
+            // Migration: add score column to existing DBs; silently ignored if already present
+            try { stmt.execute(Schema.MIGRATE_ADD_SCORE); } catch (SQLException ignored) {}
         }
     }
 

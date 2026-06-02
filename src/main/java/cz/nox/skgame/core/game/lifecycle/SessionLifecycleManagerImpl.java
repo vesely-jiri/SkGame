@@ -779,9 +779,17 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
                     .map(Player::getUniqueId).collect(Collectors.toSet());
             Set<UUID> winnerUuids = sessionWinners.stream()
                     .map(Player::getUniqueId).collect(Collectors.toSet());
+            Map<UUID, Integer> scores = new HashMap<>();
+            for (Player p : session.getPlayers()) {
+                GamePlayer gp = playerManager.getPlayer(p);
+                if (gp != null) {
+                    Object v = gp.getValue(GamePlayerKeys.SCORE, true);
+                    scores.put(p.getUniqueId(), v instanceof Number n ? n.intValue() : 0);
+                }
+            }
             GameResultsRepository.getInstance().recordAsync(
                     plugin, sessionId, minigameId, gamemapId,
-                    startTime, endTime, reason, playerUuids, winnerUuids);
+                    startTime, endTime, reason, playerUuids, winnerUuids, scores);
         }
 
         if (!sessionWinners.isEmpty()) {

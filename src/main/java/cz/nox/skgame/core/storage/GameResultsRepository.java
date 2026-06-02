@@ -35,11 +35,11 @@ public class GameResultsRepository {
      */
     public void recordAsync(SkGame plugin, String sessionId, String minigameId, String gamemapId,
                             long startTime, long endTime, String reason,
-                            Set<UUID> playerUuids, Set<UUID> winnerUuids) {
+                            Set<UUID> playerUuids, Set<UUID> winnerUuids, Map<UUID, Integer> scores) {
         if (!DatabaseManager.getInstance().isAvailable()) return;
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
-                insert(sessionId, minigameId, gamemapId, startTime, endTime, reason, playerUuids, winnerUuids);
+                insert(sessionId, minigameId, gamemapId, startTime, endTime, reason, playerUuids, winnerUuids, scores);
             } catch (SQLException e) {
                 plugin.getLogUtil().warning("Failed to record game result for session " + sessionId + ": " + e.getMessage());
             }
@@ -48,14 +48,14 @@ public class GameResultsRepository {
 
     private void insert(String sessionId, String minigameId, String gamemapId,
                         long startTime, long endTime, String reason,
-                        Set<UUID> playerUuids, Set<UUID> winnerUuids) throws SQLException {
+                        Set<UUID> playerUuids, Set<UUID> winnerUuids, Map<UUID, Integer> scores) throws SQLException {
         DatabaseManager db = DatabaseManager.getInstance();
         try (Connection conn = db.getConnection()) {
             conn.setAutoCommit(false);
             try {
                 long resultId = insertGameResult(conn, sessionId, minigameId, gamemapId,
                         startTime, endTime, reason, winnerUuids);
-                insertParticipants(conn, resultId, playerUuids, winnerUuids);
+                insertParticipants(conn, resultId, playerUuids, winnerUuids, scores);
                 conn.commit();
             } catch (SQLException e) {
                 conn.rollback();
@@ -90,13 +90,15 @@ public class GameResultsRepository {
     }
 
     private void insertParticipants(Connection conn, long resultId,
-                                    Set<UUID> playerUuids, Set<UUID> winnerUuids) throws SQLException {
+                                    Set<UUID> playerUuids, Set<UUID> winnerUuids,
+                                    Map<UUID, Integer> scores) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(
-                "INSERT INTO game_participants(game_result_id,player_uuid,is_winner) VALUES(?,?,?)")) {
+                "INSERT INTO game_participants(game_result_id,player_uuid,is_winner,score) VALUES(?,?,?,?)")) {
             for (UUID uuid : playerUuids) {
                 ps.setLong(1, resultId);
                 ps.setString(2, uuid.toString());
                 ps.setInt(3, winnerUuids.contains(uuid) ? 1 : 0);
+                ps.setInt(4, scores.getOrDefault(uuid, 0));
                 ps.addBatch();
             }
             ps.executeBatch();

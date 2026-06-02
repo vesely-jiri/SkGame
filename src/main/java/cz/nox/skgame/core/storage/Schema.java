@@ -22,8 +22,13 @@ public final class Schema {
                 game_result_id INTEGER NOT NULL,
                 player_uuid    TEXT    NOT NULL,
                 is_winner      INTEGER DEFAULT 0,
+                score          INTEGER NOT NULL DEFAULT 0,
                 FOREIGN KEY (game_result_id) REFERENCES game_results(id)
             )""";
+
+    /** Migration: add score column to existing DBs that pre-date this schema change. SQLite throws on duplicate column — caller swallows that exception. */
+    public static final String MIGRATE_ADD_SCORE =
+            "ALTER TABLE game_participants ADD COLUMN score INTEGER NOT NULL DEFAULT 0";
 
     public static final String IDX_GAME_RESULT_MINIGAME =
             "CREATE INDEX IF NOT EXISTS idx_game_result_minigame ON game_results(minigame_id)";
