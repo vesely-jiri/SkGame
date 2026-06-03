@@ -311,8 +311,8 @@ public class SkGame extends JavaPlugin implements TabCompleter {
         logUtil.raw(bar);
         logUtil.info("&3SkGame &7v" + ver + "  &8|  &7by nox");
         logUtil.info("&aSessions: ready  &8|  &7Modules: " + modCount + " loaded");
-        logUtil.raw(bar);
         logUtil.info("SkGame enabled in " + (System.currentTimeMillis() - s) + "ms");
+        logUtil.raw(bar);
         scheduleUpdateCheck();
     }
 
