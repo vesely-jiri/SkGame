@@ -66,7 +66,8 @@ public class StrucRegisterMiniGame extends Structure {
     private @Nullable Expression<Number>             minPlayersExpr;
     private @Nullable Expression<MinigameTag>        tagsExpr;
     private @Nullable List<TeamEntry>                parsedTeams;
-    private @Nullable Expression<TeamAssignmentMode> teamAssignmentExpr;
+    private @Nullable Expression<TeamAssignmentMode>           teamAssignmentExpr;
+    private @Nullable List<MiniGameEntryHelper.ValueDefEntry>  parsedValues;
 
     static {
         Skript.registerStructure(StrucRegisterMiniGame.class, MiniGameEntryHelper.MIXED, NodeType.BOTH,
@@ -91,6 +92,8 @@ public class StrucRegisterMiniGame extends Structure {
             ch.njol.skript.config.SectionNode teamsSectionNode = MiniGameEntryHelper.readTeamsSectionNode(entryContainer);
             if (teamsSectionNode != null) parsedTeams = MiniGameEntryHelper.parseTeams(teamsSectionNode);
             teamAssignmentExpr = MiniGameEntryHelper.readTeamAssignment(entryContainer);
+            ch.njol.skript.config.SectionNode valuesSectionNode = MiniGameEntryHelper.readValuesSectionNode(entryContainer);
+            if (valuesSectionNode != null) parsedValues = MiniGameEntryHelper.parseValues(valuesSectionNode);
 
             List<Node> unhandled = entryContainer.getUnhandledNodes();
             if (!unhandled.isEmpty()) {
@@ -124,7 +127,7 @@ public class StrucRegisterMiniGame extends Structure {
         String minigameId = id.getSingle(null);
         if (minigameId == null) return false;
         MiniGame mg = miniGameManager.registerMiniGame(minigameId);
-        MiniGameEntryHelper.apply(mg, nameExpr, iconExpr, descriptionExpr, authorExpr, minPlayersExpr, tagsExpr, parsedTeams, teamAssignmentExpr);
+        MiniGameEntryHelper.apply(mg, nameExpr, iconExpr, descriptionExpr, authorExpr, minPlayersExpr, tagsExpr, parsedTeams, teamAssignmentExpr, parsedValues);
         if (trigger != null) {
             MiniGameRegisterEvent registerEvent = new MiniGameRegisterEvent(mg);
             TriggerItem.walk(trigger, registerEvent);

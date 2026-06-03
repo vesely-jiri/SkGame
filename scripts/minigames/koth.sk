@@ -5,24 +5,25 @@ options:
 
 on load:
     register minigame with id "koth":
-        set minigame name of event-minigame to "King of the Hill"
-        set minigame icon of event-minigame to red banner
-        set minigame author of event-minigame to "JuraJ_Player"
-        set min players of event-minigame to 2
-        set gamemap value "spawnpoints" of event-minigame to a custom value:
-            set value name to "Spawn points"
-            set plurality to plural
-            set value type to a location
-            set description to "Spawn locations for players at game start"
-        set gamemap value "hill_region" of event-minigame to a custom value:
-            set value name to "Hill region"
-            set value type to a region
-            set description to "The region that counts as the hill"
-        set gamemap value "points_limit" of event-minigame to a custom value:
-            set value name to "Points limit"
-            set value type to a number
-            set default value to 30
-            set description to "Score a player needs to reach to win"
+        name: "King of the Hill"
+        icon: red banner
+        author: "JuraJ_Player"
+        min players: 2
+        values:
+            gamemap value "spawnpoints":
+                name: "Spawn points"
+                value type: "location"
+                plurality: "plural"
+                description: "Spawn locations for players at game start"
+            gamemap value "hill_region":
+                name: "Hill region"
+                value type: "region"
+                description: "The region that counts as the hill"
+            gamemap value "points_limit":
+                name: "Points limit"
+                value type: "number"
+                default value: 30
+                description: "Score a player needs to reach to win"
 
 on "koth" game start:
     set {_spawnpoints::*} to gamemap values "spawnpoints" of event-session

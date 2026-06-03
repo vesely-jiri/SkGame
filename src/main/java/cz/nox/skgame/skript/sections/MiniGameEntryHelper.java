@@ -2,11 +2,16 @@ package cz.nox.skgame.skript.sections;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.ScriptLoader;
+import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.registrations.Classes;
+import cz.nox.skgame.api.game.model.CustomValue;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.MinigameTag;
 import cz.nox.skgame.api.game.model.TeamEntry;
+import cz.nox.skgame.api.game.model.type.CustomValuePlurality;
 import cz.nox.skgame.api.game.model.type.TeamAssignmentMode;
+import cz.nox.skgame.core.game.MiniGameManager;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.lang.entry.EntryContainer;
@@ -21,12 +26,22 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Shared entry definitions and apply logic for register-minigame syntax elements.
  * Used by both StrucRegisterMiniGame (Structure, top-level) and EffSecRegisterMiniGame (Section, inside on load:).
  */
 final class MiniGameEntryHelper {
+
+    /** One entry from the values: section — gamemap or session scope value definition. */
+    record ValueDefEntry(boolean isGamemap, String key, CustomValue cv) {}
+
+    // key pattern: (gamemap|session) value "id"
+    private static final Pattern VALUE_KEY_PATTERN =
+            Pattern.compile("^(gamemap|session) value \"([^\"]+)\"$");
 
     // Individual constants so callers can use canCreateWith/getValue for manual iteration.
     static final ExpressionEntryData<String>             NAME_ENTRY            = new ExpressionEntryData<>("name",            null, true, String.class);
@@ -38,11 +53,22 @@ final class MiniGameEntryHelper {
     static final ExpressionEntryData<MinigameTag>        TAGS_ENTRY            = new ExpressionEntryData<>("tags",            null, true, MinigameTag.class);
     static final SectionEntryData                        TEAMS_SECTION_ENTRY   = new SectionEntryData("teams", null, true);
     static final ExpressionEntryData<TeamAssignmentMode> TEAM_ASSIGNMENT_ENTRY = new ExpressionEntryData<>("team assignment", null, true, TeamAssignmentMode.class);
+    static final SectionEntryData                        VALUES_SECTION_ENTRY  = new SectionEntryData("values", null, true);
 
     /** Validator for an individual team body (name: / icon:). */
     static final EntryValidator TEAM_BODY_VALIDATOR = EntryValidator.builder()
             .addEntryData(new ExpressionEntryData<>("name", null, true, String.class))
             .addEntryData(new ExpressionEntryData<>("icon", null, true, ItemStack.class))
+            .build();
+
+    /** Validator for an individual value-def body (inside gamemap/session value "id":). */
+    @SuppressWarnings("unchecked")
+    static final EntryValidator VALUE_BODY_VALIDATOR = EntryValidator.builder()
+            .addEntryData(new ExpressionEntryData<>("name",          null, true, String.class))
+            .addEntryData(new ExpressionEntryData<>("value type",    null, true, String.class))
+            .addEntryData(new ExpressionEntryData<>("default value", null, true, Object.class))
+            .addEntryData(new ExpressionEntryData<>("plurality",     null, true, String.class))
+            .addEntryData(new ExpressionEntryData<>("description",   null, true, String.class))
             .build();
 
     /**
@@ -59,6 +85,7 @@ final class MiniGameEntryHelper {
             .addEntryData(TAGS_ENTRY)
             .addEntryData(TEAMS_SECTION_ENTRY)
             .addEntryData(TEAM_ASSIGNMENT_ENTRY)
+            .addEntryData(VALUES_SECTION_ENTRY)
             .unexpectedNodeTester(node -> false)
             .build();
 
@@ -97,6 +124,12 @@ final class MiniGameEntryHelper {
     /** Returns the raw SectionNode for the "teams:" entry, or null if absent. */
     static @Nullable SectionNode readTeamsSectionNode(EntryContainer c) {
         Object raw = c.getOptional("teams", false);
+        return raw instanceof SectionNode sn ? sn : null;
+    }
+
+    /** Returns the raw SectionNode for the "values:" entry, or null if absent. */
+    static @Nullable SectionNode readValuesSectionNode(EntryContainer c) {
+        Object raw = c.getOptional("values", false);
         return raw instanceof SectionNode sn ? sn : null;
     }
 
@@ -142,6 +175,69 @@ final class MiniGameEntryHelper {
         return entries;
     }
 
+    /**
+     * Parse a "values:" SectionNode into a list of ValueDefEntry.
+     * Each child key must match: gamemap value "id" or session value "id".
+     * Child body may contain: name, value type, default value, plurality, description.
+     * Returns null (and logs an error) on parse failure. Returns empty list for empty section.
+     */
+    @SuppressWarnings("unchecked")
+    static @Nullable List<ValueDefEntry> parseValues(SectionNode valuesSection) {
+        List<ValueDefEntry> entries = new ArrayList<>();
+        for (Node child : valuesSection) {
+            if (child.getKey() == null) continue;
+            String rawKey = ScriptLoader.replaceOptions(child.getKey());
+            Matcher m = VALUE_KEY_PATTERN.matcher(rawKey);
+            if (!m.matches()) {
+                Skript.error("Invalid value definition key '" + rawKey
+                        + "'. Expected: gamemap value \"id\" or session value \"id\"");
+                return null;
+            }
+            boolean isGamemap = "gamemap".equals(m.group(1));
+            String valueId = m.group(2);
+
+            CustomValue cv = new CustomValue();
+            if (child instanceof SectionNode valueSection) {
+                EntryContainer body = VALUE_BODY_VALIDATOR.validate(valueSection);
+                if (body == null) return null;
+
+                Expression<String> nameExpr = (Expression<String>) body.getOptional("name", false);
+                if (nameExpr != null) cv.setName(nameExpr.getSingle(null));
+
+                Expression<String> typeExpr = (Expression<String>) body.getOptional("value type", false);
+                if (typeExpr != null) {
+                    String typeName = typeExpr.getSingle(null);
+                    if (typeName != null) {
+                        ClassInfo<?> ci = Classes.getClassInfoNoError(typeName);
+                        if (ci == null)
+                            Skript.warning("Unknown value type '" + typeName + "' in values: section — type will be null");
+                        cv.setType(ci);
+                    }
+                }
+
+                Expression<Object> defExpr = (Expression<Object>) body.getOptional("default value", false);
+                if (defExpr != null) cv.setDefaultValue(defExpr.getSingle(null));
+
+                Expression<String> plurExpr = (Expression<String>) body.getOptional("plurality", false);
+                if (plurExpr != null) {
+                    String plur = plurExpr.getSingle(null);
+                    if (plur != null) {
+                        try {
+                            cv.setPlurality(CustomValuePlurality.valueOf(plur.toUpperCase(Locale.ROOT)));
+                        } catch (IllegalArgumentException ignored) {
+                            Skript.warning("Unknown plurality '" + plur + "' — expected 'single' or 'plural'");
+                        }
+                    }
+                }
+
+                Expression<String> descExpr = (Expression<String>) body.getOptional("description", false);
+                if (descExpr != null) cv.setDescription(descExpr.getSingle(null));
+            }
+            entries.add(new ValueDefEntry(isGamemap, valueId, cv));
+        }
+        return entries;
+    }
+
     static void apply(MiniGame mg,
                       @Nullable Expression<String>             nameExpr,
                       @Nullable Expression<ItemStack>          iconExpr,
@@ -150,7 +246,8 @@ final class MiniGameEntryHelper {
                       @Nullable Expression<Number>             minPlayersExpr,
                       @Nullable Expression<MinigameTag>        tagsExpr,
                       @Nullable List<TeamEntry>                parsedTeams,
-                      @Nullable Expression<TeamAssignmentMode> teamAssignmentExpr) {
+                      @Nullable Expression<TeamAssignmentMode> teamAssignmentExpr,
+                      @Nullable List<ValueDefEntry>            parsedValues) {
         if (nameExpr != null) {
             String v = nameExpr.getSingle(null);
             if (v != null) mg.setValue("name", v);
@@ -181,6 +278,13 @@ final class MiniGameEntryHelper {
         if (teamAssignmentExpr != null) {
             TeamAssignmentMode mode = teamAssignmentExpr.getSingle(null);
             if (mode != null) mg.setTeamAssignment(mode);
+        }
+        if (parsedValues != null && !parsedValues.isEmpty()) {
+            for (ValueDefEntry ve : parsedValues) {
+                if (ve.isGamemap()) mg.setGameMapValueDef(ve.key(), ve.cv());
+                else mg.setSessionValueDef(ve.key(), ve.cv());
+            }
+            MiniGameManager.getInstance().save();
         }
     }
 

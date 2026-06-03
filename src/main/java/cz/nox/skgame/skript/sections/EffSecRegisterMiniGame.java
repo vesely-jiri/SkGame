@@ -62,8 +62,9 @@ public class EffSecRegisterMiniGame extends EffectSection {
     private @Nullable Expression<String>             authorExpr;
     private @Nullable Expression<Number>             minPlayersExpr;
     private @Nullable Expression<MinigameTag>        tagsExpr;
-    private @Nullable List<TeamEntry>                parsedTeams;
-    private @Nullable Expression<TeamAssignmentMode> teamAssignmentExpr;
+    private @Nullable List<TeamEntry>                           parsedTeams;
+    private @Nullable Expression<TeamAssignmentMode>            teamAssignmentExpr;
+    private @Nullable List<MiniGameEntryHelper.ValueDefEntry>   parsedValues;
 
     static {
         Skript.registerSection(EffSecRegisterMiniGame.class,
@@ -102,7 +103,10 @@ public class EffSecRegisterMiniGame extends EffectSection {
                     if (teamsSectionNode != null) parsedTeams = MiniGameEntryHelper.parseTeams(teamsSectionNode);
                 } else if (MiniGameEntryHelper.TEAM_ASSIGNMENT_ENTRY.canCreateWith(node))
                     teamAssignmentExpr = (Expression<TeamAssignmentMode>) MiniGameEntryHelper.TEAM_ASSIGNMENT_ENTRY.getValue(node);
-                else {
+                else if (MiniGameEntryHelper.VALUES_SECTION_ENTRY.canCreateWith(node)) {
+                    SectionNode valsSectionNode = (SectionNode) MiniGameEntryHelper.VALUES_SECTION_ENTRY.getValue(node);
+                    if (valsSectionNode != null) parsedValues = MiniGameEntryHelper.parseValues(valsSectionNode);
+                } else {
                     freeForm.add(node);
                 }
             }
@@ -126,7 +130,7 @@ public class EffSecRegisterMiniGame extends EffectSection {
 
         MiniGame mg = miniGameManager.registerMiniGame(minigameId);
 
-        MiniGameEntryHelper.apply(mg, nameExpr, iconExpr, descriptionExpr, authorExpr, minPlayersExpr, tagsExpr, parsedTeams, teamAssignmentExpr);
+        MiniGameEntryHelper.apply(mg, nameExpr, iconExpr, descriptionExpr, authorExpr, minPlayersExpr, tagsExpr, parsedTeams, teamAssignmentExpr, parsedValues);
 
         if (trigger != null) {
             MiniGameRegisterEvent registerEvent = new MiniGameRegisterEvent(mg);

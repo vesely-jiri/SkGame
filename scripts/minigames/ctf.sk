@@ -5,11 +5,11 @@ options:
 
 on script load:
     register minigame with id "ctf":
-        set minigame name of event-minigame to "&cCapture &fthe &9Flag"
-        set minigame description of event-minigame to "&7- Steal the enemy flag and return it to your base"
-        set minigame author of event-minigame to "SkGame"
-        set minigame icon of event-minigame to white banner
-        set min players of event-minigame to 4
+        name: "&cCapture &fthe &9Flag"
+        description: "&7- Steal the enemy flag and return it to your base"
+        author: "SkGame"
+        icon: white banner
+        min players: 4
         tags: team, pvp
         teams:
             red:
@@ -19,33 +19,34 @@ on script load:
                 name: "Blue Team"
                 icon: blue wool
         team assignment: auto
-        set gamemap value "red_spawnpoint" of event-minigame to a custom value:
-            set value name to "Red team spawnpoint"
-            set value type to a location
-        set gamemap value "blue_spawnpoint" of event-minigame to a custom value:
-            set value name to "Blue team spawnpoint"
-            set value type to a location
-        set gamemap value "red_flag" of event-minigame to a custom value:
-            set value name to "Red flag location"
-            set value type to a location
-            set description to "Location players walk through to pick up red flag"
-        set gamemap value "blue_flag" of event-minigame to a custom value:
-            set value name to "Blue flag location"
-            set value type to a location
-            set description to "Location players walk through to pick up blue flag"
-        set gamemap value "red_base" of event-minigame to a custom value:
-            set value name to "Red capture base"
-            set value type to a location
-            set description to "Walk here with enemy flag to score a point"
-        set gamemap value "blue_base" of event-minigame to a custom value:
-            set value name to "Blue capture base"
-            set value type to a location
-            set description to "Walk here with enemy flag to score a point"
-        set gamemap value "score_limit" of event-minigame to a custom value:
-            set value name to "Score limit"
-            set value type to a number
-            set default value to 3
-            set description to "Captures needed to win"
+        values:
+            gamemap value "red_spawnpoint":
+                name: "Red team spawnpoint"
+                value type: "location"
+            gamemap value "blue_spawnpoint":
+                name: "Blue team spawnpoint"
+                value type: "location"
+            gamemap value "red_flag":
+                name: "Red flag location"
+                value type: "location"
+                description: "Location players walk through to pick up red flag"
+            gamemap value "blue_flag":
+                name: "Blue flag location"
+                value type: "location"
+                description: "Location players walk through to pick up blue flag"
+            gamemap value "red_base":
+                name: "Red capture base"
+                value type: "location"
+                description: "Walk here with enemy flag to score a point"
+            gamemap value "blue_base":
+                name: "Blue capture base"
+                value type: "location"
+                description: "Walk here with enemy flag to score a point"
+            gamemap value "score_limit":
+                name: "Score limit"
+                value type: "number"
+                default value: 3
+                description: "Captures needed to win"
 
 on "ctf" game start:
     set {_red_chestplate} to leather chestplate

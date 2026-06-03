@@ -26,6 +26,7 @@ public class MiniGame implements ConfigurationSerializable {
     private String id;
     private Map<String, Object> values;
     private Map<String, CustomValue> gameMapValueDefs = new LinkedHashMap<>();
+    private Map<String, CustomValue> sessionValueDefs = new LinkedHashMap<>();
     private Set<MinigameTag> tags = EnumSet.noneOf(MinigameTag.class);
     private List<TeamEntry> teams = new ArrayList<>();
     private TeamAssignmentMode teamAssignment = TeamAssignmentMode.AUTO;
@@ -79,6 +80,20 @@ public class MiniGame implements ConfigurationSerializable {
     }
     public void setGameMapValueDefs(Map<String, CustomValue> defs) {
         this.gameMapValueDefs = (defs != null) ? defs : new LinkedHashMap<>();
+    }
+
+    public Map<String, CustomValue> getSessionValueDefs() {
+        return sessionValueDefs;
+    }
+    public @Nullable CustomValue getSessionValueDef(String key) {
+        return sessionValueDefs.get(key);
+    }
+    public void setSessionValueDef(String key, @Nullable CustomValue cv) {
+        if (cv == null) sessionValueDefs.remove(key);
+        else sessionValueDefs.put(key, cv);
+    }
+    public void setSessionValueDefs(Map<String, CustomValue> defs) {
+        this.sessionValueDefs = (defs != null) ? defs : new LinkedHashMap<>();
     }
 
     public Set<MinigameTag> getTags() {
@@ -142,6 +157,14 @@ public class MiniGame implements ConfigurationSerializable {
                 defs.put(e.getKey(), e.getValue().serialize());
             }
             gm.put("gamemap-values", defs);
+        }
+
+        if (!sessionValueDefs.isEmpty()) {
+            Map<String, Object> defs = new LinkedHashMap<>();
+            for (Map.Entry<String, CustomValue> e : sessionValueDefs.entrySet()) {
+                defs.put(e.getKey(), e.getValue().serialize());
+            }
+            gm.put("session-values", defs);
         }
 
         if (!tags.isEmpty()) {
@@ -231,6 +254,31 @@ public class MiniGame implements ConfigurationSerializable {
                 }
             }
             newGm.setGameMapValueDefs(defs);
+        }
+
+        Object rawSessionDefs = gm.get("session-values");
+        Map<String, Object> sessionDefsMap = null;
+        if (rawSessionDefs instanceof MemorySection sec) {
+            sessionDefsMap = sec.getValues(false);
+        } else if (rawSessionDefs instanceof Map<?, ?> m) {
+            //noinspection unchecked
+            sessionDefsMap = (Map<String, Object>) m;
+        }
+        if (sessionDefsMap != null) {
+            Map<String, CustomValue> defs = new LinkedHashMap<>();
+            for (Map.Entry<String, Object> entry : sessionDefsMap.entrySet()) {
+                Map<String, Object> cvMap = null;
+                if (entry.getValue() instanceof MemorySection cvSec) {
+                    cvMap = cvSec.getValues(false);
+                } else if (entry.getValue() instanceof Map<?, ?> m) {
+                    //noinspection unchecked
+                    cvMap = (Map<String, Object>) m;
+                }
+                if (cvMap != null) {
+                    defs.put(entry.getKey(), CustomValue.deserialize(cvMap));
+                }
+            }
+            newGm.setSessionValueDefs(defs);
         }
 
         Object rawTags = gm.get("tags");

@@ -17,44 +17,44 @@ options:
 
 on load:
     register new minigame with id "bomberman":
-        set minigame name of event-minigame to "&cBomberMan"
-        set minigame icon of event-minigame to TNT
-        set minigame description of event-minigame to "&7- Pickup your &cTNT &7and fight"
-        set minigame author of event-minigame to "JuraJ_Player"
-        set min players of event-minigame to 2
-        set gamemap value "gamemode" of event-minigame to a custom value:
-            set value name to "Gamemode"
-            set value type to a text
-            set default value to "elimination"
-            set allowed values to "elimination", "deathmatch"
-            set description to "Gamemode: 'elimination' (one life, last alive wins) or 'deathmatch' (respawn, most kills when timer ends wins)"
-        set gamemap value "respawn_cooldown" of event-minigame to a custom value:
-            set plurality to single
-            set value name to "Respawn cooldown"
-            set value type to a timespan
-            set default value to 5 seconds
-            set description to "How long it takes a player to respawn after death in deathmatch mode"
-        set gamemap value "spawn_rate" of event-minigame to a custom value:
-            set value name to "Item spawn rate"
-            set plurality to single
-            set value type to a timespan
-            set default value to 5 ticks
-            set description to "How fast items are spawned at booster locations"
-        set gamemap value "deathmatch_timer" of event-minigame to a custom value:
-            set value name to "Deathmatch playtime"
-            set plurality to single
-            set value type to a timespan
-            set default value to 1 minute
-            set description to "How long players play in deathmatch mode before TIMEOUT"
-        set gamemap value "booster_spawnpoints" of event-minigame to a custom value:
-            set value name to "Booster spawnpoints"
-            set plurality to plural
-            set value type to a location
-            set description to "Locations where items spawn; players also start here"
-        set gamemap value "arena" of event-minigame to a custom value:
-            set value name to "Arena region"
-            set value type to a region
-            set description to "Playable area — used to clean up mines at game end"
+        name: "&cBomberMan"
+        icon: TNT
+        description: "&7- Pickup your &cTNT &7and fight"
+        author: "JuraJ_Player"
+        min players: 2
+        values:
+            gamemap value "gamemode":
+                name: "Gamemode"
+                value type: "text"
+                default value: "elimination"
+                description: "Gamemode: 'elimination' (one life, last alive wins) or 'deathmatch' (respawn, most kills when timer ends wins)"
+            gamemap value "respawn_cooldown":
+                name: "Respawn cooldown"
+                value type: "timespan"
+                default value: 5 seconds
+                plurality: "single"
+                description: "How long it takes a player to respawn after death in deathmatch mode"
+            gamemap value "spawn_rate":
+                name: "Item spawn rate"
+                value type: "timespan"
+                default value: 5 ticks
+                plurality: "single"
+                description: "How fast items are spawned at booster locations"
+            gamemap value "deathmatch_timer":
+                name: "Deathmatch playtime"
+                value type: "timespan"
+                default value: 1 minute
+                plurality: "single"
+                description: "How long players play in deathmatch mode before TIMEOUT"
+            gamemap value "booster_spawnpoints":
+                name: "Booster spawnpoints"
+                value type: "location"
+                plurality: "plural"
+                description: "Locations where items spawn; players also start here"
+            gamemap value "arena":
+                name: "Arena region"
+                value type: "region"
+                description: "Playable area — used to clean up mines at game end"
 
 on "bomberman" game start:
     set {_loc::*} to gamemap values "booster_spawnpoints" of event-session
