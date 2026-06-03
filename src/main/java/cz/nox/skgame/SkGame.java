@@ -235,7 +235,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
         this.pluginStartTime = s;
 
         instance = this;
-        this.logUtil = new LogUtil(instance);
+        this.logUtil = new LogUtil();
 
         ConfigurationSerialization.registerClass(CustomValue.class);
 
@@ -306,11 +306,11 @@ public class SkGame extends JavaPlugin implements TabCompleter {
 
         String ver = getDescription().getVersion();
         int modCount = enabledModules.size();
-        String bar = "════════════════════════════════";
-        logUtil.info(bar);
-        logUtil.info(" SkGame v" + ver + "  |  by nox");
-        logUtil.info(" Sessions: ready  |  Modules: " + modCount + " loaded");
-        logUtil.info(bar);
+        String bar = "&8════════════════════════════════";
+        logUtil.raw(bar);
+        logUtil.info("&3SkGame &7v" + ver + "  &8|  &7by nox");
+        logUtil.info("&aSessions: ready  &8|  &7Modules: " + modCount + " loaded");
+        logUtil.raw(bar);
         logUtil.info("SkGame enabled in " + (System.currentTimeMillis() - s) + "ms");
         scheduleUpdateCheck();
     }

@@ -1,26 +1,33 @@
 package cz.nox.skgame.util;
 
-import org.bukkit.plugin.Plugin;
-
-import java.util.logging.Logger;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.bukkit.Bukkit;
 
 public class LogUtil {
-    private final Logger logger;
-    private static final String PREFIX = "[SkGame] ";
 
-    public LogUtil(Plugin instance) {
-        this.logger = instance.getLogger();
-    }
+    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacyAmpersand();
+
+    private static final String PREFIX_INFO  = "&8[&3SkGame&8] &7";
+    private static final String PREFIX_WARN  = "&8[&3SkGame&8] &e";
+    private static final String PREFIX_ERROR = "&8[&3SkGame&8] &c";
 
     public void info(String message) {
-        logger.info(PREFIX + message);
+        send(PREFIX_INFO + message);
     }
 
     public void warning(String message) {
-        logger.warning(PREFIX + message);
+        send(PREFIX_WARN + message);
     }
 
     public void error(String message) {
-        logger.severe(PREFIX + message);
+        send(PREFIX_ERROR + message);
+    }
+
+    public void raw(String message) {
+        send(message);
+    }
+
+    private void send(String message) {
+        Bukkit.getConsoleSender().sendMessage(LEGACY.deserialize(message));
     }
 }
