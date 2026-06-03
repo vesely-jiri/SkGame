@@ -236,6 +236,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
 
         instance = this;
         this.logUtil = new LogUtil();
+        logUtil.raw("&8════════════════════════════════");
 
         ConfigurationSerialization.registerClass(CustomValue.class);
 

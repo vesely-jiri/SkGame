@@ -42,6 +42,12 @@ public class DatabaseManager {
         config.addDataSourceProperty("journal_mode", "WAL");
         config.addDataSourceProperty("synchronous", "NORMAL");
 
+        try {
+            Class<?> conf = Class.forName("org.apache.logging.log4j.core.config.Configurator");
+            Class<?> lvl  = Class.forName("org.apache.logging.log4j.Level");
+            conf.getMethod("setLevel", String.class, lvl)
+                .invoke(null, "com.zaxxer.hikari", lvl.getField("WARN").get(null));
+        } catch (Throwable ignored) {}
         dataSource = new HikariDataSource(config);
         createSchema();
 

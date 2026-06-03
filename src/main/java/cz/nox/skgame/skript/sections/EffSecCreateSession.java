@@ -11,7 +11,6 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.Trigger;
 import ch.njol.skript.lang.TriggerItem;
-import ch.njol.skript.registrations.EventValues;
 import ch.njol.skript.variables.Variables;
 import ch.njol.util.Kleenean;
 import cz.nox.skgame.api.game.event.SessionCreateEvent;
@@ -54,7 +53,6 @@ public class EffSecCreateSession extends EffectSection {
     static {
         Skript.registerSection(EffSecCreateSession.class,
                 "create [new] [game] session [(with|from) [uu]id %string%]");
-        EventValues.registerEventValue(SessionCreateEvent.class, Session.class, SessionCreateEvent::getSession);
     }
 
     @SuppressWarnings("unchecked")

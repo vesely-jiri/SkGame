@@ -47,14 +47,6 @@ public class EvtPlayerPromoted extends SkriptEvent {
         Skript.registerEvent("PlayerPromoted", EvtPlayerPromoted.class, PlayerRoleChangeEvent.class,
                 "[%string%] [player] promoted [to player] [(in|of) %-session%]"
         );
-        EventValues.registerEventValue(PlayerRoleChangeEvent.class, Player.class,
-                PlayerRoleChangeEvent::getPlayer, EventValues.TIME_NOW);
-        EventValues.registerEventValue(PlayerRoleChangeEvent.class, Session.class,
-                PlayerRoleChangeEvent::getSession, EventValues.TIME_NOW);
-        EventValues.registerEventValue(PlayerRoleChangeEvent.class, MiniGame.class,
-                e -> e.getSession().getMiniGame(), EventValues.TIME_NOW);
-        EventValues.registerEventValue(PlayerRoleChangeEvent.class, GameMap.class,
-                e -> e.getSession().getGameMap(), EventValues.TIME_NOW);
     }
 
     @SuppressWarnings("unchecked")
