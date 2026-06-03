@@ -1,0 +1,62 @@
+options:
+    var_prefix: game::parkour
+    checkpoint_radius: 3
+
+register minigame with id "parkour":
+    name: "&bParkour"
+    description: "&7- Race through checkpoints to the finish line"
+    author: "SkGame"
+    icon: light blue stained glass pane
+    min players: 1
+    tags: ffa, race
+    values:
+        gamemap value "spawnpoint":
+            name: "Spawnpoint"
+            value type: "location"
+            description: "Starting location for all players"
+        gamemap value "checkpoints":
+            name: "Checkpoints"
+            value type: "location"
+            plurality: "plural"
+            description: "Ordered checkpoint locations players must pass through"
+
+on "parkour" game start:
+    set {_spawn} to gamemap value "spawnpoint" of event-session
+    set {_checkpoints::*} to gamemap values "checkpoints" of event-session
+    if size of {_checkpoints::*} is 0:
+        stop game of event-session with reason "NO_CHECKPOINTS"
+        stop
+    loop session players of event-session:
+        teleport loop-player to {_spawn}
+        set gamemode of loop-player to adventure
+        set temporary player value "checkpoint" of loop-player to 1
+        send "&bParkour started! Reach all &e%size of {_checkpoints::*}%&b checkpoints!" to loop-player
+    Parkour_CheckLoop(event-session)
+
+on "parkour" game stop:
+    loop (session players of event-session) and (session spectators of event-session):
+        set gamemode of loop-player to adventure
+    if event-string is "WIN":
+        set {_winner} to temporary session value "winner" of event-session
+        if {_winner} is set:
+            set winners of event-session to {_winner}
+
+local function Parkour_CheckLoop(session: session):
+    set {_checkpoints::*} to gamemap values "checkpoints" of {_session}
+    set {_total} to size of {_checkpoints::*}
+    while (session state of {_session}) is STARTED:
+        loop session players of {_session}:
+            set {_cur} to (temporary player value "checkpoint" of loop-player) ? 1
+            if {_cur} > {_total}:
+                stop
+            set {_target} to {_checkpoints::%{_cur}%}
+            if {_target} is set:
+                if distance between location of loop-player and {_target} < {@checkpoint_radius}:
+                    if {_cur} >= {_total}:
+                        set temporary session value "winner" of {_session} to loop-player
+                        stop game of {_session} with reason "WIN"
+                    else:
+                        send action bar "&aCheckpoint &e%{_cur}% &a/ &e%{_total}% &apassed!" to loop-player
+                        add 1 to {_cur}
+                        set temporary player value "checkpoint" of loop-player to {_cur}
+        wait 5 ticks
