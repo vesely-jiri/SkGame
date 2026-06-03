@@ -15,46 +15,45 @@ options:
 
 #----------------------------------------------------------------------
 
-on load:
-    register new minigame with id "bomberman":
-        name: "&cBomberMan"
-        icon: TNT
-        description: "&7- Pickup your &cTNT &7and fight"
-        author: "JuraJ_Player"
-        min players: 2
-        values:
-            gamemap value "gamemode":
-                name: "Gamemode"
-                value type: "text"
-                default value: "elimination"
-                description: "Gamemode: 'elimination' (one life, last alive wins) or 'deathmatch' (respawn, most kills when timer ends wins)"
-            gamemap value "respawn_cooldown":
-                name: "Respawn cooldown"
-                value type: "timespan"
-                default value: 5 seconds
-                plurality: "single"
-                description: "How long it takes a player to respawn after death in deathmatch mode"
-            gamemap value "spawn_rate":
-                name: "Item spawn rate"
-                value type: "timespan"
-                default value: 5 ticks
-                plurality: "single"
-                description: "How fast items are spawned at booster locations"
-            gamemap value "deathmatch_timer":
-                name: "Deathmatch playtime"
-                value type: "timespan"
-                default value: 1 minute
-                plurality: "single"
-                description: "How long players play in deathmatch mode before TIMEOUT"
-            gamemap value "booster_spawnpoints":
-                name: "Booster spawnpoints"
-                value type: "location"
-                plurality: "plural"
-                description: "Locations where items spawn; players also start here"
-            gamemap value "arena":
-                name: "Arena region"
-                value type: "region"
-                description: "Playable area — used to clean up mines at game end"
+register new minigame with id "bomberman":
+    name: "&cBomberMan"
+    icon: TNT
+    description: "&7- Pickup your &cTNT &7and fight"
+    author: "JuraJ_Player"
+    min players: 2
+    values:
+        gamemap value "gamemode":
+            name: "Gamemode"
+            value type: "text"
+            default value: "elimination"
+            description: "Gamemode: 'elimination' (one life, last alive wins) or 'deathmatch' (respawn, most kills when timer ends wins)"
+        gamemap value "respawn_cooldown":
+            name: "Respawn cooldown"
+            value type: "timespan"
+            default value: 5 seconds
+            plurality: "single"
+            description: "How long it takes a player to respawn after death in deathmatch mode"
+        gamemap value "spawn_rate":
+            name: "Item spawn rate"
+            value type: "timespan"
+            default value: 5 ticks
+            plurality: "single"
+            description: "How fast items are spawned at booster locations"
+        gamemap value "deathmatch_timer":
+            name: "Deathmatch playtime"
+            value type: "timespan"
+            default value: 1 minute
+            plurality: "single"
+            description: "How long players play in deathmatch mode before TIMEOUT"
+        gamemap value "booster_spawnpoints":
+            name: "Booster spawnpoints"
+            value type: "location"
+            plurality: "plural"
+            description: "Locations where items spawn; players also start here"
+        gamemap value "arena":
+            name: "Arena region"
+            value type: "region"
+            description: "Playable area — used to clean up mines at game end"
 
 on "bomberman" game start:
     set {_loc::*} to gamemap values "booster_spawnpoints" of event-session

@@ -19,9 +19,50 @@ options:
 
 #----------------------------------------------------------------------------
 
-on script load:
-    suppress constant condition warning
-
+register minigame with id "volleyball":
+    name: "&eVolleyball"
+    icon: magma cream
+    author: "JuraJ_Player"
+    min players: 2
+    values:
+        gamemap value "net_block":
+            name: "Net block"
+            value type: "text"
+            default value: "light gray stained glass"
+            description: "Type of block used as the net"
+        gamemap value "team_1_spawnpoint":
+            name: "Spawnpoint of team 1"
+            value type: "location"
+            description: "Spawn location for team 1 at game start"
+        gamemap value "team_1_starting_block":
+            name: "Starting block of team 1"
+            value type: "text"
+            default value: "yellow terracotta"
+            description: "Block type team 1 must stand on to kick off"
+        gamemap value "team_1_detection_block":
+            name: "Detection block of team 1"
+            value type: "text"
+            default value: "yellow stained glass"
+            description: "Block hidden 1 block under team 1's playground side (must be unique on map)"
+        gamemap value "team_2_spawnpoint":
+            name: "Spawnpoint of team 2"
+            value type: "location"
+            description: "Spawn location for team 2 at game start"
+        gamemap value "team_2_starting_block":
+            name: "Starting block of team 2"
+            value type: "text"
+            default value: "lime terracotta"
+            description: "Block type team 2 must stand on to kick off"
+        gamemap value "team_2_detection_block":
+            name: "Detection block of team 2"
+            value type: "text"
+            default value: "lime stained glass"
+            description: "Block hidden 1 block under team 2's playground side (must be unique on map)"
+        gamemap value "max_points":
+            name: "Maximum points"
+            value type: "number"
+            default value: 5
+            description: "Points required to win"
     add "&6---------------------------------------------------" to {_d::*}
     add "&6&lSend the ball onto the opponent's court" to {_d::*}
     add "&6Dragon-egg holder: &7Always starts each round from his assigned zone" to {_d::*}
@@ -31,52 +72,7 @@ on script load:
     add "&6Sprint: &7Adds up power to your punch" to {_d::*}
     add "&6Sneak: &7Charge a high-power jump" to {_d::*}
     add "&6---------------------------------------------------" to {_d::*}
-
-    register minigame with id "volleyball":
-        name: "&eVolleyball"
-        icon: magma cream
-        author: "JuraJ_Player"
-        min players: 2
-        values:
-            gamemap value "net_block":
-                name: "Net block"
-                value type: "text"
-                default value: "light gray stained glass"
-                description: "Type of block used as the net"
-            gamemap value "team_1_spawnpoint":
-                name: "Spawnpoint of team 1"
-                value type: "location"
-                description: "Spawn location for team 1 at game start"
-            gamemap value "team_1_starting_block":
-                name: "Starting block of team 1"
-                value type: "text"
-                default value: "yellow terracotta"
-                description: "Block type team 1 must stand on to kick off"
-            gamemap value "team_1_detection_block":
-                name: "Detection block of team 1"
-                value type: "text"
-                default value: "yellow stained glass"
-                description: "Block hidden 1 block under team 1's playground side (must be unique on map)"
-            gamemap value "team_2_spawnpoint":
-                name: "Spawnpoint of team 2"
-                value type: "location"
-                description: "Spawn location for team 2 at game start"
-            gamemap value "team_2_starting_block":
-                name: "Starting block of team 2"
-                value type: "text"
-                default value: "lime terracotta"
-                description: "Block type team 2 must stand on to kick off"
-            gamemap value "team_2_detection_block":
-                name: "Detection block of team 2"
-                value type: "text"
-                default value: "lime stained glass"
-                description: "Block hidden 1 block under team 2's playground side (must be unique on map)"
-            gamemap value "max_points":
-                name: "Maximum points"
-                value type: "number"
-                default value: 5
-                description: "Points required to win"
-        set minigame values "description" of event-minigame to {_d::*}
+    set minigame values "description" of event-minigame to {_d::*}
 
 on "volleyball" game start:
     set {_teams::*} to {@teams}

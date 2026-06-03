@@ -3,27 +3,26 @@ options:
 
 #------------------------------------------------------------------------------
 
-on load:
-    register minigame with id "koth":
-        name: "King of the Hill"
-        icon: red banner
-        author: "JuraJ_Player"
-        min players: 2
-        values:
-            gamemap value "spawnpoints":
-                name: "Spawn points"
-                value type: "location"
-                plurality: "plural"
-                description: "Spawn locations for players at game start"
-            gamemap value "hill_region":
-                name: "Hill region"
-                value type: "region"
-                description: "The region that counts as the hill"
-            gamemap value "points_limit":
-                name: "Points limit"
-                value type: "number"
-                default value: 30
-                description: "Score a player needs to reach to win"
+register minigame with id "koth":
+    name: "King of the Hill"
+    icon: red banner
+    author: "JuraJ_Player"
+    min players: 2
+    values:
+        gamemap value "spawnpoints":
+            name: "Spawn points"
+            value type: "location"
+            plurality: "plural"
+            description: "Spawn locations for players at game start"
+        gamemap value "hill_region":
+            name: "Hill region"
+            value type: "region"
+            description: "The region that counts as the hill"
+        gamemap value "points_limit":
+            name: "Points limit"
+            value type: "number"
+            default value: 30
+            description: "Score a player needs to reach to win"
 
 on "koth" game start:
     set {_spawnpoints::*} to gamemap values "spawnpoints" of event-session

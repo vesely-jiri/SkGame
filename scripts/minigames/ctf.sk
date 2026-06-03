@@ -3,50 +3,49 @@ options:
     capture_radius: 3
     score_limit: 3
 
-on script load:
-    register minigame with id "ctf":
-        name: "&cCapture &fthe &9Flag"
-        description: "&7- Steal the enemy flag and return it to your base"
-        author: "SkGame"
-        icon: white banner
-        min players: 4
-        tags: team, pvp
-        teams:
-            red:
-                name: "Red Team"
-                icon: red wool
-            blue:
-                name: "Blue Team"
-                icon: blue wool
-        team assignment: auto
-        values:
-            gamemap value "red_spawnpoint":
-                name: "Red team spawnpoint"
-                value type: "location"
-            gamemap value "blue_spawnpoint":
-                name: "Blue team spawnpoint"
-                value type: "location"
-            gamemap value "red_flag":
-                name: "Red flag location"
-                value type: "location"
-                description: "Location players walk through to pick up red flag"
-            gamemap value "blue_flag":
-                name: "Blue flag location"
-                value type: "location"
-                description: "Location players walk through to pick up blue flag"
-            gamemap value "red_base":
-                name: "Red capture base"
-                value type: "location"
-                description: "Walk here with enemy flag to score a point"
-            gamemap value "blue_base":
-                name: "Blue capture base"
-                value type: "location"
-                description: "Walk here with enemy flag to score a point"
-            gamemap value "score_limit":
-                name: "Score limit"
-                value type: "number"
-                default value: 3
-                description: "Captures needed to win"
+register minigame with id "ctf":
+    name: "&cCapture &fthe &9Flag"
+    description: "&7- Steal the enemy flag and return it to your base"
+    author: "SkGame"
+    icon: white banner
+    min players: 4
+    tags: team, pvp
+    teams:
+        red:
+            name: "Red Team"
+            icon: red wool
+        blue:
+            name: "Blue Team"
+            icon: blue wool
+    team assignment: auto
+    values:
+        gamemap value "red_spawnpoint":
+            name: "Red team spawnpoint"
+            value type: "location"
+        gamemap value "blue_spawnpoint":
+            name: "Blue team spawnpoint"
+            value type: "location"
+        gamemap value "red_flag":
+            name: "Red flag location"
+            value type: "location"
+            description: "Location players walk through to pick up red flag"
+        gamemap value "blue_flag":
+            name: "Blue flag location"
+            value type: "location"
+            description: "Location players walk through to pick up blue flag"
+        gamemap value "red_base":
+            name: "Red capture base"
+            value type: "location"
+            description: "Walk here with enemy flag to score a point"
+        gamemap value "blue_base":
+            name: "Blue capture base"
+            value type: "location"
+            description: "Walk here with enemy flag to score a point"
+        gamemap value "score_limit":
+            name: "Score limit"
+            value type: "number"
+            default value: 3
+            description: "Captures needed to win"
 
 on "ctf" game start:
     set {_red_chestplate} to leather chestplate

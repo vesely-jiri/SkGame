@@ -17,11 +17,16 @@ import ch.njol.skript.lang.parser.ParserInstance;
 import ch.njol.skript.lang.util.SimpleEvent;
 import ch.njol.skript.registrations.EventValues;
 import cz.nox.skgame.api.game.event.MiniGameRegisterEvent;
+import cz.nox.skgame.SkGame;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.MinigameTag;
+import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.TeamEntry;
+import cz.nox.skgame.api.game.model.type.DisbandReason;
 import cz.nox.skgame.api.game.model.type.TeamAssignmentMode;
 import cz.nox.skgame.core.game.MiniGameManager;
+import cz.nox.skgame.core.game.SessionManager;
+import cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -138,9 +143,17 @@ public class StrucRegisterMiniGame extends Structure {
     @Override
     public void unload() {
         String minigameId = id.getSingle(null);
-        if (minigameId != null) {
-            miniGameManager.unregisterMiniGame(minigameId);
+        if (minigameId == null) return;
+        int kicked = 0;
+        for (Session session : SessionManager.getInstance().getAllSessions()) {
+            if (session.getMiniGame() != null && minigameId.equals(session.getMiniGame().getId())) {
+                SessionLifecycleManagerImpl.getInstance().disbandSession(session, DisbandReason.EXPLICIT_DISBAND);
+                kicked++;
+            }
         }
+        if (kicked > 0)
+            SkGame.getInstance().getLogUtil().info("Reloaded minigame '" + minigameId + "': kicked " + kicked + " running session(s)");
+        miniGameManager.unregisterMiniGame(minigameId);
     }
 
     @Override

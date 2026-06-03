@@ -1,29 +1,28 @@
 options:
     var_prefix: game::spleef
 
-on load:
-    register minigame with id "spleef":
-        name: "&bSpleef"
-        description: "&7- Break blocks under opponents to eliminate them"
-        author: "SkGame"
-        icon: iron shovel
-        min players: 2
-        tags: ffa, pvp
-        values:
-            gamemap value "spawnpoints":
-                name: "Spawn points"
-                value type: "location"
-                plurality: "plural"
-                description: "Player spawn locations on the spleef arena"
-            gamemap value "arena":
-                name: "Arena region"
-                value type: "region"
-                description: "The arena — players below minimum Y are eliminated"
-            gamemap value "floor_block":
-                name: "Floor block"
-                value type: "text"
-                default value: "snow block"
-                description: "Block type that makes up the floor (players can only break this)"
+register minigame with id "spleef":
+    name: "&bSpleef"
+    description: "&7- Break blocks under opponents to eliminate them"
+    author: "SkGame"
+    icon: iron shovel
+    min players: 2
+    tags: ffa, pvp
+    values:
+        gamemap value "spawnpoints":
+            name: "Spawn points"
+            value type: "location"
+            plurality: "plural"
+            description: "Player spawn locations on the spleef arena"
+        gamemap value "arena":
+            name: "Arena region"
+            value type: "region"
+            description: "The arena — players below minimum Y are eliminated"
+        gamemap value "floor_block":
+            name: "Floor block"
+            value type: "text"
+            default value: "snow block"
+            description: "Block type that makes up the floor (players can only break this)"
 
 on "spleef" game start:
     set {_spawns::*} to gamemap values "spawnpoints" of event-session
