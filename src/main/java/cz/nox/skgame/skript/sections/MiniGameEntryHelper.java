@@ -225,9 +225,13 @@ final class MiniGameEntryHelper {
                     if (typeVal instanceof ClassInfo<?> info) {
                         ci = info;
                     } else if (typeVal instanceof String s) {
-                        String code = s.trim().toLowerCase(Locale.ROOT);
-                        if ("text".equals(code)) code = "string";
-                        ci = Classes.getClassInfoNoError(code);
+                        String raw = s.trim();
+                        // User-input lookup first: matches user patterns ("regions?", "(text|string)s?", etc.)
+                        ci = Classes.getClassInfoFromUserInput(raw);
+                        if (ci == null) {
+                            // Fall back to exact code name ("string", "number", "location", etc.)
+                            ci = Classes.getClassInfoNoError(raw.toLowerCase(Locale.ROOT));
+                        }
                         if (ci == null)
                             Skript.warning("Unknown value type '" + s + "' in values: — type will be null");
                     }
