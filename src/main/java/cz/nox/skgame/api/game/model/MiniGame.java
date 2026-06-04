@@ -4,6 +4,7 @@ import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Serializer;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.variables.SerializedVariable;
+import cz.nox.skgame.api.game.model.type.CancellableEventType;
 import cz.nox.skgame.api.game.model.type.TeamAssignmentMode;
 import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
@@ -28,6 +29,7 @@ public class MiniGame implements ConfigurationSerializable {
     private Map<String, CustomValue> gameMapValueDefs = new LinkedHashMap<>();
     private Map<String, CustomValue> sessionValueDefs = new LinkedHashMap<>();
     private Set<MinigameTag> tags = EnumSet.noneOf(MinigameTag.class);
+    private Set<CancellableEventType> cancelledEvents = EnumSet.noneOf(CancellableEventType.class);
     private List<TeamEntry> teams = new ArrayList<>();
     private TeamAssignmentMode teamAssignment = TeamAssignmentMode.AUTO;
 
@@ -109,6 +111,13 @@ public class MiniGame implements ConfigurationSerializable {
         tags.remove(tag);
     }
 
+    public Set<CancellableEventType> getCancelledEvents() {
+        return cancelledEvents;
+    }
+    public void setCancelledEvents(Set<CancellableEventType> events) {
+        this.cancelledEvents = events != null ? events : EnumSet.noneOf(CancellableEventType.class);
+    }
+
     /** Derived view — returns team ids in declaration order. All existing callers unchanged. */
     public List<String> getTeams() {
         return teams.stream().map(TeamEntry::getId).toList();
@@ -169,6 +178,11 @@ public class MiniGame implements ConfigurationSerializable {
 
         if (!tags.isEmpty()) {
             gm.put("tags", tags.stream().map(MinigameTag::name)
+                    .reduce((a, b) -> a + "," + b).orElse(""));
+        }
+
+        if (!cancelledEvents.isEmpty()) {
+            gm.put("cancel-events", cancelledEvents.stream().map(CancellableEventType::name)
                     .reduce((a, b) -> a + "," + b).orElse(""));
         }
 
@@ -288,6 +302,15 @@ public class MiniGame implements ConfigurationSerializable {
                 try { tagSet.add(MinigameTag.valueOf(part.trim())); } catch (IllegalArgumentException ignored) {}
             }
             newGm.setTags(tagSet);
+        }
+
+        Object rawCancelEvents = gm.get("cancel-events");
+        if (rawCancelEvents instanceof String s && !s.isEmpty()) {
+            Set<CancellableEventType> evSet = EnumSet.noneOf(CancellableEventType.class);
+            for (String part : s.split(",")) {
+                try { evSet.add(CancellableEventType.valueOf(part.trim())); } catch (IllegalArgumentException ignored) {}
+            }
+            newGm.setCancelledEvents(evSet);
         }
 
         // Teams: new section format, with CSV fallback for legacy data

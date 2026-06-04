@@ -21,6 +21,7 @@ register new minigame with id "bomberman":
     description: "&7- Pickup your &cTNT &7and fight"
     author: "JuraJ_Player"
     min players: 2
+    cancel events: hunger, item-drop
     values:
         gamemap value "gamemode":
             name: "Gamemode"

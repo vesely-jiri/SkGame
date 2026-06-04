@@ -22,6 +22,7 @@ import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.MinigameTag;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.TeamEntry;
+import cz.nox.skgame.api.game.model.type.CancellableEventType;
 import cz.nox.skgame.api.game.model.type.DisbandReason;
 import cz.nox.skgame.api.game.model.type.TeamAssignmentMode;
 import cz.nox.skgame.core.game.MiniGameManager;
@@ -71,8 +72,9 @@ public class StrucRegisterMiniGame extends Structure {
     private @Nullable Expression<Number>             minPlayersExpr;
     private @Nullable Expression<MinigameTag>        tagsExpr;
     private @Nullable List<TeamEntry>                parsedTeams;
-    private @Nullable Expression<TeamAssignmentMode>           teamAssignmentExpr;
-    private @Nullable List<MiniGameEntryHelper.ValueDefEntry>  parsedValues;
+    private @Nullable Expression<TeamAssignmentMode>             teamAssignmentExpr;
+    private @Nullable List<MiniGameEntryHelper.ValueDefEntry>    parsedValues;
+    private @Nullable Expression<CancellableEventType>           cancelEventsExpr;
 
     static {
         Skript.registerStructure(StrucRegisterMiniGame.class, MiniGameEntryHelper.MIXED, NodeType.BOTH,
@@ -99,6 +101,7 @@ public class StrucRegisterMiniGame extends Structure {
             teamAssignmentExpr = MiniGameEntryHelper.readTeamAssignment(entryContainer);
             ch.njol.skript.config.SectionNode valuesSectionNode = MiniGameEntryHelper.readValuesSectionNode(entryContainer);
             if (valuesSectionNode != null) parsedValues = MiniGameEntryHelper.parseValues(valuesSectionNode);
+            cancelEventsExpr = MiniGameEntryHelper.readCancelEvents(entryContainer);
 
             List<Node> unhandled = entryContainer.getUnhandledNodes();
             if (!unhandled.isEmpty()) {
@@ -132,7 +135,7 @@ public class StrucRegisterMiniGame extends Structure {
         String minigameId = id.getSingle(null);
         if (minigameId == null) return false;
         MiniGame mg = miniGameManager.registerMiniGame(minigameId);
-        MiniGameEntryHelper.apply(mg, nameExpr, iconExpr, descriptionExpr, authorExpr, minPlayersExpr, tagsExpr, parsedTeams, teamAssignmentExpr, parsedValues);
+        MiniGameEntryHelper.apply(mg, nameExpr, iconExpr, descriptionExpr, authorExpr, minPlayersExpr, tagsExpr, parsedTeams, teamAssignmentExpr, parsedValues, cancelEventsExpr);
         if (trigger != null) {
             MiniGameRegisterEvent registerEvent = new MiniGameRegisterEvent(mg);
             TriggerItem.walk(trigger, registerEvent);

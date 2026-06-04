@@ -9,6 +9,7 @@ register minigame with id "parkour":
     icon: light blue stained glass pane
     min players: 1
     tags: ffa, race
+    cancel events: hunger, pvp, item-drop, item-pickup, block-break, block-place
     values:
         gamemap value "spawnpoint":
             name: "Spawnpoint"

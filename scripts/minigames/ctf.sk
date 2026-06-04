@@ -18,6 +18,7 @@ register minigame with id "ctf":
             name: "Blue Team"
             icon: blue wool
     team assignment: auto
+    cancel events: hunger, item-drop, item-pickup
     values:
         gamemap value "red_spawnpoint":
             name: "Red team spawnpoint"

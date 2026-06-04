@@ -24,6 +24,7 @@ register minigame with id "volleyball":
     icon: magma cream
     author: "JuraJ_Player"
     min players: 2
+    cancel events: hunger, item-drop, item-pickup
     values:
         gamemap value "net_block":
             name: "Net block"

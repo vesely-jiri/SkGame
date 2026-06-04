@@ -8,6 +8,7 @@ register minigame with id "koth":
     icon: red banner
     author: "JuraJ_Player"
     min players: 2
+    cancel events: hunger, item-drop, item-pickup
     values:
         gamemap value "spawnpoints":
             name: "Spawn points"

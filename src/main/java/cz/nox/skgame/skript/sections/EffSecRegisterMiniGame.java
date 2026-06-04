@@ -14,6 +14,7 @@ import cz.nox.skgame.api.game.event.MiniGameRegisterEvent;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.MinigameTag;
 import cz.nox.skgame.api.game.model.TeamEntry;
+import cz.nox.skgame.api.game.model.type.CancellableEventType;
 import cz.nox.skgame.api.game.model.type.TeamAssignmentMode;
 import cz.nox.skgame.core.game.MiniGameManager;
 import org.bukkit.event.Event;
@@ -64,6 +65,7 @@ public class EffSecRegisterMiniGame extends EffectSection {
     private @Nullable List<TeamEntry>                           parsedTeams;
     private @Nullable Expression<TeamAssignmentMode>            teamAssignmentExpr;
     private @Nullable List<MiniGameEntryHelper.ValueDefEntry>   parsedValues;
+    private @Nullable Expression<CancellableEventType>          cancelEventsExpr;
 
     static {
         Skript.registerSection(EffSecRegisterMiniGame.class,
@@ -103,6 +105,8 @@ public class EffSecRegisterMiniGame extends EffectSection {
                 else if (MiniGameEntryHelper.VALUES_SECTION_ENTRY.canCreateWith(node)) {
                     SectionNode valsSectionNode = (SectionNode) MiniGameEntryHelper.VALUES_SECTION_ENTRY.getValue(node);
                     if (valsSectionNode != null) parsedValues = MiniGameEntryHelper.parseValues(valsSectionNode);
+                } else if (MiniGameEntryHelper.CANCEL_EVENTS_ENTRY.canCreateWith(node)) {
+                    cancelEventsExpr = (Expression<CancellableEventType>) MiniGameEntryHelper.CANCEL_EVENTS_ENTRY.getValue(node);
                 } else {
                     freeForm.add(node);
                 }
@@ -127,7 +131,7 @@ public class EffSecRegisterMiniGame extends EffectSection {
 
         MiniGame mg = miniGameManager.registerMiniGame(minigameId);
 
-        MiniGameEntryHelper.apply(mg, nameExpr, iconExpr, descriptionExpr, authorExpr, minPlayersExpr, tagsExpr, parsedTeams, teamAssignmentExpr, parsedValues);
+        MiniGameEntryHelper.apply(mg, nameExpr, iconExpr, descriptionExpr, authorExpr, minPlayersExpr, tagsExpr, parsedTeams, teamAssignmentExpr, parsedValues, cancelEventsExpr);
 
         if (trigger != null) {
             MiniGameRegisterEvent registerEvent = new MiniGameRegisterEvent(mg);

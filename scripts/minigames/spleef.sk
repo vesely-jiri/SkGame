@@ -8,6 +8,7 @@ register minigame with id "spleef":
     icon: iron shovel
     min players: 2
     tags: ffa, pvp
+    cancel events: hunger, block-place, item-drop, item-pickup
     values:
         gamemap value "spawnpoints":
             name: "Spawn points"

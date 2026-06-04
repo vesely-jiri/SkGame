@@ -9,6 +9,7 @@ import cz.nox.skgame.api.game.model.CustomValue;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.MinigameTag;
 import cz.nox.skgame.api.game.model.TeamEntry;
+import cz.nox.skgame.api.game.model.type.CancellableEventType;
 import cz.nox.skgame.api.game.model.type.CustomValuePlurality;
 import cz.nox.skgame.api.game.model.type.TeamAssignmentMode;
 import cz.nox.skgame.core.game.MiniGameManager;
@@ -27,6 +28,7 @@ import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,9 +53,10 @@ final class MiniGameEntryHelper {
     static final ExpressionEntryData<Number>             MIN_PLAYERS_ENTRY     = new ExpressionEntryData<>("min players",     null, true, Number.class);
     static final ExpressionEntryData<MinigameTag>        MINIGAME_TAGS_ENTRY   = new ExpressionEntryData<>("minigame tags",   null, true, MinigameTag.class);
     static final ExpressionEntryData<MinigameTag>        TAGS_ENTRY            = new ExpressionEntryData<>("tags",            null, true, MinigameTag.class);
-    static final SectionEntryData                        TEAMS_SECTION_ENTRY   = new SectionEntryData("teams", null, true);
-    static final ExpressionEntryData<TeamAssignmentMode> TEAM_ASSIGNMENT_ENTRY = new ExpressionEntryData<>("team assignment", null, true, TeamAssignmentMode.class);
-    static final SectionEntryData                        VALUES_SECTION_ENTRY  = new SectionEntryData("values", null, true);
+    static final SectionEntryData                        TEAMS_SECTION_ENTRY      = new SectionEntryData("teams", null, true);
+    static final ExpressionEntryData<TeamAssignmentMode> TEAM_ASSIGNMENT_ENTRY    = new ExpressionEntryData<>("team assignment", null, true, TeamAssignmentMode.class);
+    static final SectionEntryData                        VALUES_SECTION_ENTRY     = new SectionEntryData("values", null, true);
+    static final ExpressionEntryData<CancellableEventType> CANCEL_EVENTS_ENTRY   = new ExpressionEntryData<>("cancel events", null, true, CancellableEventType.class);
 
     /** Validator for an individual team body (name: / icon:). */
     static final EntryValidator TEAM_BODY_VALIDATOR = EntryValidator.builder()
@@ -86,6 +89,7 @@ final class MiniGameEntryHelper {
             .addEntryData(TEAMS_SECTION_ENTRY)
             .addEntryData(TEAM_ASSIGNMENT_ENTRY)
             .addEntryData(VALUES_SECTION_ENTRY)
+            .addEntryData(CANCEL_EVENTS_ENTRY)
             .unexpectedNodeTester(node -> false)
             .build();
 
@@ -136,6 +140,11 @@ final class MiniGameEntryHelper {
     @SuppressWarnings("unchecked")
     static @Nullable Expression<TeamAssignmentMode> readTeamAssignment(EntryContainer c) {
         return (Expression<TeamAssignmentMode>) c.getOptional("team assignment", false);
+    }
+
+    @SuppressWarnings("unchecked")
+    static @Nullable Expression<CancellableEventType> readCancelEvents(EntryContainer c) {
+        return (Expression<CancellableEventType>) c.getOptional("cancel events", false);
     }
 
     /**
@@ -239,15 +248,16 @@ final class MiniGameEntryHelper {
     }
 
     static void apply(MiniGame mg,
-                      @Nullable Expression<String>             nameExpr,
-                      @Nullable Expression<ItemStack>          iconExpr,
-                      @Nullable Expression<String>             descriptionExpr,
-                      @Nullable Expression<String>             authorExpr,
-                      @Nullable Expression<Number>             minPlayersExpr,
-                      @Nullable Expression<MinigameTag>        tagsExpr,
-                      @Nullable List<TeamEntry>                parsedTeams,
-                      @Nullable Expression<TeamAssignmentMode> teamAssignmentExpr,
-                      @Nullable List<ValueDefEntry>            parsedValues) {
+                      @Nullable Expression<String>               nameExpr,
+                      @Nullable Expression<ItemStack>            iconExpr,
+                      @Nullable Expression<String>               descriptionExpr,
+                      @Nullable Expression<String>               authorExpr,
+                      @Nullable Expression<Number>               minPlayersExpr,
+                      @Nullable Expression<MinigameTag>          tagsExpr,
+                      @Nullable List<TeamEntry>                  parsedTeams,
+                      @Nullable Expression<TeamAssignmentMode>   teamAssignmentExpr,
+                      @Nullable List<ValueDefEntry>              parsedValues,
+                      @Nullable Expression<CancellableEventType> cancelEventsExpr) {
         if (nameExpr != null) {
             String v = nameExpr.getSingle(null);
             if (v != null) mg.setValue("name", v);
@@ -285,6 +295,13 @@ final class MiniGameEntryHelper {
                 else mg.setSessionValueDef(ve.key(), ve.cv());
             }
             MiniGameManager.getInstance().save();
+        }
+        if (cancelEventsExpr != null) {
+            CancellableEventType[] types = cancelEventsExpr.getArray(null);
+            if (types.length > 0) {
+                Set<CancellableEventType> set = EnumSet.copyOf(Arrays.asList(types));
+                mg.setCancelledEvents(set);
+            }
         }
     }
 

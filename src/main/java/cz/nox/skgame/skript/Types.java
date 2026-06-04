@@ -13,6 +13,7 @@ import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.MinigameTag;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.SessionVisibility;
+import cz.nox.skgame.api.game.model.type.CancellableEventType;
 import cz.nox.skgame.api.game.model.type.CustomValuePlurality;
 import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.api.game.model.type.TeamAssignmentMode;
@@ -389,6 +390,32 @@ public class Types {
                     @Override
                     public String toVariableNameString(TeamAssignmentMode mode) {
                         return "teamAssignmentMode:" + mode.name();
+                    }
+                })
+        );
+
+        Classes.registerClass(new EnumClassInfo<>(CancellableEventType.class, "cancellableeventtype", "cancellable event types",
+                        new SimpleLiteral<>(CancellableEventType.DAMAGE, true))
+                .user("cancellable ?event ?types?")
+                .name("Cancellable Event Type")
+                .description("Represents a game event type that can be automatically cancelled for all players in a session. Used with the 'cancel events:' entry in register minigame blocks.")
+                .since("1.0.0")
+                .parser(new Parser<>() {
+                    @Override
+                    public @Nullable CancellableEventType parse(String input, ParseContext context) {
+                        try {
+                            return CancellableEventType.valueOf(input.trim().toUpperCase().replace('-', '_'));
+                        } catch (IllegalArgumentException e) {
+                            return null;
+                        }
+                    }
+                    @Override
+                    public String toString(CancellableEventType type, int flags) {
+                        return type.skriptName();
+                    }
+                    @Override
+                    public String toVariableNameString(CancellableEventType type) {
+                        return "cancellableEventType:" + type.name();
                     }
                 })
         );
