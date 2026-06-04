@@ -12,10 +12,13 @@ import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
+import cz.nox.skgame.SkGame;
+import cz.nox.skgame.api.game.model.CustomValue;
 import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.core.game.GameMapManager;
+import cz.nox.skgame.core.game.MiniGameManager;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,13 +112,14 @@ public class ExprGameMapConfigValue extends SimpleExpression<Object> {
         switch (mode) {
             case SET -> {
                 if (delta == null || delta[0] == null) return;
-                map.setMiniGameValue(mgId, k, delta[0]);
+                Object val = clampWithWarn(mgId, k, delta[0]);
+                map.setMiniGameValue(mgId, k, val);
                 GameMapManager.getInstance().save();
             }
             case ADD -> {
                 if (delta == null) return;
                 for (Object o : delta) {
-                    if (o != null) map.addMiniGameValue(mgId, k, o);
+                    if (o != null) map.addMiniGameValue(mgId, k, clampWithWarn(mgId, k, o));
                 }
                 GameMapManager.getInstance().save();
             }
@@ -148,6 +152,19 @@ public class ExprGameMapConfigValue extends SimpleExpression<Object> {
         if (s == null) return null;
         MiniGame mg = s.getMiniGame();
         return mg != null ? mg.getId() : null;
+    }
+
+    private Object clampWithWarn(String mgId, String key, Object value) {
+        MiniGame mg = MiniGameManager.getInstance().getMiniGameById(mgId);
+        if (mg == null) return value;
+        CustomValue def = mg.getGameMapValueDef(key);
+        if (def == null || !def.hasBounds()) return value;
+        Object clamped = def.clamp(value);
+        if (clamped != value) {
+            SkGame.getInstance().getLogUtil().warning(
+                    "Gamemap value '" + key + "' clamped to [" + def.getMinValue() + ", " + def.getMaxValue() + "]");
+        }
+        return clamped;
     }
 
     @Override

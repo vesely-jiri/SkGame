@@ -22,6 +22,8 @@ public class CustomValue implements ConfigurationSerializable {
     String description;
     CustomValuePlurality plurality;
     private List<String> allowedValues = new ArrayList<>();
+    private Number minValue;
+    private Number maxValue;
 
     public CustomValue() {}
     public CustomValue(String name) {
@@ -80,6 +82,24 @@ public class CustomValue implements ConfigurationSerializable {
         return allowedValues != null && !allowedValues.isEmpty();
     }
 
+    public Number getMinValue() { return minValue; }
+    public void setMinValue(Number min) { this.minValue = min; }
+    public Number getMaxValue() { return maxValue; }
+    public void setMaxValue(Number max) { this.maxValue = max; }
+    public boolean hasBounds() { return minValue != null || maxValue != null; }
+
+    /** Clamp a numeric value to [min, max]. Returns original if not a Number or no bounds. */
+    public Object clamp(Object value) {
+        if (!(value instanceof Number n)) return value;
+        if (!hasBounds()) return value;
+        double v = n.doubleValue();
+        if (minValue != null && v < minValue.doubleValue()) v = minValue.doubleValue();
+        else if (maxValue != null && v > maxValue.doubleValue()) v = maxValue.doubleValue();
+        else return value;
+        // Preserve integer type when original was integral
+        return (value instanceof Long || value instanceof Integer) ? (long) v : v;
+    }
+
     @Override
     public @NotNull Map<String, Object> serialize() {
         Map<String, Object> map = new HashMap<>();
@@ -99,6 +119,8 @@ public class CustomValue implements ConfigurationSerializable {
         if (allowedValues != null && !allowedValues.isEmpty()) {
             map.put("allowed-values", new ArrayList<>(allowedValues));
         }
+        if (minValue != null) map.put("min", minValue);
+        if (maxValue != null) map.put("max", maxValue);
         return map;
     }
 
@@ -146,6 +168,10 @@ public class CustomValue implements ConfigurationSerializable {
             }
             cv.allowedValues = allowed;
         }
+        Object minRaw = map.get("min");
+        if (minRaw instanceof Number n) cv.minValue = n;
+        Object maxRaw = map.get("max");
+        if (maxRaw instanceof Number n) cv.maxValue = n;
         return cv;
     }
 }

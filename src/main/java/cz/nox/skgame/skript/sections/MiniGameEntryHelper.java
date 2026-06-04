@@ -72,6 +72,8 @@ final class MiniGameEntryHelper {
             .addEntryData(new ExpressionEntryData<>("default value", null, true, Object.class))
             .addEntryData(new ExpressionEntryData<>("plurality",     null, true, String.class))
             .addEntryData(new ExpressionEntryData<>("description",   null, true, String.class))
+            .addEntryData(new ExpressionEntryData<>("min",           null, true, Number.class))
+            .addEntryData(new ExpressionEntryData<>("max",           null, true, Number.class))
             .build();
 
     /**
@@ -241,6 +243,19 @@ final class MiniGameEntryHelper {
 
                 Expression<String> descExpr = (Expression<String>) body.getOptional("description", false);
                 if (descExpr != null) cv.setDescription(descExpr.getSingle(null));
+
+                boolean isNumericType = cv.getType() != null
+                        && (Number.class.isAssignableFrom(cv.getType().getC()));
+                Expression<Number> minExpr = (Expression<Number>) body.getOptional("min", false);
+                if (minExpr != null) {
+                    if (!isNumericType) Skript.warning("'min' bound ignored: value type is not numeric for key '" + valueId + "'");
+                    else cv.setMinValue(minExpr.getSingle(null));
+                }
+                Expression<Number> maxExpr = (Expression<Number>) body.getOptional("max", false);
+                if (maxExpr != null) {
+                    if (!isNumericType) Skript.warning("'max' bound ignored: value type is not numeric for key '" + valueId + "'");
+                    else cv.setMaxValue(maxExpr.getSingle(null));
+                }
             }
             entries.add(new ValueDefEntry(isGamemap, valueId, cv));
         }

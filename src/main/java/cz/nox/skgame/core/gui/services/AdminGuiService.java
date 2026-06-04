@@ -531,10 +531,22 @@ public class AdminGuiService implements Listener {
         if (mapId == null || mgId == null || key == null) return;
         GameMap map = GameMapManager.getInstance().getGameMapById(mapId);
         if (map == null) return;
-        map.setMiniGameValue(mgId, key, parseTypedValue(message));
+        Object parsed = parseTypedValue(message);
+        MiniGame mg = MiniGameManager.getInstance().getMiniGameById(mgId);
+        if (mg != null) {
+            CustomValue def = mg.getGameMapValueDef(key);
+            if (def != null && def.hasBounds()) {
+                Object clamped = def.clamp(parsed);
+                if (clamped != parsed) {
+                    player.sendMessage(ADMIN_PREFIX + "§eValue clamped to bounds [" + def.getMinValue() + ", " + def.getMaxValue() + "].");
+                    parsed = clamped;
+                }
+            }
+        }
+        map.setMiniGameValue(mgId, key, parsed);
         GameMapManager.getInstance().save();
         state.setResponseMode(AdminSetupState.ResponseMode.NONE);
-        player.sendMessage(ADMIN_PREFIX + "Value '" + key + "' set to " + message);
+        player.sendMessage(ADMIN_PREFIX + "Value '" + key + "' set to " + parsed);
         openValuesGui(player, mapId, mgId);
     }
 
