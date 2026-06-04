@@ -26,7 +26,6 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -69,7 +68,7 @@ final class MiniGameEntryHelper {
             .addEntryData(new ExpressionEntryData<>("name",        null, true, String.class))
             .addEntryData(new ExpressionEntryData<>("type",        null, true, ClassInfo.class))
             .addEntryData(new ExpressionEntryData<>("default",     null, true, Object.class))
-            .addEntryData(new ExpressionEntryData<>("plurality",   null, true, String.class))
+            .addEntryData(new ExpressionEntryData<>("plurality",   null, true, CustomValuePlurality.class))
             .addEntryData(new ExpressionEntryData<>("description", null, true, String.class))
             .addEntryData(new ExpressionEntryData<>("min",         null, true, Number.class))
             .addEntryData(new ExpressionEntryData<>("max",         null, true, Number.class))
@@ -226,16 +225,10 @@ final class MiniGameEntryHelper {
                 Expression<Object> defExpr = (Expression<Object>) body.getOptional("default", false);
                 if (defExpr != null) cv.setDefaultValue(defExpr.getSingle(null));
 
-                Expression<String> plurExpr = (Expression<String>) body.getOptional("plurality", false);
+                Expression<CustomValuePlurality> plurExpr = (Expression<CustomValuePlurality>) body.getOptional("plurality", false);
                 if (plurExpr != null) {
-                    String plur = plurExpr.getSingle(null);
-                    if (plur != null) {
-                        try {
-                            cv.setPlurality(CustomValuePlurality.valueOf(plur.toUpperCase(Locale.ROOT)));
-                        } catch (IllegalArgumentException ignored) {
-                            Skript.warning("Unknown plurality '" + plur + "' — expected 'single' or 'plural'");
-                        }
-                    }
+                    CustomValuePlurality plur = plurExpr.getSingle(null);
+                    if (plur != null) cv.setPlurality(plur);
                 }
 
                 Expression<String> descExpr = (Expression<String>) body.getOptional("description", false);

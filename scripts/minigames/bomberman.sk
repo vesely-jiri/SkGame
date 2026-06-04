@@ -32,24 +32,24 @@ register new minigame with id "bomberman":
             name: "Respawn cooldown"
             type: a timespan
             default: 5 seconds
-            plurality: "single"
+            plurality: single
             description: "How long it takes a player to respawn after death in deathmatch mode"
         gamemap value "spawn_rate":
             name: "Item spawn rate"
             type: a timespan
             default: 5 ticks
-            plurality: "single"
+            plurality: single
             description: "How fast items are spawned at booster locations"
         gamemap value "deathmatch_timer":
             name: "Deathmatch playtime"
             type: a timespan
             default: 1 minute
-            plurality: "single"
+            plurality: single
             description: "How long players play in deathmatch mode before TIMEOUT"
         gamemap value "booster_spawnpoints":
             name: "Booster spawnpoints"
             type: a location
-            plurality: "plural"
+            plurality: plural
             description: "Locations where items spawn; players also start here"
         gamemap value "arena":
             name: "Arena region"

@@ -18,7 +18,7 @@ register minigame with id "parkour":
         gamemap value "checkpoints":
             name: "Checkpoints"
             type: a location
-            plurality: "plural"
+            plurality: plural
             description: "Ordered checkpoint locations players must pass through"
 
 on "parkour" game start:

@@ -13,7 +13,7 @@ register minigame with id "spleef":
         gamemap value "spawnpoints":
             name: "Spawn points"
             type: a location
-            plurality: "plural"
+            plurality: plural
             description: "Player spawn locations on the spleef arena"
         gamemap value "arena":
             name: "Arena region"

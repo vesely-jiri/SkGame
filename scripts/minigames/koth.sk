@@ -13,7 +13,7 @@ register minigame with id "koth":
         gamemap value "spawnpoints":
             name: "Spawn points"
             type: a location
-            plurality: "plural"
+            plurality: plural
             description: "Spawn locations for players at game start"
         gamemap value "hill_region":
             name: "Hill region"
