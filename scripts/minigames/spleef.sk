@@ -12,16 +12,16 @@ register minigame with id "spleef":
     values:
         gamemap value "spawnpoints":
             name: "Spawn points"
-            type: "location"
+            type: a location
             plurality: "plural"
             description: "Player spawn locations on the spleef arena"
         gamemap value "arena":
             name: "Arena region"
-            type: "region"
+            type: a region
             description: "The arena — players below minimum Y are eliminated"
         gamemap value "floor_block":
             name: "Floor block"
-            type: "string"
+            type: a text
             default: "snow block"
             description: "Block type that makes up the floor (players can only break this)"
 

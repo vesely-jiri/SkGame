@@ -12,16 +12,16 @@ register minigame with id "koth":
     values:
         gamemap value "spawnpoints":
             name: "Spawn points"
-            type: "location"
+            type: a location
             plurality: "plural"
             description: "Spawn locations for players at game start"
         gamemap value "hill_region":
             name: "Hill region"
-            type: "region"
+            type: a region
             description: "The region that counts as the hill"
         gamemap value "points_limit":
             name: "Points limit"
-            type: "number"
+            type: a number
             default: 30
             description: "Score a player needs to reach to win"
 

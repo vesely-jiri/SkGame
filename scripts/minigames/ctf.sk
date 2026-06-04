@@ -22,29 +22,29 @@ register minigame with id "ctf":
     values:
         gamemap value "red_spawnpoint":
             name: "Red team spawnpoint"
-            type: "location"
+            type: a location
         gamemap value "blue_spawnpoint":
             name: "Blue team spawnpoint"
-            type: "location"
+            type: a location
         gamemap value "red_flag":
             name: "Red flag location"
-            type: "location"
+            type: a location
             description: "Location players walk through to pick up red flag"
         gamemap value "blue_flag":
             name: "Blue flag location"
-            type: "location"
+            type: a location
             description: "Location players walk through to pick up blue flag"
         gamemap value "red_base":
             name: "Red capture base"
-            type: "location"
+            type: a location
             description: "Walk here with enemy flag to score a point"
         gamemap value "blue_base":
             name: "Blue capture base"
-            type: "location"
+            type: a location
             description: "Walk here with enemy flag to score a point"
         gamemap value "score_limit":
             name: "Score limit"
-            type: "number"
+            type: a number
             default: 3
             description: "Captures needed to win"
 

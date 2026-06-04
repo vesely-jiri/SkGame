@@ -4,7 +4,6 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.registrations.Classes;
 import cz.nox.skgame.api.game.model.CustomValue;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.MinigameTag;
@@ -68,7 +67,7 @@ final class MiniGameEntryHelper {
     @SuppressWarnings("unchecked")
     static final EntryValidator VALUE_BODY_VALIDATOR = EntryValidator.builder()
             .addEntryData(new ExpressionEntryData<>("name",        null, true, String.class))
-            .addEntryData(new ExpressionEntryData<>("type",        null, true, Object.class))
+            .addEntryData(new ExpressionEntryData<>("type",        null, true, ClassInfo.class))
             .addEntryData(new ExpressionEntryData<>("default",     null, true, Object.class))
             .addEntryData(new ExpressionEntryData<>("plurality",   null, true, String.class))
             .addEntryData(new ExpressionEntryData<>("description", null, true, String.class))
@@ -218,24 +217,10 @@ final class MiniGameEntryHelper {
                 Expression<String> nameExpr = (Expression<String>) body.getOptional("name", false);
                 if (nameExpr != null) cv.setName(nameExpr.getSingle(null));
 
-                Expression<?> typeExpr = (Expression<?>) body.getOptional("type", false);
+                @SuppressWarnings("unchecked")
+                Expression<? extends ClassInfo<?>> typeExpr = (Expression<? extends ClassInfo<?>>) body.getOptional("type", false);
                 if (typeExpr != null) {
-                    Object typeVal = typeExpr.getSingle(null);
-                    ClassInfo<?> ci = null;
-                    if (typeVal instanceof ClassInfo<?> info) {
-                        ci = info;
-                    } else if (typeVal instanceof String s) {
-                        String raw = s.trim();
-                        // User-input lookup first: matches user patterns ("regions?", "(text|string)s?", etc.)
-                        ci = Classes.getClassInfoFromUserInput(raw);
-                        if (ci == null) {
-                            // Fall back to exact code name ("string", "number", "location", etc.)
-                            ci = Classes.getClassInfoNoError(raw.toLowerCase(Locale.ROOT));
-                        }
-                        if (ci == null)
-                            Skript.warning("Unknown value type '" + s + "' in values: — type will be null");
-                    }
-                    cv.setType(ci);
+                    cv.setType(typeExpr.getSingle(null));
                 }
 
                 Expression<Object> defExpr = (Expression<Object>) body.getOptional("default", false);

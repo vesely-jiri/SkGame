@@ -13,11 +13,11 @@ register minigame with id "parkour":
     values:
         gamemap value "spawnpoint":
             name: "Spawnpoint"
-            type: "location"
+            type: a location
             description: "Starting location for all players"
         gamemap value "checkpoints":
             name: "Checkpoints"
-            type: "location"
+            type: a location
             plurality: "plural"
             description: "Ordered checkpoint locations players must pass through"
 
