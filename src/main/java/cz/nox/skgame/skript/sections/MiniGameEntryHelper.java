@@ -67,13 +67,13 @@ final class MiniGameEntryHelper {
     /** Validator for an individual value-def body (inside gamemap/session value "id":). */
     @SuppressWarnings("unchecked")
     static final EntryValidator VALUE_BODY_VALIDATOR = EntryValidator.builder()
-            .addEntryData(new ExpressionEntryData<>("name",          null, true, String.class))
-            .addEntryData(new ExpressionEntryData<>("value type",    null, true, String.class))
-            .addEntryData(new ExpressionEntryData<>("default value", null, true, Object.class))
-            .addEntryData(new ExpressionEntryData<>("plurality",     null, true, String.class))
-            .addEntryData(new ExpressionEntryData<>("description",   null, true, String.class))
-            .addEntryData(new ExpressionEntryData<>("min",           null, true, Number.class))
-            .addEntryData(new ExpressionEntryData<>("max",           null, true, Number.class))
+            .addEntryData(new ExpressionEntryData<>("name",        null, true, String.class))
+            .addEntryData(new ExpressionEntryData<>("type",        null, true, Object.class))
+            .addEntryData(new ExpressionEntryData<>("default",     null, true, Object.class))
+            .addEntryData(new ExpressionEntryData<>("plurality",   null, true, String.class))
+            .addEntryData(new ExpressionEntryData<>("description", null, true, String.class))
+            .addEntryData(new ExpressionEntryData<>("min",         null, true, Number.class))
+            .addEntryData(new ExpressionEntryData<>("max",         null, true, Number.class))
             .build();
 
     /**
@@ -210,23 +210,31 @@ final class MiniGameEntryHelper {
             CustomValue cv = new CustomValue();
             if (child instanceof SectionNode valueSection) {
                 EntryContainer body = VALUE_BODY_VALIDATOR.validate(valueSection);
-                if (body == null) return null;
+                if (body == null) {
+                    Skript.error("Invalid value definition for '" + rawKey + "': check entry syntax (type:, default:, name:, etc.)");
+                    continue;
+                }
 
                 Expression<String> nameExpr = (Expression<String>) body.getOptional("name", false);
                 if (nameExpr != null) cv.setName(nameExpr.getSingle(null));
 
-                Expression<String> typeExpr = (Expression<String>) body.getOptional("value type", false);
+                Expression<?> typeExpr = (Expression<?>) body.getOptional("type", false);
                 if (typeExpr != null) {
-                    String typeName = typeExpr.getSingle(null);
-                    if (typeName != null) {
-                        ClassInfo<?> ci = Classes.getClassInfoNoError(typeName);
+                    Object typeVal = typeExpr.getSingle(null);
+                    ClassInfo<?> ci = null;
+                    if (typeVal instanceof ClassInfo<?> info) {
+                        ci = info;
+                    } else if (typeVal instanceof String s) {
+                        String code = s.trim().toLowerCase(Locale.ROOT);
+                        if ("text".equals(code)) code = "string";
+                        ci = Classes.getClassInfoNoError(code);
                         if (ci == null)
-                            Skript.warning("Unknown value type '" + typeName + "' in values: section — type will be null");
-                        cv.setType(ci);
+                            Skript.warning("Unknown value type '" + s + "' in values: — type will be null");
                     }
+                    cv.setType(ci);
                 }
 
-                Expression<Object> defExpr = (Expression<Object>) body.getOptional("default value", false);
+                Expression<Object> defExpr = (Expression<Object>) body.getOptional("default", false);
                 if (defExpr != null) cv.setDefaultValue(defExpr.getSingle(null));
 
                 Expression<String> plurExpr = (Expression<String>) body.getOptional("plurality", false);
