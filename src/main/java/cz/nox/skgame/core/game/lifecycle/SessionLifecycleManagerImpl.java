@@ -5,7 +5,6 @@ import cz.nox.skgame.api.game.event.GamePlayerSessionJoin;
 import cz.nox.skgame.api.game.event.GamePlayerSessionLeave;
 import cz.nox.skgame.api.game.event.GameStartEvent;
 import cz.nox.skgame.api.game.event.GameStopEvent;
-import cz.nox.skgame.api.game.event.RoundEndEvent;
 import cz.nox.skgame.api.game.event.LobbyEnterEvent;
 import cz.nox.skgame.api.game.event.PlayerRoleChangeEvent;
 import cz.nox.skgame.api.game.event.SessionCreateEvent;
@@ -902,11 +901,6 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         int cur = session.getCurrentRound();
         int total = session.getTotalRounds();
         long windowTicks = plugin.getConfig().getLong("session.post-game.window-seconds", 0L) * 20L;
-
-        if (!isAbortReason(reason)) {
-            boolean hasNextRound = !plugin.isMaintenanceMode() && cur > 0 && cur < total;
-            Bukkit.getPluginManager().callEvent(new RoundEndEvent(session, cur, total, hasNextRound, reason));
-        }
 
         if (!plugin.isMaintenanceMode() && cur > 0 && cur < total) {
             session.setCurrentRound(cur + 1);
