@@ -4,6 +4,8 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ParseContext;
+import ch.njol.skript.lang.UnparsedLiteral;
 import cz.nox.skgame.api.game.model.CustomValue;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.MinigameTag;
@@ -222,8 +224,22 @@ final class MiniGameEntryHelper {
                     cv.setType(typeExpr.getSingle(null));
                 }
 
-                Expression<Object> defExpr = (Expression<Object>) body.getOptional("default", false);
-                if (defExpr != null) cv.setDefaultValue(defExpr.getSingle(null));
+                Expression<?> defExpr = (Expression<?>) body.getOptional("default", false);
+                if (defExpr != null) {
+                    Object defVal = null;
+                    if (defExpr instanceof UnparsedLiteral unparsed) {
+                        // 'default: 10' or 'default: 5 seconds' — convert using declared type
+                        ClassInfo<?> ci = cv.getType();
+                        @SuppressWarnings("unchecked")
+                        Expression<?> converted = ci != null
+                                ? unparsed.getConvertedExpression(ParseContext.DEFAULT, ci.getC())
+                                : unparsed.getConvertedExpression(ParseContext.DEFAULT, Object.class);
+                        if (converted != null) defVal = converted.getSingle(null);
+                    } else {
+                        defVal = defExpr.getSingle(null);
+                    }
+                    if (defVal != null) cv.setDefaultValue(defVal);
+                }
 
                 Expression<CustomValuePlurality> plurExpr = (Expression<CustomValuePlurality>) body.getOptional("plurality", false);
                 if (plurExpr != null) {
