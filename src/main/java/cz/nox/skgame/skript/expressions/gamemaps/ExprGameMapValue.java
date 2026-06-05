@@ -54,8 +54,8 @@ public class ExprGameMapValue extends SimpleExpression<Object> implements KeyPro
     static {
         // COMBINED: two patterns with different structures; key %string% param prevents pure property classification
         Skript.registerExpression(ExprGameMapValue.class, Object.class, ExpressionType.COMBINED,
-                "[[game]map] value[list:s] %string% of %object%",
-                "[all] [[game]map] values of %object%"
+                "[the] map value[list:s] %string% of %object%",
+                "[all] [the] map values of %object%"
         );
     }
 
