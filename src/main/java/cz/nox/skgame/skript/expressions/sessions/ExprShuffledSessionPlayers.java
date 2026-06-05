@@ -34,25 +34,24 @@ import java.util.List;
 @Since("1.0.0")
 public class ExprShuffledSessionPlayers extends SimpleExpression<Player> {
 
-    private Expression<Session> session;
+    private Expression<Object> session;
 
     static {
         Skript.registerExpression(ExprShuffledSessionPlayers.class, Player.class, ExpressionType.PROPERTY,
-                "shuffled session players of %session%"
+                "shuffled session players of %object%"
         );
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public boolean init(Expression<?>[] exprs, int i, Kleenean kleenean, SkriptParser.ParseResult parseResult) {
-        this.session = (Expression<Session>) exprs[0];
+        this.session = (Expression<Object>) exprs[0];
         return true;
     }
 
     @Override
     protected @Nullable Player[] get(Event event) {
-        Session s = this.session.getSingle(event);
-        if (s == null) return null;
+        if (!(this.session.getSingle(event) instanceof Session s)) return null;
         List<Player> players = new ArrayList<>(s.getPlayers());
         if (s.isShuffle()) Collections.shuffle(players);
         return players.toArray(new Player[0]);

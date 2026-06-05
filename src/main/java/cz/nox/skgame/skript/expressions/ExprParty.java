@@ -25,25 +25,24 @@ import org.jetbrains.annotations.Nullable;
 @SuppressWarnings("unused")
 public class ExprParty extends SimpleExpression<Player> {
 
-    private Expression<Session> session;
+    private Expression<Object> session;
 
     static {
         Skript.registerExpression(ExprParty.class, Player.class, ExpressionType.PROPERTY,
-                "[the] [session] party of %session%"
+                "[the] [session] party of %object%"
         );
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public boolean init(Expression<?>[] exprs, int i, Kleenean kleenean, SkriptParser.ParseResult parseResult) {
-        this.session = (Expression<Session>) exprs[0];
+        this.session = (Expression<Object>) exprs[0];
         return true;
     }
 
     @Override
     protected @Nullable Player[] get(Event event) {
-        Session s = this.session.getSingle(event);
-        if (s == null) return new Player[0];
+        if (!(this.session.getSingle(event) instanceof Session s)) return new Player[0];
         return s.getLobbyMembers().toArray(new Player[0]);
     }
 

@@ -48,12 +48,12 @@ public class ExprPlayerScore extends SimpleExpression<Number> {
     private static final PlayerManager playerManager = PlayerManager.getInstance();
 
     private Expression<Player> playerExpr;
-    private Expression<Session> sessionExpr;
+    private Expression<Object> sessionExpr;
 
     static {
         // COMBINED: two type params (%player% + %session%), not a simple property of one type
         Skript.registerExpression(ExprPlayerScore.class, Number.class, ExpressionType.COMBINED,
-                "[skgame] score of %player% in %session%");
+                "[skgame] score of %player% in %object%");
     }
 
     @SuppressWarnings("unchecked")
@@ -61,7 +61,7 @@ public class ExprPlayerScore extends SimpleExpression<Number> {
     public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed,
                         SkriptParser.ParseResult parseResult) {
         playerExpr  = (Expression<Player>) exprs[0];
-        sessionExpr = (Expression<Session>) exprs[1];
+        sessionExpr = (Expression<Object>) exprs[1];
         return true;
     }
 
@@ -87,8 +87,7 @@ public class ExprPlayerScore extends SimpleExpression<Number> {
     public void change(Event e, @Nullable Object[] delta, ChangeMode mode) {
         Player p = playerExpr.getSingle(e);
         if (p == null) return;
-        Session session = sessionExpr.getSingle(e);
-        if (session == null) return;
+        if (!(sessionExpr.getSingle(e) instanceof Session session)) return;
         GamePlayer gp = playerManager.getPlayer(p);
         if (gp == null) return;
 

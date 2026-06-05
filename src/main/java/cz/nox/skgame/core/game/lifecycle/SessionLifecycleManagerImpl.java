@@ -424,6 +424,10 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             }
         }
 
+        // Reset all players before game starts — clears lobby inventory, effects, state
+        for (Player p : session.getPlayers()) {
+            PlayerResetter.reset(p, plugin.getDefaultGameMode());
+        }
         Bukkit.getPluginManager().callEvent(new GameStartEvent(session, session.getMiniGame(), gameMap));
         if (session.getMiniGame() != null) {
             final MiniGame _mg = session.getMiniGame();

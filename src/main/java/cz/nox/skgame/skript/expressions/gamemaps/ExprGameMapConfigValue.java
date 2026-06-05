@@ -44,7 +44,7 @@ public class ExprGameMapConfigValue extends SimpleExpression<Object> {
     private Expression<String> key;
     private Expression<GameMap> gameMap;
     private Expression<MiniGame> miniGame;
-    private Expression<Session> session;
+    private Expression<Object> session;
 
     private int pattern;
     private boolean isList;
@@ -53,7 +53,7 @@ public class ExprGameMapConfigValue extends SimpleExpression<Object> {
         // COMBINED: key %string% + optional second type param make it multi-token, not pure property
         Skript.registerExpression(ExprGameMapConfigValue.class, Object.class, ExpressionType.COMBINED,
                 "gamemap value[list:s] %string% of %gamemap% for %minigame%",
-                "gamemap value[list:s] %string% of %session%"
+                "gamemap value[list:s] %string% of %object%"
         );
     }
 
@@ -67,7 +67,7 @@ public class ExprGameMapConfigValue extends SimpleExpression<Object> {
             this.gameMap = (Expression<GameMap>) exprs[1];
             this.miniGame = (Expression<MiniGame>) exprs[2];
         } else {
-            this.session = (Expression<Session>) exprs[1];
+            this.session = (Expression<Object>) exprs[1];
         }
         return true;
     }
@@ -139,8 +139,8 @@ public class ExprGameMapConfigValue extends SimpleExpression<Object> {
 
     private @Nullable GameMap resolveMap(Event event) {
         if (pattern == 0) return gameMap.getSingle(event);
-        Session s = session.getSingle(event);
-        return s != null ? s.getGameMap() : null;
+        if (!(session.getSingle(event) instanceof Session s)) return null;
+        return s.getGameMap();
     }
 
     private @Nullable String resolveMgId(Event event) {
@@ -148,8 +148,7 @@ public class ExprGameMapConfigValue extends SimpleExpression<Object> {
             MiniGame mg = miniGame.getSingle(event);
             return mg != null ? mg.getId() : null;
         }
-        Session s = session.getSingle(event);
-        if (s == null) return null;
+        if (!(session.getSingle(event) instanceof Session s)) return null;
         MiniGame mg = s.getMiniGame();
         return mg != null ? mg.getId() : null;
     }

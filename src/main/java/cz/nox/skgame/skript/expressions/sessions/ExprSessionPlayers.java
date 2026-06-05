@@ -42,28 +42,25 @@ import java.util.Arrays;
 
 public class ExprSessionPlayers extends SimpleExpression<Player> {
 
-    private Expression<Session> session;
+    private Expression<Object> session;
 
     static {
         Skript.registerExpression(ExprSessionPlayers.class, Player.class, ExpressionType.PROPERTY,
-                "[all] session players of %session%"
+                "[all] session players of %object%"
         );
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public boolean init(Expression<?>[] exprs, int i, Kleenean kleenean, SkriptParser.ParseResult parseResult) {
-        this.session = (Expression<Session>) exprs[0];
+        this.session = (Expression<Object>) exprs[0];
         return true;
     }
 
     @Override
     protected @Nullable Player[] get(Event event) {
-        Session session = this.session.getSingle(event);
-        if (session != null) {
-            return session.getPlayers().toArray(new Player[0]);
-        }
-        return null;
+        if (!(this.session.getSingle(event) instanceof Session session)) return null;
+        return session.getPlayers().toArray(new Player[0]);
     }
 
     @Override
@@ -77,8 +74,7 @@ public class ExprSessionPlayers extends SimpleExpression<Player> {
 
     @Override
     public void change(Event event, @Nullable Object[] delta, Changer.ChangeMode mode) {
-        Session session = this.session.getSingle(event);
-        if (session == null) return;
+        if (!(this.session.getSingle(event) instanceof Session session)) return;
         Player[] players = (delta == null) ? new Player[0] :
                 Arrays.copyOf(delta, delta.length, Player[].class);
         switch (mode) {

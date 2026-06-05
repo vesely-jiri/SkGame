@@ -34,21 +34,21 @@ import org.jetbrains.annotations.Nullable;
 @SuppressWarnings("unused")
 public class ExprSessionArenaRegion extends SimpleExpression<Region> {
 
-    private Expression<Session> session;
+    private Expression<Object> session;
     private int pattern;
 
     static {
         // COMBINED: two patterns (primary + deprecated alias); switching to PROPERTY before alias removal risks silent parse collision
         Skript.registerExpression(ExprSessionArenaRegion.class, Region.class, ExpressionType.COMBINED,
-                "[the] [session] arena of %session%",  // 0 — primary
-                "[the] arena region of %session%"     // 1 — deprecated alias
+                "[the] [session] arena of %object%",  // 0 — primary
+                "[the] arena region of %object%"     // 1 — deprecated alias
         );
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public boolean init(Expression<?>[] exprs, int i, Kleenean kleenean, SkriptParser.ParseResult parseResult) {
-        this.session = (Expression<Session>) exprs[0];
+        this.session = (Expression<Object>) exprs[0];
         this.pattern = i;
         if (pattern == 1) {
             Skript.warning("'arena region of %session%' is deprecated — use 'arena of %session%' instead");
@@ -58,8 +58,7 @@ public class ExprSessionArenaRegion extends SimpleExpression<Region> {
 
     @Override
     protected @Nullable Region[] get(Event event) {
-        Session s = session.getSingle(event);
-        if (s == null) return new Region[0];
+        if (!(session.getSingle(event) instanceof Session s)) return new Region[0];
         Region r = s.getArenaRegion();
         return r == null ? new Region[0] : new Region[]{r};
     }

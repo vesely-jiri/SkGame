@@ -31,25 +31,24 @@ import org.jetbrains.annotations.Nullable;
 @SuppressWarnings("unused")
 public class ExprSessionActivePlayers extends SimpleExpression<Player> {
 
-    private Expression<Session> session;
+    private Expression<Object> session;
 
     static {
         Skript.registerExpression(ExprSessionActivePlayers.class, Player.class, ExpressionType.PROPERTY,
-                "[all] (playing|active) session players of %session%"
+                "[all] (playing|active) session players of %object%"
         );
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public boolean init(Expression<?>[] exprs, int i, Kleenean kleenean, SkriptParser.ParseResult parseResult) {
-        this.session = (Expression<Session>) exprs[0];
+        this.session = (Expression<Object>) exprs[0];
         return true;
     }
 
     @Override
     protected @Nullable Player[] get(Event event) {
-        Session session = this.session.getSingle(event);
-        if (session == null) return new Player[0];
+        if (!(this.session.getSingle(event) instanceof Session session)) return new Player[0];
         return session.getPlayers().stream()
                 .filter(p -> p.getGameMode() != GameMode.SPECTATOR)
                 .toArray(Player[]::new);

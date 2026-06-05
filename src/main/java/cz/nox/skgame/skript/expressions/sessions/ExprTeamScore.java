@@ -42,12 +42,12 @@ public class ExprTeamScore extends SimpleExpression<Number> {
     private static final String KEY_PREFIX = SessionKeys.TEAM_SCORE_PREFIX;
 
     private Expression<String> teamIdExpr;
-    private Expression<Session> sessionExpr;
+    private Expression<Object> sessionExpr;
 
     static {
-        // COMBINED: team id %string% + session %session% are two params, not property-of-type
+        // COMBINED: team id %string% + session %object% are two params, not property-of-type
         Skript.registerExpression(ExprTeamScore.class, Number.class, ExpressionType.COMBINED,
-                "[skgame] team score of %string% in %session%");
+                "[skgame] team score of %string% in %object%");
     }
 
     @SuppressWarnings("unchecked")
@@ -55,7 +55,7 @@ public class ExprTeamScore extends SimpleExpression<Number> {
     public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed,
                         SkriptParser.ParseResult parseResult) {
         teamIdExpr  = (Expression<String>) exprs[0];
-        sessionExpr = (Expression<Session>) exprs[1];
+        sessionExpr = (Expression<Object>) exprs[1];
         return true;
     }
 
@@ -63,8 +63,7 @@ public class ExprTeamScore extends SimpleExpression<Number> {
     protected @Nullable Number[] get(Event e) {
         String teamId = teamIdExpr.getSingle(e);
         if (teamId == null) return null;
-        Session session = sessionExpr.getSingle(e);
-        if (session == null) return null;
+        if (!(sessionExpr.getSingle(e) instanceof Session session)) return null;
         return new Number[]{scoreOf(session, teamId)};
     }
 
@@ -81,8 +80,7 @@ public class ExprTeamScore extends SimpleExpression<Number> {
     public void change(Event e, @Nullable Object[] delta, ChangeMode mode) {
         String teamId = teamIdExpr.getSingle(e);
         if (teamId == null) return;
-        Session session = sessionExpr.getSingle(e);
-        if (session == null) return;
+        if (!(sessionExpr.getSingle(e) instanceof Session session)) return;
 
         String key = KEY_PREFIX + teamId;
 
