@@ -33,7 +33,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import org.jetbrains.annotations.Nullable;
 
 public class MinigamesGuiService implements Listener {
 
@@ -52,6 +55,7 @@ public class MinigamesGuiService implements Listener {
 
     private static MinigamesGuiService instance;
     private final Map<String, Set<UUID>> viewers = new HashMap<>();
+    private final Map<UUID, Consumer<Player>> returnCallbacks = new ConcurrentHashMap<>();
 
     private MinigamesGuiService() {}
 
@@ -63,6 +67,11 @@ public class MinigamesGuiService implements Listener {
     // ─── Public API ───────────────────────────────────────────────────────────
 
     public void openFor(Player player) {
+        openFor(player, null);
+    }
+
+    public void openFor(Player player, @Nullable Consumer<Player> onReturn) {
+        if (onReturn != null) returnCallbacks.put(player.getUniqueId(), onReturn);
         Session session = SessionManager.getInstance().getSession(player);
         if (session == null) return;
         MinigamesGuiOpenEvent guiEvent = new MinigamesGuiOpenEvent(player, session);
@@ -70,6 +79,12 @@ public class MinigamesGuiService implements Listener {
         if (guiEvent.isCancelled()) return;
         player.openInventory(buildFor(player, session));
         viewers.computeIfAbsent(session.getId(), k -> new HashSet<>()).add(player.getUniqueId());
+    }
+
+    private void returnToCaller(Player p) {
+        Consumer<Player> cb = returnCallbacks.remove(p.getUniqueId());
+        if (cb != null) cb.accept(p);
+        else SessionGuiService.getInstance().openFor(p);
     }
 
     public int getTotalViewerCount() { return viewers.values().stream().mapToInt(Set::size).sum(); }
@@ -115,7 +130,7 @@ public class MinigamesGuiService implements Listener {
         // Slot 53 — back to session lobby
         builder.slot(53, GuiItem.of(Material.SPRUCE_DOOR)
                 .name("&c&lBack to lobby")
-                .onClick(e -> SessionGuiService.getInstance().openFor((Player) e.getWhoClicked())));
+                .onClick(e -> returnToCaller((Player) e.getWhoClicked())));
 
         // Dynamic minigame list
         MiniGameManager mgm = MiniGameManager.getInstance();
@@ -137,7 +152,7 @@ public class MinigamesGuiService implements Listener {
                 s.setMiniGame(clicked);
                 Bukkit.getPluginManager().callEvent(new SessionSettingsChangedEvent(s, "minigame"));
                 SessionGuiService.getInstance().update(s);
-                SessionGuiService.getInstance().openFor(p);
+                returnToCaller(p);
             }));
         }
 

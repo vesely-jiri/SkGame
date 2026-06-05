@@ -27,6 +27,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.SkullMeta;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -81,13 +82,13 @@ public class EventSessionGuiService implements Listener {
         builder.slot(1, GuiItem.of(mg != null ? Material.BOOK : Material.WRITABLE_BOOK)
                 .name(c("&eMiniGame: &f" + mgName))
                 .lore(c("&7Click to select"))
-                .onClick(e -> MinigamesGuiService.getInstance().openFor((Player) e.getWhoClicked())));
+                .onClick(e -> MinigamesGuiService.getInstance().openFor((Player) e.getWhoClicked(), EventSessionGuiService.getInstance()::openFor)));
 
         // Map selector
         builder.slot(3, GuiItem.of(map != null ? Material.MAP : Material.FILLED_MAP)
                 .name(c("&eMap: &f" + mapName))
                 .lore(c("&7Click to select"))
-                .onClick(e -> MapsGuiService.getInstance().openFor((Player) e.getWhoClicked())));
+                .onClick(e -> MapsGuiService.getInstance().openFor((Player) e.getWhoClicked(), EventSessionGuiService.getInstance()::openFor)));
 
         // Player count
         builder.slot(5, GuiItem.of(Material.PLAYER_HEAD)
@@ -97,6 +98,30 @@ public class EventSessionGuiService implements Listener {
         builder.slot(7, GuiItem.of(Material.COMPASS)
                 .name(c("&eState: &f" + session.getState().name()))
                 .lore(c("&eVisibility: &f" + session.getVisibility().name())));
+
+        // Middle slots 9-44 — Player heads
+        java.util.List<Player> allMembers = new java.util.ArrayList<>();
+        allMembers.addAll(session.getLobbyMembers());
+        allMembers.addAll(session.getPlayers());
+        allMembers.addAll(session.getSpectators());
+        int[] playerSlots = {
+            10, 11, 12, 13, 14, 15, 16,
+            19, 20, 21, 22, 23, 24, 25,
+            28, 29, 30, 31, 32, 33, 34,
+            37, 38, 39, 40, 41, 42, 43
+        };
+        for (int i = 0; i < Math.min(allMembers.size(), playerSlots.length); i++) {
+            Player member = allMembers.get(i);
+            boolean isHost = member.equals(session.getHost());
+            String role = session.getLobbyMembers().contains(member) ? "Lobby"
+                    : session.getPlayers().contains(member) ? "Playing" : "Spectator";
+            ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
+            SkullMeta meta = (SkullMeta) skull.getItemMeta();
+            if (meta != null) { meta.setPlayerProfile(member.getPlayerProfile()); skull.setItemMeta(meta); }
+            builder.slot(playerSlots[i], GuiItem.of(skull)
+                    .name(c((isHost ? "&e✦ " : "&7") + member.getName()))
+                    .lore(c("&7Role: &f" + role)));
+        }
 
         // Slot 45 — Unlock / Start / Stop
         if (!unlocked) {

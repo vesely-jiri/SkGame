@@ -331,6 +331,7 @@ public class MainGuiService implements Listener {
         String filter = viewerFilters.get(viewer.getUniqueId());
         Set<MinigameTag> tagFilter = viewerTagFilters.getOrDefault(viewer.getUniqueId(), Set.of());
         List<Session> lobbySessions = Arrays.stream(sm.getAllSessions())
+                .filter(s -> !s.isEventSession())
                 .filter(s -> s.getState() == SessionState.LOBBY
                         && s.getVisibility() == SessionVisibility.PUBLIC)
                 .filter(s -> matchesFilter(s, filter, tagFilter))
