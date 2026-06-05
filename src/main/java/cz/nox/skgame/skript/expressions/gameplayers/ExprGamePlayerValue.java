@@ -14,6 +14,9 @@ import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
 import cz.nox.skgame.api.game.model.GamePlayer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import cz.nox.skgame.core.game.PlayerManager;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -27,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
         "",
         "Also supports retrieving all keys or all values of a player.",
         "",
-        "Supports: GET / SET / RESET / DELETE."
+        "Supports: GET / SET / ADD / REMOVE / RESET / DELETE."
 })
 @Examples({
         "set temporary value \"score\" of player to 10",
@@ -104,6 +107,7 @@ public class ExprGamePlayerValue extends SimpleExpression<Object> implements Key
                 if (isList) yield CollectionUtils.array(Object[].class);
                 yield CollectionUtils.array(Object.class);
             }
+            case ADD, REMOVE          -> CollectionUtils.array(Object.class);
             case DELETE, RESET        -> CollectionUtils.array();
             default                   -> null;
         };
@@ -124,6 +128,32 @@ public class ExprGamePlayerValue extends SimpleExpression<Object> implements Key
                     gamePlayer.setValue(k, delta, isTemporary);
                 } else {
                     gamePlayer.setValue(k, delta[0], isTemporary);
+                }
+            }
+            case ADD -> {
+                String k = key.getSingle(e);
+                if (delta == null || delta[0] == null || k == null) return;
+                Object current = gamePlayer.getValue(k, isTemporary);
+                if (current instanceof Number cn && delta[0] instanceof Number dn) {
+                    gamePlayer.setValue(k, cn.doubleValue() + dn.doubleValue(), isTemporary);
+                } else {
+                    Object[] arr = current instanceof Object[] a ? a : (current != null ? new Object[]{current} : new Object[0]);
+                    Object[] merged = Arrays.copyOf(arr, arr.length + 1);
+                    merged[arr.length] = delta[0];
+                    gamePlayer.setValue(k, merged, isTemporary);
+                }
+            }
+            case REMOVE -> {
+                String k = key.getSingle(e);
+                if (delta == null || delta[0] == null || k == null) return;
+                Object current = gamePlayer.getValue(k, isTemporary);
+                if (current instanceof Number cn && delta[0] instanceof Number dn) {
+                    gamePlayer.setValue(k, cn.doubleValue() - dn.doubleValue(), isTemporary);
+                } else {
+                    Object[] arr = current instanceof Object[] a ? a : (current != null ? new Object[]{current} : new Object[0]);
+                    List<Object> list = new ArrayList<>(Arrays.asList(arr));
+                    list.remove(delta[0]);
+                    gamePlayer.setValue(k, list.toArray(), isTemporary);
                 }
             }
             case DELETE, RESET -> {

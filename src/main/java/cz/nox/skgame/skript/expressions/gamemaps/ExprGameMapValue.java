@@ -14,6 +14,9 @@ import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
 import cz.nox.skgame.api.game.model.GameMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
         "You can retrieve, set, reset, or delete values associated with a specific key in a GameMap.",
         "Supports fetching all keys or all values of a GameMap.",
         "",
-        "Supports: GET / SET / RESET / DELETE."
+        "Supports: GET / SET / ADD / REMOVE / RESET / DELETE."
 })
 @Examples({
         "set {_map} to gamemap with id \"arena_battle\"",
@@ -78,6 +81,7 @@ public class ExprGameMapValue extends SimpleExpression<Object> implements KeyPro
                 if (isList) yield CollectionUtils.array(Object[].class);
                 yield CollectionUtils.array(Object.class);
             }
+            case ADD, REMOVE   -> CollectionUtils.array(Object.class);
             case RESET, DELETE -> CollectionUtils.array();
             default            -> null;
         };
@@ -115,6 +119,32 @@ public class ExprGameMapValue extends SimpleExpression<Object> implements KeyPro
                 if (pattern == 1) return;
                 Object o = delta[0];
                 map.setValue(k,o);
+            }
+            case ADD -> {
+                String k = this.key.getSingle(event);
+                if (delta == null || delta[0] == null || k == null) return;
+                Object current = map.getValue(k);
+                if (current instanceof Number cn && delta[0] instanceof Number dn) {
+                    map.setValue(k, cn.doubleValue() + dn.doubleValue());
+                } else {
+                    Object[] arr = current instanceof Object[] a ? a : (current != null ? new Object[]{current} : new Object[0]);
+                    Object[] merged = Arrays.copyOf(arr, arr.length + 1);
+                    merged[arr.length] = delta[0];
+                    map.setValue(k, merged);
+                }
+            }
+            case REMOVE -> {
+                String k = this.key.getSingle(event);
+                if (delta == null || delta[0] == null || k == null) return;
+                Object current = map.getValue(k);
+                if (current instanceof Number cn && delta[0] instanceof Number dn) {
+                    map.setValue(k, cn.doubleValue() - dn.doubleValue());
+                } else {
+                    Object[] arr = current instanceof Object[] a ? a : (current != null ? new Object[]{current} : new Object[0]);
+                    List<Object> list = new ArrayList<>(Arrays.asList(arr));
+                    list.remove(delta[0]);
+                    map.setValue(k, list.toArray());
+                }
             }
             case RESET, DELETE -> {
                 if (pattern == 0) {

@@ -14,6 +14,9 @@ import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
 import cz.nox.skgame.api.game.model.Session;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
         "Setting this value stores data under a given key.",
         "Deleting or resetting removes a specific value or all values, depending on the expression.",
         "",
-        "Supports: GET / SET / RESET / DELETE."
+        "Supports: GET / SET / ADD / REMOVE / RESET / DELETE."
 })
 @Examples({
         "set {_session} to session with id \"my_custom_session_uuid\"",
@@ -109,6 +112,7 @@ public class ExprSessionValue extends SimpleExpression<Object> implements KeyPro
                 if (isList) yield CollectionUtils.array(Object[].class);
                 yield CollectionUtils.array(Object.class);
             }
+            case ADD, REMOVE   -> CollectionUtils.array(Object.class);
             case DELETE, RESET -> CollectionUtils.array();
             default            -> null;
         };
@@ -126,6 +130,32 @@ public class ExprSessionValue extends SimpleExpression<Object> implements KeyPro
                     s.setValue(k, delta, isTemporary);
                 } else {
                     s.setValue(k, delta[0], isTemporary);
+                }
+            }
+            case ADD -> {
+                String k = key.getSingle(e);
+                if (delta == null || delta[0] == null || k == null) return;
+                Object current = s.getValue(k, isTemporary);
+                if (current instanceof Number cn && delta[0] instanceof Number dn) {
+                    s.setValue(k, cn.doubleValue() + dn.doubleValue(), isTemporary);
+                } else {
+                    Object[] arr = current instanceof Object[] a ? a : (current != null ? new Object[]{current} : new Object[0]);
+                    Object[] merged = Arrays.copyOf(arr, arr.length + 1);
+                    merged[arr.length] = delta[0];
+                    s.setValue(k, merged, isTemporary);
+                }
+            }
+            case REMOVE -> {
+                String k = key.getSingle(e);
+                if (delta == null || delta[0] == null || k == null) return;
+                Object current = s.getValue(k, isTemporary);
+                if (current instanceof Number cn && delta[0] instanceof Number dn) {
+                    s.setValue(k, cn.doubleValue() - dn.doubleValue(), isTemporary);
+                } else {
+                    Object[] arr = current instanceof Object[] a ? a : (current != null ? new Object[]{current} : new Object[0]);
+                    List<Object> list = new ArrayList<>(Arrays.asList(arr));
+                    list.remove(delta[0]);
+                    s.setValue(k, list.toArray(), isTemporary);
                 }
             }
             case DELETE, RESET -> {
