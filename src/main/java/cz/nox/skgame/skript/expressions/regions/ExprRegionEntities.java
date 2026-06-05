@@ -10,6 +10,8 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.log.BlockingLogHandler;
+import ch.njol.skript.log.LogHandler;
 import ch.njol.util.Kleenean;
 import cz.nox.skgame.api.region.Region;
 import org.bukkit.entity.Entity;
@@ -22,7 +24,7 @@ import java.util.Collection;
 @Description({
         "Returns entities inside the given region.",
         "Typed form filters by entity type — supports loop aliases (loop-armor stand, loop-dropped item, etc.).",
-        "Untyped form returns all entities (excluding players)."
+        "Untyped form returns all entities."
 })
 @Examples({
         "loop entities in region {_region}:",
@@ -51,10 +53,11 @@ public class ExprRegionEntities extends SimpleExpression<Entity> {
         if (pattern == 0) {
             this.entityDataExpr = (Expression<EntityData>) exprs[0];
             this.region = (Expression<Region>) exprs[1];
-            // Evaluate with null event — works for literals and ConvertedExpression wrappers alike
-            EntityData<?>[] data = (EntityData<?>[]) entityDataExpr.getArray(null);
-            if (data != null && data.length == 1 && data[0] != null) {
-                returnType = data[0].getType();
+            // Source expression (ExprEntities) already resolved the specific entity class.
+            // getArray(null) would be empty at parse time, so we read returnType from the source instead.
+            Class<?> srcType = entityDataExpr.getSource().getReturnType();
+            if (srcType != null && Entity.class.isAssignableFrom(srcType) && !Entity.class.equals(srcType)) {
+                returnType = (Class<? extends Entity>) srcType;
             }
         } else {
             this.region = (Expression<Region>) exprs[0];
@@ -78,6 +81,19 @@ public class ExprRegionEntities extends SimpleExpression<Entity> {
                     .toArray(Entity[]::new);
         }
         return all.toArray(new Entity[0]);
+    }
+
+    // Skript uses isLoopOf for specific entity type aliases (loop-armor stand, loop-pig).
+    // Supertype aliases (loop-entity) are handled automatically via getReturnType().
+    @Override
+    public boolean isLoopOf(String s) {
+        try (LogHandler ignored = new BlockingLogHandler().start()) {
+            EntityData<?> loopData = EntityData.parseWithoutIndefiniteArticle(s);
+            if (loopData != null) {
+                return loopData.getType().isAssignableFrom(returnType);
+            }
+        }
+        return false;
     }
 
     @Override
