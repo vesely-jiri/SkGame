@@ -647,7 +647,5 @@ public class Types {
                 obj -> obj instanceof Session s ? s : null);
         Converters.registerConverter(Object.class, MiniGame.class,
                 obj -> obj instanceof MiniGame mg ? mg : null);
-        Converters.registerConverter(Object.class, GameMap.class,
-                obj -> obj instanceof GameMap gm ? gm : null);
     }
 }

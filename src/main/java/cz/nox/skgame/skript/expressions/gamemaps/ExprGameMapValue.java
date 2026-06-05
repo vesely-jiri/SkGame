@@ -46,7 +46,7 @@ import org.jetbrains.annotations.Nullable;
 @SuppressWarnings("unused")
 public class ExprGameMapValue extends SimpleExpression<Object> implements KeyProviderExpression<Object> {
     private Expression<String> key;
-    private Expression<GameMap> gameMap;
+    private Expression<Object> gameMap;
     private int pattern;
     private int mark;
     private boolean isList;
@@ -54,8 +54,8 @@ public class ExprGameMapValue extends SimpleExpression<Object> implements KeyPro
     static {
         // COMBINED: two patterns with different structures; key %string% param prevents pure property classification
         Skript.registerExpression(ExprGameMapValue.class, Object.class, ExpressionType.COMBINED,
-                "[[game]map] value[list:s] %string% of %gamemap%",
-                "[all] [[game]map] values of %gamemap%"
+                "[[game]map] value[list:s] %string% of %object%",
+                "[all] [[game]map] values of %object%"
         );
     }
 
@@ -65,9 +65,9 @@ public class ExprGameMapValue extends SimpleExpression<Object> implements KeyPro
         this.pattern = pattern;
         if (pattern == 0) {
             this.key = (Expression<String>) exprs[0];
-            this.gameMap = (Expression<GameMap>) exprs[1];
+            this.gameMap = (Expression<Object>) exprs[1];
         } else {
-            this.gameMap = (Expression<GameMap>) exprs[0];
+            this.gameMap = (Expression<Object>) exprs[0];
         }
         this.isList = parseResult.hasTag("list");
         return true;
@@ -89,8 +89,8 @@ public class ExprGameMapValue extends SimpleExpression<Object> implements KeyPro
 
     @Override
     protected @Nullable Object[] get(Event event) {
-        GameMap map = this.gameMap.getSingle(event);
-        if (map == null) return null;
+        Object raw = this.gameMap.getSingle(event);
+        if (!(raw instanceof GameMap map)) return null;
         switch (pattern) {
             case 0:
             Object o;
@@ -110,8 +110,8 @@ public class ExprGameMapValue extends SimpleExpression<Object> implements KeyPro
 
     @Override
     public void change(Event event, @Nullable Object[] delta, Changer.ChangeMode mode) {
-        GameMap map = this.gameMap.getSingle(event);
-        if (map == null) return;
+        Object raw = this.gameMap.getSingle(event);
+        if (!(raw instanceof GameMap map)) return;
         switch (mode) {
             case SET -> {
                 String k = this.key.getSingle(event);
@@ -181,8 +181,8 @@ public class ExprGameMapValue extends SimpleExpression<Object> implements KeyPro
 
     @Override
     public @NotNull String[] getArrayKeys(Event e) throws IllegalStateException {
-        GameMap map = this.gameMap.getSingle(e);
-        assert map != null;
+        Object raw = this.gameMap.getSingle(e);
+        if (!(raw instanceof GameMap map)) return new String[0];
         return map.getKeys();
     }
 
