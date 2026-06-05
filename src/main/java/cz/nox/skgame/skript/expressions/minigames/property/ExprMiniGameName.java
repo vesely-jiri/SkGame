@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 @Since("1.0.0")
 public class ExprMiniGameName extends SimpleExpression<String> {
     private Expression<Object> expr;
-    static { Skript.registerExpression(ExprMiniGameName.class, String.class, ExpressionType.PROPERTY,
+    static { Skript.registerExpression(ExprMiniGameName.class, String.class, ExpressionType.COMBINED,
             "minigame name of %minigame%", "%minigame%'s minigame name"); }
     @SuppressWarnings("unchecked") @Override
     public boolean init(Expression<?>[] e, int i, Kleenean k, SkriptParser.ParseResult r) { expr = (Expression<Object>) e[0]; return true; }

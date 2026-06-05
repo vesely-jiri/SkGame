@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 @Since("1.0.0")
 public class ExprGameMapId extends SimpleExpression<String> {
     private Expression<Object> expr;
-    static { Skript.registerExpression(ExprGameMapId.class, String.class, ExpressionType.PROPERTY,
+    static { Skript.registerExpression(ExprGameMapId.class, String.class, ExpressionType.COMBINED,
             "[game]map id of %object%", "%object%'s [game]map id"); }
     @SuppressWarnings("unchecked") @Override
     public boolean init(Expression<?>[] e, int i, Kleenean k, SkriptParser.ParseResult r) { expr = (Expression<Object>) e[0]; return true; }

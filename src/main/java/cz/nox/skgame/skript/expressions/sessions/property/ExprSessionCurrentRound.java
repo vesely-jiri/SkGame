@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 @Since("1.0.0")
 public class ExprSessionCurrentRound extends SimpleExpression<Number> {
     private Expression<Object> expr;
-    static { Skript.registerExpression(ExprSessionCurrentRound.class, Number.class, ExpressionType.PROPERTY,
+    static { Skript.registerExpression(ExprSessionCurrentRound.class, Number.class, ExpressionType.COMBINED,
             "[session] current round of %session%", "%session%'s [session] current round",
             "current [session] round of %session%", "%session%'s current [session] round"); }
     @SuppressWarnings("unchecked") @Override

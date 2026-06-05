@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 @Since("1.0.0")
 public class ExprSessionTotalRounds extends SimpleExpression<Number> {
     private Expression<Object> expr;
-    static { Skript.registerExpression(ExprSessionTotalRounds.class, Number.class, ExpressionType.PROPERTY,
+    static { Skript.registerExpression(ExprSessionTotalRounds.class, Number.class, ExpressionType.COMBINED,
             "[session] rounds of %session%", "%session%'s [session] rounds"); }
     @SuppressWarnings("unchecked") @Override
     public boolean init(Expression<?>[] e, int i, Kleenean k, SkriptParser.ParseResult r) { expr = (Expression<Object>) e[0]; return true; }

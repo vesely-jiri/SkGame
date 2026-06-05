@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 @Since("1.0.0")
 public class ExprMiniGameIcon extends SimpleExpression<ItemStack> {
     private Expression<Object> expr;
-    static { Skript.registerExpression(ExprMiniGameIcon.class, ItemStack.class, ExpressionType.PROPERTY,
+    static { Skript.registerExpression(ExprMiniGameIcon.class, ItemStack.class, ExpressionType.COMBINED,
             "minigame icon of %minigame%", "%minigame%'s minigame icon"); }
     @SuppressWarnings("unchecked") @Override
     public boolean init(Expression<?>[] e, int i, Kleenean k, SkriptParser.ParseResult r) { expr = (Expression<Object>) e[0]; return true; }

@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 @Since("1.0.0")
 public class ExprSessionPersistent extends SimpleExpression<Boolean> {
     private Expression<Object> expr;
-    static { Skript.registerExpression(ExprSessionPersistent.class, Boolean.class, ExpressionType.PROPERTY,
+    static { Skript.registerExpression(ExprSessionPersistent.class, Boolean.class, ExpressionType.COMBINED,
             "[session] persist[ent] of %session%", "%session%'s [session] persist[ent]"); }
     @SuppressWarnings("unchecked") @Override
     public boolean init(Expression<?>[] e, int i, Kleenean k, SkriptParser.ParseResult r) { expr = (Expression<Object>) e[0]; return true; }
