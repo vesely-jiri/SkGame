@@ -88,10 +88,20 @@ public class ExprGameMapConfigValue extends SimpleExpression<Object> {
     protected @Nullable Object[] get(Event event) {
         String k = key.getSingle(event);
         if (k == null) return null;
-        GameMap map = resolveMap(event);
-        String mgId = resolveMgId(event);
+        GameMap map;
+        String mgId;
+        if (pattern == 0) {
+            map = gameMap.getSingle(event);
+            MiniGame mg = miniGame.getSingle(event);
+            mgId = mg != null ? mg.getId() : null;
+        } else {
+            Object raw = session.getSingle(event);
+            if (!(raw instanceof Session s)) return null;
+            map = s.getGameMap();
+            MiniGame mg = s.getMiniGame();
+            mgId = mg != null ? mg.getId() : null;
+        }
         if (map == null || mgId == null) return null;
-
         Object o = map.getMiniGameValue(mgId, k);
         if (o == null) return null;
         if (o.getClass().isArray()) {
@@ -105,8 +115,19 @@ public class ExprGameMapConfigValue extends SimpleExpression<Object> {
     public void change(Event event, @Nullable Object[] delta, Changer.ChangeMode mode) {
         String k = key.getSingle(event);
         if (k == null) return;
-        GameMap map = resolveMap(event);
-        String mgId = resolveMgId(event);
+        GameMap map;
+        String mgId;
+        if (pattern == 0) {
+            map = gameMap.getSingle(event);
+            MiniGame mg = miniGame.getSingle(event);
+            mgId = mg != null ? mg.getId() : null;
+        } else {
+            Object raw = session.getSingle(event);
+            if (!(raw instanceof Session s)) return;
+            map = s.getGameMap();
+            MiniGame mg = s.getMiniGame();
+            mgId = mg != null ? mg.getId() : null;
+        }
         if (map == null || mgId == null) return;
 
         switch (mode) {
@@ -135,22 +156,6 @@ public class ExprGameMapConfigValue extends SimpleExpression<Object> {
                 GameMapManager.getInstance().save();
             }
         }
-    }
-
-    private @Nullable GameMap resolveMap(Event event) {
-        if (pattern == 0) return gameMap.getSingle(event);
-        if (!(session.getSingle(event) instanceof Session s)) return null;
-        return s.getGameMap();
-    }
-
-    private @Nullable String resolveMgId(Event event) {
-        if (pattern == 0) {
-            MiniGame mg = miniGame.getSingle(event);
-            return mg != null ? mg.getId() : null;
-        }
-        if (!(session.getSingle(event) instanceof Session s)) return null;
-        MiniGame mg = s.getMiniGame();
-        return mg != null ? mg.getId() : null;
     }
 
     private Object clampWithWarn(String mgId, String key, Object value) {
