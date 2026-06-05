@@ -107,7 +107,7 @@ public class ExprGamePlayerValue extends SimpleExpression<Object> implements Key
                 if (isList) yield CollectionUtils.array(Object[].class);
                 yield CollectionUtils.array(Object.class);
             }
-            case ADD, REMOVE          -> CollectionUtils.array(Object.class);
+            case ADD, REMOVE          -> CollectionUtils.array(Number.class);
             case DELETE, RESET        -> CollectionUtils.array();
             default                   -> null;
         };
@@ -134,8 +134,9 @@ public class ExprGamePlayerValue extends SimpleExpression<Object> implements Key
                 String k = key.getSingle(e);
                 if (delta == null || delta[0] == null || k == null) return;
                 Object current = gamePlayer.getValue(k, isTemporary);
-                if (current instanceof Number cn && delta[0] instanceof Number dn) {
-                    gamePlayer.setValue(k, cn.doubleValue() + dn.doubleValue(), isTemporary);
+                if (delta[0] instanceof Number dn) {
+                    double cur = (current instanceof Number cn) ? cn.doubleValue() : 0.0;
+                    gamePlayer.setValue(k, cur + dn.doubleValue(), isTemporary);
                 } else {
                     Object[] arr = current instanceof Object[] a ? a : (current != null ? new Object[]{current} : new Object[0]);
                     Object[] merged = Arrays.copyOf(arr, arr.length + 1);
@@ -147,8 +148,9 @@ public class ExprGamePlayerValue extends SimpleExpression<Object> implements Key
                 String k = key.getSingle(e);
                 if (delta == null || delta[0] == null || k == null) return;
                 Object current = gamePlayer.getValue(k, isTemporary);
-                if (current instanceof Number cn && delta[0] instanceof Number dn) {
-                    gamePlayer.setValue(k, cn.doubleValue() - dn.doubleValue(), isTemporary);
+                if (delta[0] instanceof Number dn) {
+                    double cur = (current instanceof Number cn) ? cn.doubleValue() : 0.0;
+                    gamePlayer.setValue(k, cur - dn.doubleValue(), isTemporary);
                 } else {
                     Object[] arr = current instanceof Object[] a ? a : (current != null ? new Object[]{current} : new Object[0]);
                     List<Object> list = new ArrayList<>(Arrays.asList(arr));

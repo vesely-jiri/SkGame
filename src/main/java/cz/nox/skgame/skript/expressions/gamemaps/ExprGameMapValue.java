@@ -81,7 +81,7 @@ public class ExprGameMapValue extends SimpleExpression<Object> implements KeyPro
                 if (isList) yield CollectionUtils.array(Object[].class);
                 yield CollectionUtils.array(Object.class);
             }
-            case ADD, REMOVE   -> CollectionUtils.array(Object.class);
+            case ADD, REMOVE   -> CollectionUtils.array(Number.class);
             case RESET, DELETE -> CollectionUtils.array();
             default            -> null;
         };
@@ -124,8 +124,9 @@ public class ExprGameMapValue extends SimpleExpression<Object> implements KeyPro
                 String k = this.key.getSingle(event);
                 if (delta == null || delta[0] == null || k == null) return;
                 Object current = map.getValue(k);
-                if (current instanceof Number cn && delta[0] instanceof Number dn) {
-                    map.setValue(k, cn.doubleValue() + dn.doubleValue());
+                if (delta[0] instanceof Number dn) {
+                    double cur = (current instanceof Number cn) ? cn.doubleValue() : 0.0;
+                    map.setValue(k, cur + dn.doubleValue());
                 } else {
                     Object[] arr = current instanceof Object[] a ? a : (current != null ? new Object[]{current} : new Object[0]);
                     Object[] merged = Arrays.copyOf(arr, arr.length + 1);
@@ -137,8 +138,9 @@ public class ExprGameMapValue extends SimpleExpression<Object> implements KeyPro
                 String k = this.key.getSingle(event);
                 if (delta == null || delta[0] == null || k == null) return;
                 Object current = map.getValue(k);
-                if (current instanceof Number cn && delta[0] instanceof Number dn) {
-                    map.setValue(k, cn.doubleValue() - dn.doubleValue());
+                if (delta[0] instanceof Number dn) {
+                    double cur = (current instanceof Number cn) ? cn.doubleValue() : 0.0;
+                    map.setValue(k, cur - dn.doubleValue());
                 } else {
                     Object[] arr = current instanceof Object[] a ? a : (current != null ? new Object[]{current} : new Object[0]);
                     List<Object> list = new ArrayList<>(Arrays.asList(arr));
