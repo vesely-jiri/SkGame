@@ -1,53 +1,33 @@
 package cz.nox.skgame.skript.expressions.sessions.property;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
-import ch.njol.skript.expressions.base.SimplePropertyExpression;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
+import ch.njol.skript.lang.SkriptParser;
+import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.util.Kleenean;
 import cz.nox.skgame.api.game.model.Session;
+import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
 @Name("Session - ID")
-@Description({
-        "Represents the unique identifier (ID) of a game session.",
-        "Each session has its own unique string ID which can be used to identify or reference it.",
-        "",
-        "Useful for debugging, storing, or comparing sessions by their identifiers.",
-        "",
-        "Supports: GET only."
-})
-@Examples({
-        "set {_session} to session of player",
-        "broadcast id of {_session}",
-        "",
-        "set {_id} to id of {_session}",
-        "if {_id} is \"session_001\":",
-        "    broadcast \"This is the main session!\""
-})
+@Description({"Represents the unique identifier (ID) of a game session.", "", "Supports: GET only."})
+@Examples({"broadcast id of {_session}", "broadcast id of event-session"})
 @Since("1.0.0")
-
-public class ExprSessionId extends SimplePropertyExpression<Session, String> {
-
-    static {
-        register(ExprSessionId.class, String.class,
-                "[session] id","session"
-        );
-    }
-
-    @Override
-    public @Nullable String convert(Session session) {
-        return session.getId();
-    }
-
-    @Override
-    protected String getPropertyName() {
-        return "id";
-    }
-
-    @Override
-    public Class<? extends String> getReturnType() {
-        return String.class;
-    }
+public class ExprSessionId extends SimpleExpression<String> {
+    private Expression<Object> expr;
+    static { Skript.registerExpression(ExprSessionId.class, String.class, ExpressionType.PROPERTY,
+            "[session] id of %object%", "%object%'s [session] id"); }
+    @SuppressWarnings("unchecked") @Override
+    public boolean init(Expression<?>[] e, int i, Kleenean k, SkriptParser.ParseResult r) { expr = (Expression<Object>) e[0]; return true; }
+    @Override protected @Nullable String[] get(Event ev) {
+        Object raw = expr.getSingle(ev); if (!(raw instanceof Session s)) return null; return new String[]{s.getId()}; }
+    @Override public boolean isSingle() { return true; }
+    @Override public Class<String> getReturnType() { return String.class; }
+    @Override public String toString(@Nullable Event ev, boolean d) { return "id of " + expr.toString(ev, d); }
 }

@@ -1,43 +1,34 @@
 package cz.nox.skgame.skript.expressions.sessions.property;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
-import ch.njol.skript.expressions.base.SimplePropertyExpression;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
+import ch.njol.skript.lang.SkriptParser;
+import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.util.Kleenean;
 import cz.nox.skgame.api.game.model.Session;
+import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
-@Name("Session - Current Round")
-@Description({
-        "The current round number of a session. 0 when no game is active (lobby state).",
-        "",
-        "Supports: GET only."
-})
-@Examples({
-        "broadcast \"Round %session current round of event-session% of %session rounds of event-session%\""
-})
-@Since("1.0.0")
 @SuppressWarnings("unused")
-public class ExprSessionCurrentRound extends SimplePropertyExpression<Session, Number> {
-
-    static {
-        register(ExprSessionCurrentRound.class, Number.class, "[session] current round", "session");
-        register(ExprSessionCurrentRound.class, Number.class, "current [session] round", "session");
-    }
-
-    @Override
-    public @Nullable Number convert(Session session) {
-        return session.getCurrentRound();
-    }
-
-    @Override
-    protected String getPropertyName() {
-        return "current round";
-    }
-
-    @Override
-    public Class<? extends Number> getReturnType() {
-        return Number.class;
-    }
+@Name("Session - Current Round")
+@Description({"The current round number of a session. 0 when no game is active.", "", "Supports: GET only."})
+@Examples({"broadcast current round of event-session"})
+@Since("1.0.0")
+public class ExprSessionCurrentRound extends SimpleExpression<Number> {
+    private Expression<Object> expr;
+    static { Skript.registerExpression(ExprSessionCurrentRound.class, Number.class, ExpressionType.PROPERTY,
+            "[session] current round of %object%", "%object%'s [session] current round",
+            "current [session] round of %object%", "%object%'s current [session] round"); }
+    @SuppressWarnings("unchecked") @Override
+    public boolean init(Expression<?>[] e, int i, Kleenean k, SkriptParser.ParseResult r) { expr = (Expression<Object>) e[0]; return true; }
+    @Override protected @Nullable Number[] get(Event ev) {
+        Object raw = expr.getSingle(ev); if (!(raw instanceof Session s)) return null; return new Number[]{s.getCurrentRound()}; }
+    @Override public boolean isSingle() { return true; }
+    @Override public Class<Number> getReturnType() { return Number.class; }
+    @Override public String toString(@Nullable Event ev, boolean d) { return "current round of " + expr.toString(ev, d); }
 }
