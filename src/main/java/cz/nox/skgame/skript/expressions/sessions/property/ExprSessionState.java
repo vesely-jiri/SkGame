@@ -27,7 +27,7 @@ public class ExprSessionState extends SimpleExpression<SessionState> {
     private static final SessionManager manager = SessionManager.getInstance();
     private Expression<Object> expr;
     static { Skript.registerExpression(ExprSessionState.class, SessionState.class, ExpressionType.PROPERTY,
-            "[session] state of %object%", "%object%'s [session] state"); }
+            "[session] state of %session%", "%session%'s [session] state"); }
     @SuppressWarnings("unchecked") @Override
     public boolean init(Expression<?>[] e, int i, Kleenean k, SkriptParser.ParseResult r) { expr = (Expression<Object>) e[0]; return true; }
     @Override protected @Nullable SessionState[] get(Event ev) {

@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExprSessionId extends SimpleExpression<String> {
     private Expression<Object> expr;
     static { Skript.registerExpression(ExprSessionId.class, String.class, ExpressionType.PROPERTY,
-            "[the] session id of %object%", "%object%'s session id"); }
+            "[the] session id of %session%", "%session%'s session id"); }
     @SuppressWarnings("unchecked") @Override
     public boolean init(Expression<?>[] e, int i, Kleenean k, SkriptParser.ParseResult r) { expr = (Expression<Object>) e[0]; return true; }
     @Override protected @Nullable String[] get(Event ev) {

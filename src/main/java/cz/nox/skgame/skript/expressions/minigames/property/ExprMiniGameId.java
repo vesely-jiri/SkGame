@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExprMiniGameId extends SimpleExpression<String> {
     private Expression<Object> expr;
     static { Skript.registerExpression(ExprMiniGameId.class, String.class, ExpressionType.PROPERTY,
-            "minigame id of %object%", "%object%'s minigame id"); }
+            "minigame id of %minigame%", "%minigame%'s minigame id"); }
     @SuppressWarnings("unchecked") @Override
     public boolean init(Expression<?>[] e, int i, Kleenean k, SkriptParser.ParseResult r) { expr = (Expression<Object>) e[0]; return true; }
     @Override protected @Nullable String[] get(Event ev) {

@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExprSessionVisibility extends SimpleExpression<SessionVisibility> {
     private Expression<Object> expr;
     static { Skript.registerExpression(ExprSessionVisibility.class, SessionVisibility.class, ExpressionType.PROPERTY,
-            "[session] visibility of %object%", "%object%'s [session] visibility"); }
+            "[session] visibility of %session%", "%session%'s [session] visibility"); }
     @SuppressWarnings("unchecked") @Override
     public boolean init(Expression<?>[] e, int i, Kleenean k, SkriptParser.ParseResult r) { expr = (Expression<Object>) e[0]; return true; }
     @Override protected @Nullable SessionVisibility[] get(Event ev) {

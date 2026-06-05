@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExprSessionMap extends SimpleExpression<GameMap> {
     private Expression<Object> expr;
     static { Skript.registerExpression(ExprSessionMap.class, GameMap.class, ExpressionType.PROPERTY,
-            "[session] [game]map of %object%", "%object%'s [session] [game]map"); }
+            "[session] [game]map of %session%", "%session%'s [session] [game]map"); }
     @SuppressWarnings("unchecked") @Override
     public boolean init(Expression<?>[] e, int i, Kleenean k, SkriptParser.ParseResult r) { expr = (Expression<Object>) e[0]; return true; }
     @Override protected @Nullable GameMap[] get(Event ev) {

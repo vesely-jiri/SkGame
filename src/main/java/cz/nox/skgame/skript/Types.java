@@ -5,6 +5,7 @@ import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.registrations.Classes;
+import ch.njol.skript.registrations.Converters;
 import ch.njol.util.coll.CollectionUtils;
 import ch.njol.yggdrasil.Fields;
 import cz.nox.skgame.api.game.model.CustomValue;
@@ -639,5 +640,14 @@ public class Types {
                     }
                 })
         );
+
+        // Converters so that Object-typed variables ({_session}, {_mg}, {_map}) are accepted
+        // wherever %session% / %minigame% / %gamemap% patterns are expected.
+        Converters.registerConverter(Object.class, Session.class,
+                obj -> obj instanceof Session s ? s : null);
+        Converters.registerConverter(Object.class, MiniGame.class,
+                obj -> obj instanceof MiniGame mg ? mg : null);
+        Converters.registerConverter(Object.class, GameMap.class,
+                obj -> obj instanceof GameMap gm ? gm : null);
     }
 }

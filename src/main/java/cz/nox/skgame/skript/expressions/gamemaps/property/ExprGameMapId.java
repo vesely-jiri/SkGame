@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExprGameMapId extends SimpleExpression<String> {
     private Expression<Object> expr;
     static { Skript.registerExpression(ExprGameMapId.class, String.class, ExpressionType.PROPERTY,
-            "[game]map id of %object%", "%object%'s [game]map id"); }
+            "[game]map id of %gamemap%", "%gamemap%'s [game]map id"); }
     @SuppressWarnings("unchecked") @Override
     public boolean init(Expression<?>[] e, int i, Kleenean k, SkriptParser.ParseResult r) { expr = (Expression<Object>) e[0]; return true; }
     @Override protected @Nullable String[] get(Event ev) {

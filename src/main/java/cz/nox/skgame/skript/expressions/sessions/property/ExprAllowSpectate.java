@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExprAllowSpectate extends SimpleExpression<Boolean> {
     private Expression<Object> expr;
     static { Skript.registerExpression(ExprAllowSpectate.class, Boolean.class, ExpressionType.PROPERTY,
-            "[session] allow spectate of %object%", "%object%'s [session] allow spectate"); }
+            "[session] allow spectate of %session%", "%session%'s [session] allow spectate"); }
     @SuppressWarnings("unchecked") @Override
     public boolean init(Expression<?>[] e, int i, Kleenean k, SkriptParser.ParseResult r) { expr = (Expression<Object>) e[0]; return true; }
     @Override protected @Nullable Boolean[] get(Event ev) {

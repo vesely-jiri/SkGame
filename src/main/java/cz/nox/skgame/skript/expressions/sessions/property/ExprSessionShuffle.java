@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExprSessionShuffle extends SimpleExpression<Boolean> {
     private Expression<Object> expr;
     static { Skript.registerExpression(ExprSessionShuffle.class, Boolean.class, ExpressionType.PROPERTY,
-            "[session] shuffle of %object%", "%object%'s [session] shuffle"); }
+            "[session] shuffle of %session%", "%session%'s [session] shuffle"); }
     @SuppressWarnings("unchecked") @Override
     public boolean init(Expression<?>[] e, int i, Kleenean k, SkriptParser.ParseResult r) { expr = (Expression<Object>) e[0]; return true; }
     @Override protected @Nullable Boolean[] get(Event ev) {

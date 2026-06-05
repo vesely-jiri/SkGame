@@ -22,8 +22,8 @@ import org.jetbrains.annotations.Nullable;
 public class ExprSessionCurrentRound extends SimpleExpression<Number> {
     private Expression<Object> expr;
     static { Skript.registerExpression(ExprSessionCurrentRound.class, Number.class, ExpressionType.PROPERTY,
-            "[session] current round of %object%", "%object%'s [session] current round",
-            "current [session] round of %object%", "%object%'s current [session] round"); }
+            "[session] current round of %session%", "%session%'s [session] current round",
+            "current [session] round of %session%", "%session%'s current [session] round"); }
     @SuppressWarnings("unchecked") @Override
     public boolean init(Expression<?>[] e, int i, Kleenean k, SkriptParser.ParseResult r) { expr = (Expression<Object>) e[0]; return true; }
     @Override protected @Nullable Number[] get(Event ev) {

@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExprSessionHost extends SimpleExpression<Player> {
     private Expression<Object> expr;
     static { Skript.registerExpression(ExprSessionHost.class, Player.class, ExpressionType.PROPERTY,
-            "[session] host of %object%", "%object%'s [session] host"); }
+            "[session] host of %session%", "%session%'s [session] host"); }
     @SuppressWarnings("unchecked") @Override
     public boolean init(Expression<?>[] e, int i, Kleenean k, SkriptParser.ParseResult r) { expr = (Expression<Object>) e[0]; return true; }
     @Override protected @Nullable Player[] get(Event ev) {

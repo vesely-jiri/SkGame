@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExprSessionMiniGame extends SimpleExpression<MiniGame> {
     private Expression<Object> expr;
     static { Skript.registerExpression(ExprSessionMiniGame.class, MiniGame.class, ExpressionType.PROPERTY,
-            "[session] minigame of %object%", "%object%'s [session] minigame"); }
+            "[session] minigame of %session%", "%session%'s [session] minigame"); }
     @SuppressWarnings("unchecked") @Override
     public boolean init(Expression<?>[] e, int i, Kleenean k, SkriptParser.ParseResult r) { expr = (Expression<Object>) e[0]; return true; }
     @Override protected @Nullable MiniGame[] get(Event ev) {

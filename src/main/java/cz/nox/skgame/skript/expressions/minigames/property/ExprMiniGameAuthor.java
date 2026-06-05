@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExprMiniGameAuthor extends SimpleExpression<String> {
     private Expression<Object> expr;
     static { Skript.registerExpression(ExprMiniGameAuthor.class, String.class, ExpressionType.PROPERTY,
-            "minigame author of %object%", "%object%'s minigame author"); }
+            "minigame author of %minigame%", "%minigame%'s minigame author"); }
     @SuppressWarnings("unchecked") @Override
     public boolean init(Expression<?>[] e, int i, Kleenean k, SkriptParser.ParseResult r) { expr = (Expression<Object>) e[0]; return true; }
     @Override protected @Nullable String[] get(Event ev) {
