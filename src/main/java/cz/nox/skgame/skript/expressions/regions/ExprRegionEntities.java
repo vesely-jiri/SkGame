@@ -8,11 +8,8 @@ import ch.njol.skript.doc.Since;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
-import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
-import ch.njol.skript.log.BlockingLogHandler;
-import ch.njol.skript.log.LogHandler;
 import ch.njol.util.Kleenean;
 import cz.nox.skgame.api.region.Region;
 import org.bukkit.entity.Entity;
@@ -54,9 +51,10 @@ public class ExprRegionEntities extends SimpleExpression<Entity> {
         if (pattern == 0) {
             this.entityDataExpr = (Expression<EntityData>) exprs[0];
             this.region = (Expression<Region>) exprs[1];
-            if (entityDataExpr instanceof Literal<?> lit && lit.getAll().length == 1) {
-                Object single = lit.getSingle();
-                if (single instanceof EntityData<?> ed) returnType = ed.getType();
+            // Evaluate with null event — works for literals and ConvertedExpression wrappers alike
+            EntityData<?>[] data = (EntityData<?>[]) entityDataExpr.getArray(null);
+            if (data != null && data.length == 1 && data[0] != null) {
+                returnType = data[0].getType();
             }
         } else {
             this.region = (Expression<Region>) exprs[0];
@@ -80,23 +78,6 @@ public class ExprRegionEntities extends SimpleExpression<Entity> {
                     .toArray(Entity[]::new);
         }
         return all.toArray(new Entity[0]);
-    }
-
-    @Override
-    public boolean isLoopOf(String s) {
-        if (!(entityDataExpr instanceof Literal<?> lit))
-            return false;
-        try (LogHandler ignored = new BlockingLogHandler().start()) {
-            EntityData<?> entityData = EntityData.parseWithoutIndefiniteArticle(s);
-            if (entityData != null) {
-                for (Object obj : lit.getAll()) {
-                    if (!(obj instanceof EntityData<?> type)) return false;
-                    if (!entityData.isSupertypeOf(type)) return false;
-                }
-                return true;
-            }
-        }
-        return false;
     }
 
     @Override
