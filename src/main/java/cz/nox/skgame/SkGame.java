@@ -86,6 +86,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             "cz.nox.skgame.skript.events.EvtScoreChange",
             "cz.nox.skgame.skript.events.EvtGameStart",
             "cz.nox.skgame.skript.events.EvtSessionDisband",
+            "cz.nox.skgame.skript.events.EvtEventSessionOpen",
             "cz.nox.skgame.skript.events.EvtSpectatorJoin",
             "cz.nox.skgame.skript.events.EvtPlayerPromoted",
             "cz.nox.skgame.skript.events.EvtPlayerDemoted",
@@ -279,6 +280,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
         Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.gui.services.FilterPickerGuiService.getInstance(), instance);
         Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.gui.services.TeamPickerGuiService.getInstance(), instance);
         Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.gui.services.MapVoteGuiService.getInstance(), instance);
+        Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.gui.services.EventSessionGuiService.getInstance(), instance);
         Bukkit.getPluginManager().registerEvents(new cz.nox.skgame.core.game.GameEventCancelListener(), instance);
         Bukkit.getPluginManager().registerEvents(new cz.nox.skgame.core.listener.ChatIsolationListener(), instance);
         Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.tab.TabManager.getInstance(), instance);

@@ -43,6 +43,7 @@ public class Session {
     private final Map<UUID, String> teamAssignments = new HashMap<>();
     private MapSelectionMode mapSelectionMode = MapSelectionMode.SPECIFIC;
     private boolean persistent = false;
+    private boolean eventSession = false;
     private final Map<UUID, String> mapVotes = new HashMap<>();
     /** Transient per-session bans. UUID → name captured at ban time (no OfflinePlayer lookups needed). */
     private final java.util.LinkedHashMap<UUID, String> bannedPlayers = new java.util.LinkedHashMap<>();
@@ -255,6 +256,8 @@ public class Session {
     public void setMapVoting(boolean vote) { mapSelectionMode = vote ? MapSelectionMode.VOTE : MapSelectionMode.SPECIFIC; }
     public boolean isPersistent() { return persistent; }
     public void setPersistent(boolean persistent) { this.persistent = persistent; }
+    public boolean isEventSession() { return eventSession; }
+    public void setEventSession(boolean eventSession) { this.eventSession = eventSession; }
     public @Nullable String getMapVote(Player player) { return mapVotes.get(player.getUniqueId()); }
     public void setMapVote(Player player, @Nullable String mapId) {
         if (mapId == null) mapVotes.remove(player.getUniqueId());

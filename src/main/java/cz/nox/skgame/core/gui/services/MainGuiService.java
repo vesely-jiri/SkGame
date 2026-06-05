@@ -4,6 +4,9 @@ import cz.nox.skgame.api.game.event.GameStartEvent;
 import cz.nox.skgame.api.game.event.GameStopEvent;
 import cz.nox.skgame.api.game.event.SessionCreateEvent;
 import cz.nox.skgame.api.game.event.SessionDisbandEvent;
+import cz.nox.skgame.api.game.event.SessionSettingsChangedEvent;
+import cz.nox.skgame.api.game.model.GameMap;
+import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.MinigameTag;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.SessionVisibility;
@@ -119,6 +122,11 @@ public class MainGuiService implements Listener {
     @EventHandler
     public void onGameStop(GameStopEvent event) { update(); }
 
+    @EventHandler
+    public void onSessionSettings(SessionSettingsChangedEvent event) {
+        if (event.getSession().isEventSession()) update();
+    }
+
     // Legacy handler (LOWEST) is the sole filter processor. Cancels + clears recipients, then defers
     // flag removal + GUI reopen to main thread so the flag stays set through LOW — ChatIsolationListener
     // sees isAwaitingChatInput=true and skips re-delivery. Paper handler (LOWEST) only suppresses
@@ -218,15 +226,36 @@ public class MainGuiService implements Listener {
                     }
                 }));
 
-        // Slot 19 — Leaderboards
-        if (DatabaseManager.getInstance().isAvailable()) {
-            builder.slot(19, GuiItem.of(Material.NETHER_STAR)
-                    .name(Messages.getComponent("gui.leaderboard.button.title", viewer))
-                    .lore(Messages.getComponent("gui.leaderboard.button.lore", viewer))
-                    .onClick(e -> LeaderboardGuiService.getInstance().openMinigamePicker((Player) e.getWhoClicked())));
+        // Slot 19 — Server Event Session
+        Session eventSession = SessionManager.getInstance().getEventSession();
+        if (eventSession != null && eventSession.getVisibility() != SessionVisibility.INVITE_ONLY) {
+            MiniGame evMg = eventSession.getMiniGame();
+            GameMap evMap = eventSession.getGameMap();
+            String mgName = evMg != null && evMg.getValue("name") != null ? evMg.getValue("name").toString() : "Event";
+            String mapName = evMap != null ? evMap.getId() : "—";
+            int evPlayers = eventSession.getLobbyMembers().size() + eventSession.getPlayers().size();
+            String evHost = eventSession.getHost() != null ? eventSession.getHost().getName() : "Server";
+            Material evIcon = Material.RED_BANNER;
+            if (evMg != null && evMg.getValue("icon") instanceof ItemStack icon) evIcon = icon.getType();
+            builder.slot(19, GuiItem.of(evIcon)
+                    .name(Messages.getComponent("gui.event.slot.active.title", viewer, mgName))
+                    .lore(Messages.getComponent("gui.event.slot.active.lore", viewer, mgName, mapName, evPlayers, evHost))
+                    .onClick(e -> {
+                        Player p = (Player) e.getWhoClicked();
+                        SessionLifecycleManagerImpl.getInstance().joinSession(p, eventSession);
+                    }));
         } else {
             builder.slot(19, GuiItem.of(Material.BARRIER)
-                    .name(Messages.getComponent("gui.leaderboard.button.unavailable", viewer)));
+                    .name(Messages.getComponent(
+                            eventSession != null ? "gui.event.slot.locked.title" : "gui.event.slot.none.title", viewer))
+                    .lore(Messages.getComponent(
+                            eventSession != null ? "gui.event.slot.locked.lore" : "gui.event.slot.none.lore", viewer))
+                    .onClick(e -> {
+                        Player p = (Player) e.getWhoClicked();
+                        if (p.hasPermission("skgame.admin")) {
+                            EventSessionGuiService.getInstance().openFor(p);
+                        }
+                    }));
         }
 
         // Slot 45 — Close

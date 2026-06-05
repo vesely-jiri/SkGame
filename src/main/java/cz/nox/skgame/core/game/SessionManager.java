@@ -23,6 +23,7 @@ public class SessionManager implements Listener {
     private final Map<UUID, LinkedList<String>> playerToSession = new HashMap<>();
     private final Map<String, BukkitTask> countdownTasks = new HashMap<>();
     private Session lastCreatedSession;
+    private @Nullable Session eventSession;
 
     public static synchronized SessionManager getInstance() {
         if (manager == null) {
@@ -97,6 +98,10 @@ public class SessionManager implements Listener {
     public Session[] getAllSessions() {
         return sessions.values().toArray(new Session[0]);
     }
+
+    public @Nullable Session getEventSession() { return eventSession; }
+    public void setEventSession(Session session) { this.eventSession = session; }
+    public void clearEventSession() { this.eventSession = null; }
 
     @Nullable
     public Session getSessionById(String id) {

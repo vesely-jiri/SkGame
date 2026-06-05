@@ -166,6 +166,18 @@ gui:
     title: "&3Minigames"
   maps:
     title: "&2Available maps for the minigame"
+  event:
+    slot:
+      none:
+        title: "&8Server Event"
+        lore: "&7No event is running"
+      active:
+        title: "&6&l{0}"
+        lore: "&7Map: &f{1}\n&7Players: &f{2}\n&7Host: &f{3}\n&7\n&eClick to join!"
+      locked:
+        title: "&8Server Event &7(Locked)"
+        lore: "&7An event is being prepared"
+      gui-title: "&6Server Event Setup"
   leaderboard:
     button:
       title: "&6&lLeaderboards"
@@ -306,6 +318,11 @@ minigame:
   disable:
     notice: "&7This minigame was disabled by an administrator — current games finish, no new ones start."
     terminated: "&cThis minigame was disabled by an administrator."
+
+event:
+  broadcast: "&6[Event] &eA server event has started! Minigame: &f{0} &e| Map: &f{1}"
+  joined: "&aYou joined the server event."
+  not-running: "&cNo server event is currently running."
 
 quickplay:
   queued: "&aSearching for a game... &7(use &c/game quickplay cancel &7to cancel)"

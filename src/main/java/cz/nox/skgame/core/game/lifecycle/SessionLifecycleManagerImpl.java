@@ -16,6 +16,7 @@ import cz.nox.skgame.api.game.model.GamePlayer;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.type.DisbandReason;
+import cz.nox.skgame.api.game.model.SessionVisibility;
 import cz.nox.skgame.api.game.model.type.MapSelectionMode;
 import cz.nox.skgame.api.game.model.type.TeamAssignmentMode;
 import cz.nox.skgame.api.game.model.type.GameStartReason;
@@ -127,6 +128,21 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             return null;
         }
         partyManager.registerActivity(session);
+        return session;
+    }
+
+    /** Creates a server-managed event session. Returns null if one already exists. */
+    public @Nullable Session createEventSession(Player admin) {
+        if (sessionManager.getEventSession() != null) {
+            plugin.getLogUtil().warning("createEventSession: event session already exists — ignoring");
+            return null;
+        }
+        Session session = createSession(admin);
+        if (session == null) return null;
+        session.setEventSession(true);
+        session.setPersistent(true);
+        session.setVisibility(SessionVisibility.INVITE_ONLY);
+        sessionManager.setEventSession(session);
         return session;
     }
 
@@ -971,6 +987,9 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         partyManager.onSessionDisbanded(session.getId());
         // Delete before firing event so listeners (e.g. admin panel) see the session already gone
         sessionManager.deleteSession(session.getId());
+        if (session.isEventSession() && session.equals(sessionManager.getEventSession())) {
+            sessionManager.clearEventSession();
+        }
         Bukkit.getPluginManager().callEvent(new SessionDisbandEvent(session, reason));
     }
 
