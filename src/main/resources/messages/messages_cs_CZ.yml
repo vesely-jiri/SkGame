@@ -156,6 +156,23 @@ gui:
     title: "&3Minihry"
   maps:
     title: "&2Dostupné mapy pro minihru"
+  event:
+    slot:
+      none:
+        title: "&8Serverová událost"
+        lore: "&7Žádná událost neprobíhá"
+      active:
+        title: "&6&l{0}"
+        lore: "&7Mapa: &f{1}\n&7Hráči: &f{2}\n&7Hostitel: &f{3}\n&7\n&eKlikni pro vstup!"
+      locked:
+        title: "&8Serverová událost &7(Uzamčeno)"
+        lore: "&7Událost se připravuje"
+      gui-title: "&6Nastavení události"
+    player:
+      title: "&6Serverová událost"
+    banned:
+      title: "&4Zabanovaní hráči"
+      empty: "&aNikdo není zabanován"
   leaderboard:
     button:
       title: "&6&lŽebříčky"
@@ -235,6 +252,15 @@ minigame:
   disable:
     notice: "&7Tato minihra byla deaktivována administrátorem — aktuální hry dohrají, nové nezačnou."
     terminated: "&cTato minihra byla deaktivována administrátorem."
+
+event:
+  broadcast: "&6[Událost] &eZačala serverová událost! Minihra: &f{0} &e| Mapa: &f{1}"
+  joined: "&aPřipojil/a ses k serverové události."
+  not-running: "&cŽádná serverová událost momentálně neprobíhá."
+  kicked: "&cByl/a jsi vykopnut/a ze serverové události."
+  banned: "&4Byl/a jsi zabanován/a ze serverové události."
+  unlock:
+    missing-setup: "&cNejdřív nastav minihru a mapu."
 
 quickplay:
   queued: "&aHledám hru... &7(použij &c/game quickplay cancel &7pro zrušení)"

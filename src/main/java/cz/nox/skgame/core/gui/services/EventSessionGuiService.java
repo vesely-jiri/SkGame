@@ -26,6 +26,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -35,7 +36,10 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -113,9 +117,16 @@ public class EventSessionGuiService implements Listener {
                     .name(c("&eMap: &f" + mapName)));
         }
 
-        // Player count
-        builder.slot(5, GuiItem.of(Material.PLAYER_HEAD)
-                .name(c("&ePlayers in lobby: &f" + total)));
+        // Player count (admin: clickable → ban management; player: display only)
+        if (isAdmin) {
+            builder.slot(5, GuiItem.of(Material.PLAYER_HEAD)
+                    .name(c("&ePlayers in lobby: &f" + total))
+                    .lore(c("&7Click to manage bans"))
+                    .onClick(e -> openBannedGui((Player) e.getWhoClicked(), session)));
+        } else {
+            builder.slot(5, GuiItem.of(Material.PLAYER_HEAD)
+                    .name(c("&ePlayers in lobby: &f" + total)));
+        }
 
         // Rounds (admin: clickable ±; player: display only)
         int rounds = session.getTotalRounds();
@@ -254,6 +265,55 @@ public class EventSessionGuiService implements Listener {
                 }));
 
         return builder.build();
+    }
+
+    private void openBannedGui(Player admin, Session session) {
+        GuiBuilder builder = new GuiBuilder()
+                .size(3)
+                .title(Messages.get("gui.event.banned.title", admin));
+
+        GuiItem glass = GuiItem.of(Material.BLACK_STAINED_GLASS_PANE).name(" ");
+        builder.fill(0, 8, glass).fill(18, 26, glass);
+
+        Map<UUID, String> banned = session.getBannedEntries();
+        if (banned.isEmpty()) {
+            builder.slot(13, GuiItem.of(Material.LIME_CONCRETE)
+                    .name(c(Messages.get("gui.event.banned.empty", admin))));
+        } else {
+            int[] bannedSlots = {9, 10, 11, 12, 13, 14, 15, 16, 17};
+            List<Map.Entry<UUID, String>> entries = new ArrayList<>(banned.entrySet());
+            for (int i = 0; i < Math.min(entries.size(), bannedSlots.length); i++) {
+                UUID uuid = entries.get(i).getKey();
+                String reason = entries.get(i).getValue();
+                OfflinePlayer op = Bukkit.getOfflinePlayer(uuid);
+                String name = op.getName() != null ? op.getName() : uuid.toString().substring(0, 8);
+
+                ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
+                if (op.isOnline() && op.getPlayer() != null) {
+                    SkullMeta meta = (SkullMeta) skull.getItemMeta();
+                    if (meta != null) {
+                        meta.setPlayerProfile(op.getPlayer().getPlayerProfile());
+                        skull.setItemMeta(meta);
+                    }
+                }
+
+                final UUID uuidFinal = uuid;
+                builder.slot(bannedSlots[i], GuiItem.of(skull)
+                        .name(c("&c" + name))
+                        .lore(c("&7Reason: &f" + reason), c("&aClick to unban"))
+                        .onClick(e -> {
+                            session.removeBan(uuidFinal);
+                            openBannedGui((Player) e.getWhoClicked(), session);
+                        }));
+            }
+        }
+
+        builder.slot(22, GuiItem.of(Material.SPRUCE_DOOR)
+                .name(c("&c&lBack"))
+                .onClick(e -> openFor((Player) e.getWhoClicked())));
+
+        admin.openInventory(builder.build());
+        activeViewers.add(admin.getUniqueId());
     }
 
     private void unlockEvent(Player admin, Session session) {

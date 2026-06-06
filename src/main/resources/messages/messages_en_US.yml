@@ -180,6 +180,9 @@ gui:
       gui-title: "&6Server Event Setup"
     player:
       title: "&6Server Event"
+    banned:
+      title: "&4Banned Players"
+      empty: "&aNobody is banned"
   leaderboard:
     button:
       title: "&6&lLeaderboards"
