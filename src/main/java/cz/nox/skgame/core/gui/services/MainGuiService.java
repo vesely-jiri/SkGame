@@ -237,9 +237,15 @@ public class MainGuiService implements Listener {
             String evHost = eventSession.getHost() != null ? eventSession.getHost().getName() : "Server";
             Material evIcon = Material.RED_BANNER;
             if (evMg != null && evMg.getValue("icon") instanceof ItemStack icon) evIcon = icon.getType();
+            List<Component> evLore = new java.util.ArrayList<>();
+            evLore.add(legacy("&7Map: &f" + mapName));
+            evLore.add(legacy("&7Players: &f" + evPlayers));
+            evLore.add(legacy("&7Host: &f" + evHost));
+            evLore.add(Component.empty());
+            evLore.add(legacy("&eClick to join!"));
             builder.slot(19, GuiItem.of(evIcon)
                     .name(Messages.getComponent("gui.event.slot.active.title", viewer, mgName))
-                    .lore(Messages.getComponent("gui.event.slot.active.lore", viewer, mgName, mapName, evPlayers, evHost))
+                    .lore(evLore)
                     .onClick(e -> {
                         Player p = (Player) e.getWhoClicked();
                         Session cur = sm.getSession(p);
