@@ -325,6 +325,10 @@ event:
   broadcast: "&6[Event] &eA server event has started! Minigame: &f{0} &e| Map: &f{1}"
   joined: "&aYou joined the server event."
   not-running: "&cNo server event is currently running."
+  kicked: "&cYou were kicked from the server event."
+  banned: "&4You were banned from the server event."
+  unlock:
+    missing-setup: "&cSet a minigame and map before unlocking the event."
 
 quickplay:
   queued: "&aSearching for a game... &7(use &c/game quickplay cancel &7to cancel)"

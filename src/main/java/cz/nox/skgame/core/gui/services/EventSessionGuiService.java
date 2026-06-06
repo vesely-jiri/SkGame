@@ -81,6 +81,7 @@ public class EventSessionGuiService implements Listener {
         int total = session.getLobbyMembers().size() + session.getPlayers().size();
         boolean unlocked = session.getVisibility() == SessionVisibility.PUBLIC;
         boolean started = session.getState() == SessionState.STARTED;
+        boolean inPreparation = session.getState() == SessionState.PREPARATION;
 
         GuiBuilder builder = new GuiBuilder()
                 .size(6)
@@ -116,6 +117,26 @@ public class EventSessionGuiService implements Listener {
         builder.slot(5, GuiItem.of(Material.PLAYER_HEAD)
                 .name(c("&ePlayers in lobby: &f" + total)));
 
+        // Rounds (admin: clickable ±; player: display only)
+        int rounds = session.getTotalRounds();
+        if (isAdmin) {
+            builder.slot(6, GuiItem.of(Material.CLOCK)
+                    .name(c("&eRounds: &f" + rounds))
+                    .lore(c("&aLeft-click: &f+1"), c("&cRight-click: &f-1"))
+                    .onClick(e -> {
+                        if (e.getClick().isRightClick()) {
+                            session.setTotalRounds(session.getTotalRounds() - 1);
+                        } else {
+                            session.setTotalRounds(session.getTotalRounds() + 1);
+                        }
+                        Bukkit.getPluginManager().callEvent(new SessionSettingsChangedEvent(session, "rounds"));
+                        openFor((Player) e.getWhoClicked());
+                    }));
+        } else {
+            builder.slot(6, GuiItem.of(Material.CLOCK)
+                    .name(c("&eRounds: &f" + rounds)));
+        }
+
         // State
         builder.slot(7, GuiItem.of(Material.COMPASS)
                 .name(c("&eState: &f" + session.getState().name()))
@@ -142,17 +163,26 @@ public class EventSessionGuiService implements Listener {
             if (meta != null) { meta.setPlayerProfile(member.getPlayerProfile()); skull.setItemMeta(meta); }
             java.util.List<Component> headLore = new java.util.ArrayList<>();
             headLore.add(c("&7Role: &f" + role));
-            if (isAdmin) headLore.add(c("&cRight-click: &7Kick"));
+            if (isAdmin) {
+                headLore.add(c("&cRight-click: &7Kick"));
+                headLore.add(c("&4Shift+Right-click: &7Ban"));
+            }
             GuiItem headItem = GuiItem.of(skull)
                     .name(c((isHost ? "&e✦ " : "&7") + member.getName()))
                     .lore(headLore);
             if (isAdmin) {
                 final Player memberFinal = member;
                 headItem.onClick(e -> {
-                    if (e.getClick().isRightClick()) {
+                    if (!e.getClick().isRightClick()) return;
+                    if (e.getClick().isShiftClick()) {
+                        session.addBan(memberFinal.getUniqueId(), memberFinal.getName());
+                        Messages.send(memberFinal, "event.banned");
                         SessionLifecycleManagerImpl.getInstance().leaveSession(memberFinal);
-                        openFor((Player) e.getWhoClicked());
+                    } else {
+                        Messages.send(memberFinal, "event.kicked");
+                        SessionLifecycleManagerImpl.getInstance().leaveSession(memberFinal);
                     }
+                    openFor((Player) e.getWhoClicked());
                 });
             }
             builder.slot(playerSlots[i], headItem);
@@ -161,10 +191,21 @@ public class EventSessionGuiService implements Listener {
         // Slot 45 — Unlock / Start / Stop (admin only; non-admin: black glass from fill)
         if (isAdmin) {
             if (!unlocked) {
-                builder.slot(45, GuiItem.of(Material.LIME_STAINED_GLASS_PANE)
-                        .name(c("&a&lUnlock Event"))
-                        .lore(c("&7Opens the event to all players"))
-                        .onClick(e -> unlockEvent((Player) e.getWhoClicked(), session)));
+                if (mg == null || map == null) {
+                    builder.slot(45, GuiItem.of(Material.GRAY_STAINED_GLASS_PANE)
+                            .name(c("&7Unlock Event"))
+                            .lore(c("&cSet minigame and map first"))
+                            .onClick(e -> Messages.send((Player) e.getWhoClicked(), "event.unlock.missing-setup")));
+                } else {
+                    builder.slot(45, GuiItem.of(Material.LIME_STAINED_GLASS_PANE)
+                            .name(c("&a&lUnlock Event"))
+                            .lore(c("&7Opens the event to all players"))
+                            .onClick(e -> unlockEvent((Player) e.getWhoClicked(), session)));
+                }
+            } else if (inPreparation) {
+                builder.slot(45, GuiItem.of(Material.YELLOW_CONCRETE)
+                        .name(c("&e&lPreparing..."))
+                        .lore(c("&7Team selection / map vote in progress")));
             } else if (!started) {
                 builder.slot(45, GuiItem.of(Material.LIME_CONCRETE)
                         .name(c("&a&lStart Game"))
