@@ -9,6 +9,7 @@ import cz.nox.skgame.core.command.subcommands.QuickplaySubcommand;
 import cz.nox.skgame.core.command.subcommands.SpectateSubcommand;
 import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl;
+import cz.nox.skgame.core.gui.services.EventSessionGuiService;
 import cz.nox.skgame.core.gui.services.MainGuiService;
 import cz.nox.skgame.core.gui.services.GameHistoryGuiService;
 import cz.nox.skgame.core.gui.services.PlayerProfileGuiService;
@@ -47,7 +48,10 @@ public class GameCommand implements CommandExecutor, TabCompleter {
             return true;
         }
         if (args.length == 0) {
-            if (SessionManager.getInstance().getSession(player) != null) {
+            Session cur = SessionManager.getInstance().getSession(player);
+            if (cur != null && cur.isEventSession()) {
+                EventSessionGuiService.getInstance().openFor(player);
+            } else if (cur != null) {
                 SessionGuiService.getInstance().openFor(player);
             } else {
                 MainGuiService.getInstance().openFor(player);
