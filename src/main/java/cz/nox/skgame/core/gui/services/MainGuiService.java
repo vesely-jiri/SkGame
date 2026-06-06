@@ -242,7 +242,15 @@ public class MainGuiService implements Listener {
                     .lore(Messages.getComponent("gui.event.slot.active.lore", viewer, mgName, mapName, evPlayers, evHost))
                     .onClick(e -> {
                         Player p = (Player) e.getWhoClicked();
-                        SessionLifecycleManagerImpl.getInstance().joinSession(p, eventSession);
+                        Session cur = sm.getSession(p);
+                        if (cur != null && cur.getId().equals(eventSession.getId())) {
+                            EventSessionGuiService.getInstance().openFor(p);
+                        } else if (cur == null) {
+                            boolean joined = SessionLifecycleManagerImpl.getInstance().joinSession(p, eventSession);
+                            if (joined) EventSessionGuiService.getInstance().openFor(p);
+                        } else {
+                            Messages.send(p, "session.error.already-in-session");
+                        }
                     }));
         } else {
             builder.slot(19, GuiItem.of(Material.BARRIER)
@@ -280,10 +288,13 @@ public class MainGuiService implements Listener {
                 .name("&a&lOpen current session")
                 .onClick(e -> {
                     Player p = (Player) e.getWhoClicked();
-                    if (sm.getSession(p) != null) {
+                    Session cur = sm.getSession(p);
+                    if (cur == null) return;
+                    if (cur.isEventSession()) {
+                        EventSessionGuiService.getInstance().openFor(p);
+                    } else {
                         SessionGuiService.getInstance().openFor(p);
                     }
-                    // else: player not in session — no-op (matches .sk implicit stop)
                 }));
 
         // Slot 4 — Filter sessions (overrides the red glass pane from RED_SLOTS)
