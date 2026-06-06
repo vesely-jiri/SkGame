@@ -3,6 +3,7 @@ package cz.nox.skgame.core.gui.services;
 import cz.nox.skgame.SkGame;
 import cz.nox.skgame.api.game.event.EventSessionOpenEvent;
 import cz.nox.skgame.api.game.event.GamePlayerSessionLeave;
+import cz.nox.skgame.api.game.event.SessionDisbandEvent;
 import cz.nox.skgame.api.game.event.GameStartEvent;
 import cz.nox.skgame.api.game.event.GameStopEvent;
 import cz.nox.skgame.api.game.event.LobbyEnterEvent;
@@ -154,11 +155,10 @@ public class EventSessionGuiService implements Listener {
                 .name(c("&eState: &f" + session.getState().name()))
                 .lore(c("&eVisibility: &f" + session.getVisibility().name())));
 
-        // Middle slots 9-44 — Player heads
+        // Middle slots 9-44 — Player heads (spectators shown separately via slot 46 lore)
         java.util.List<Player> allMembers = new java.util.ArrayList<>();
         allMembers.addAll(session.getLobbyMembers());
         allMembers.addAll(session.getPlayers());
-        allMembers.addAll(session.getSpectators());
         int[] playerSlots = {
             10, 11, 12, 13, 14, 15, 16,
             19, 20, 21, 22, 23, 24, 25,
@@ -243,24 +243,32 @@ public class EventSessionGuiService implements Listener {
             boolean inThisSession = playerSession != null && playerSession.getId().equals(session.getId());
             boolean isSpectator = inThisSession && session.getSpectators().contains(player);
             boolean isLobbyMember = inThisSession && session.getLobbyMembers().contains(player);
+            int spectatorCount = session.getSpectators().size();
+            List<Component> spectLore = new ArrayList<>();
 
             if (isSpectator) {
-                builder.slot(46, GuiItem.of(Material.GRAY_STAINED_GLASS_PANE)
-                        .name(c("&7Spectating"))
-                        .lore(c("&7You are already spectating")));
+                spectLore.add(c("&7You are spectating"));
+                if (spectatorCount > 0) spectLore.add(c("&7Spectating: &f" + spectatorCount));
+                builder.slot(46, GuiItem.of(Material.SPYGLASS)
+                        .name(c("&b&lSpectating"))
+                        .lore(spectLore));
             } else if (isLobbyMember) {
+                spectLore.add(c("&7Switch to spectator"));
+                if (spectatorCount > 0) spectLore.add(c("&7Spectating: &f" + spectatorCount));
                 builder.slot(46, GuiItem.of(Material.SPYGLASS)
                         .name(c("&b&lSpectate"))
-                        .lore(c("&7Switch to spectator"))
+                        .lore(spectLore)
                         .onClick(e -> {
                             Player p = (Player) e.getWhoClicked();
                             session.setRole(p, SessionRole.SPECTATOR);
                             openFor(p);
                         }));
             } else if (!inThisSession) {
+                spectLore.add(c("&7Watch the game as spectator"));
+                if (spectatorCount > 0) spectLore.add(c("&7Spectating: &f" + spectatorCount));
                 builder.slot(46, GuiItem.of(Material.SPYGLASS)
                         .name(c("&b&lSpectate"))
-                        .lore(c("&7Watch the game as spectator"))
+                        .lore(spectLore)
                         .onClick(e -> {
                             Player p = (Player) e.getWhoClicked();
                             SessionLifecycleManagerImpl.getInstance().joinAsSpectator(p, session);
@@ -414,5 +422,11 @@ public class EventSessionGuiService implements Listener {
     @EventHandler
     public void onSessionLeave(GamePlayerSessionLeave event) {
         if (event.getSession().isEventSession()) update();
+    }
+
+    @EventHandler
+    public void onSessionDisband(SessionDisbandEvent event) {
+        if (!event.getSession().isEventSession()) return;
+        Bukkit.getScheduler().runTask(SkGame.getInstance(), this::update);
     }
 }
