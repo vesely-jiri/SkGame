@@ -15,6 +15,7 @@ import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.SessionVisibility;
 import cz.nox.skgame.api.game.model.type.DisbandReason;
 import cz.nox.skgame.api.game.model.type.GameStartReason;
+import cz.nox.skgame.api.game.model.type.SessionRole;
 import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.api.gui.GuiBuilder;
 import cz.nox.skgame.api.gui.GuiHolder;
@@ -232,6 +233,38 @@ public class EventSessionGuiService implements Listener {
                         .onClick(e -> {
                             SessionLifecycleManagerImpl.getInstance().endGame(session, "admin");
                             openFor((Player) e.getWhoClicked());
+                        }));
+            }
+        }
+
+        // Slot 46 — Spectate (all; only when STARTED or PREPARATION)
+        if (started || inPreparation) {
+            Session playerSession = SessionManager.getInstance().getSession(player);
+            boolean inThisSession = playerSession != null && playerSession.getId().equals(session.getId());
+            boolean isSpectator = inThisSession && session.getSpectators().contains(player);
+            boolean isLobbyMember = inThisSession && session.getLobbyMembers().contains(player);
+
+            if (isSpectator) {
+                builder.slot(46, GuiItem.of(Material.GRAY_STAINED_GLASS_PANE)
+                        .name(c("&7Spectating"))
+                        .lore(c("&7You are already spectating")));
+            } else if (isLobbyMember) {
+                builder.slot(46, GuiItem.of(Material.SPYGLASS)
+                        .name(c("&b&lSpectate"))
+                        .lore(c("&7Switch to spectator"))
+                        .onClick(e -> {
+                            Player p = (Player) e.getWhoClicked();
+                            session.setRole(p, SessionRole.SPECTATOR);
+                            openFor(p);
+                        }));
+            } else if (!inThisSession) {
+                builder.slot(46, GuiItem.of(Material.SPYGLASS)
+                        .name(c("&b&lSpectate"))
+                        .lore(c("&7Watch the game as spectator"))
+                        .onClick(e -> {
+                            Player p = (Player) e.getWhoClicked();
+                            SessionLifecycleManagerImpl.getInstance().joinAsSpectator(p, session);
+                            openFor(p);
                         }));
             }
         }
