@@ -237,12 +237,13 @@ public class MainGuiService implements Listener {
             String evHost = eventSession.getHost() != null ? eventSession.getHost().getName() : "Server";
             Material evIcon = Material.RED_BANNER;
             if (evMg != null && evMg.getValue("icon") instanceof ItemStack icon) evIcon = icon.getType();
+            boolean evStarted = eventSession.getState() == SessionState.STARTED;
             List<Component> evLore = new java.util.ArrayList<>();
             evLore.add(legacy("&7Map: &f" + mapName));
             evLore.add(legacy("&7Players: &f" + evPlayers));
             evLore.add(legacy("&7Host: &f" + evHost));
             evLore.add(Component.empty());
-            evLore.add(legacy("&eClick to join!"));
+            evLore.add(legacy(evStarted ? "&eClick to spectate!" : "&eClick to join!"));
             builder.slot(19, GuiItem.of(evIcon)
                     .name(Messages.getComponent("gui.event.slot.active.title", viewer, mgName))
                     .lore(evLore)
@@ -251,11 +252,18 @@ public class MainGuiService implements Listener {
                         Session cur = sm.getSession(p);
                         if (cur != null && cur.getId().equals(eventSession.getId())) {
                             EventSessionGuiService.getInstance().openFor(p);
-                        } else if (cur == null) {
+                            return;
+                        }
+                        if (cur != null) {
+                            Messages.send(p, "session.error.already-in-session");
+                            return;
+                        }
+                        if (eventSession.getState() == SessionState.STARTED) {
+                            SessionLifecycleManagerImpl.getInstance().joinAsSpectator(p, eventSession);
+                            EventSessionGuiService.getInstance().openFor(p);
+                        } else {
                             boolean joined = SessionLifecycleManagerImpl.getInstance().joinSession(p, eventSession);
                             if (joined) EventSessionGuiService.getInstance().openFor(p);
-                        } else {
-                            Messages.send(p, "session.error.already-in-session");
                         }
                     }));
         } else {

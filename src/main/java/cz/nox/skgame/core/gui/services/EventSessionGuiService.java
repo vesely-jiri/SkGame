@@ -84,7 +84,7 @@ public class EventSessionGuiService implements Listener {
 
         GuiBuilder builder = new GuiBuilder()
                 .size(6)
-                .title(Messages.get("gui.event.slot.gui-title", player));
+                .title(Messages.get(isAdmin ? "gui.event.slot.gui-title" : "gui.event.player.title", player));
 
         // Black border top + bottom
         GuiItem glass = GuiItem.of(Material.BLACK_STAINED_GLASS_PANE).name(" ");
@@ -140,9 +140,22 @@ public class EventSessionGuiService implements Listener {
             ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
             SkullMeta meta = (SkullMeta) skull.getItemMeta();
             if (meta != null) { meta.setPlayerProfile(member.getPlayerProfile()); skull.setItemMeta(meta); }
-            builder.slot(playerSlots[i], GuiItem.of(skull)
+            java.util.List<Component> headLore = new java.util.ArrayList<>();
+            headLore.add(c("&7Role: &f" + role));
+            if (isAdmin) headLore.add(c("&cRight-click: &7Kick"));
+            GuiItem headItem = GuiItem.of(skull)
                     .name(c((isHost ? "&e✦ " : "&7") + member.getName()))
-                    .lore(c("&7Role: &f" + role)));
+                    .lore(headLore);
+            if (isAdmin) {
+                final Player memberFinal = member;
+                headItem.onClick(e -> {
+                    if (e.getClick().isRightClick()) {
+                        SessionLifecycleManagerImpl.getInstance().leaveSession(memberFinal);
+                        openFor((Player) e.getWhoClicked());
+                    }
+                });
+            }
+            builder.slot(playerSlots[i], headItem);
         }
 
         // Slot 45 — Unlock / Start / Stop (admin only; non-admin: black glass from fill)

@@ -178,6 +178,8 @@ gui:
         title: "&8Server Event &7(Locked)"
         lore: "&7An event is being prepared"
       gui-title: "&6Server Event Setup"
+    player:
+      title: "&6Server Event"
   leaderboard:
     button:
       title: "&6&lLeaderboards"
