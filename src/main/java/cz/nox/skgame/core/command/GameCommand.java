@@ -306,6 +306,23 @@ public class GameCommand implements CommandExecutor, TabCompleter {
                         ? onlineNames(args[1]) : List.of();
                 case "report"    -> player.hasPermission("skgame.report")
                         ? onlineNames(args[1]) : List.of();
+                case "invite" -> {
+                    Session is = SessionManager.getInstance().getSession(player);
+                    if (is == null || !player.equals(is.getHost())) yield List.of();
+                    yield onlineNames(args[1]);
+                }
+                case "uninvite" -> {
+                    Session us2 = SessionManager.getInstance().getSession(player);
+                    if (us2 == null || !player.equals(us2.getHost())) yield List.of();
+                    String partial = args[1].toLowerCase(java.util.Locale.ROOT);
+                    yield us2.getInvitedPlayers().stream()
+                            .map(uuid -> {
+                                org.bukkit.OfflinePlayer op = Bukkit.getOfflinePlayer(uuid);
+                                return op.getName();
+                            })
+                            .filter(n -> n != null && n.toLowerCase(java.util.Locale.ROOT).startsWith(partial))
+                            .collect(Collectors.toList());
+                }
                 case "kick", "ban" -> {
                     Session ks = SessionManager.getInstance().getSession(player);
                     if (ks == null || !player.equals(ks.getHost())) yield List.of();
