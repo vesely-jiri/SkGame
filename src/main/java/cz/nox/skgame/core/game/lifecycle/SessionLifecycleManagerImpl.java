@@ -86,6 +86,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
     private final SkGame plugin;
     private final PartyManager partyManager;
     private final Map<UUID, RejoinSnapshot> rejoinSnapshots = new ConcurrentHashMap<>();
+    private final Map<String, BukkitTask> actionBarTasks = new ConcurrentHashMap<>();
     private static final int PICKER_SLOT = 4;
     private static final int VOTE_SLOT = 5;
     // Reasons that indicate forced teardown rather than natural round completion.
@@ -849,12 +850,29 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
                     runDeferredBlock(session, reason, capturedArena);
             }, windowTicks);
             sessionManager.setCountdownTask(session.getId(), windowTask);
+
+            // Action bar countdown — runs every second, shows time until lobby teleport
+            final long[] ticksLeft = {windowTicks};
+            BukkitTask actionBarTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+                Session s = sessionManager.getSessionById(sessionId);
+                if (s == null) return;
+                long secsLeft = Math.max(1, (ticksLeft[0] + 19) / 20);
+                Component msg = Component.text("Teleporting in ", NamedTextColor.YELLOW)
+                        .append(Component.text(secsLeft + "s", NamedTextColor.WHITE))
+                        .append(Component.text("...", NamedTextColor.YELLOW));
+                for (Player p : s.getMembers()) p.sendActionBar(msg);
+                ticksLeft[0] = Math.max(0, ticksLeft[0] - 20);
+            }, 0L, 20L);
+            actionBarTasks.put(session.getId(), actionBarTask);
         } else {
             runDeferredBlock(session, reason, arena);
         }
     }
 
     private void runDeferredBlock(Session session, String reason, @Nullable Region arena) {
+        BukkitTask ab = actionBarTasks.remove(session.getId());
+        if (ab != null) ab.cancel();
+
         // Apply admin-queued config changes before clearing game state
         Map<String, Object> pending = session.drainPendingAdminChanges();
         if (pending.containsKey("map-mode"))
