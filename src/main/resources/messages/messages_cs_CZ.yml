@@ -25,6 +25,7 @@ session:
     mid-game-locked: "&cBěhem hry nelze měnit nastavení session"
     game-in-progress: "&cTato hra již probíhá"
     no-maps-for-minigame: "&cŽádná mapa nepodporuje tuto minihru — nelze spustit"
+    minigame-disabled: "&cTato minihra je momentálně zakázána."
   join-denied:
     banned: "&cJsi zabanován v této session."
   kick:
@@ -52,6 +53,8 @@ session:
     no-players: "&cŽádní hráči. Ukončuji hru"
     unknown-error: "&cNeznámá chyba. Ukončuji hru"
     admin-ended: "&cHru násilně ukončil administrátor"
+    summary-separator: "&6------------------------------------"
+    summary-finished: "&6Hra &e{0} &6na mapě &e{1} &6skončila"
   start:
     maintenance: "&cServer je v režimu údržby — žádné nové hry nemohou začít"
   rejoin:
@@ -129,6 +132,7 @@ gui:
     title: "&6Hlavní nabídka her"
   session:
     title: "&5Lobby hosta {0}"
+    host-label: "&eHost"
     allow-spectate:
       title: "&7&lPovolit diváky"
       lore-on: "&aDiváci povoleni"
@@ -228,6 +232,10 @@ gui:
     title: "&cAdmin rozhraní"
     enum-picker:
       title: "&3Vyber hodnotu pro {0}"
+    map:
+      title: "&9GES"
+      addon-title: "&9GES&7-&e{0}"
+      values-title: "&9GES{0}"
 
 maintenance:
   broadcast:
@@ -242,13 +250,70 @@ admin:
     confirm: "&aUkončil jsi session {0}."
     confirm-reason: "&aUkončil jsi session {0} &7(důvod: &f{1}&7)."
     cancelled: "&7Force-end zrušen."
+  wand:
+    name: "&6Hůlka pro vytváření map"
+    lore: |-
+      &eLeftclick &7> &enastavit pozici 1
+      &eRightclick &7> &enastavit pozici 2
+      &cHod hůlkou ukončíš režim úprav
+    given: "&aHůlka pro tvorbu map předána"
+    stabilize: "&6[&eStabilizovat&6]"
+    stabilize-hover: "&eStabilizovat pozici"
   setup:
     enabled: "&aRežim úprav aktivován"
     disabled: "&cRežim úprav deaktivován"
+    indicator: "&9Nastavení je aktivní"
+    not-enabled: "&cRežim nastavení není aktivní"
   map:
     created: "&aMapa {0} vytvořena"
     deleted: "&aMapa {0} odstraněna"
     already-exists: "&cMapa {0} již existuje"
+    type-name-prompt: "&aVyber dva body a napiš název mapy pro potvrzení. Pro zrušení napiš 'cancel'"
+    name-prompt: "&aVyber dva body a napiš název mapy: "
+    position-set: "&aPoloha pozice &2{0} &anastavena"
+    point-location: "&ePoloha tohoto bodu je {0}"
+    positions-not-set: "&cPozice nenastaveny. Použij hůlku"
+    mode-disabled: "&cRežim úprav bodů mapy není aktivní"
+    values-not-set: "&cHodnoty mapy nejsou nastaveny"
+    accept-position: "&eChceš nastavit aktuální hodnotu na &6{0}?"
+    accept-position-confirm: "&a[Potvrdit pozici]"
+    accept-position-deny: "&c[Zpět do menu]"
+    value-set: "&aHodnota mapy &7{0} - &7{1} &anastavena na &7{2}"
+    instructions: |-
+      &7---------------------------
+      &7Leftclick > &aOtevřít nastavení addonu pro tuto mapu
+      &7Rightclick + shift > &cSmazat mapu
+  addon:
+    assigned: "&aAddon přiřazen k mapě"
+    assigned-to-map: "&aAddon &6{0} &apřiřazen k mapě &6{1}"
+    unassigned: "&cAddon &6{0} &codřazen od mapy &6{1}"
+    instructions: |-
+      &7-----------------------------------
+      &7Leftclick > &aOtevřít nastavení addonu pro mapu
+      &7Rightclick + shift > &aPřiřadit&7/&cOdřadit addon
+  value:
+    type-prompt: "&aNapiš požadovanou hodnotu. Pro zrušení napiš 'cancel'"
+    instructions: |-
+      &7---------------------------
+      &7Leftclick > &aNavstav hodnotu
+      &7Rightclick + shift > &cResetovat hodnotu
+    edit-instructions: |-
+      &7---------------------------
+      &7---------------------------
+      &7Leftclick > {0}
+      &7Rightclick + shift > &cSmazat
+    multi:
+      add: "&a[&2+&a]"
+      add-hover: "&aPřidat novou hodnotu: &2{0}"
+      back: "&a[&2Zpět&2]"
+      back-hover: "&aZpět do hlavního menu"
+      delete: "&4[&cX&4]"
+      delete-hover: "&4Smazat hodnotu"
+      show: "&9[&bZobrazit&9]"
+      show-hover: "&bOznačit uložená místa"
+      header: "&6Seznam &7hodnot {0} &6pro &7mapu {1} &6z &7addonu {2}"
+  action:
+    canceled: "&cAkce zrušena"
 
 minigame:
   disable:
