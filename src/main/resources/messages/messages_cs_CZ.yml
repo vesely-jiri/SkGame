@@ -233,6 +233,7 @@ maintenance:
   broadcast:
     enabled: "&eRežim údržby &cZAPNUT&e. Víceroundové hry dohrají aktuální kolo. Žádné nové hry nemohou začít."
     disabled: "&aRežim údržby &7VYPNUT&a. Server se vrací do normálního provozu."
+  all-sessions-ended: "&a[SkGame] Všechny session skončily. Server je připraven k údržbě."
 
 admin:
   force-end:

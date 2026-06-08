@@ -1022,6 +1022,14 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             sessionManager.clearEventSession();
         }
         Bukkit.getPluginManager().callEvent(new SessionDisbandEvent(session, reason));
+
+        if (plugin.isMaintenanceMode() && sessionManager.getAllSessions().length == 0) {
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                if (p.hasPermission("skgame.admin")) {
+                    Messages.send(p, "maintenance.all-sessions-ended");
+                }
+            }
+        }
     }
 
     /** Kick a member from their session. All validation included — safe to call from command and GUI. */
