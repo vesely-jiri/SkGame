@@ -2,11 +2,14 @@ package cz.nox.skgame.core.command.subcommands;
 
 import cz.nox.skgame.SkGame;
 import cz.nox.skgame.api.game.model.MiniGame;
+import cz.nox.skgame.api.game.model.MinigameTag;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.api.module.SkGameModule;
+import cz.nox.skgame.core.game.GameMapManager;
 import cz.nox.skgame.core.game.MiniGameManager;
 import cz.nox.skgame.core.game.SessionManager;
+import cz.nox.skgame.core.module.ModuleRegistry;
 import cz.nox.skgame.core.storage.DatabaseManager;
 import cz.nox.skgame.util.BuildInfo;
 import net.kyori.adventure.text.Component;
@@ -22,8 +25,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class InfoSubcommand {
@@ -62,20 +67,54 @@ public class InfoSubcommand {
                 + " " + Bukkit.getServer().getVersion()
                 + " &7| Skript &f" + skriptVer));
 
-        // Modules
-        List<SkGameModule> modules = plugin.getEnabledModules();
-        String moduleList = modules.isEmpty() ? "none"
-                : modules.stream().map(SkGameModule::getId).collect(Collectors.joining(", "));
-        send(sender, c("&7Modules: &f" + moduleList));
+        // Modules — green=enabled, red=disabled
+        Set<String> enabledIds = plugin.getEnabledModules().stream()
+                .map(SkGameModule::getId).collect(Collectors.toSet());
+        Component moduleLine = c("&7Modules: ");
+        List<SkGameModule> allMods = ModuleRegistry.BUILTIN_MODULES;
+        for (int i = 0; i < allMods.size(); i++) {
+            SkGameModule mod = allMods.get(i);
+            boolean on = enabledIds.contains(mod.getId());
+            moduleLine = moduleLine.append(Component.text(mod.getId(), on ? NamedTextColor.GREEN : NamedTextColor.RED));
+            if (i < allMods.size() - 1) moduleLine = moduleLine.append(c("&8, "));
+        }
+        send(sender, moduleLine);
 
-        // Minigames
+        // Minigames — green=has maps, red=no maps; hover with desc+tags+map count
         MiniGame[] mgs = MiniGameManager.getInstance().getAllMiniGames();
-        String mgNames = mgs.length == 0 ? "none"
-                : Arrays.stream(mgs).map(mg -> {
-            Object n = mg.getValue("name");
-            return n != null ? n.toString() : mg.getId();
-        }).collect(Collectors.joining(", "));
-        send(sender, c("&7Minigames &8(" + mgs.length + ")&7: &f" + mgNames));
+        if (mgs.length == 0) {
+            send(sender, c("&7Minigames &8(0)&7: &8none"));
+        } else {
+            GameMapManager gmm = GameMapManager.getInstance();
+            Component mgLine = c("&7Minigames &8(" + mgs.length + ")&7: ");
+            for (int i = 0; i < mgs.length; i++) {
+                MiniGame mg = mgs[i];
+                long mapCount = Arrays.stream(gmm.getGameMaps()).filter(m -> m.supportsMiniGame(mg)).count();
+                boolean hasMaps = mapCount > 0;
+                Object n = mg.getValue("name");
+                String displayName = n != null ? n.toString() : mg.getId();
+
+                List<Component> hoverLines = new ArrayList<>();
+                Object desc = mg.getValue("description");
+                if (desc instanceof String ds && !ds.isEmpty()) hoverLines.add(c("&7" + ds));
+                Set<MinigameTag> tags = mg.getTags();
+                if (!tags.isEmpty()) {
+                    String tagStr = tags.stream().map(t -> t.name().toLowerCase()).collect(Collectors.joining(", "));
+                    hoverLines.add(c("&8Tags: &f" + tagStr));
+                }
+                hoverLines.add(c("&7Maps: &f" + mapCount));
+
+                Component hover = hoverLines.get(0);
+                for (int h = 1; h < hoverLines.size(); h++)
+                    hover = hover.append(Component.newline()).append(hoverLines.get(h));
+
+                Component chip = Component.text(displayName, hasMaps ? NamedTextColor.GREEN : NamedTextColor.RED)
+                        .hoverEvent(HoverEvent.showText(hover));
+                mgLine = mgLine.append(chip);
+                if (i < mgs.length - 1) mgLine = mgLine.append(c("&8, "));
+            }
+            send(sender, mgLine);
+        }
 
         // Sessions
         Session[] all = SessionManager.getInstance().getAllSessions();

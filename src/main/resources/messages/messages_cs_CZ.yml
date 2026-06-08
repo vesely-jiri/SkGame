@@ -222,7 +222,7 @@ gui:
     total-wins: "&aVýhry: &f{0}"
     total-losses: "&cProhry: &f{0}"
     win-rate: "&eVýhernost: &f{0}"
-    favorite: "&7Oblíbená: &f{0}"
+    favorite: "&7Nejhranější: &f{0}"
     no-data: "&7Zatím žádné hry"
   admin:
     title: "&cAdmin rozhraní"

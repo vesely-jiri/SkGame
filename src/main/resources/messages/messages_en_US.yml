@@ -232,7 +232,7 @@ gui:
     total-wins: "&aWins: &f{0}"
     total-losses: "&cLosses: &f{0}"
     win-rate: "&eWin rate: &f{0}"
-    favorite: "&7Favorite: &f{0}"
+    favorite: "&7Most played: &f{0}"
     no-data: "&7No games played yet"
   admin:
     title: "&cAdmin gui"

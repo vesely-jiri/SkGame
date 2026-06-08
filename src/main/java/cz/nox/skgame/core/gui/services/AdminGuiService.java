@@ -129,7 +129,7 @@ public class AdminGuiService implements Listener {
             builder.slot(ITEM_SLOTS[i], GuiItem.of(Material.FILLED_MAP)
                     .name("&6" + displayName)
                     .lore(
-                            legacy("&7Left-click: &aOpen addon settings"),
+                            legacy("&7Left-click: &aOpen settings"),
                             legacy("&7Shift+Right-click: &cDelete map")
                     )
                     .onLeftClick(e -> openMapPropertiesGui((Player) e.getWhoClicked(), mapId))
@@ -150,7 +150,7 @@ public class AdminGuiService implements Listener {
 
         GuiBuilder builder = new GuiBuilder()
                 .size(6)
-                .title(legacy("&9GES"));
+                .title(legacy("&9Map Minigames"));
 
         GuiItem blackGlass = GuiItem.of(Material.BLACK_STAINED_GLASS_PANE).name(Component.text(" "));
         for (int s : BLACK_BORDER) builder.slot(s, blackGlass);
@@ -197,7 +197,7 @@ public class AdminGuiService implements Listener {
 
         GuiBuilder builder = new GuiBuilder()
                 .size(6)
-                .title(legacy("&9GES&7-&e" + mgId));
+                .title(legacy("&9Map Values &7(&e" + mgId + "&7)"));
 
         GuiItem blackGlass = GuiItem.of(Material.BLACK_STAINED_GLASS_PANE).name(Component.text(" "));
         for (int s : BLACK_BORDER) builder.slot(s, blackGlass);
@@ -302,7 +302,7 @@ public class AdminGuiService implements Listener {
 
         GuiBuilder builder = new GuiBuilder()
                 .size(6)
-                .title(legacy("&9GES &7values: &e" + key));
+                .title(legacy("&9Edit Value &7(&e" + key + "&7)"));
 
         GuiItem blackGlass = GuiItem.of(Material.BLACK_STAINED_GLASS_PANE).name(Component.text(" "));
         for (int s : BLACK_BORDER) builder.slot(s, blackGlass);
