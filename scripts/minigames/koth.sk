@@ -27,6 +27,7 @@ register minigame with id "koth":
 
 on "koth" game start:
     set {_spawnpoints::*} to gamemap values "spawnpoints" of event-session
+    shuffle {_spawnpoints::*}
     set {_region} to gamemap value "hill_region" of event-session
     set {_limit} to (gamemap value "points_limit" of event-session) ? 30
     loop shuffled session players of event-session:
