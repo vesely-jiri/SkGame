@@ -137,12 +137,25 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             plugin.getLogUtil().warning("createEventSession: event session already exists — ignoring");
             return null;
         }
-        Session session = createSession(admin);
-        if (session == null) return null;
+        // Inline createSession so we can set isEventSession BEFORE SessionCreateEvent fires.
+        // If we called createSession() and set the flag after, MainGuiService would briefly
+        // show the session in the normal session list during the event handler.
+        String id = java.util.UUID.randomUUID().toString();
+        Session session = sessionManager.registerSession(id);
+        session.setHost(admin);
         session.setEventSession(true);
         session.setPersistent(true);
         session.setVisibility(SessionVisibility.INVITE_ONLY);
         sessionManager.setEventSession(session);
+        session.addLobbyMember(admin);
+        Bukkit.getPluginManager().callEvent(new SessionCreateEvent(session));
+        LobbyEnterEvent lobbyEvent = new LobbyEnterEvent(admin, session);
+        Bukkit.getPluginManager().callEvent(lobbyEvent);
+        if (lobbyEvent.isCancelled()) {
+            disbandSession(session, DisbandReason.EXPLICIT_DISBAND);
+            return null;
+        }
+        partyManager.registerActivity(session);
         return session;
     }
 
