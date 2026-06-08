@@ -8,6 +8,7 @@ import cz.nox.skgame.api.game.model.type.SessionState;
 import cz.nox.skgame.api.messages.Messages;
 import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl;
+import cz.nox.skgame.core.gui.services.SessionGuiService;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
@@ -115,6 +116,7 @@ public class QuickplayQueue {
                 it.remove();
                 if (lifecycle.joinSession(player, match)) {
                     Messages.send(player, "quickplay.found", match.getId());
+                    SessionGuiService.getInstance().openFor(player);
                 }
                 continue;
             }
@@ -124,6 +126,7 @@ public class QuickplayQueue {
                 if (createOnNoMatch) {
                     if (lifecycle.createSession(player) != null) {
                         Messages.send(player, "quickplay.created-session");
+                        SessionGuiService.getInstance().openFor(player);
                     }
                 } else {
                     Messages.send(player, "quickplay.no-match");
