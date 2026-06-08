@@ -27,7 +27,9 @@ public class LocationBeam {
     public void spawn() {
         if (base.getWorld() == null) return;
 
-        ItemDisplay display = (ItemDisplay) base.getWorld().spawnEntity(base, EntityType.ITEM_DISPLAY);
+        Location spawnLoc = base.clone();
+        spawnLoc.setPitch(0);
+        ItemDisplay display = (ItemDisplay) base.getWorld().spawnEntity(spawnLoc, EntityType.ITEM_DISPLAY);
         display.setItemStack(new ItemStack(Material.RED_CONCRETE));
         display.setGlowing(true);
         display.setInterpolationDelay(1);
