@@ -327,21 +327,21 @@ public class MainGuiService implements Listener {
             filterLore.add(legacy("&7Tags: &f" + tagStr));
         }
         filterLore.add(legacy("&aLeft-click &7to pick tags"));
-        filterLore.add(legacy("&eShift-click &7to type text filter"));
-        if (hasAnyFilter) filterLore.add(legacy("&cRight-click &7to clear all"));
+        filterLore.add(legacy("&eRight-click &7to type text filter"));
+        if (hasAnyFilter) filterLore.add(legacy("&cShift+right-click &7to clear all"));
 
         builder.slot(4, GuiItem.of(Material.HOPPER)
                 .name(hasAnyFilter ? "&e&lFiltered" : "&e&lFilter sessions")
                 .lore(filterLore)
                 .onClick(e -> {
                     Player p = (Player) e.getWhoClicked();
-                    if (e.getClick().isRightClick()) {
+                    if (e.getClick().isRightClick() && e.getClick().isShiftClick()) {
                         viewerFilters.remove(p.getUniqueId());
                         viewerTagFilters.remove(p.getUniqueId());
                         openFor(p);
                         return;
                     }
-                    if (e.getClick().isShiftClick()) {
+                    if (e.getClick().isRightClick()) {
                         p.closeInventory();
                         awaitingFilterInput.add(p.getUniqueId());
                         p.sendMessage(legacy("&eType a filter (minigame, host, or map name). Type &cclear &eto reset:"));
