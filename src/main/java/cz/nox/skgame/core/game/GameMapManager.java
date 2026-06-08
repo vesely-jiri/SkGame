@@ -1,8 +1,10 @@
 package cz.nox.skgame.core.game;
 
 import cz.nox.skgame.SkGame;
+import cz.nox.skgame.api.game.event.GameMapUnregisterEvent;
 import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.game.model.type.GameMapFilter;
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -100,6 +102,8 @@ public class GameMapManager {
         return map;
     }
     public void unregisterGameMap(String id) {
+        GameMap map = maps.get(id.toLowerCase());
+        if (map != null) Bukkit.getPluginManager().callEvent(new GameMapUnregisterEvent(map));
         maps.remove(id.toLowerCase());
         save();
     }

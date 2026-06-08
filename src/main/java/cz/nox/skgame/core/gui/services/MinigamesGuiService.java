@@ -2,6 +2,8 @@ package cz.nox.skgame.core.gui.services;
 
 import cz.nox.skgame.api.game.event.GamePlayerSessionLeave;
 import cz.nox.skgame.api.game.event.GameStartEvent;
+import cz.nox.skgame.api.game.event.MiniGameRegisterEvent;
+import cz.nox.skgame.api.game.event.MiniGameUnregisterEvent;
 import cz.nox.skgame.api.game.event.SessionDisbandEvent;
 import cz.nox.skgame.api.game.event.SessionSettingsChangedEvent;
 import cz.nox.skgame.api.gui.event.MinigamesGuiOpenEvent;
@@ -100,8 +102,10 @@ public class MinigamesGuiService implements Listener {
 
     // ─── Event listeners ──────────────────────────────────────────────────────
 
-    @EventHandler public void onSessionDisband(SessionDisbandEvent e) { closeFor(e.getSession()); }
-    @EventHandler public void onGameStart(GameStartEvent e)           { closeFor(e.getSession()); }
+    @EventHandler public void onSessionDisband(SessionDisbandEvent e)        { closeFor(e.getSession()); }
+    @EventHandler public void onGameStart(GameStartEvent e)                   { closeFor(e.getSession()); }
+    @EventHandler public void onMinigameRegister(MiniGameRegisterEvent e)     { updateAll(); }
+    @EventHandler public void onMinigameUnregister(MiniGameUnregisterEvent e) { updateAll(); }
 
     @EventHandler
     public void onPlayerLeave(GamePlayerSessionLeave e) {
@@ -115,6 +119,15 @@ public class MinigamesGuiService implements Listener {
             UUID uuid = e.getPlayer().getUniqueId();
             viewers.values().forEach(vset -> vset.remove(uuid));
         }
+    }
+
+    private void updateAll() {
+        viewers.forEach((sessionId, uuids) -> new HashSet<>(uuids).forEach(uuid -> {
+            Player p = Bukkit.getPlayer(uuid);
+            if (p == null || !p.isOnline()) { uuids.remove(uuid); return; }
+            if (p.getOpenInventory().getTopInventory().getHolder() instanceof GuiHolder) openFor(p);
+            else uuids.remove(uuid);
+        }));
     }
 
     // ─── GUI construction ─────────────────────────────────────────────────────

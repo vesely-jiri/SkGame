@@ -1,7 +1,9 @@
 package cz.nox.skgame.core.game;
 
 import cz.nox.skgame.SkGame;
+import cz.nox.skgame.api.game.event.MiniGameUnregisterEvent;
 import cz.nox.skgame.api.game.model.MiniGame;
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -88,6 +90,8 @@ public class MiniGameManager {
         return mg;
     }
     public void unregisterMiniGame(String id) {
+        MiniGame mg = miniGames.get(id.toLowerCase());
+        if (mg != null) Bukkit.getPluginManager().callEvent(new MiniGameUnregisterEvent(mg));
         miniGames.remove(id.toLowerCase());
         save();
     }

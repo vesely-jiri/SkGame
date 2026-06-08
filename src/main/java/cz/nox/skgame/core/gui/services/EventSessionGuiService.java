@@ -410,6 +410,11 @@ public class EventSessionGuiService implements Listener {
     }
 
     @EventHandler
+    public void onSessionSettingsChanged(SessionSettingsChangedEvent event) {
+        if (event.getSession().isEventSession()) update();
+    }
+
+    @EventHandler
     public void onGameStart(GameStartEvent event) {
         if (event.getSession().isEventSession()) update();
     }
