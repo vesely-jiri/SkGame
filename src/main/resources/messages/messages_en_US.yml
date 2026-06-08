@@ -13,6 +13,7 @@
 
 session:
   created: "&aSession created"
+  joined: "&aJoined the session"
   leave:
     notification: "&7You left the session"
   host:

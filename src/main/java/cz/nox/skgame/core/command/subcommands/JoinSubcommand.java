@@ -5,6 +5,7 @@ import cz.nox.skgame.api.game.model.SessionVisibility;
 import cz.nox.skgame.api.messages.Messages;
 import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl;
+import cz.nox.skgame.core.gui.services.SessionGuiService;
 import org.bukkit.entity.Player;
 
 import java.util.Arrays;
@@ -45,7 +46,11 @@ public class JoinSubcommand {
                 return;
             }
         }
-        SessionLifecycleManagerImpl.getInstance().joinSession(player, session);
+        boolean joined = SessionLifecycleManagerImpl.getInstance().joinSession(player, session);
+        if (joined) {
+            Messages.send(player, "session.joined");
+            SessionGuiService.getInstance().openFor(player);
+        }
     }
 
     public List<String> tabComplete(Player player, String[] args) {
