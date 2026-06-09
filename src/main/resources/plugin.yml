@@ -46,3 +46,6 @@ permissions:
   skgame.info.extended:
     description: View extended runtime/database info via /skgame info
     default: op
+  skgame.game.create:
+    description: Create a new game session via the main GUI
+    default: true

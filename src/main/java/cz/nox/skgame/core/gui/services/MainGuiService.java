@@ -58,7 +58,7 @@ public class MainGuiService implements Listener {
     // Slot 47 excluded — replaced by spectate browser button.
     private static final int[] BLACK_SLOTS   = {1, 3, 5, 7, 9, 11, 13, 17, 21, 27, 29, 31, 35, 37, 39, 49, 53};
     private static final int[] SESSION_SLOTS = {14, 15, 16, 23, 24, 25, 32, 33, 34, 41, 42, 43};
-    private static final String CREATE_PERMISSION = "skript.game.create_session";
+    private static final String CREATE_PERMISSION = "skgame.game.create";
 
     private static MainGuiService instance;
     private final Set<UUID> activeViewers = new HashSet<>();
