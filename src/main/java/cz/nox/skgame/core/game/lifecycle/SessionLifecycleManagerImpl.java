@@ -965,6 +965,20 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         } else {
             session.setCurrentRound(0);
         }
+
+        // Notify admins when last active game finishes during maintenance
+        if (plugin.isMaintenanceMode()) {
+            boolean anyActive = Arrays.stream(sessionManager.getAllSessions())
+                    .anyMatch(s -> s.getState() == SessionState.STARTED
+                                || s.getState() == SessionState.STARTING);
+            if (!anyActive) {
+                for (Player p : Bukkit.getOnlinePlayers()) {
+                    if (p.hasPermission("skgame.admin")) {
+                        Messages.send(p, "maintenance.all-sessions-ended");
+                    }
+                }
+            }
+        }
     }
 
     /** Called from SkGame.setMaintenanceMode(true): server-wide broadcast + clear lobby ready states. */
@@ -1023,13 +1037,6 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         }
         Bukkit.getPluginManager().callEvent(new SessionDisbandEvent(session, reason));
 
-        if (plugin.isMaintenanceMode() && sessionManager.getAllSessions().length == 0) {
-            for (Player p : Bukkit.getOnlinePlayers()) {
-                if (p.hasPermission("skgame.admin")) {
-                    Messages.send(p, "maintenance.all-sessions-ended");
-                }
-            }
-        }
     }
 
     /** Kick a member from their session. All validation included — safe to call from command and GUI. */

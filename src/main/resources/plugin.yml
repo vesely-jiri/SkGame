@@ -48,4 +48,4 @@ permissions:
     default: op
   skgame.game.create:
     description: Create a new game session via the main GUI
-    default: true
+    default: op
