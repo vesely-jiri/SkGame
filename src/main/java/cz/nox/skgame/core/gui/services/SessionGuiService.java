@@ -451,6 +451,12 @@ public class SessionGuiService implements Listener {
                     .lore(legacy("&7Server picks randomly at game start"),
                           legacy("&8Right-click to cycle"));
         }
+        if (session.getMiniGameSelectionMode() == MapSelectionMode.VOTE) {
+            return GuiItem.of(Material.PAPER)
+                    .name("&d&lVote Minigame")
+                    .lore(legacy("&7Players vote for a minigame during prep"),
+                          legacy("&8Right-click to cycle"));
+        }
         return GuiItem.of(Material.LIGHT_GRAY_BUNDLE)
                 .name("&7&lMinigames")
                 .lore(legacy("&7Left-click: choose a specific minigame"),
@@ -464,9 +470,6 @@ public class SessionGuiService implements Listener {
             String mapName = nameObj != null ? nameObj.toString() : "?";
             return GuiItem.of(Material.PAPER).name("&7&l" + mapName);
         }
-        if (session.getMiniGame() == null) {
-            return GuiItem.of(Material.BARRIER).name("&7&lMaps").lore(legacy("&c- Choose a minigame first"));
-        }
         if (session.getMapSelectionMode() == MapSelectionMode.VOTE) {
             return GuiItem.of(Material.FILLED_MAP)
                     .name("&b&lMap Vote")
@@ -478,6 +481,10 @@ public class SessionGuiService implements Listener {
                     .name("&a&lRandom Map")
                     .lore(legacy("&7Server picks randomly at game start"),
                           legacy("&8Right-click to cycle"));
+        }
+        // SPECIFIC mode: need a minigame to filter maps
+        if (session.getMiniGame() == null) {
+            return GuiItem.of(Material.BARRIER).name("&7&lMaps").lore(legacy("&c- Choose a minigame first"));
         }
         return GuiItem.of(Material.BARRIER)
                 .name("&7&lMaps")
