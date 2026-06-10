@@ -33,6 +33,7 @@ import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.region.ArenaSlot;
 import cz.nox.skgame.api.messages.Messages;
 import cz.nox.skgame.core.team.MapVoteItem;
+import cz.nox.skgame.core.team.MiniGameVoteItem;
 import cz.nox.skgame.core.team.TeamPickerItem;
 import cz.nox.skgame.util.Debug;
 import cz.nox.skgame.util.PlayerResetter;
@@ -89,6 +90,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
     private final Map<String, BukkitTask> actionBarTasks = new ConcurrentHashMap<>();
     private static final int PICKER_SLOT = 4;
     private static final int VOTE_SLOT = 5;
+    private static final int MGVOTE_SLOT = 6;
     // Reasons that indicate forced teardown rather than natural round completion.
     private static final Set<String> TEARDOWN_REASONS = Set.of(
             "disband", "shutdown", "abandoned", "admin", "minigame-disabled", "no-players");
@@ -100,6 +102,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
     }
     private final Map<UUID, ItemStack> pickerSlotBackup = new ConcurrentHashMap<>();
     private final Map<UUID, ItemStack> voteSlotBackup = new ConcurrentHashMap<>();
+    private final Map<UUID, ItemStack> mgVoteSlotBackup = new ConcurrentHashMap<>();
 
     private SessionLifecycleManagerImpl(SkGame plugin) {
         this.sessionManager = SessionManager.getInstance();
@@ -503,6 +506,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
 
     private boolean needsPreparation(Session session) {
         if (session.isMapVoting()) return true;
+        if (session.isMiniGameVoting()) return true;
         MiniGame mg = session.getMiniGame();
         if (mg == null || mg.getTeams().isEmpty()) return false;
         TeamAssignmentMode mode = mg.getTeamAssignment();
@@ -547,6 +551,22 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             Debug.logMiniGame(_mg.getId(), "preparation-start", () -> "session=" + session.getId());
         }
 
+        // Minigame vote setup (runs before map vote so minigame is resolved first when both vote)
+        boolean showMinigameHint = false;
+        if (session.isMiniGameVoting()) {
+            List<MiniGame> mgCandidates = getCandidateMinigames();
+            if (mgCandidates.isEmpty()) {
+                session.setMiniGameSelectionMode(MapSelectionMode.SPECIFIC);
+            } else if (mgCandidates.size() == 1) {
+                session.setMiniGame(mgCandidates.get(0));
+                session.setMiniGameSelectionMode(MapSelectionMode.SPECIFIC);
+            } else {
+                session.setMiniGame(null);
+                for (Player p : session.getLobbyMembers()) giveMgVoteItem(p);
+                showMinigameHint = true;
+            }
+        }
+
         // Map vote setup (must happen before team picker so both can coexist)
         if (session.isMapVoting()) {
             List<GameMap> candidates = getCandidateMaps(session);
@@ -570,21 +590,25 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         Set<Player> prepMembers = new HashSet<>(session.getLobbyMembers());
         boolean showTeamHint = needsTeamPicker(session);
         boolean showMapHint = session.isMapVoting();
+        final boolean showMgHint = showMinigameHint;
         Bukkit.getScheduler().runTask(plugin, () -> {
             prepMembers.forEach(Player::closeInventory);
-            if (showTeamHint || showMapHint) {
+            if (showTeamHint || showMapHint || showMgHint) {
                 Title.Times times = Title.Times.times(
                         Duration.ofMillis(200), Duration.ofSeconds(2), Duration.ofMillis(500));
                 prepMembers.forEach(p -> {
-                    Component titleComp = (showTeamHint && showMapHint)
+                    Component titleComp = (showTeamHint && (showMapHint || showMgHint))
                             ? LegacyComponentSerializer.legacyAmpersand()
                                     .deserialize(Messages.get("session.preparation.pick-team", p))
                             : Component.empty();
                     Component subtitleComp = showMapHint
                             ? LegacyComponentSerializer.legacyAmpersand()
                                     .deserialize(Messages.get("session.preparation.pick-map", p))
-                            : LegacyComponentSerializer.legacyAmpersand()
-                                    .deserialize(Messages.get("session.preparation.pick-team", p));
+                            : showMgHint
+                                    ? LegacyComponentSerializer.legacyAmpersand()
+                                            .deserialize(Messages.get("session.preparation.pick-minigame", p))
+                                    : LegacyComponentSerializer.legacyAmpersand()
+                                            .deserialize(Messages.get("session.preparation.pick-team", p));
                     p.showTitle(Title.title(titleComp, subtitleComp, times));
                 });
             }
@@ -622,9 +646,10 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
     private void cancelPreparation(Session session) {
         sessionManager.cancelCountdownTask(session.getId());
         Set<Player> members = new HashSet<>(session.getLobbyMembers());
-        for (Player p : members) { removePicker(p); removeVoteItem(p); }
+        for (Player p : members) { removePicker(p); removeVoteItem(p); removeMgVoteItem(p); }
         session.clearTeams();
         session.clearMapVotes();
+        session.clearMiniGameVotes();
         session.setState(SessionState.LOBBY);
     }
 
@@ -636,7 +661,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             Debug.logMiniGame(_mg.getId(), "preparation-end", () -> "session=" + session.getId());
         }
         Set<Player> members = new HashSet<>(session.getLobbyMembers());
-        for (Player p : members) { removePicker(p); removeVoteItem(p); }
+        for (Player p : members) { removePicker(p); removeVoteItem(p); removeMgVoteItem(p); }
 
         // Close any open SkGame GUI (team picker, map vote) on all session members before
         // game starts. Synchronous closeInventory() is safe here because the only click-context
@@ -649,6 +674,19 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             if (p.isOnline()
                     && p.getOpenInventory().getTopInventory().getHolder() instanceof GuiHolder) {
                 p.closeInventory();
+            }
+        }
+
+        // Resolve minigame vote first (map candidates depend on the chosen minigame)
+        if (session.isMiniGameVoting()) {
+            MiniGame mgWinner = tallyMiniGameVotes(session);
+            session.setMiniGame(mgWinner);
+            session.setMiniGameSelectionMode(MapSelectionMode.SPECIFIC);
+            session.clearMiniGameVotes();
+            if (mgWinner != null) {
+                for (Player p : session.getLobbyMembers()) {
+                    Messages.send(p, "session.preparation.minigame-vote-result", mgWinner.getId());
+                }
             }
         }
 
@@ -729,6 +767,48 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         // Restore slot 5 only if something was displaced; otherwise the strip already cleared it
         ItemStack backup = voteSlotBackup.remove(player.getUniqueId());
         if (backup != null) player.getInventory().setItem(VOTE_SLOT, backup);
+    }
+
+    private void giveMgVoteItem(Player player) {
+        MiniGameVoteItem item = MiniGameVoteItem.getInstance();
+        ItemStack existing = player.getInventory().getItem(MGVOTE_SLOT);
+        if (item.isVoteItem(existing)) return;
+        if (existing != null && !existing.getType().isAir()) {
+            mgVoteSlotBackup.put(player.getUniqueId(), existing);
+        }
+        player.getInventory().setItem(MGVOTE_SLOT, item.create());
+    }
+
+    private void removeMgVoteItem(Player player) {
+        MiniGameVoteItem item = MiniGameVoteItem.getInstance();
+        for (int i = 0; i < player.getInventory().getSize(); i++) {
+            if (item.isVoteItem(player.getInventory().getItem(i))) {
+                player.getInventory().setItem(i, null);
+            }
+        }
+        ItemStack backup = mgVoteSlotBackup.remove(player.getUniqueId());
+        if (backup != null) player.getInventory().setItem(MGVOTE_SLOT, backup);
+    }
+
+    private List<MiniGame> getCandidateMinigames() {
+        MiniGameManager mgm = MiniGameManager.getInstance();
+        return Arrays.stream(mgm.getAllMiniGames())
+                .filter(mg -> !mgm.isMinigameDisabled(mg.getId()))
+                .collect(Collectors.toList());
+    }
+
+    private MiniGame tallyMiniGameVotes(Session session) {
+        List<MiniGame> candidates = getCandidateMinigames();
+        if (candidates.isEmpty()) return null;
+        Map<String, Integer> tally = new HashMap<>();
+        candidates.forEach(mg -> tally.put(mg.getId(), 0));
+        session.getMiniGameVotes().values()
+                .forEach(votedId -> tally.computeIfPresent(votedId, (k, v) -> v + 1));
+        int max = Collections.max(tally.values());
+        List<MiniGame> top = candidates.stream()
+                .filter(mg -> tally.getOrDefault(mg.getId(), 0) == max)
+                .collect(Collectors.toList());
+        return top.get(new Random().nextInt(top.size()));
     }
 
     // Returns maps supporting the minigame that are available for voting.

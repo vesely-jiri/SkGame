@@ -49,8 +49,10 @@ session:
       not-banned: "&c{0} is not banned from this session."
   preparation:
     map-vote-result: "&6Map decided by vote: &e{0}"
+    minigame-vote-result: "&6Minigame decided by vote: &e{0}"
     pick-team: "&ePick your team!"
     pick-map: "&eVote for a map!"
+    pick-minigame: "&eVote for a minigame!"
   spectator:
     queued-join: "&aYou will join the party after this game"
     queued-leave: "&7You will not join the party after this game"

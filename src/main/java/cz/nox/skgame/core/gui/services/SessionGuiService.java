@@ -184,11 +184,18 @@ public class SessionGuiService implements Listener {
                 if (!isHostOnly(p, session)) return;
                 MapSelectionMode next = switch (session.getMiniGameSelectionMode()) {
                     case SPECIFIC -> MapSelectionMode.RANDOM;
-                    case RANDOM   -> MapSelectionMode.SPECIFIC;
-                    case VOTE     -> MapSelectionMode.SPECIFIC; // VOTE not yet implemented; fall back
+                    case RANDOM   -> MapSelectionMode.VOTE;
+                    case VOTE     -> MapSelectionMode.SPECIFIC;
                 };
                 if (next != MapSelectionMode.SPECIFIC) session.setMiniGame(null);
                 session.setMiniGameSelectionMode(next);
+                // Constraint: minigame VOTE → map manual not allowed; auto-push to RANDOM
+                if (next == MapSelectionMode.VOTE
+                        && session.getMapSelectionMode() == MapSelectionMode.SPECIFIC) {
+                    session.setGameMap(null);
+                    session.setMapSelectionMode(MapSelectionMode.RANDOM);
+                    Bukkit.getPluginManager().callEvent(new SessionSettingsChangedEvent(session, "map"));
+                }
                 Bukkit.getPluginManager().callEvent(new SessionSettingsChangedEvent(session, "minigame"));
                 update(session);
             }));
@@ -208,10 +215,12 @@ public class SessionGuiService implements Listener {
                 Player p = (Player) e.getWhoClicked();
                 if (isMidGameLocked(session, p)) return;
                 if (!isHostOnly(p, session)) return;
+                boolean mgVoteMode = session.getMiniGameSelectionMode() == MapSelectionMode.VOTE;
                 MapSelectionMode next = switch (session.getMapSelectionMode()) {
                     case SPECIFIC -> MapSelectionMode.VOTE;
                     case VOTE     -> MapSelectionMode.RANDOM;
-                    case RANDOM   -> MapSelectionMode.SPECIFIC;
+                    // Skip SPECIFIC when minigame is in VOTE mode (no manual map with unknown minigame)
+                    case RANDOM   -> mgVoteMode ? MapSelectionMode.VOTE : MapSelectionMode.SPECIFIC;
                 };
                 if (session.getMapSelectionMode() == MapSelectionMode.SPECIFIC) session.setGameMap(null);
                 session.setMapSelectionMode(next);

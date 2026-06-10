@@ -46,6 +46,7 @@ public class Session {
     private boolean persistent = false;
     private boolean eventSession = false;
     private final Map<UUID, String> mapVotes = new HashMap<>();
+    private final Map<UUID, String> miniGameVotes = new HashMap<>();
     /** Transient per-session bans. UUID → name captured at ban time (no OfflinePlayer lookups needed). */
     private final java.util.LinkedHashMap<UUID, String> bannedPlayers = new java.util.LinkedHashMap<>();
     /** Admin-queued config changes to apply at round end. Flushed in runDeferredBlock before round logic. */
@@ -258,6 +259,7 @@ public class Session {
 
     public MapSelectionMode getMiniGameSelectionMode() { return miniGameSelectionMode; }
     public void setMiniGameSelectionMode(MapSelectionMode mode) { this.miniGameSelectionMode = mode; }
+    public boolean isMiniGameVoting() { return miniGameSelectionMode == MapSelectionMode.VOTE; }
     public boolean isPersistent() { return persistent; }
     public void setPersistent(boolean persistent) { this.persistent = persistent; }
     public boolean isEventSession() { return eventSession; }
@@ -269,6 +271,14 @@ public class Session {
     }
     public void clearMapVotes() { mapVotes.clear(); }
     public Map<UUID, String> getMapVotes() { return java.util.Collections.unmodifiableMap(mapVotes); }
+
+    public @Nullable String getMiniGameVote(Player player) { return miniGameVotes.get(player.getUniqueId()); }
+    public void setMiniGameVote(Player player, @Nullable String mgId) {
+        if (mgId == null) miniGameVotes.remove(player.getUniqueId());
+        else miniGameVotes.put(player.getUniqueId(), mgId);
+    }
+    public void clearMiniGameVotes() { miniGameVotes.clear(); }
+    public Map<UUID, String> getMiniGameVotes() { return java.util.Collections.unmodifiableMap(miniGameVotes); }
 
     public @Nullable String getTeam(Player player) {
         return teamAssignments.get(player.getUniqueId());

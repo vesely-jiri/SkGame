@@ -43,8 +43,10 @@ session:
       not-banned: "&c{0} není zabanován v této session."
   preparation:
     map-vote-result: "&6Mapa rozhodnuta hlasováním: &e{0}"
+    minigame-vote-result: "&6Minihra rozhodnuta hlasováním: &e{0}"
     pick-team: "&eVyber svůj tým!"
     pick-map: "&eHlasuj pro mapu!"
+    pick-minigame: "&eHlasuj pro minihru!"
   spectator:
     queued-join: "&aPo skončení hry se připojíš do party"
     queued-leave: "&7Po skončení hry session opustíš"
