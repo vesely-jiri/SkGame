@@ -10,6 +10,7 @@ import cz.nox.skgame.api.game.event.LobbyEnterEvent;
 import cz.nox.skgame.api.game.event.PlayerRoleChangeEvent;
 import cz.nox.skgame.api.game.event.SessionSettingsChangedEvent;
 import cz.nox.skgame.api.game.event.SpectatorJoinEvent;
+import cz.nox.skgame.api.game.model.CustomValue;
 import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
@@ -303,6 +304,29 @@ public class EventSessionGuiService implements Listener {
                         SessionLifecycleManagerImpl.getInstance().disbandSession(session, DisbandReason.EXPLICIT_DISBAND);
                         ((Player) e.getWhoClicked()).closeInventory();
                     }));
+        }
+
+        // Slots 48, 49, 50 — session value defs (admin: clickable; player: display only)
+        if (mg != null && !mg.getSessionValueDefs().isEmpty()) {
+            int[] valueSlots = {48, 49, 50};
+            int svIdx = 0;
+            for (Map.Entry<String, CustomValue> svEntry : mg.getSessionValueDefs().entrySet()) {
+                if (svIdx >= valueSlots.length) break;
+                String svKey = svEntry.getKey();
+                CustomValue svCv = svEntry.getValue();
+                int svSlot = valueSlots[svIdx++];
+                GuiItem svItem = SessionGuiService.buildSessionValueItem(svKey, svCv, session);
+                if (isAdmin) {
+                    svItem.onLeftClick(e -> {
+                        SessionGuiService.advanceSessionValue(session, svKey, svCv, true);
+                        openFor((Player) e.getWhoClicked());
+                    }).onRightClick(e -> {
+                        SessionGuiService.advanceSessionValue(session, svKey, svCv, false);
+                        openFor((Player) e.getWhoClicked());
+                    });
+                }
+                builder.slot(svSlot, svItem);
+            }
         }
 
         // Slot 53 — Back (left-click) / Leave event (right-click, non-admin only)

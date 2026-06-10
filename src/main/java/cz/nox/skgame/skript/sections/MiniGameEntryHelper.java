@@ -74,6 +74,7 @@ final class MiniGameEntryHelper {
             .addEntryData(new ExpressionEntryData<>("description", null, true, String.class))
             .addEntryData(new ExpressionEntryData<>("min",         null, true, Number.class))
             .addEntryData(new ExpressionEntryData<>("max",         null, true, Number.class))
+            .addEntryData(new ExpressionEntryData<>("allowed",     null, true, String.class))
             .build();
 
     /**
@@ -261,6 +262,12 @@ final class MiniGameEntryHelper {
                 if (maxExpr != null) {
                     if (!isNumericType) Skript.warning("'max' bound ignored: value type is not numeric for key '" + valueId + "'");
                     else cv.setMaxValue(maxExpr.getSingle(null));
+                }
+
+                Expression<String> allowedExpr = (Expression<String>) body.getOptional("allowed", false);
+                if (allowedExpr != null) {
+                    String[] vals = allowedExpr.getArray(null);
+                    if (vals != null && vals.length > 0) cv.setAllowedValues(java.util.Arrays.asList(vals));
                 }
             }
             entries.add(new ValueDefEntry(isGamemap, valueId, cv));

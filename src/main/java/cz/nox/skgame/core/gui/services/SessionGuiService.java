@@ -8,6 +8,8 @@ import cz.nox.skgame.api.game.event.PlayerRoleChangeEvent;
 import cz.nox.skgame.api.game.event.SessionDisbandEvent;
 import cz.nox.skgame.api.game.event.SessionSettingsChangedEvent;
 import cz.nox.skgame.api.gui.event.SessionGuiOpenEvent;
+import ch.njol.skript.classes.ClassInfo;
+import cz.nox.skgame.api.game.model.CustomValue;
 import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
@@ -39,6 +41,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -149,8 +152,8 @@ public class SessionGuiService implements Listener {
         for (int s : WHITE_SLOTS) builder.slot(s, GuiItem.of(Material.WHITE_STAINED_GLASS_PANE).name(Component.space()));
         for (int s : BLACK_SLOTS) builder.slot(s, GuiItem.of(Material.BLACK_STAINED_GLASS_PANE).name(Component.space()));
 
-        // Slot 34 — visual separator (standalone; not in any border batch; static)
-        builder.slot(34, GuiItem.of(Material.LIGHT_GRAY_STAINED_GLASS_PANE).name(Component.space()));
+        // Slots 34 / 18 / 27 — session value defs (slot 34 is separator when no values)
+        buildSessionValueSlots(builder, session, viewer);
 
         // Slot 7 — Spectators count + toggle
         builder.slot(7, buildSpectatorsSlot(session, viewer));
@@ -563,5 +566,102 @@ public class SessionGuiService implements Listener {
 
     private static Component legacy(String text) {
         return LegacyComponentSerializer.legacyAmpersand().deserialize(text);
+    }
+
+    // ─── Session value slots ───────────────────────────────────────────────────
+
+    // Slot 34 = first value (replaces separator); slots 18, 27 = second + third.
+    private void buildSessionValueSlots(GuiBuilder builder, Session session, Player viewer) {
+        MiniGame mg = session.getMiniGame();
+        if (mg == null || mg.getSessionValueDefs().isEmpty()) {
+            builder.slot(34, GuiItem.of(Material.LIGHT_GRAY_STAINED_GLASS_PANE).name(Component.space()));
+            return;
+        }
+        int[] valueSlots = {34, 18, 27};
+        int idx = 0;
+        for (Map.Entry<String, CustomValue> entry : mg.getSessionValueDefs().entrySet()) {
+            if (idx >= valueSlots.length) break;
+            String key = entry.getKey();
+            CustomValue cv = entry.getValue();
+            int slot = valueSlots[idx++];
+            builder.slot(slot, buildSessionValueItem(key, cv, session)
+                .onLeftClick(e -> {
+                    Player p = (Player) e.getWhoClicked();
+                    if (isMidGameLocked(session, p)) return;
+                    if (!isHostOnly(p, session)) return;
+                    advanceSessionValue(session, key, cv, true);
+                    update(session);
+                })
+                .onRightClick(e -> {
+                    Player p = (Player) e.getWhoClicked();
+                    if (isMidGameLocked(session, p)) return;
+                    if (!isHostOnly(p, session)) return;
+                    advanceSessionValue(session, key, cv, false);
+                    update(session);
+                }));
+        }
+    }
+
+    static GuiItem buildSessionValueItem(String key, CustomValue cv, Session session) {
+        Object current = session.getValue(key, false);
+        if (current == null) current = cv.getDefaultValue();
+        String displayName = cv.getName() != null && !cv.getName().isEmpty() ? cv.getName() : key;
+        String currentStr = current != null ? current.toString() : "—";
+
+        ClassInfo<?> type = cv.getType();
+        Material mat = Material.PAPER;
+        if (type != null) {
+            if (Boolean.class.isAssignableFrom(type.getC())) {
+                mat = Boolean.TRUE.equals(current) ? Material.LIME_DYE : Material.GRAY_DYE;
+            } else if (Number.class.isAssignableFrom(type.getC())) {
+                mat = Material.CLOCK;
+            }
+        }
+
+        List<Component> lore = new ArrayList<>();
+        lore.add(legacy("&7Current: &f" + currentStr));
+        if (cv.hasAllowedValues()) {
+            lore.add(legacy("&8Left: next  |  Right: prev"));
+        } else if (type != null && Number.class.isAssignableFrom(type.getC())) {
+            String bounds = (cv.getMinValue() != null || cv.getMaxValue() != null)
+                    ? " (" + (cv.getMinValue() != null ? cv.getMinValue() : "∞")
+                    + "–" + (cv.getMaxValue() != null ? cv.getMaxValue() : "∞") + ")" : "";
+            lore.add(legacy("&8Left: +1  |  Right: -1" + bounds));
+        } else {
+            lore.add(legacy("&8Click to toggle"));
+        }
+        if (cv.getDescription() != null && !cv.getDescription().isEmpty()) {
+            lore.add(legacy("&7" + cv.getDescription()));
+        }
+
+        return GuiItem.of(mat).name("&b" + displayName).lore(lore.toArray(new Component[0]));
+    }
+
+    static void advanceSessionValue(Session session, String key, CustomValue cv, boolean forward) {
+        Object current = session.getValue(key, false);
+        if (current == null) current = cv.getDefaultValue();
+
+        ClassInfo<?> type = cv.getType();
+        if (type == null) return;
+
+        if (cv.hasAllowedValues() && String.class.isAssignableFrom(type.getC())) {
+            List<String> allowed = cv.getAllowedValues();
+            if (allowed.isEmpty()) return;
+            String curr = current != null ? current.toString() : allowed.get(0);
+            int i = allowed.indexOf(curr);
+            if (i < 0) i = 0;
+            int next = forward ? (i + 1) % allowed.size() : (i - 1 + allowed.size()) % allowed.size();
+            session.setValue(key, allowed.get(next), false);
+        } else if (Number.class.isAssignableFrom(type.getC())) {
+            double curr = current instanceof Number n ? n.doubleValue() : 0;
+            double next = forward ? curr + 1 : curr - 1;
+            if (cv.getMinValue() != null) next = Math.max(next, cv.getMinValue().doubleValue());
+            if (cv.getMaxValue() != null) next = Math.min(next, cv.getMaxValue().doubleValue());
+            session.setValue(key, (next == Math.floor(next)) ? (long) next : next, false);
+        } else if (Boolean.class.isAssignableFrom(type.getC())) {
+            session.setValue(key, !Boolean.TRUE.equals(current), false);
+        }
+
+        Bukkit.getPluginManager().callEvent(new SessionSettingsChangedEvent(session, "sessionvalue:" + key));
     }
 }
