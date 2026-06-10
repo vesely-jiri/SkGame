@@ -247,7 +247,7 @@ maintenance:
   broadcast:
     enabled: "&eMaintenance mode &cENABLED&e. Multi-round games will end after current round. No new games can start."
     disabled: "&aMaintenance mode &7DISABLED&a. Server returning to normal operation."
-  all-sessions-ended: "&a[SkGame] All sessions ended. Server is now clear for maintenance."
+  all-sessions-ended: "&e[Maintenance] &aAll active sessions have ended — server is clear."
 
 admin:
   wand:
