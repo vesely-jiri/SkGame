@@ -31,7 +31,11 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import cz.nox.skgame.api.game.event.GameMapRegisterEvent;
+import cz.nox.skgame.api.game.event.GameMapUnregisterEvent;
+import cz.nox.skgame.api.gui.GuiHolder;
 import cz.nox.skgame.api.gui.event.AdminGuiOpenEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -40,9 +44,12 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("deprecation")
 public class AdminGuiService implements Listener {
@@ -63,6 +70,7 @@ public class AdminGuiService implements Listener {
 
     private static AdminGuiService instance;
     private final Map<UUID, AdminSetupState> states = new HashMap<>();
+    private final Set<UUID> mapListViewers = ConcurrentHashMap.newKeySet();
     private final AdminWand wand;
 
     private AdminGuiService() {
@@ -141,6 +149,7 @@ public class AdminGuiService implements Listener {
         }
 
         player.openInventory(builder.build());
+        mapListViewers.add(player.getUniqueId());
     }
 
     public void openMapPropertiesGui(Player player, String mapId) {
@@ -494,6 +503,29 @@ public class AdminGuiService implements Listener {
     public void onQuit(PlayerQuitEvent e) {
         AdminSetupState state = states.remove(e.getPlayer().getUniqueId());
         if (state != null) state.clearPositions();
+        mapListViewers.remove(e.getPlayer().getUniqueId());
+    }
+
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent e) {
+        if (e.getInventory().getHolder() instanceof GuiHolder) {
+            mapListViewers.remove(e.getPlayer().getUniqueId());
+        }
+    }
+
+    @EventHandler
+    public void onMapRegister(GameMapRegisterEvent e) { refreshMapListViewers(); }
+
+    @EventHandler
+    public void onMapUnregister(GameMapUnregisterEvent e) { refreshMapListViewers(); }
+
+    private void refreshMapListViewers() {
+        new HashSet<>(mapListViewers).forEach(uuid -> {
+            Player p = Bukkit.getPlayer(uuid);
+            if (p == null || !p.isOnline()) { mapListViewers.remove(uuid); return; }
+            if (p.getOpenInventory().getTopInventory().getHolder() instanceof GuiHolder) openAdminGui(p);
+            else mapListViewers.remove(uuid);
+        });
     }
 
     @EventHandler
