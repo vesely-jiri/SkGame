@@ -1,6 +1,8 @@
 package cz.nox.skgame.core.gui.services;
 
 import cz.nox.skgame.SkGame;
+import cz.nox.skgame.api.game.event.GamePlayerSessionJoin;
+import cz.nox.skgame.api.game.event.GamePlayerSessionLeave;
 import cz.nox.skgame.api.game.event.GameStartEvent;
 import cz.nox.skgame.api.game.event.GameStopEvent;
 import cz.nox.skgame.api.game.event.SessionCreateEvent;
@@ -375,6 +377,7 @@ public class AdminPanelGuiService implements Listener {
                     Session s = SessionManager.getInstance().getSessionById(sessionId);
                     if (s != null && s.getTotalRounds() > 1) s.setTotalRounds(s.getTotalRounds() - 1);
                     if (s != null) {
+                        Bukkit.getPluginManager().callEvent(new SessionSettingsChangedEvent(s, "rounds"));
                         SessionGuiService.getInstance().update(s);
                         openDetailFor((Player) e.getWhoClicked(), s);
                     }
@@ -386,6 +389,7 @@ public class AdminPanelGuiService implements Listener {
                     Session s = SessionManager.getInstance().getSessionById(sessionId);
                     if (s != null) s.setTotalRounds(s.getTotalRounds() + 1);
                     if (s != null) {
+                        Bukkit.getPluginManager().callEvent(new SessionSettingsChangedEvent(s, "rounds"));
                         SessionGuiService.getInstance().update(s);
                         openDetailFor((Player) e.getWhoClicked(), s);
                     }
@@ -465,6 +469,8 @@ public class AdminPanelGuiService implements Listener {
     @EventHandler public void onGameStart(GameStartEvent e)                { refreshPanelViewers(); }
     @EventHandler public void onGameStop(GameStopEvent e)                  { refreshPanelViewers(); }
     @EventHandler public void onSettingsChanged(SessionSettingsChangedEvent e) { refreshPanelViewers(); }
+    @EventHandler public void onPlayerJoin(GamePlayerSessionJoin e)        { refreshPanelViewers(); }
+    @EventHandler public void onPlayerLeave(GamePlayerSessionLeave e)      { refreshPanelViewers(); }
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
