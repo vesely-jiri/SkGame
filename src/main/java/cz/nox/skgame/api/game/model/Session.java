@@ -42,6 +42,7 @@ public class Session {
     @Nullable private String joinCode;
     private final Map<UUID, String> teamAssignments = new HashMap<>();
     private MapSelectionMode mapSelectionMode = MapSelectionMode.SPECIFIC;
+    private MapSelectionMode miniGameSelectionMode = MapSelectionMode.SPECIFIC;
     private boolean persistent = false;
     private boolean eventSession = false;
     private final Map<UUID, String> mapVotes = new HashMap<>();
@@ -254,6 +255,9 @@ public class Session {
     public boolean isMapVoting() { return mapSelectionMode == MapSelectionMode.VOTE; }
     /** Compat wrapper: true → VOTE, false → SPECIFIC. Does not set RANDOM. */
     public void setMapVoting(boolean vote) { mapSelectionMode = vote ? MapSelectionMode.VOTE : MapSelectionMode.SPECIFIC; }
+
+    public MapSelectionMode getMiniGameSelectionMode() { return miniGameSelectionMode; }
+    public void setMiniGameSelectionMode(MapSelectionMode mode) { this.miniGameSelectionMode = mode; }
     public boolean isPersistent() { return persistent; }
     public void setPersistent(boolean persistent) { this.persistent = persistent; }
     public boolean isEventSession() { return eventSession; }

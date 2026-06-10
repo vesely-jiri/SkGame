@@ -170,13 +170,28 @@ public class SessionGuiService implements Listener {
                     update(session);
                 }));
 
-        // Slot 25 — Minigames (host-only)
-        builder.slot(25, buildMinigameSlot(session).onClick(e -> {
-            Player p = (Player) e.getWhoClicked();
-            if (isMidGameLocked(session, p)) return;
-            if (!isHostOnly(p, session)) return;
-            MinigamesGuiService.getInstance().openFor(p);
-        }));
+        // Slot 25 — Minigames (host-only): left-click = specific minigame browser, right-click = cycle SPECIFIC→RANDOM→SPECIFIC
+        builder.slot(25, buildMinigameSlot(session)
+            .onLeftClick(e -> {
+                Player p = (Player) e.getWhoClicked();
+                if (isMidGameLocked(session, p)) return;
+                if (!isHostOnly(p, session)) return;
+                MinigamesGuiService.getInstance().openFor(p);
+            })
+            .onRightClick(e -> {
+                Player p = (Player) e.getWhoClicked();
+                if (isMidGameLocked(session, p)) return;
+                if (!isHostOnly(p, session)) return;
+                MapSelectionMode next = switch (session.getMiniGameSelectionMode()) {
+                    case SPECIFIC -> MapSelectionMode.RANDOM;
+                    case RANDOM   -> MapSelectionMode.SPECIFIC;
+                    case VOTE     -> MapSelectionMode.SPECIFIC; // VOTE not yet implemented; fall back
+                };
+                if (next != MapSelectionMode.SPECIFIC) session.setMiniGame(null);
+                session.setMiniGameSelectionMode(next);
+                Bukkit.getPluginManager().callEvent(new SessionSettingsChangedEvent(session, "minigame"));
+                update(session);
+            }));
 
         // Slot 26 — Visibility cycle: PUBLIC → INVITE_ONLY → CODE → PUBLIC (host-only)
         builder.slot(26, buildVisibilitySlot(session, viewer));
@@ -235,11 +250,12 @@ public class SessionGuiService implements Listener {
                         Messages.send(p, "session.start.maintenance");
                         return;
                     }
-                    if (session.getMiniGame() == null) {
+                    if (session.getMiniGame() == null && session.getMiniGameSelectionMode() == MapSelectionMode.SPECIFIC) {
                         Messages.send(p, "gui.session.error.no-minigame");
                         return;
                     }
-                    if (session.getGameMap() == null && session.getMapSelectionMode() == MapSelectionMode.SPECIFIC) {
+                    if (session.getGameMap() == null && session.getMapSelectionMode() == MapSelectionMode.SPECIFIC
+                            && session.getMiniGameSelectionMode() != MapSelectionMode.RANDOM) {
                         Messages.send(p, "gui.session.error.no-map");
                         return;
                     }
@@ -420,7 +436,16 @@ public class SessionGuiService implements Listener {
                 return item;
             }
         }
-        return GuiItem.of(Material.LIGHT_GRAY_BUNDLE).name("&7&lMinigames");
+        if (session.getMiniGameSelectionMode() == MapSelectionMode.RANDOM) {
+            return GuiItem.of(Material.NETHER_STAR)
+                    .name("&a&lRandom Minigame")
+                    .lore(legacy("&7Server picks randomly at game start"),
+                          legacy("&8Right-click to cycle"));
+        }
+        return GuiItem.of(Material.LIGHT_GRAY_BUNDLE)
+                .name("&7&lMinigames")
+                .lore(legacy("&7Left-click: choose a specific minigame"),
+                      legacy("&8Right-click: cycle minigame selection mode"));
     }
 
     private GuiItem buildMapsSlot(Session session) {

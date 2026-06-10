@@ -374,6 +374,22 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         if (session.getState() != SessionState.LOBBY) return false;
         MiniGame miniGame = session.getMiniGame();
         GameMap gameMap = session.getGameMap();
+
+        // Random minigame: pick one before other checks
+        if (miniGame == null && session.getMiniGameSelectionMode() == MapSelectionMode.RANDOM) {
+            MiniGame[] allGames = MiniGameManager.getInstance().getAllMiniGames();
+            List<MiniGame> candidates = Arrays.stream(allGames)
+                    .filter(mg -> !MiniGameManager.getInstance().isMinigameDisabled(mg.getId()))
+                    .collect(Collectors.toList());
+            if (candidates.isEmpty()) {
+                for (Player p : session.getLobbyMembers()) Messages.send(p, "session.error.no-minigames");
+                return false;
+            }
+            Collections.shuffle(candidates);
+            session.setMiniGame(candidates.get(0));
+            miniGame = session.getMiniGame();
+        }
+
         if (miniGame == null) return false;
         if (MiniGameManager.getInstance().isMinigameDisabled(miniGame.getId())) {
             for (Player p : session.getLobbyMembers()) Messages.send(p, "session.error.minigame-disabled");
