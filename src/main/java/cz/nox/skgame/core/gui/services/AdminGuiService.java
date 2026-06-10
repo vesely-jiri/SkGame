@@ -249,16 +249,19 @@ public class AdminGuiService implements Listener {
             Material mat = rawMapVal != null ? Material.CHEST_MINECART : Material.MINECART;
             String nameColor = rawMapVal != null ? "&a" : "&c";
 
+            List<Component> loreLine = new ArrayList<>();
+            loreLine.add(legacy("&eType: " + typeStr));
+            loreLine.add(legacy("&6Value: " + valueDisplay));
+            loreLine.add(legacy("&3Plurality: " + plurStr));
+            String cvDesc = cvDef.getDescription();
+            if (cvDesc != null && !cvDesc.isEmpty()) loreLine.add(legacy("&7" + cvDesc));
+            loreLine.add(legacy("&7---------"));
+            loreLine.add(legacy("&7Left-click: " + action));
+            loreLine.add(legacy("&7Shift+Right-click: &cDelete value"));
+
             builder.slot(ITEM_SLOTS[idx++], GuiItem.of(mat)
                     .name(nameColor + key)
-                    .lore(
-                            legacy("&eType: " + typeStr),
-                            legacy("&6Value: " + valueDisplay),
-                            legacy("&3Plurality: " + plurStr),
-                            legacy("&7---------"),
-                            legacy("&7Left-click: " + action),
-                            legacy("&7Shift+Right-click: &cDelete value")
-                    )
+                    .lore(loreLine)
                     .onLeftClick(e -> {
                         Player p = (Player) e.getWhoClicked();
                         AdminSetupState st = states.computeIfAbsent(p.getUniqueId(), k -> new AdminSetupState());
