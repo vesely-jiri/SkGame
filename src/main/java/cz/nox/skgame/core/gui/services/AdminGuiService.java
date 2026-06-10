@@ -250,11 +250,14 @@ public class AdminGuiService implements Listener {
             String nameColor = rawMapVal != null ? "&a" : "&c";
 
             List<Component> loreLine = new ArrayList<>();
+            String cvDesc = cvDef.getDescription();
+            if (cvDesc != null && !cvDesc.isEmpty()) {
+                loreLine.add(legacy("&7" + cvDesc));
+                loreLine.add(Component.empty());
+            }
             loreLine.add(legacy("&eType: " + typeStr));
             loreLine.add(legacy("&6Value: " + valueDisplay));
             loreLine.add(legacy("&3Plurality: " + plurStr));
-            String cvDesc = cvDef.getDescription();
-            if (cvDesc != null && !cvDesc.isEmpty()) loreLine.add(legacy("&7" + cvDesc));
             loreLine.add(legacy("&7---------"));
             loreLine.add(legacy("&7Left-click: " + action));
             loreLine.add(legacy("&7Shift+Right-click: &cDelete value"));
