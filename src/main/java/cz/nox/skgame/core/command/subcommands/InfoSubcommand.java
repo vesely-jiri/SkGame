@@ -108,7 +108,8 @@ public class InfoSubcommand {
                 for (int h = 1; h < hoverLines.size(); h++)
                     hover = hover.append(Component.newline()).append(hoverLines.get(h));
 
-                Component chip = Component.text(displayName, hasMaps ? NamedTextColor.GREEN : NamedTextColor.RED)
+                Component chip = LegacyComponentSerializer.legacyAmpersand().deserialize(displayName)
+                        .colorIfAbsent(hasMaps ? NamedTextColor.GREEN : NamedTextColor.RED)
                         .hoverEvent(HoverEvent.showText(hover));
                 mgLine = mgLine.append(chip);
                 if (i < mgs.length - 1) mgLine = mgLine.append(c("&8, "));
