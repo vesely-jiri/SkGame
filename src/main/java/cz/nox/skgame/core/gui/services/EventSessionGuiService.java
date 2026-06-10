@@ -73,8 +73,19 @@ public class EventSessionGuiService implements Listener {
                 return;
             }
         }
+        boolean isNewViewer = !activeViewers.contains(player.getUniqueId());
         player.openInventory(buildFor(player, session));
         activeViewers.add(player.getUniqueId());
+        if (isNewViewer) {
+            // Refresh other open GUIs so they see the new viewer in the player head grid
+            Bukkit.getScheduler().runTask(SkGame.getInstance(), () ->
+                new HashSet<>(activeViewers).stream()
+                    .filter(uuid -> !uuid.equals(player.getUniqueId()))
+                    .map(Bukkit::getPlayer)
+                    .filter(p -> p != null && p.isOnline())
+                    .forEach(this::openFor)
+            );
+        }
     }
 
     private Inventory buildFor(Player player, Session session) {
@@ -159,6 +170,12 @@ public class EventSessionGuiService implements Listener {
         java.util.List<Player> allMembers = new java.util.ArrayList<>();
         allMembers.addAll(session.getLobbyMembers());
         allMembers.addAll(session.getPlayers());
+        // Include admins currently viewing the GUI but not yet session members (locked phase)
+        for (UUID viewerUuid : new HashSet<>(activeViewers)) {
+            Player vp = Bukkit.getPlayer(viewerUuid);
+            if (vp != null && vp.isOnline() && !allMembers.contains(vp)) allMembers.add(vp);
+        }
+        if (!allMembers.contains(player)) allMembers.add(player);
         int[] playerSlots = {
             10, 11, 12, 13, 14, 15, 16,
             19, 20, 21, 22, 23, 24, 25,
