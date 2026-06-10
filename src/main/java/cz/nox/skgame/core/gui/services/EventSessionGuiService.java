@@ -316,7 +316,9 @@ public class EventSessionGuiService implements Listener {
                     Player p = (Player) e.getWhoClicked();
                     if (!isAdmin && e.getClick().isRightClick()) {
                         SessionLifecycleManagerImpl.getInstance().leaveSession(p);
-                        p.closeInventory();
+                        // Open main GUI last — overrides the event GUI that update() re-opens
+                        // synchronously inside leaveSession via onSessionLeave → update() → openFor().
+                        MainGuiService.getInstance().openFor(p);
                         return;
                     }
                     MainGuiService.getInstance().openFor(p);
