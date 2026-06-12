@@ -50,6 +50,8 @@ public class JoinSubcommand {
         }
         boolean joined = SessionLifecycleManagerImpl.getInstance().joinSession(player, session);
         if (joined) {
+            // Consume the invite so it cannot be reused after leaving
+            session.removeInvitedPlayer(player.getUniqueId());
             Messages.send(player, "session.joined");
             SessionGuiService.getInstance().openFor(player);
         }
