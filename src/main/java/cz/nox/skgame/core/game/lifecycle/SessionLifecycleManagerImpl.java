@@ -393,13 +393,14 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             miniGame = session.getMiniGame();
         }
 
-        if (miniGame == null) return false;
-        if (MiniGameManager.getInstance().isMinigameDisabled(miniGame.getId())) {
+        // VOTE mode: miniGame is intentionally null until players vote — don't block here
+        if (miniGame == null && !session.isMiniGameVoting()) return false;
+        if (miniGame != null && MiniGameManager.getInstance().isMinigameDisabled(miniGame.getId())) {
             for (Player p : session.getLobbyMembers()) Messages.send(p, "session.error.minigame-disabled");
             return false;
         }
         if (gameMap == null && session.getMapSelectionMode() == MapSelectionMode.SPECIFIC) return false;
-        if (gameMap != null && !gameMap.supportsMiniGame(miniGame)) return false;
+        if (gameMap != null && miniGame != null && !gameMap.supportsMiniGame(miniGame)) return false;
 
         if (plugin.isMaintenanceMode()) {
             for (Player p : session.getLobbyMembers()) {
@@ -409,7 +410,8 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         }
 
         if (needsPreparation(session)) {
-            if (session.isMapVoting() && getCandidateMaps(session).isEmpty()) {
+            // Skip map candidate validation when minigame isn't resolved yet (VOTE mode resolves it during prep)
+            if (session.isMapVoting() && !session.isMiniGameVoting() && getCandidateMaps(session).isEmpty()) {
                 for (Player p : session.getLobbyMembers())
                     Messages.send(p, "session.error.no-maps-for-minigame");
                 return false;
