@@ -6,6 +6,8 @@ import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.UnparsedLiteral;
+import ch.njol.skript.util.Timespan;
+import ch.njol.skript.util.Timespan.TimePeriod;
 import cz.nox.skgame.api.game.model.CustomValue;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.MinigameTag;
@@ -72,9 +74,10 @@ final class MiniGameEntryHelper {
             .addEntryData(new ExpressionEntryData<>("default",     null, true, Object.class))
             .addEntryData(new ExpressionEntryData<>("plurality",   null, true, CustomValuePlurality.class))
             .addEntryData(new ExpressionEntryData<>("description", null, true, String.class))
-            .addEntryData(new ExpressionEntryData<>("min",         null, true, Number.class))
-            .addEntryData(new ExpressionEntryData<>("max",         null, true, Number.class))
-            .addEntryData(new ExpressionEntryData<>("allowed",     null, true, String.class))
+            .addEntryData(new ExpressionEntryData<>("min",            null, true, Object.class))
+            .addEntryData(new ExpressionEntryData<>("max",            null, true, Object.class))
+            .addEntryData(new ExpressionEntryData<>("allowed",        null, true, String.class))
+            .addEntryData(new ExpressionEntryData<>("allowed values", null, true, String.class))
             .build();
 
     /**
@@ -251,20 +254,29 @@ final class MiniGameEntryHelper {
                 Expression<String> descExpr = (Expression<String>) body.getOptional("description", false);
                 if (descExpr != null) cv.setDescription(descExpr.getSingle(null));
 
-                boolean isNumericType = cv.getType() != null
-                        && (Number.class.isAssignableFrom(cv.getType().getC()));
-                Expression<Number> minExpr = (Expression<Number>) body.getOptional("min", false);
+                boolean isNumericOrTimespan = cv.getType() != null
+                        && (Number.class.isAssignableFrom(cv.getType().getC()) || Timespan.class == cv.getType().getC());
+                Expression<?> minExpr = (Expression<?>) body.getOptional("min", false);
                 if (minExpr != null) {
-                    if (!isNumericType) Skript.warning("'min' bound ignored: value type is not numeric for key '" + valueId + "'");
-                    else cv.setMinValue(minExpr.getSingle(null));
+                    if (!isNumericOrTimespan) Skript.warning("'min' bound ignored: value type is not numeric or timespan for key '" + valueId + "'");
+                    else {
+                        Object minVal = minExpr.getSingle(null);
+                        if (minVal instanceof Timespan ts) cv.setMinValue(ts.getAs(TimePeriod.TICK));
+                        else if (minVal instanceof Number n) cv.setMinValue(n);
+                    }
                 }
-                Expression<Number> maxExpr = (Expression<Number>) body.getOptional("max", false);
+                Expression<?> maxExpr = (Expression<?>) body.getOptional("max", false);
                 if (maxExpr != null) {
-                    if (!isNumericType) Skript.warning("'max' bound ignored: value type is not numeric for key '" + valueId + "'");
-                    else cv.setMaxValue(maxExpr.getSingle(null));
+                    if (!isNumericOrTimespan) Skript.warning("'max' bound ignored: value type is not numeric or timespan for key '" + valueId + "'");
+                    else {
+                        Object maxVal = maxExpr.getSingle(null);
+                        if (maxVal instanceof Timespan ts) cv.setMaxValue(ts.getAs(TimePeriod.TICK));
+                        else if (maxVal instanceof Number n) cv.setMaxValue(n);
+                    }
                 }
 
                 Expression<String> allowedExpr = (Expression<String>) body.getOptional("allowed", false);
+                if (allowedExpr == null) allowedExpr = (Expression<String>) body.getOptional("allowed values", false);
                 if (allowedExpr != null) {
                     String[] vals = allowedExpr.getArray(null);
                     if (vals != null && vals.length > 0) cv.setAllowedValues(java.util.Arrays.asList(vals));
