@@ -20,7 +20,6 @@ public class MiniGameManager {
     private Map<String, MiniGame> miniGames = new HashMap<>();
     private MiniGame lastCreatedMiniGame;
     private File storageFile;
-    /** Runtime-only disabled set — NOT persisted across restarts. */
     private final Set<String> disabledMinigames = new HashSet<>();
 
     public static MiniGameManager getInstance() {
