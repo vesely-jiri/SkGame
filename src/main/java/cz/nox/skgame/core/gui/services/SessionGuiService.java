@@ -572,36 +572,80 @@ public class SessionGuiService implements Listener {
 
     // ─── Session value slots ───────────────────────────────────────────────────
 
-    // Slot 34 = first value (replaces separator); slots 18, 27 = second + third.
     private void buildSessionValueSlots(GuiBuilder builder, Session session, Player viewer) {
         MiniGame mg = session.getMiniGame();
         if (mg == null || mg.getSessionValueDefs().isEmpty()) {
             builder.slot(34, GuiItem.of(Material.LIGHT_GRAY_STAINED_GLASS_PANE).name(Component.space()));
             return;
         }
-        int[] valueSlots = {34, 18, 27};
-        int idx = 0;
-        for (Map.Entry<String, CustomValue> entry : mg.getSessionValueDefs().entrySet()) {
-            if (idx >= valueSlots.length) break;
+        Map<String, CustomValue> defs = mg.getSessionValueDefs();
+        if (defs.size() >= 2) {
+            builder.slot(34, GuiItem.of(Material.COMPARATOR)
+                .name(legacy("&b&lGame Settings"))
+                .lore(legacy("&7Click to configure"), legacy("&8" + defs.size() + " settings"))
+                .onClick(e -> {
+                    Player p = (Player) e.getWhoClicked();
+                    if (isMidGameLocked(session, p)) return;
+                    boolean canEdit = p.equals(session.getHost());
+                    openSessionValuesGui(p, session, canEdit, () -> openFor(p));
+                }));
+            return;
+        }
+        // Single value: inline at slot 34
+        Map.Entry<String, CustomValue> entry = defs.entrySet().iterator().next();
+        String key = entry.getKey();
+        CustomValue cv = entry.getValue();
+        builder.slot(34, buildSessionValueItem(key, cv, session)
+            .onLeftClick(e -> {
+                Player p = (Player) e.getWhoClicked();
+                if (isMidGameLocked(session, p)) return;
+                if (!isHostOnly(p, session)) return;
+                advanceSessionValue(session, key, cv, true);
+                update(session);
+            })
+            .onRightClick(e -> {
+                Player p = (Player) e.getWhoClicked();
+                if (isMidGameLocked(session, p)) return;
+                if (!isHostOnly(p, session)) return;
+                advanceSessionValue(session, key, cv, false);
+                update(session);
+            }));
+    }
+
+    public static void openSessionValuesGui(Player player, Session session, boolean canEdit, Runnable backAction) {
+        MiniGame mg = session.getMiniGame();
+        if (mg == null) { if (backAction != null) backAction.run(); return; }
+        Map<String, CustomValue> defs = mg.getSessionValueDefs();
+
+        GuiBuilder builder = new GuiBuilder().size(3).title("&b&lGame Settings");
+
+        GuiItem border = GuiItem.of(Material.GRAY_STAINED_GLASS_PANE).name(Component.space());
+        for (int i = 0; i < 9; i++) builder.slot(i, border);
+        for (int i = 18; i < 27; i++) builder.slot(i, border);
+
+        int slot = 9;
+        for (Map.Entry<String, CustomValue> entry : defs.entrySet()) {
+            if (slot > 17) break;
             String key = entry.getKey();
             CustomValue cv = entry.getValue();
-            int slot = valueSlots[idx++];
-            builder.slot(slot, buildSessionValueItem(key, cv, session)
-                .onLeftClick(e -> {
-                    Player p = (Player) e.getWhoClicked();
-                    if (isMidGameLocked(session, p)) return;
-                    if (!isHostOnly(p, session)) return;
+            GuiItem item = buildSessionValueItem(key, cv, session);
+            if (canEdit) {
+                item.onLeftClick(e -> {
                     advanceSessionValue(session, key, cv, true);
-                    update(session);
-                })
-                .onRightClick(e -> {
-                    Player p = (Player) e.getWhoClicked();
-                    if (isMidGameLocked(session, p)) return;
-                    if (!isHostOnly(p, session)) return;
+                    openSessionValuesGui((Player) e.getWhoClicked(), session, canEdit, backAction);
+                }).onRightClick(e -> {
                     advanceSessionValue(session, key, cv, false);
-                    update(session);
-                }));
+                    openSessionValuesGui((Player) e.getWhoClicked(), session, canEdit, backAction);
+                });
+            }
+            builder.slot(slot++, item);
         }
+
+        builder.slot(22, GuiItem.of(Material.ARROW)
+            .name(legacy("&7Back"))
+            .onClick(e -> { if (backAction != null) backAction.run(); }));
+
+        player.openInventory(builder.build());
     }
 
     static GuiItem buildSessionValueItem(String key, CustomValue cv, Session session) {

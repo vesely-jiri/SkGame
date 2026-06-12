@@ -306,15 +306,21 @@ public class EventSessionGuiService implements Listener {
                     }));
         }
 
-        // Slots 48, 49, 50 — session value defs (admin: clickable; player: display only)
+        // Slot 48 — session value defs (≥2: sub-GUI; 1: inline)
         if (mg != null && !mg.getSessionValueDefs().isEmpty()) {
-            int[] valueSlots = {48, 49, 50};
-            int svIdx = 0;
-            for (Map.Entry<String, CustomValue> svEntry : mg.getSessionValueDefs().entrySet()) {
-                if (svIdx >= valueSlots.length) break;
+            Map<String, CustomValue> svDefs = mg.getSessionValueDefs();
+            if (svDefs.size() >= 2) {
+                builder.slot(48, GuiItem.of(Material.COMPARATOR)
+                    .name(c("&b&lGame Settings"))
+                    .lore(c("&7Click to configure"), c("&8" + svDefs.size() + " settings"))
+                    .onClick(e -> {
+                        Player p = (Player) e.getWhoClicked();
+                        SessionGuiService.openSessionValuesGui(p, session, isAdmin, () -> openFor(p));
+                    }));
+            } else {
+                Map.Entry<String, CustomValue> svEntry = svDefs.entrySet().iterator().next();
                 String svKey = svEntry.getKey();
                 CustomValue svCv = svEntry.getValue();
-                int svSlot = valueSlots[svIdx++];
                 GuiItem svItem = SessionGuiService.buildSessionValueItem(svKey, svCv, session);
                 if (isAdmin) {
                     svItem.onLeftClick(e -> {
@@ -325,7 +331,7 @@ public class EventSessionGuiService implements Listener {
                         openFor((Player) e.getWhoClicked());
                     });
                 }
-                builder.slot(svSlot, svItem);
+                builder.slot(48, svItem);
             }
         }
 
