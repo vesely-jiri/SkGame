@@ -260,18 +260,30 @@ final class MiniGameEntryHelper {
                 if (minExpr != null) {
                     if (!isNumericOrTimespan) Skript.warning("'min' bound ignored: value type is not numeric or timespan for key '" + valueId + "'");
                     else {
-                        Object minVal = minExpr.getSingle(null);
-                        if (minVal instanceof Timespan ts) cv.setMinValue(ts.getAs(TimePeriod.TICK));
-                        else if (minVal instanceof Number n) cv.setMinValue(n);
+                        if (minExpr instanceof UnparsedLiteral ul) {
+                            Class<?> tc = cv.getType() != null ? cv.getType().getC() : Object.class;
+                            minExpr = ul.getConvertedExpression(ParseContext.DEFAULT, tc);
+                        }
+                        if (minExpr != null) {
+                            Object minVal = minExpr.getSingle(null);
+                            if (minVal instanceof Timespan ts) cv.setMinValue(ts.getAs(TimePeriod.TICK));
+                            else if (minVal instanceof Number n) cv.setMinValue(n);
+                        }
                     }
                 }
                 Expression<?> maxExpr = (Expression<?>) body.getOptional("max", false);
                 if (maxExpr != null) {
                     if (!isNumericOrTimespan) Skript.warning("'max' bound ignored: value type is not numeric or timespan for key '" + valueId + "'");
                     else {
-                        Object maxVal = maxExpr.getSingle(null);
-                        if (maxVal instanceof Timespan ts) cv.setMaxValue(ts.getAs(TimePeriod.TICK));
-                        else if (maxVal instanceof Number n) cv.setMaxValue(n);
+                        if (maxExpr instanceof UnparsedLiteral ul) {
+                            Class<?> tc = cv.getType() != null ? cv.getType().getC() : Object.class;
+                            maxExpr = ul.getConvertedExpression(ParseContext.DEFAULT, tc);
+                        }
+                        if (maxExpr != null) {
+                            Object maxVal = maxExpr.getSingle(null);
+                            if (maxVal instanceof Timespan ts) cv.setMaxValue(ts.getAs(TimePeriod.TICK));
+                            else if (maxVal instanceof Number n) cv.setMaxValue(n);
+                        }
                     }
                 }
 
