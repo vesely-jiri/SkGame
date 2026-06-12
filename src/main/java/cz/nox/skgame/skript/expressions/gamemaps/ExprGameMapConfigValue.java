@@ -2,14 +2,17 @@ package cz.nox.skgame.skript.expressions.gamemaps;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer;
+import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
+import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.registrations.Classes;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
 import cz.nox.skgame.SkGame;
@@ -104,6 +107,7 @@ public class ExprGameMapConfigValue extends SimpleExpression<Object> {
         if (map == null || mgId == null) return null;
         Object o = map.getMiniGameValue(mgId, k);
         if (o == null) return null;
+        o = tryConvertFromString(o, mgId, k);
         if (o.getClass().isArray()) {
             return isList ? (Object[]) o : null;
         } else {
@@ -156,6 +160,22 @@ public class ExprGameMapConfigValue extends SimpleExpression<Object> {
                 GameMapManager.getInstance().save();
             }
         }
+    }
+
+    private Object tryConvertFromString(Object value, String mgId, String key) {
+        if (!(value instanceof String str)) return value;
+        MiniGame mg = MiniGameManager.getInstance().getMiniGameById(mgId);
+        if (mg == null) return value;
+        CustomValue def = mg.getGameMapValueDef(key);
+        if (def == null) return value;
+        ClassInfo<?> ci = def.getType();
+        if (ci == null || ci.getC() == String.class) return value;
+        Object parsed = Classes.parse(str, ci.getC(), ParseContext.DEFAULT);
+        if (parsed != null) return parsed;
+        SkGame.getInstance().getLogUtil().warning(
+                "Gamemap value '" + key + "' stored as String \"" + str
+                + "\" but declared type is '" + ci.getCodeName() + "' — could not convert.");
+        return value;
     }
 
     private Object clampWithWarn(String mgId, String key, Object value) {
