@@ -65,6 +65,9 @@ public class MiniGameManager {
             MiniGame gm = MiniGame.deserialize(section.getValues(true));
             if (gm != null) {
                 miniGames.put(gm.getId().toLowerCase(), gm);
+                if (Boolean.TRUE.equals(section.get("disabled"))) {
+                    disabledMinigames.add(gm.getId().toLowerCase());
+                }
             }
         }
     }
@@ -72,7 +75,9 @@ public class MiniGameManager {
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
         config.set("minigames",null);
         for (MiniGame gm : miniGames.values()) {
-            config.createSection("minigames." + gm.getId().toLowerCase(), gm.serialize());
+            Map<String, Object> data = new java.util.LinkedHashMap<>(gm.serialize());
+            if (disabledMinigames.contains(gm.getId().toLowerCase())) data.put("disabled", true);
+            config.createSection("minigames." + gm.getId().toLowerCase(), data);
         }
         try {
             config.save(file);

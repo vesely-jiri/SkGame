@@ -586,16 +586,15 @@ public class SkGame extends JavaPlugin implements TabCompleter {
         }
         if (action.equals("enable")) {
             mgm.enableMinigame(mgId);
+            mgm.save();
             sender.sendMessage(Component.text("Minigame '").color(NamedTextColor.GREEN)
                     .append(Component.text(mgId).color(NamedTextColor.WHITE))
-                    .append(Component.text("' enabled ").color(NamedTextColor.GREEN))
-                    .append(Component.text("(i)").color(NamedTextColor.GRAY)
-                            .hoverEvent(HoverEvent.showText(
-                                    Component.text("Transient: re-enables on server restart.").color(NamedTextColor.GRAY)))));
+                    .append(Component.text("' enabled (persisted).").color(NamedTextColor.GREEN)));
         } else if (action.equals("disable")) {
             boolean force = args.length >= 4
                     && (args[3].equalsIgnoreCase("--force") || args[3].equalsIgnoreCase("-f"));
             mgm.disableMinigame(mgId);
+            mgm.save();
 
             cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl lifecycle =
                     cz.nox.skgame.core.game.lifecycle.SessionLifecycleManagerImpl.getInstance();
@@ -622,12 +621,8 @@ public class SkGame extends JavaPlugin implements TabCompleter {
                 int terminated = activeSessions.size();
                 sender.sendMessage(Component.text("Minigame '").color(NamedTextColor.YELLOW)
                         .append(Component.text(mgId).color(NamedTextColor.WHITE))
-                        .append(Component.text("' disabled ").color(NamedTextColor.YELLOW))
-                        .append(Component.text("(i)").color(NamedTextColor.GRAY)
-                                .hoverEvent(HoverEvent.showText(
-                                        Component.text("Transient: re-enables on server restart.").color(NamedTextColor.GRAY)
-                                                .appendNewline()
-                                                .append(Component.text(terminated + " running session(s) were force-terminated.").color(NamedTextColor.GRAY))))));
+                        .append(Component.text("' disabled (persisted). ").color(NamedTextColor.YELLOW))
+                        .append(Component.text(terminated + " session(s) force-terminated.").color(NamedTextColor.GRAY)));
             } else {
                 // Graceful: notify running sessions, let them finish naturally
                 for (cz.nox.skgame.api.game.model.Session s : activeSessions) {
@@ -637,12 +632,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
                 }
                 sender.sendMessage(Component.text("Minigame '").color(NamedTextColor.YELLOW)
                         .append(Component.text(mgId).color(NamedTextColor.WHITE))
-                        .append(Component.text("' disabled ").color(NamedTextColor.YELLOW))
-                        .append(Component.text("(i)").color(NamedTextColor.GRAY)
-                                .hoverEvent(HoverEvent.showText(
-                                        Component.text("Transient: re-enables on server restart.").color(NamedTextColor.GRAY)
-                                                .appendNewline()
-                                                .append(Component.text("Running sessions will finish naturally.").color(NamedTextColor.GRAY))))));
+                        .append(Component.text("' disabled (persisted). Running sessions will finish naturally.").color(NamedTextColor.YELLOW)));
             }
         } else {
             sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame minigame <enable|disable> <id> [--force|-f]");
