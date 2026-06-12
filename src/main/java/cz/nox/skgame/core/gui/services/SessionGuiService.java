@@ -9,6 +9,8 @@ import cz.nox.skgame.api.game.event.SessionDisbandEvent;
 import cz.nox.skgame.api.game.event.SessionSettingsChangedEvent;
 import cz.nox.skgame.api.gui.event.SessionGuiOpenEvent;
 import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.util.Timespan;
+import ch.njol.skript.util.Timespan.TimePeriod;
 import cz.nox.skgame.api.game.model.CustomValue;
 import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.game.model.MiniGame;
@@ -613,7 +615,7 @@ public class SessionGuiService implements Listener {
         if (type != null) {
             if (Boolean.class.isAssignableFrom(type.getC())) {
                 mat = Boolean.TRUE.equals(current) ? Material.LIME_DYE : Material.GRAY_DYE;
-            } else if (Number.class.isAssignableFrom(type.getC())) {
+            } else if (Number.class.isAssignableFrom(type.getC()) || type.getC() == Timespan.class) {
                 mat = Material.CLOCK;
             }
         }
@@ -660,6 +662,12 @@ public class SessionGuiService implements Listener {
             session.setValue(key, (next == Math.floor(next)) ? (long) next : next, false);
         } else if (Boolean.class.isAssignableFrom(type.getC())) {
             session.setValue(key, !Boolean.TRUE.equals(current), false);
+        } else if (type.getC() == Timespan.class) {
+            long currTicks = current instanceof Timespan ts ? ts.getAs(TimePeriod.TICK) : 0L;
+            long nextTicks = forward ? currTicks + 1 : Math.max(0L, currTicks - 1);
+            if (cv.getMinValue() != null) nextTicks = Math.max(nextTicks, cv.getMinValue().longValue());
+            if (cv.getMaxValue() != null) nextTicks = Math.min(nextTicks, cv.getMaxValue().longValue());
+            session.setValue(key, new Timespan(TimePeriod.TICK, nextTicks), false);
         }
 
         Bukkit.getPluginManager().callEvent(new SessionSettingsChangedEvent(session, "sessionvalue:" + key));
