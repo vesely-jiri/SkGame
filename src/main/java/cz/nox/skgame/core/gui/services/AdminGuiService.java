@@ -164,6 +164,21 @@ public class AdminGuiService implements Listener {
         GuiItem blackGlass = GuiItem.of(Material.BLACK_STAINED_GLASS_PANE).name(Component.text(" "));
         for (int s : BLACK_BORDER) builder.slot(s, blackGlass);
 
+        builder.slot(45, GuiItem.of(Material.NAME_TAG)
+                .name("&e&lRename map")
+                .lore(legacy("&7Click to set new display name"))
+                .onClick(e -> {
+                    Player p = (Player) e.getWhoClicked();
+                    AdminSetupState st = states.computeIfAbsent(p.getUniqueId(), k -> new AdminSetupState());
+                    st.setResponseMode(AdminSetupState.ResponseMode.MAP_RENAME);
+                    st.setCurrentMapId(mapId);
+                    p.closeInventory();
+                    GameMap freshMap = GameMapManager.getInstance().getGameMapById(mapId);
+                    Object nameObj = freshMap != null ? freshMap.getValue("name") : null;
+                    String current = nameObj != null ? nameObj.toString() : mapId;
+                    p.sendMessage(ADMIN_PREFIX + "Type new display name in chat (current: §e" + current + "§r). Type 'cancel' to abort:");
+                }));
+
         builder.slot(53, GuiItem.of(Material.SPRUCE_DOOR)
                 .name("&c&lBack to admin menu")
                 .onClick(e -> openAdminGui((Player) e.getWhoClicked())));
@@ -493,6 +508,8 @@ public class AdminGuiService implements Listener {
         Bukkit.getScheduler().runTask(SkGame.getInstance(), () -> {
             if (mode == AdminSetupState.ResponseMode.MAP_CREATION) {
                 createMap(player, message, state);
+            } else if (mode == AdminSetupState.ResponseMode.MAP_RENAME) {
+                renameMap(player, message, state);
             } else if (mode == AdminSetupState.ResponseMode.VALUE_INPUT) {
                 setMapValue(player, message, state);
             } else if (mode == AdminSetupState.ResponseMode.REGION_INPUT) {
@@ -560,6 +577,22 @@ public class AdminGuiService implements Listener {
         state.clearPositions();
         player.sendMessage(ADMIN_PREFIX + "Map '" + name + "' created.");
         openAdminGui(player);
+    }
+
+    private void renameMap(Player player, String newName, AdminSetupState state) {
+        String mapId = state.getCurrentMapId();
+        if (mapId == null) return;
+        GameMap map = GameMapManager.getInstance().getGameMapById(mapId);
+        if (map == null) {
+            player.sendMessage(ADMIN_PREFIX + "§cMap not found.");
+            state.setResponseMode(AdminSetupState.ResponseMode.NONE);
+            return;
+        }
+        map.setValue("name", newName);
+        GameMapManager.getInstance().save();
+        state.setResponseMode(AdminSetupState.ResponseMode.NONE);
+        player.sendMessage(ADMIN_PREFIX + "Map '" + mapId + "' renamed to '§e" + newName + "§r'.");
+        openMapPropertiesGui(player, mapId);
     }
 
     private void setMapValue(Player player, String message, AdminSetupState state) {

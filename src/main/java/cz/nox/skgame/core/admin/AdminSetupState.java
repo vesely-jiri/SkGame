@@ -4,7 +4,7 @@ import org.bukkit.Location;
 
 public class AdminSetupState {
 
-    public enum ResponseMode { NONE, MAP_CREATION, VALUE_INPUT, REGION_INPUT }
+    public enum ResponseMode { NONE, MAP_CREATION, MAP_RENAME, VALUE_INPUT, REGION_INPUT }
 
     private Location pos1;
     private Location pos2;
