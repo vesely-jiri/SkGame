@@ -2,6 +2,9 @@ package cz.nox.skgame.core.admin;
 
 import org.bukkit.Location;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class AdminSetupState {
 
     public enum ResponseMode { NONE, MAP_CREATION, MAP_RENAME, VALUE_INPUT, REGION_INPUT }
@@ -14,6 +17,10 @@ public class AdminSetupState {
     private String currentMapId;
     private String currentMiniGameId;
     private String currentValueKey;
+
+    // ─── Location toggle ──────────────────────────────────────────────────────
+    private final List<LocationBeam> activeBeams = new ArrayList<>();
+    private boolean locationToggleActive = false;
 
     public Location getPos1() { return pos1; }
     public Location getPos2() { return pos2; }
@@ -44,4 +51,15 @@ public class AdminSetupState {
 
     public String getCurrentValueKey() { return currentValueKey; }
     public void setCurrentValueKey(String key) { this.currentValueKey = key; }
+
+    public boolean isLocationToggleActive() { return locationToggleActive; }
+    public void setLocationToggleActive(boolean active) { this.locationToggleActive = active; }
+
+    public void addLocationBeam(LocationBeam beam) { activeBeams.add(beam); }
+
+    public void stopAllLocationBeams() {
+        activeBeams.forEach(LocationBeam::stop);
+        activeBeams.clear();
+        locationToggleActive = false;
+    }
 }

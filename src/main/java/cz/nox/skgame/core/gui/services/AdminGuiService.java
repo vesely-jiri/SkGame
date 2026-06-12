@@ -345,22 +345,32 @@ public class AdminGuiService implements Listener {
                     sendLocationPicker(p, mapId, mgId, key, false);
                 }));
 
-        builder.slot(50, GuiItem.of(Material.ENDER_EYE)
-                .name("&aShow all locations")
+        AdminSetupState toggleState = states.computeIfAbsent(player.getUniqueId(), k -> new AdminSetupState());
+        boolean toggleOn = toggleState.isLocationToggleActive();
+        builder.slot(50, GuiItem.of(toggleOn ? Material.LIME_CONCRETE : Material.ENDER_EYE)
+                .name(toggleOn ? "&a&lLocations: ON (click to hide)" : "&7Show locations (toggle)")
                 .onClick(e -> {
                     Player p = (Player) e.getWhoClicked();
-                    GameMap freshMap = GameMapManager.getInstance().getGameMapById(mapId);
-                    if (freshMap != null) showLocationsForKey(freshMap, mgId, key);
-                    p.closeInventory();
-                    SkGame plugin = SkGame.getInstance();
-                    Component back = Component.text(ADMIN_PREFIX).append(
-                            Component.text("[Back to menu]").color(NamedTextColor.AQUA)
-                                    .clickEvent(ClickEvent.callback(a -> {
-                                        if (!(a instanceof Player bp)) return;
-                                        Bukkit.getScheduler().runTask(plugin,
-                                                () -> openPluralListGui(bp, mapId, mgId, key));
-                                    })));
-                    p.sendMessage(back);
+                    AdminSetupState st = states.computeIfAbsent(p.getUniqueId(), k -> new AdminSetupState());
+                    if (st.isLocationToggleActive()) {
+                        st.stopAllLocationBeams();
+                    } else {
+                        GameMap freshMap = GameMapManager.getInstance().getGameMapById(mapId);
+                        if (freshMap != null) {
+                            Object rawVal = freshMap.getMiniGameValue(mgId, key);
+                            if (rawVal instanceof Object[] arr) {
+                                for (Object o : arr) {
+                                    if (o instanceof Location loc) {
+                                        LocationBeam beam = new LocationBeam(loc, SkGame.getInstance());
+                                        beam.spawn();
+                                        st.addLocationBeam(beam);
+                                    }
+                                }
+                            }
+                        }
+                        st.setLocationToggleActive(true);
+                    }
+                    openPluralListGui(p, mapId, mgId, key);
                 }));
 
         builder.slot(53, GuiItem.of(Material.SPRUCE_DOOR)
@@ -448,7 +458,10 @@ public class AdminGuiService implements Listener {
 
     public void stopSetupMode(Player player) {
         AdminSetupState state = states.remove(player.getUniqueId());
-        if (state != null) state.clearPositions();
+        if (state != null) {
+            state.stopAllLocationBeams();
+            state.clearPositions();
+        }
         for (int i = 0; i < player.getInventory().getSize(); i++) {
             ItemStack item = player.getInventory().getItem(i);
             if (wand.isWand(item)) player.getInventory().setItem(i, null);
@@ -525,7 +538,10 @@ public class AdminGuiService implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
         AdminSetupState state = states.remove(e.getPlayer().getUniqueId());
-        if (state != null) state.clearPositions();
+        if (state != null) {
+            state.stopAllLocationBeams();
+            state.clearPositions();
+        }
         mapListViewers.remove(e.getPlayer().getUniqueId());
     }
 
@@ -671,6 +687,14 @@ public class AdminGuiService implements Listener {
                                     else m.addMiniGameValue(mgId, key, loc);
                                     GameMapManager.getInstance().save();
                                 }
+                                if (!single) {
+                                    AdminSetupState st = states.get(p.getUniqueId());
+                                    if (st != null && st.isLocationToggleActive()) {
+                                        LocationBeam beam = new LocationBeam(loc, plugin);
+                                        beam.spawn();
+                                        st.addLocationBeam(beam);
+                                    }
+                                }
                                 if (single) openValuesGui(p, mapId, mgId);
                                 else openPluralListGui(p, mapId, mgId, key);
                             });
@@ -685,6 +709,14 @@ public class AdminGuiService implements Listener {
                                     if (single) m.setMiniGameValue(mgId, key, loc);
                                     else m.addMiniGameValue(mgId, key, loc);
                                     GameMapManager.getInstance().save();
+                                }
+                                if (!single) {
+                                    AdminSetupState st = states.get(p.getUniqueId());
+                                    if (st != null && st.isLocationToggleActive()) {
+                                        LocationBeam beam = new LocationBeam(loc, plugin);
+                                        beam.spawn();
+                                        st.addLocationBeam(beam);
+                                    }
                                 }
                                 if (single) openValuesGui(p, mapId, mgId);
                                 else openPluralListGui(p, mapId, mgId, key);
