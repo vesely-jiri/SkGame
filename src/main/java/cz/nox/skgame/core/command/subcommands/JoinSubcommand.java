@@ -40,8 +40,10 @@ public class JoinSubcommand {
                 return;
             }
         } else if (vis == SessionVisibility.CODE) {
-            // Must have joined via code (session.getJoinCode() matched)
-            if (sm.getSessionByCode(token) == null) {
+            // Invited players can join via session ID without providing the code
+            boolean hasCode = sm.getSessionByCode(token) != null;
+            boolean invited = session.isInvited(player.getUniqueId());
+            if (!hasCode && !invited) {
                 Messages.send(player, "session.code.invalid");
                 return;
             }

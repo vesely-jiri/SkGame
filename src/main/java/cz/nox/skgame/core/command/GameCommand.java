@@ -137,10 +137,6 @@ public class GameCommand implements CommandExecutor, TabCompleter {
             Messages.send(player, "gui.session.error.not-host");
             return;
         }
-        if (session.getVisibility() != SessionVisibility.INVITE_ONLY) {
-            Messages.send(player, "command.invite.wrong-mode");
-            return;
-        }
         Player target = Bukkit.getPlayerExact(args[1]);
         if (target == null) {
             Messages.send(player, "command.profile.not-found", args[1]);
