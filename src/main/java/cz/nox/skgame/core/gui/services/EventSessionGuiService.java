@@ -329,16 +329,13 @@ public class EventSessionGuiService implements Listener {
             }
         }
 
-        // Slot 53 — Back (left-click) / Leave event (right-click, non-admin only)
-        java.util.List<Component> backLore = new java.util.ArrayList<>();
-        backLore.add(c("&7Left-click: &fBack"));
-        if (!isAdmin) backLore.add(c("&7Right-click: &cLeave event"));
+        // Slot 53 — Back (left-click) / Leave event (right-click, any player)
         builder.slot(53, GuiItem.of(Material.SPRUCE_DOOR)
                 .name(c("&c&lBack"))
-                .lore(backLore)
+                .lore(c("&7Left-click: &fBack"), c("&7Right-click: &cLeave event"))
                 .onClick(e -> {
                     Player p = (Player) e.getWhoClicked();
-                    if (!isAdmin && e.getClick().isRightClick()) {
+                    if (e.getClick().isRightClick()) {
                         SessionLifecycleManagerImpl.getInstance().leaveSession(p);
                         // Open main GUI last — overrides the event GUI that update() re-opens
                         // synchronously inside leaveSession via onSessionLeave → update() → openFor().
