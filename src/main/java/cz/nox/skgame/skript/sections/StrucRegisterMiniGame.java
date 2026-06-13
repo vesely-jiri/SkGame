@@ -136,6 +136,10 @@ public class StrucRegisterMiniGame extends Structure {
         if (minigameId == null) return false;
         MiniGame mg = miniGameManager.registerMiniGame(minigameId);
         MiniGameEntryHelper.apply(mg, nameExpr, iconExpr, descriptionExpr, authorExpr, minPlayersExpr, tagsExpr, parsedTeams, teamAssignmentExpr, parsedValues, cancelEventsExpr);
+        // Always save after postLoad so that after a /sk reload the file contains this minigame
+        // (unload() removes it via unregisterMiniGame; without this, a no-values minigame would never
+        // be re-written to file, causing disabled-state loss on next server restart).
+        miniGameManager.save();
         if (trigger != null) {
             MiniGameRegisterEvent registerEvent = new MiniGameRegisterEvent(mg);
             TriggerItem.walk(trigger, registerEvent);
