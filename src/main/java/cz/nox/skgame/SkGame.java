@@ -290,10 +290,11 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             module.onEnable(this);
         }
 
-        Bukkit.getScheduler().runTaskLater(this, () -> {
-            MiniGameManager.getInstance().loadFromFile(miniGamesDataFile);
-            GameMapManager.getInstance().loadFromFile(mapsDataFile);
-        }, 1L);
+        // Load synchronously before Skript scripts fire postLoad() on tick 1.
+        // Deferring to tick 1 caused a race: scripts saved minigames.yml before
+        // disabledMinigames was populated, silently erasing disabled flags on restart.
+        MiniGameManager.getInstance().loadFromFile(miniGamesDataFile);
+        GameMapManager.getInstance().loadFromFile(mapsDataFile);
 
         var cmd = getCommand("skgame");
         if (cmd != null) {
