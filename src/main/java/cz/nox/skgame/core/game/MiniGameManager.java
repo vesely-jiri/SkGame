@@ -39,7 +39,13 @@ public class MiniGameManager {
     public void enableMinigame(String id) { disabledMinigames.remove(id.toLowerCase()); }
 
     public void save() {
-        if (storageFile != null) saveToFile(storageFile);
+        if (storageFile == null) return;
+        // During server shutdown Skript disables after SkGame (depend chain) and calls unload() on
+        // sections, which triggers unregisterMiniGame() → save(). At that point SkGame is already
+        // disabled and has already saved correctly in onDisable() — skip to avoid overwriting.
+        SkGame plugin = SkGame.getInstance();
+        if (plugin == null || !plugin.isEnabled()) return;
+        saveToFile(storageFile);
     }
 
     public void loadFromFile(File file) {
