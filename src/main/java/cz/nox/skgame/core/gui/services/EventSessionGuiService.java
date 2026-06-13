@@ -301,8 +301,12 @@ public class EventSessionGuiService implements Listener {
                     .name(c("&c&lDisband Event Session"))
                     .lore(c("&7Removes the event session entirely"))
                     .onClick(e -> {
+                        Player p = (Player) e.getWhoClicked();
+                        // Remove from activeViewers before disband so the scheduled update() next tick
+                        // does not see this player with a GuiHolder open and close the main GUI.
+                        activeViewers.remove(p.getUniqueId());
                         SessionLifecycleManagerImpl.getInstance().disbandSession(session, DisbandReason.EXPLICIT_DISBAND);
-                        ((Player) e.getWhoClicked()).closeInventory();
+                        MainGuiService.getInstance().openFor(p);
                     }));
         }
 
