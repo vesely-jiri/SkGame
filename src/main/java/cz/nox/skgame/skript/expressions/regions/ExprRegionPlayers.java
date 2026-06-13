@@ -26,7 +26,7 @@ public class ExprRegionPlayers extends SimpleExpression<Player> {
 
     static {
         Skript.registerExpression(ExprRegionPlayers.class, Player.class, ExpressionType.PROPERTY,
-                "[all] players (in|inside|of) [region] %skgameregion%"
+                "[all] players (in|inside|of) [region] %skarena%"
         );
     }
 

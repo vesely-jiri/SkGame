@@ -29,7 +29,7 @@ public class ExprRegionBlocks extends SimpleExpression<Block> {
 
     static {
         Skript.registerExpression(ExprRegionBlocks.class, Block.class, ExpressionType.PROPERTY,
-                "[all] blocks (in|inside|of) [region] %skgameregion%"
+                "[all] blocks (in|inside|of) [region] %skarena%"
         );
     }
 

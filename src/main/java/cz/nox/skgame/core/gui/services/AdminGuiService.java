@@ -240,7 +240,7 @@ public class AdminGuiService implements Listener {
             String typeStr = (cvDef.getType() != null) ? cvDef.getType().getCodeName() : "unknown";
             String plurStr = cvDef.getPlurality().name();
             boolean valueIsPlural = cvDef.getPlurality() == CustomValuePlurality.PLURAL;
-            boolean isRegion = "skgameregion".equals(typeStr);
+            boolean isRegion = "skarena".equals(typeStr);
             boolean isLocation = "location".equals(typeStr);
 
             String valueDisplay;

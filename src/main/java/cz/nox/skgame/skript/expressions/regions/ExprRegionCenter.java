@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExprRegionCenter extends SimplePropertyExpression<Region, Location> {
 
     static {
-        register(ExprRegionCenter.class, Location.class, "center", "skgameregion");
+        register(ExprRegionCenter.class, Location.class, "center", "skarena");
     }
 
     @Override

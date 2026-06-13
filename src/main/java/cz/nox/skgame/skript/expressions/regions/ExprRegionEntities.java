@@ -42,8 +42,8 @@ public class ExprRegionEntities extends SimpleExpression<Entity> {
 
     static {
         Skript.registerExpression(ExprRegionEntities.class, Entity.class, ExpressionType.COMBINED,
-                "[all] %entitydatas% (in|inside|of) [region] %skgameregion%",
-                "[all] entities (in|inside|of) [region] %skgameregion%"
+                "[all] %entitydatas% (in|inside|of) [region] %skarena%",
+                "[all] entities (in|inside|of) [region] %skarena%"
         );
     }
 

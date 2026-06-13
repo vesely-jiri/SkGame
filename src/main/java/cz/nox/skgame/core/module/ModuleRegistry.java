@@ -7,9 +7,6 @@ import cz.nox.skgame.core.module.modules.DefaultMinigamesModule;
 import cz.nox.skgame.core.module.modules.GuiModule;
 import cz.nox.skgame.core.module.modules.MessagesModule;
 import cz.nox.skgame.core.module.modules.ScoreboardModule;
-import cz.nox.skgame.core.module.modules.SkBeeRegionModule;
-import cz.nox.skgame.core.module.modules.WorldGuardRegionModule;
-
 import java.util.List;
 
 /** Static registry of all built-in modules. Adding a module = add an entry here. */
@@ -19,8 +16,6 @@ public final class ModuleRegistry {
             new GuiModule(),
             new AdminModule(),
             new DefaultMinigamesModule(),
-            new SkBeeRegionModule(),
-            new WorldGuardRegionModule(),
             new MessagesModule(),
             new DatabaseModule(),
             new ScoreboardModule()

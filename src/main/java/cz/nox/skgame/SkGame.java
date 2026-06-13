@@ -975,19 +975,6 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             logUtil.info("Migrated vanilla-scripts config to modules config");
         }
 
-        // regions.* → modules.region-*.enabled  (phase 1-4 config format)
-        if (getConfig().isSet("regions")) {
-            if (getConfig().isSet("regions.enable-skbee-adapter")) {
-                getConfig().set("modules.region-skbee.enabled", getConfig().getBoolean("regions.enable-skbee-adapter", true));
-            }
-            if (getConfig().isSet("regions.enable-worldguard-adapter")) {
-                getConfig().set("modules.region-worldguard.enabled", getConfig().getBoolean("regions.enable-worldguard-adapter", true));
-            }
-            getConfig().set("regions", null);
-            changed = true;
-            logUtil.info("Migrated regions config to modules config");
-        }
-
         if (changed) saveConfig();
     }
 

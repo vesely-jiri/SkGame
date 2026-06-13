@@ -8,8 +8,6 @@ import cz.nox.skgame.api.region.Region;
 import cz.nox.skgame.core.region.ArenaSlot;
 import cz.nox.skgame.core.region.CuboidRegion;
 import cz.nox.skgame.core.region.RegionCopier;
-import cz.nox.skgame.core.region.SkBeeBoundRegion;
-import cz.nox.skgame.core.region.WorldGuardRegion;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -337,13 +335,6 @@ public class GameMap implements ConfigurationSerializable {
             r.put("maxX", cuboid.getMaxX());
             r.put("maxY", cuboid.getMaxY());
             r.put("maxZ", cuboid.getMaxZ());
-        } else if (region instanceof SkBeeBoundRegion skbee) {
-            r.put("type", "skbee_bound");
-            r.put("id", skbee.getId());
-        } else if (region instanceof WorldGuardRegion wg) {
-            r.put("type", "worldguard");
-            r.put("world", wg.getWorld().getName());
-            r.put("regionId", wg.getRegionId());
         }
         return r;
     }
@@ -372,16 +363,6 @@ public class GameMap implements ConfigurationSerializable {
             int maxY = toInt(data.get("maxY"));
             int maxZ = toInt(data.get("maxZ"));
             return new CuboidRegion(new Location(world, minX, minY, minZ), new Location(world, maxX, maxY, maxZ));
-        } else if ("skbee_bound".equals(type)) {
-            String id = (String) data.get("id");
-            return id != null ? SkBeeBoundRegion.fromId(id) : null;
-        } else if ("worldguard".equals(type)) {
-            String worldName = (String) data.get("world");
-            World world = Bukkit.getWorld(worldName != null ? worldName : "");
-            if (world == null) return null;
-            String regionId = (String) data.get("regionId");
-            if (regionId == null) return null;
-            return new WorldGuardRegion(world, regionId);
         }
         return null;
     }
