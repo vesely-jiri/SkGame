@@ -10,6 +10,7 @@ import org.bukkit.entity.Player;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class JoinSubcommand {
@@ -32,7 +33,28 @@ public class JoinSubcommand {
             Messages.send(player, "command.join.not-found", token);
             return;
         }
-        // Access control for non-PUBLIC sessions
+        // Token-based invite: /game join <sessionId> <uuidToken>
+        if (args.length >= 3) {
+            try {
+                UUID inviteToken = UUID.fromString(args[2]);
+                if (!session.consumeInviteToken(inviteToken, player.getUniqueId())) {
+                    Messages.send(player, "session.invite.expired");
+                    return;
+                }
+                // Valid token consumed — bypass visibility check and join directly
+                session.removeInvitedPlayer(player.getUniqueId());
+                boolean joined = SessionLifecycleManagerImpl.getInstance().joinSession(player, session);
+                if (joined) {
+                    Messages.send(player, "session.joined");
+                    SessionGuiService.getInstance().openFor(player);
+                }
+                return;
+            } catch (IllegalArgumentException ignored) {
+                // args[2] is not a UUID — fall through to normal visibility check
+            }
+        }
+
+        // Normal join: access control for non-PUBLIC sessions
         SessionVisibility vis = session.getVisibility();
         if (vis == SessionVisibility.INVITE_ONLY) {
             if (!session.isInvited(player.getUniqueId())) {

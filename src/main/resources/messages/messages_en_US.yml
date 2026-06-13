@@ -75,6 +75,7 @@ session:
     revoked: "&7Invite revoked for {0}"
     received: "&eYou were invited to a session by {0}. &a[Click to join]"
     not-invited: "&cYou are not invited to this session"
+    expired: "&cThis invite link has already been used or expired"
   code:
     your-code: "&eYour session code: &f&l{0}"
     invalid: "&cInvalid or expired session code"

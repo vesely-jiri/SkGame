@@ -39,6 +39,8 @@ public class Session {
     private SessionVisibility visibility = SessionVisibility.PUBLIC;
     private List<Player> winners = new ArrayList<>();
     private final Set<UUID> invitedPlayers = new HashSet<>();
+    /** One-time invite tokens: tokenUUID → targetPlayerUUID. Consumed on first use. */
+    private final Map<UUID, UUID> inviteTokens = new HashMap<>();
     @Nullable private String joinCode;
     private final Map<UUID, String> teamAssignments = new HashMap<>();
     private MapSelectionMode mapSelectionMode = MapSelectionMode.SPECIFIC;
@@ -209,6 +211,21 @@ public class Session {
     public void addInvitedPlayer(UUID uuid) { invitedPlayers.add(uuid); }
     public void removeInvitedPlayer(UUID uuid) { invitedPlayers.remove(uuid); }
     public boolean isInvited(UUID uuid) { return invitedPlayers.contains(uuid); }
+
+    /** Generates a single-use token for the given player and returns it. */
+    public UUID generateInviteToken(UUID playerUUID) {
+        UUID token = UUID.randomUUID();
+        inviteTokens.put(token, playerUUID);
+        return token;
+    }
+
+    /** Validates and consumes a token. Returns true only if the token exists and belongs to playerUUID. */
+    public boolean consumeInviteToken(UUID token, UUID playerUUID) {
+        UUID owner = inviteTokens.get(token);
+        if (owner == null || !owner.equals(playerUUID)) return false;
+        inviteTokens.remove(token);
+        return true;
+    }
 
     @Nullable public String getJoinCode() { return joinCode; }
     public void setJoinCode(@Nullable String joinCode) { this.joinCode = joinCode; }

@@ -146,8 +146,9 @@ public class GameCommand implements CommandExecutor, TabCompleter {
             return;
         }
         session.addInvitedPlayer(target.getUniqueId());
+        UUID token = session.generateInviteToken(target.getUniqueId());
         Messages.send(player, "session.invite.sent", target.getName());
-        String joinCmd = "/game join " + session.getId();
+        String joinCmd = "/game join " + session.getId() + " " + token;
         Component msg = LegacyComponentSerializer.legacyAmpersand()
                 .deserialize(Messages.get("session.invite.received", target, player.getName()))
                 .clickEvent(ClickEvent.runCommand(joinCmd));

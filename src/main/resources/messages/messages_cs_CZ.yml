@@ -69,6 +69,7 @@ session:
     revoked: "&7Pozvánka pro {0} zrušena"
     received: "&eObdržel jsi pozvánku do session od {0}. &a[Klikni pro připojení]"
     not-invited: "&cNejsi pozván do této session"
+    expired: "&cTento pozvánkový odkaz byl již použit nebo vypršel"
   code:
     your-code: "&eKód tvé session: &f&l{0}"
     invalid: "&cNeplatný nebo prošlý kód session"
