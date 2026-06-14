@@ -75,6 +75,8 @@ public class GameMapManager {
             SkGame.getInstance().getLogger().severe("Failed to load maps.yml via raw YAML: " + e.getMessage());
         }
         warnLegacyKeys();
+        // Rewrite file in new format so next startup uses normal load path.
+        if (!maps.isEmpty()) save();
     }
 
     private void warnLegacyKeys() {

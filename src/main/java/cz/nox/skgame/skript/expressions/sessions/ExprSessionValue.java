@@ -13,6 +13,7 @@ import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
+import cz.nox.skgame.SkGame;
 import cz.nox.skgame.api.game.model.CustomValue;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
@@ -105,6 +106,8 @@ public class ExprSessionValue extends SimpleExpression<Object> implements KeyPro
                         if (def != null) o = def.getDefaultValue();
                     }
                 }
+                SkGame.getInstance().getLogger().info("[T118] ExprSessionValue.get key=" + k
+                        + " temp=" + isTemporary + " val=" + o + " session=" + s.getId());
                 if (o == null) return null;
                 if (o.getClass().isArray()) {
                     return (Object[]) o;
