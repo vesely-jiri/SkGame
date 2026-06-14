@@ -104,7 +104,7 @@ public class GameMapManager {
     }
 
     public void saveToFile(File file) {
-        YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
+        YamlConfiguration config = new YamlConfiguration();
         config.set("maps",null);
         for (GameMap gameMap : maps.values()) {
             config.createSection("maps." + gameMap.getId(), gameMap.serialize());
