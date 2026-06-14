@@ -13,6 +13,8 @@ import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
+import cz.nox.skgame.api.game.model.CustomValue;
+import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -93,7 +95,16 @@ public class ExprSessionValue extends SimpleExpression<Object> implements KeyPro
             case 0:
                 String k = key.getSingle(e);
                 if (k == null) return null;
-                Object o = s.getValue(k,isTemporary);
+                Object o = s.getValue(k, isTemporary);
+                // If no runtime value stored and not temporary, fall back to the
+                // declared default so the script sees what the GUI displayed to the host.
+                if (o == null && !isTemporary) {
+                    MiniGame mg = s.getMiniGame();
+                    if (mg != null) {
+                        CustomValue def = mg.getSessionValueDef(k);
+                        if (def != null) o = def.getDefaultValue();
+                    }
+                }
                 if (o == null) return null;
                 if (o.getClass().isArray()) {
                     return (Object[]) o;
