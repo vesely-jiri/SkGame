@@ -270,7 +270,16 @@ public class GameMap implements ConfigurationSerializable {
                 if (innerValue instanceof Object[] arr) {
                     Map<String, Object> plural = new HashMap<>();
                     plural.put("__plural", true);
-                    plural.put("values", new ArrayList<>(Arrays.asList(arr)));
+                    List<Object> serializedArr = new ArrayList<>();
+                    for (Object el : arr) {
+                        if (el instanceof Location loc) {
+                            Map<String, Object> lm = serializeLocation(loc);
+                            if (!lm.isEmpty()) serializedArr.add(lm);
+                        } else {
+                            serializedArr.add(el);
+                        }
+                    }
+                    plural.put("values", serializedArr);
                     result.put(innerKey, plural);
                 } else if (innerValue instanceof Region region) {
                     Map<String, Object> ser = new HashMap<>(serializeRegion(region));
@@ -285,6 +294,9 @@ public class GameMap implements ConfigurationSerializable {
                         ser.put("type", serialized.type);
                         ser.put("data", serialized.data);
                         result.put(innerKey, ser);
+                    } else if (innerValue instanceof Location loc) {
+                        Map<String, Object> lm = serializeLocation(loc);
+                        if (!lm.isEmpty()) result.put(innerKey, lm);
                     } else {
                         result.put(innerKey, innerValue);
                     }
@@ -377,6 +389,38 @@ public class GameMap implements ConfigurationSerializable {
         return 0.0;
     }
 
+    private static Map<String, Object> serializeLocation(Location loc) {
+        Map<String, Object> m = new HashMap<>();
+        if (loc.getWorld() == null) return m;
+        m.put("__location", true);
+        m.put("world", loc.getWorld().getName());
+        m.put("x", loc.getX());
+        m.put("y", loc.getY());
+        m.put("z", loc.getZ());
+        m.put("yaw", (double) loc.getYaw());
+        m.put("pitch", (double) loc.getPitch());
+        return m;
+    }
+
+    @Nullable
+    private static Location deserializeLocation(Object raw) {
+        Map<String, Object> data;
+        if (raw instanceof MemorySection sec) {
+            data = sec.getValues(false);
+        } else if (raw instanceof Map<?, ?> m) {
+            @SuppressWarnings("unchecked") Map<String, Object> cast = (Map<String, Object>) m;
+            data = cast;
+        } else {
+            return null;
+        }
+        String worldName = (String) data.get("world");
+        World world = Bukkit.getWorld(worldName != null ? worldName : "");
+        if (world == null) return null;
+        double x = toDouble(data.get("x")), y = toDouble(data.get("y")), z = toDouble(data.get("z"));
+        float yaw = (float) toDouble(data.get("yaw")), pitch = (float) toDouble(data.get("pitch"));
+        return new Location(world, x, y, z, yaw, pitch);
+    }
+
     public static GameMap deserialize(Map<String, Object> map) {
         String id = (String) map.get("id");
         GameMap gameMap = new GameMap(id);
@@ -391,22 +435,51 @@ public class GameMap implements ConfigurationSerializable {
             for (Map.Entry<String, Object> valEntry : innerMap.entrySet()) {
                 String key = valEntry.getKey();
                 Object raw = valEntry.getValue();
-                if (raw instanceof MemorySection rawMap) {
-                    Map<String, Object> data = rawMap.getValues(false);
+                Map<String, Object> data = null;
+                if (raw instanceof MemorySection sec) data = sec.getValues(false);
+                else if (raw instanceof Map<?, ?> m) {
+                    @SuppressWarnings("unchecked") Map<String, Object> cast = (Map<String, Object>) m;
+                    data = cast;
+                }
+                if (data != null) {
                     if (Boolean.TRUE.equals(data.get("__region"))) {
-                        Region r = deserializeRegion(rawMap);
+                        Region r = deserializeRegion(raw);
                         if (r != null) {
                             gameMap.setMiniGameValue(miniGameId, key, r);
                             continue;
                         }
                     }
+                    if (Boolean.TRUE.equals(data.get("__location"))) {
+                        Location loc = deserializeLocation(raw);
+                        if (loc != null) gameMap.setMiniGameValue(miniGameId, key, loc);
+                        continue;
+                    }
                     if (Boolean.TRUE.equals(data.get("__plural"))) {
-                        List<?> pluralList = rawMap.getList("values");
-                        gameMap.setMiniGameValue(miniGameId, key, pluralList != null ? pluralList.toArray() : new Object[0]);
+                        Object rawList = data.get("values");
+                        List<Object> elements = new ArrayList<>();
+                        if (rawList instanceof List<?> pl) {
+                            for (Object el : pl) {
+                                Map<String, Object> elData = null;
+                                if (el instanceof MemorySection elSec) elData = elSec.getValues(false);
+                                else if (el instanceof Map<?, ?> elMap) {
+                                    @SuppressWarnings("unchecked") Map<String, Object> elCast = (Map<String, Object>) elMap;
+                                    elData = elCast;
+                                }
+                                if (elData != null && (Boolean.TRUE.equals(elData.get("__location"))
+                                        || "org.bukkit.Location".equals(elData.get("==")))) {
+                                    Location loc = deserializeLocation(el);
+                                    if (loc != null) elements.add(loc);
+                                    continue;
+                                }
+                                elements.add(el);
+                            }
+                        }
+                        gameMap.setMiniGameValue(miniGameId, key, elements.toArray());
                         continue;
                     }
                     String typeObj = (String) data.get("type");
-                    byte[] bytes = (byte[]) data.get("data");
+                    Object rawBytes = data.get("data");
+                    byte[] bytes = rawBytes instanceof byte[] b ? b : null;
                     if (typeObj != null && bytes != null) {
                         ClassInfo<?> classInfo = Classes.getClassInfoNoError(typeObj);
                         if (classInfo != null) {
@@ -419,6 +492,12 @@ public class GameMap implements ConfigurationSerializable {
                                 }
                             }
                         }
+                    }
+                    // Legacy backwards compat: old Bukkit-serialized Location (from SnakeYAML raw read)
+                    if ("org.bukkit.Location".equals(data.get("=="))) {
+                        Location loc = deserializeLocation(raw);
+                        if (loc != null) gameMap.setMiniGameValue(miniGameId, key, loc);
+                        continue;
                     }
                 }
                 gameMap.setMiniGameValue(miniGameId, key, raw);

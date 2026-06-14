@@ -9,6 +9,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 
@@ -28,7 +29,19 @@ public class GameMapManager {
     public void loadFromFile(File file) {
         this.storageFile = file;
         if (!file.exists()) return;
-        YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
+        YamlConfiguration config;
+        try {
+            config = YamlConfiguration.loadConfiguration(file);
+        } catch (IllegalArgumentException e) {
+            // Legacy maps.yml has Location stored via Bukkit ConfigurationSerialization.
+            // World not loaded at onEnable() → Location.deserialize() throws "unknown world".
+            // Fall back to raw SnakeYAML read that bypasses ConfigurationSerialization.
+            SkGame.getInstance().getLogger().warning(
+                "maps.yml contains legacy Bukkit-serialized Location values. " +
+                "Falling back to raw YAML read. Re-save gamemap values to migrate. (" + e.getMessage() + ")");
+            loadFromRawYaml(file);
+            return;
+        }
         ConfigurationSection baseSection = config.getConfigurationSection("maps");
         if (baseSection == null) return;
         for (String key : baseSection.getKeys(false)) {
@@ -36,6 +49,30 @@ public class GameMapManager {
             if (section == null) continue;
             GameMap gameMap = GameMap.deserialize(section.getValues(true));
             maps.put(gameMap.getId(), gameMap);
+        }
+        warnLegacyKeys();
+    }
+
+    @SuppressWarnings("unchecked")
+    private void loadFromRawYaml(File file) {
+        try (FileReader reader = new FileReader(file)) {
+            org.yaml.snakeyaml.Yaml yaml = new org.yaml.snakeyaml.Yaml();
+            Object loaded = yaml.load(reader);
+            if (!(loaded instanceof Map<?, ?> root)) return;
+            Object mapsRaw = root.get("maps");
+            if (!(mapsRaw instanceof Map<?, ?> mapsSection)) return;
+            for (Map.Entry<?, ?> entry : mapsSection.entrySet()) {
+                if (!(entry.getValue() instanceof Map<?, ?> mapData)) continue;
+                try {
+                    GameMap gameMap = GameMap.deserialize((Map<String, Object>) mapData);
+                    maps.put(gameMap.getId(), gameMap);
+                } catch (Exception ex) {
+                    SkGame.getInstance().getLogger().warning(
+                        "Skipped map '" + entry.getKey() + "' during raw YAML load: " + ex.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            SkGame.getInstance().getLogger().severe("Failed to load maps.yml via raw YAML: " + e.getMessage());
         }
         warnLegacyKeys();
     }
