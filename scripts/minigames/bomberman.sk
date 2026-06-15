@@ -21,54 +21,47 @@ register new minigame with id "bomberman":
     description: "&7- Pickup your &cTNT &7and fight"
     author: "JuraJ_Player"
     min players: 2
-    cancel events: hunger, item-drop
+    cancel events: hunger, item-drop, pvp
     values:
-        gamemap value "gamemode":
-            name: "Gamemode"
-            type: a text
-            default: "elimination"
-            description: "Gamemode: 'elimination' (one life, last alive wins) or 'deathmatch' (respawn, most kills when timer ends wins)"
-        gamemap value "respawn_cooldown":
-            name: "Respawn cooldown"
-            type: a timespan
-            default: 5 seconds
-            plurality: single
-            description: "How long it takes a player to respawn after death in deathmatch mode"
-        gamemap value "spawn_rate":
-            name: "Item spawn rate"
-            type: a timespan
-            default: 5 ticks
-            plurality: single
-            description: "How fast items are spawned at booster locations"
-        gamemap value "deathmatch_timer":
-            name: "Deathmatch playtime"
-            type: a timespan
-            default: 1 minute
-            plurality: single
-            description: "How long players play in deathmatch mode before TIMEOUT"
         gamemap value "booster_spawnpoints":
             name: "Booster spawnpoints"
+            description: "Locations where items spawn; players also start here"
             type: a location
             plurality: plural
-            description: "Locations where items spawn; players also start here"
-        gamemap value "arena":
-            name: "Arena region"
-            type: a region
-            description: "Playable area — used to clean up mines at game end"
+
+        session value "spawn_rate":
+            name: "Item spawn rate"
+            description: "How fast items are spawned at booster locations"
+            type: a timespan
+            default: 5 ticks
+            min: 1 tick
+            max: 60 ticks
+        session value "deathmatch_timer":
+            name: "Deathmatch playtime"
+            description: "How long players play in deathmatch mode before TIMEOUT"
+            type: a timespan
+            default: 120 seconds
+            min: 60 seconds
+            max: 300 seconds
+        session value "gamemode":
+            name: "Gamemode"
+            description: "Gamemode: 'elimination' (one life, last alive wins) or 'deathmatch' (respawn, most kills when timer ends wins)"
+            type: a text
+            default: "elimination"
+            allowed values: "elimination", "deathmatch"
+        session value "respawn_cooldown":
+            name: "Respawn cooldown"
+            description: "How long it takes a player to respawn after death in deathmatch mode"
+            type: a timespan
+            default: 5 seconds
+            min: 1 second
+            max: 60 seconds
 
 on "bomberman" game start:
     set {_loc::*} to gamemap values "booster_spawnpoints" of event-session
-    set {_mode} to (gamemap value "gamemode" of event-session) ? "elimination"
-    if {_mode} is not "elimination":
-        if {_mode} is not "deathmatch":
-            send "[Bomberman] Invalid gamemode '%{_mode}%' on session %event-session%, falling back to elimination" to console
-            set {_mode} to "elimination"
-    set {_rate} to (gamemap value "spawn_rate" of event-session) ? 5 ticks
-    set {_timer} to (gamemap value "deathmatch_timer" of event-session) ? 1 minute
-    set {_cd} to (gamemap value "respawn_cooldown" of event-session) ? 5 seconds
-    set temporary session value "gamemode" of event-session to {_mode}
-    set temporary session value "respawn_cooldown" of event-session to {_cd}
-    set temporary session values "booster_locs" of event-session to {_loc::*}
+    set {_mode} to (session value "gamemode" of event-session) ? "elimination"
+    set {_rate} to (session value "spawn_rate" of event-session) ? 5 ticks
+    set {_cd} to (session value "respawn_cooldown" of event-session) ? 5 seconds
     loop shuffled session players of event-session:
         add 1 to {_n}
         teleport loop-value to {_loc::%{_n}%}
@@ -81,20 +74,18 @@ on "bomberman" game start:
         wait 1 second
     Bomberman_StartSpawningDrops(event-session, {_rate}, {_loc::*})
     if {_mode} is "deathmatch":
-        Bomberman_StartTimer(event-session, {_timer})
+        Bomberman_StartTimer(event-session)
 
 on "bomberman" game stop:
-    set {_arena} to gamemap value "arena" of event-session
-    if {_arena} is set:
-        loop (blocks in {_arena}) where [input is polished blackstone pressure plate]:
-            set loop-block to air
-    # arena entity cleanup is handled automatically by SkGame (arena.cleanup config)
+    set {_arena} to arena of event-session
+    set (blocks in {_arena}) where [input is polished blackstone pressure plate] to air
+
     set {_p::*} to Bomberman_GetPlayingPlayers(event-session)
     if event-string is "WIN":
         set winners of event-session to {_p::1}
     else if event-string is "TIMEOUT":
         loop {_p::*}:
-            set {_v} to (temporary session value "players::%loop-value%::points" of event-session) ? 0
+            set {_v} to (score of loop-value) ? 0
             add loop-value to {_player-list::*}
             set {_players::%loop-value%} to {_v}
         sort {_player-list::*} in descending order based on {_players::%input%}
@@ -137,7 +128,8 @@ on script load:
 local function Bomberman_GetGamemode(session: session) :: string:
     return (temporary session value "gamemode" of {_session}) ? "elimination"
 
-local function Bomberman_StartTimer(session: session, timer: timespan):
+local function Bomberman_StartTimer(session: session):
+    set {_timer} to (session value "deathmatch_timer" of {_session}) ? 1 minute
     while (session state of {_session}) is STARTED:
         if {_timer} <= (loop-iteration * 1 second):
             stop game of {_session} with reason "TIMEOUT"
@@ -153,18 +145,17 @@ local function Bomberman_GetRandomItemIndex() :: string:
     return random element of {{@var_prefix}::probabilities::*}
 
 local function Bomberman_RespawnPlayer(session: session, p: player):
-    set {_cd} to (temporary session value "respawn_cooldown" of {_session}) ? 5 seconds
+    set {_cd} to (session value "respawn_cooldown" of {_session}) ? 5 seconds
     wait {_cd}
     if {_p} is playing (minigame with id "bomberman"):
-        set {_l::*} to temporary session values "booster_locs" of {_session}
+        set {_l::*} to gamemap values "booster_spawnpoints" of {_session}
         teleport {_p} to (random element of {_l::*})
         set gamemode of {_p} to survival
 
 local function Bomberman_AddPoint(session: session, p: player):
     play sound "minecraft:entity.experience_orb.pickup" to {_p}
-    set {_v} to (temporary session value "players::%{_p}%::points" of {_session}) ? 0
-    set temporary session value "players::%{_p}%::points" of {_session} to ({_v} + 1)
-    set (level of {_p}) to ({_v} + 1)
+    add 1 to score of {_p}
+    set (level of {_p}) to (score of {_p} ? 0)
 
 local function Bomberman_SpawnDrops(mode: string, l: locations):
     if {_mode} is "charge":
@@ -185,7 +176,7 @@ local function Bomberman_SpawnDrops(mode: string, l: locations):
 local function Bomberman_StartSpawningDrops(session: session, rate: timespan, locs: locations):
     Bomberman_SpawnDrops("charge", {_locs::*})
     while session state of {_session} is STARTED:
-        set {_cur::*} to temporary session values "booster_locs" of {_session}
+        set {_cur::*} to gamemap values "booster_spawnpoints" of {_session}
         Bomberman_SpawnDrops("random", {_cur::*})
         wait {_rate}
 
@@ -196,8 +187,7 @@ local function Bomberman_EliminatePlayer(victim: player, attacker: player):
     set invulnerability time of {_victim} to 2 ticks
     if chestplate of {_victim} is air:
         set (gamemode of {_victim}) to spectator
-        set {_v} to (temporary session value "players::%{_victim}%::deaths" of {_session}) ? 0
-        set temporary session value "players::%{_victim}%::deaths" of {_session} to {_v} + 1
+        add 1 to temporary player value "deaths" of {_victim}
         play sound "minecraft:entity.player.hurt" at {_victim}
         send {@player_eliminated} to (session players of {_session}) and (session spectators of {_session})
         if {_victim} is not {_attacker}:
@@ -284,10 +274,6 @@ on rightclick with tnt:
         set metadata tag "{@var_prefix};type" of {_e} to {_t}
         set metadata tag "{@var_prefix};owner" of {_e} to player
 
-on damage of player:
-    victim is playing (minigame with id "bomberman")
-    cancel event
-
 on pickup:
     player is playing (minigame with id "bomberman")
     event-item is {{@var_prefix}::items::speed_boots}
@@ -302,6 +288,10 @@ on armor change:
         player is playing (minigame with id "bomberman")
         apply speed 1 to player for 2 seconds
         wait 1 second
+
+on damage of player:
+    victim is playing (minigame with id "bomberman")
+    cancel event
 
 on place:
     player is playing (minigame with id "bomberman")

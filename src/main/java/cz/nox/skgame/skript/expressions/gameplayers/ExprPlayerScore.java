@@ -16,6 +16,7 @@ import cz.nox.skgame.api.game.event.PlayerScoreChangeEvent;
 import cz.nox.skgame.api.game.model.GamePlayer;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.core.game.PlayerManager;
+import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.util.GamePlayerKeys;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -24,21 +25,23 @@ import org.jetbrains.annotations.Nullable;
 
 @Name("Player Score")
 @Description({
-        "Gets or changes a player's score in a session.",
+        "Gets or changes a player's score.",
         "",
         "Score is stored as an integer under the reserved plugin key 'skgame.score'.",
         "It is a temporary per-player value — auto-reset to 0 at the start of each game/round.",
         "Fractional values are truncated (e.g. set to 1.5 stores 1).",
         "No floor clamp: negative scores are allowed.",
         "",
+        "PlayerScoreChangeEvent is fired on change when the player is in a session.",
+        "",
         "Supports: GET / SET / ADD / REMOVE / DELETE."
 })
 @Examples({
-        "set score of event-player in event-session to 0",
-        "add 1 to score of event-player in event-session",
-        "remove 2 from score of event-player in event-session",
-        "broadcast \"Score: %score of event-player in event-session%\"",
-        "delete score of event-player in event-session"
+        "set score of event-player to 0",
+        "add 1 to score of event-player",
+        "remove 2 from score of event-player",
+        "broadcast \"Score: %score of event-player%\"",
+        "delete score of event-player"
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")
@@ -48,20 +51,18 @@ public class ExprPlayerScore extends SimpleExpression<Number> {
     private static final PlayerManager playerManager = PlayerManager.getInstance();
 
     private Expression<Player> playerExpr;
-    private Expression<Object> sessionExpr;
 
     static {
-        // COMBINED: two type params (%player% + %session%), not a simple property of one type
-        Skript.registerExpression(ExprPlayerScore.class, Number.class, ExpressionType.COMBINED,
-                "[skgame] score of %player% in %object%");
+        // PROPERTY: single type param, qualifies as PROPERTY classification
+        Skript.registerExpression(ExprPlayerScore.class, Number.class, ExpressionType.PROPERTY,
+                "[skgame] score of %player%");
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed,
                         SkriptParser.ParseResult parseResult) {
-        playerExpr  = (Expression<Player>) exprs[0];
-        sessionExpr = (Expression<Object>) exprs[1];
+        playerExpr = (Expression<Player>) exprs[0];
         return true;
     }
 
@@ -87,15 +88,16 @@ public class ExprPlayerScore extends SimpleExpression<Number> {
     public void change(Event e, @Nullable Object[] delta, ChangeMode mode) {
         Player p = playerExpr.getSingle(e);
         if (p == null) return;
-        if (!(sessionExpr.getSingle(e) instanceof Session session)) return;
         GamePlayer gp = playerManager.getPlayer(p);
         if (gp == null) return;
 
+        Session session = SessionManager.getInstance().getSession(p);
         int old = scoreOf(gp);
 
         if (mode == ChangeMode.DELETE || mode == ChangeMode.RESET) {
             gp.removeValue(SCORE_KEY, true);
-            Bukkit.getPluginManager().callEvent(new PlayerScoreChangeEvent(session, p, old, 0));
+            if (session != null)
+                Bukkit.getPluginManager().callEvent(new PlayerScoreChangeEvent(session, p, old, 0));
             return;
         }
 
@@ -108,7 +110,8 @@ public class ExprPlayerScore extends SimpleExpression<Number> {
             default     -> old;
         };
         gp.setValue(SCORE_KEY, newVal, true);
-        Bukkit.getPluginManager().callEvent(new PlayerScoreChangeEvent(session, p, old, newVal));
+        if (session != null)
+            Bukkit.getPluginManager().callEvent(new PlayerScoreChangeEvent(session, p, old, newVal));
     }
 
     private static int scoreOf(GamePlayer gp) {
@@ -124,6 +127,6 @@ public class ExprPlayerScore extends SimpleExpression<Number> {
 
     @Override
     public String toString(@Nullable Event e, boolean b) {
-        return "score of " + playerExpr.toString(e, b) + " in " + sessionExpr.toString(e, b);
+        return "score of " + playerExpr.toString(e, b);
     }
 }
