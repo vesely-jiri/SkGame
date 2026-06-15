@@ -17,8 +17,12 @@ register minigame with id "spleef":
             description: "Player spawn locations on the spleef arena"
         gamemap value "arena":
             name: "Arena region"
-            type: a region
-            description: "The arena — players below minimum Y are eliminated"
+            type: an arena
+            description: "The arena region bounding the spleef floor"
+        gamemap value "floor_y":
+            name: "Fall-out Y level"
+            description: "Y coordinate below which players are eliminated from the arena"
+            type: a number
         gamemap value "floor_block":
             name: "Floor block"
             type: a text
@@ -27,8 +31,6 @@ register minigame with id "spleef":
 
 on "spleef" game start:
     set {_spawns::*} to gamemap values "spawnpoints" of event-session
-    set {_arena} to gamemap value "arena" of event-session
-    set temporary session value "arena" of event-session to {_arena}
     loop shuffled session players of event-session:
         add 1 to {_n}
         teleport loop-player to {_spawns::%{_n}%}
@@ -53,8 +55,7 @@ on drop:
     cancel event
 
 local function Spleef_StartFallCheck(session: session):
-    set {_arena} to temporary session value "arena" of {_session}
-    set {_minY} to y-coordinate of (minimum corner of region {_arena})
+    set {_minY} to gamemap value "floor_y" of {_session}
     while (session state of {_session}) is STARTED:
         loop session players of {_session}:
             if (y-coordinate of loop-player) < {_minY}:

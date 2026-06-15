@@ -269,7 +269,7 @@ on rightclick with dragon egg:
     player is playing (minigame with id "volleyball")
     cancel event
     set {_teams::*} to {@teams}
-    set {_team} to temporary value "team" of player
+    set {_team} to temporary player value "team" of player
     set {_t} to 1 if {_team} is {_teams::1} else 2
     set {_session} to session of player
     set {_playout-block} to (temporary session value "team_%{_t}%_starting_block" of {_session}) ? "yellow terracotta"

@@ -42,10 +42,12 @@ register minigame with id "ctf":
             name: "Blue capture base"
             type: a location
             description: "Walk here with enemy flag to score a point"
-        gamemap value "score_limit":
+        session value "score_limit":
             name: "Score limit"
             type: a number
             default: 3
+            min: 1
+            max: 20
             description: "Captures needed to win"
 
 on "ctf" game start:
@@ -66,7 +68,6 @@ on "ctf" game start:
     set temporary session value "blue_flag" of event-session to (gamemap value "blue_flag" of event-session)
     set temporary session value "red_base" of event-session to (gamemap value "red_base" of event-session)
     set temporary session value "blue_base" of event-session to (gamemap value "blue_base" of event-session)
-    set temporary session value "score_limit" of event-session to (gamemap value "score_limit" of event-session) ? {@score_limit}
     Ctf_StartFlagCheck(event-session)
     Ctf_StartScoreBar(event-session)
 
@@ -94,7 +95,7 @@ local function Ctf_StartFlagCheck(session: session):
         set {_blue_flag} to temporary session value "blue_flag" of {_session}
         set {_red_base} to temporary session value "red_base" of {_session}
         set {_blue_base} to temporary session value "blue_base" of {_session}
-        set {_limit} to (temporary session value "score_limit" of {_session}) ? {@score_limit}
+        set {_limit} to (session value "score_limit" of {_session}) ? {@score_limit}
         loop session players of {_session}:
             set {_p} to loop-player
             set {_team} to skgame team of {_p}
