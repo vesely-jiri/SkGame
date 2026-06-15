@@ -11,8 +11,6 @@ options:
     player_eliminated: "&cPlayer %{_victim}% has been eliminated by %{_attacker}%"
     shield_destroyed: "&cYour shield has been destroyed!"
 
-# Spectators allowed by default. No handler needed.
-
 #----------------------------------------------------------------------
 
 register new minigame with id "bomberman":
@@ -126,7 +124,7 @@ on script load:
 #----------------------------------------------------------------------
 
 local function Bomberman_GetGamemode(session: session) :: string:
-    return (temporary session value "gamemode" of {_session}) ? "elimination"
+    return (session value "gamemode" of {_session}) ? "elimination"
 
 local function Bomberman_StartTimer(session: session):
     set {_timer} to (session value "deathmatch_timer" of {_session}) ? 1 minute
@@ -155,7 +153,7 @@ local function Bomberman_RespawnPlayer(session: session, p: player):
 local function Bomberman_AddPoint(session: session, p: player):
     play sound "minecraft:entity.experience_orb.pickup" to {_p}
     add 1 to score of {_p}
-    set (level of {_p}) to (score of {_p} ? 0)
+    set (level of {_p}) to (score of {_p}) ? 0
 
 local function Bomberman_SpawnDrops(mode: string, l: locations):
     if {_mode} is "charge":
