@@ -272,7 +272,7 @@ on rightclick with dragon egg:
     set {_team} to temporary value "team" of player
     set {_t} to 1 if {_team} is {_teams::1} else 2
     set {_session} to session of player
-    set {_playout-block} to (session value "team_%{_t}%_starting_block" of {_session}) ? "yellow terracotta"
+    set {_playout-block} to (temporary session value "team_%{_t}%_starting_block" of {_session}) ? "yellow terracotta"
     if (type of (block under player)) is {_playout-block}:
         remove (1 of dragon egg) from player
         Volleyball_SpawnBall(player)
