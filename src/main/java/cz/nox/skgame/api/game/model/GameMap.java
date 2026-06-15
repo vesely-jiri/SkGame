@@ -415,7 +415,11 @@ public class GameMap implements ConfigurationSerializable {
         }
         String worldName = (String) data.get("world");
         World world = Bukkit.getWorld(worldName != null ? worldName : "");
-        if (world == null) return null;
+        if (world == null) {
+            cz.nox.skgame.SkGame.getInstance().getLogger().warning(
+                "[GameMap] deserializeLocation: world '" + worldName + "' not found — location skipped");
+            return null;
+        }
         double x = toDouble(data.get("x")), y = toDouble(data.get("y")), z = toDouble(data.get("z"));
         float yaw = (float) toDouble(data.get("yaw")), pitch = (float) toDouble(data.get("pitch"));
         return new Location(world, x, y, z, yaw, pitch);

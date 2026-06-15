@@ -294,7 +294,16 @@ public class SkGame extends JavaPlugin implements TabCompleter {
         // Deferring to tick 1 caused a race: scripts saved minigames.yml before
         // disabledMinigames was populated, silently erasing disabled flags on restart.
         MiniGameManager.getInstance().loadFromFile(miniGamesDataFile);
-        GameMapManager.getInstance().loadFromFile(mapsDataFile);
+        // GameMapManager must load AFTER world-management plugins (Multiverse etc.) have loaded
+        // their worlds — onEnable() is too early, custom worlds return null from Bukkit.getWorld().
+        // ServerLoadEvent fires after all plugins are fully enabled and worlds are available.
+        File mapsFile = mapsDataFile;
+        Bukkit.getPluginManager().registerEvents(new org.bukkit.event.Listener() {
+            @org.bukkit.event.EventHandler
+            public void onServerLoad(org.bukkit.event.server.ServerLoadEvent event) {
+                GameMapManager.getInstance().loadFromFile(mapsFile);
+            }
+        }, this);
 
         var cmd = getCommand("skgame");
         if (cmd != null) {
