@@ -688,9 +688,6 @@ public class SessionGuiService implements Listener {
         if (current == null) current = cv.getDefaultValue();
 
         ClassInfo<?> type = cv.getType();
-        SkGame.getInstance().getLogger().info("[T118] advanceSessionValue key=" + key
-                + " type=" + (type != null ? type.getCodeName() : "null")
-                + " current=" + current + " session=" + session.getId());
         if (type == null) return;
 
         if (cv.hasAllowedValues() && String.class.isAssignableFrom(type.getC())) {
@@ -717,7 +714,6 @@ public class SessionGuiService implements Listener {
             session.setValue(key, new Timespan(TimePeriod.TICK, nextTicks), false);
         }
 
-        SkGame.getInstance().getLogger().info("[T118] advanceSessionValue stored=" + session.getValue(key, false));
         Bukkit.getPluginManager().callEvent(new SessionSettingsChangedEvent(session, "sessionvalue:" + key));
     }
 }

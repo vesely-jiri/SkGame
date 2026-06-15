@@ -106,8 +106,6 @@ public class ExprSessionValue extends SimpleExpression<Object> implements KeyPro
                         if (def != null) o = def.getDefaultValue();
                     }
                 }
-                SkGame.getInstance().getLogger().info("[T118] ExprSessionValue.get key=" + k
-                        + " temp=" + isTemporary + " val=" + o + " session=" + s.getId());
                 if (o == null) return null;
                 if (o.getClass().isArray()) {
                     return (Object[]) o;

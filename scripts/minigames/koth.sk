@@ -8,28 +8,29 @@ register minigame with id "koth":
     icon: red banner
     author: "JuraJ_Player"
     min players: 2
-    cancel events: hunger, item-drop, item-pickup
+    cancel events: item-drop, hunger
     values:
-        gamemap value "spawnpoints":
-            name: "Spawn points"
-            type: a location
-            plurality: plural
-            description: "Spawn locations for players at game start"
         gamemap value "hill_region":
             name: "Hill region"
-            type: a region
             description: "The region that counts as the hill"
-        gamemap value "points_limit":
+            type: an arena
+        gamemap value "spawnpoints":
+            name: "Spawn points"
+            description: "Spawn locations for players at game start"
+            type: a location
+            plurality: plural
+        session value "points_limit":
             name: "Points limit"
+            description: "Score a player needs to reach to win"
             type: a number
             default: 30
-            description: "Score a player needs to reach to win"
+            min: 5
+            max: 60
 
 on "koth" game start:
     set {_spawnpoints::*} to gamemap values "spawnpoints" of event-session
-    shuffle {_spawnpoints::*}
     set {_region} to gamemap value "hill_region" of event-session
-    set {_limit} to (gamemap value "points_limit" of event-session) ? 30
+    set {_limit} to (session value "points_limit" of event-session) ? 30
     loop shuffled session players of event-session:
         add 1 to {_n}
         teleport loop-player to {_spawnpoints::%{_n}%}
@@ -77,7 +78,3 @@ on damage of player:
         add 0.5 to {_sp}
     push victim (vector from attacker to victim) with speed {_sp}
     push victim up with speed 0.5
-
-on drop:
-    player is playing (minigame with id "koth")
-    cancel event
