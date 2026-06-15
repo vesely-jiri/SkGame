@@ -64,10 +64,6 @@ on "ctf" game start:
             teleport loop-player to (gamemap value "blue_spawnpoint" of event-session)
             set chestplate of loop-player to {_blue_chestplate}
         set gamemode of loop-player to survival
-    set temporary session value "red_flag" of event-session to (gamemap value "red_flag" of event-session)
-    set temporary session value "blue_flag" of event-session to (gamemap value "blue_flag" of event-session)
-    set temporary session value "red_base" of event-session to (gamemap value "red_base" of event-session)
-    set temporary session value "blue_base" of event-session to (gamemap value "blue_base" of event-session)
     Ctf_StartFlagCheck(event-session)
     Ctf_StartScoreBar(event-session)
 
@@ -91,10 +87,10 @@ on damage of player:
 
 local function Ctf_StartFlagCheck(session: session):
     while (session state of {_session}) is STARTED:
-        set {_red_flag} to temporary session value "red_flag" of {_session}
-        set {_blue_flag} to temporary session value "blue_flag" of {_session}
-        set {_red_base} to temporary session value "red_base" of {_session}
-        set {_blue_base} to temporary session value "blue_base" of {_session}
+        set {_red_flag} to gamemap value "red_flag" of {_session}
+        set {_blue_flag} to gamemap value "blue_flag" of {_session}
+        set {_red_base} to gamemap value "red_base" of {_session}
+        set {_blue_base} to gamemap value "blue_base" of {_session}
         set {_limit} to (session value "score_limit" of {_session}) ? {@score_limit}
         loop session players of {_session}:
             set {_p} to loop-player
