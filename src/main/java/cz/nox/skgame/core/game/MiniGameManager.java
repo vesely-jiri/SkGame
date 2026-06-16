@@ -72,6 +72,9 @@ public class MiniGameManager {
                 miniGames.put(gm.getId().toLowerCase(), gm);
                 if (Boolean.TRUE.equals(section.get("disabled"))) {
                     disabledMinigames.add(gm.getId().toLowerCase());
+                    SkGame.getInstance().getLogger().info("[DEBUG] loadFromFile: loaded '" + gm.getId() + "' as DISABLED");
+                } else {
+                    SkGame.getInstance().getLogger().info("[DEBUG] loadFromFile: loaded '" + gm.getId() + "' (enabled)");
                 }
             }
         }
@@ -79,11 +82,16 @@ public class MiniGameManager {
     public void saveToFile(File file) {
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
         config.set("minigames",null);
+        java.util.List<String> savedDisabled = new java.util.ArrayList<>();
         for (MiniGame gm : miniGames.values()) {
             Map<String, Object> data = new java.util.LinkedHashMap<>(gm.serialize());
-            if (disabledMinigames.contains(gm.getId().toLowerCase())) data.put("disabled", true);
+            if (disabledMinigames.contains(gm.getId().toLowerCase())) {
+                data.put("disabled", true);
+                savedDisabled.add(gm.getId());
+            }
             config.createSection("minigames." + gm.getId().toLowerCase(), data);
         }
+        SkGame.getInstance().getLogger().info("[DEBUG] saveToFile: writing " + miniGames.size() + " minigame(s); disabled=" + savedDisabled + " disabledSet=" + disabledMinigames);
         try {
             config.save(file);
         } catch (IOException e) {
