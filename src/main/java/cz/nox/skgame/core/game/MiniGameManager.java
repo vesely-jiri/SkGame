@@ -116,7 +116,9 @@ public class MiniGameManager {
         MiniGame mg = miniGames.get(id.toLowerCase());
         if (mg != null) Bukkit.getPluginManager().callEvent(new MiniGameUnregisterEvent(mg));
         miniGames.remove(id.toLowerCase());
-        save();
+        // Do NOT call save() here: unregisterMiniGame writes an incomplete list (missing the
+        // just-removed minigame), which loses its disabled flag. onDisable() and postLoad()
+        // are the correct persistence points — they always have the full correct state.
     }
     public boolean isRegistered(String id) {
         return miniGames.containsKey(id.toLowerCase());
