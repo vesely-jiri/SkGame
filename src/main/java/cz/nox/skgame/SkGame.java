@@ -332,6 +332,9 @@ public class SkGame extends JavaPlugin implements TabCompleter {
     public void onDisable() {
         long s = System.currentTimeMillis();
 
+        // Must be first: blocks save() in unregisterMiniGame() that fires later during
+        // Skript section unload, which would overwrite the file with 0 minigames.
+        MiniGameManager.getInstance().beginShutdown();
         MiniGameManager.getInstance().saveToFile(miniGamesDataFile);
         GameMapManager.getInstance().saveToFile(mapsDataFile);
 

@@ -21,6 +21,7 @@ public class MiniGameManager {
     private MiniGame lastCreatedMiniGame;
     private File storageFile;
     private final Set<String> disabledMinigames = new HashSet<>();
+    private boolean shuttingDown = false;
 
     public static MiniGameManager getInstance() {
         if (miniGameManager == null) miniGameManager = new MiniGameManager();
@@ -38,11 +39,15 @@ public class MiniGameManager {
     public void disableMinigame(String id) { disabledMinigames.add(id.toLowerCase()); }
     public void enableMinigame(String id) { disabledMinigames.remove(id.toLowerCase()); }
 
+    public void beginShutdown() {
+        shuttingDown = true;
+    }
+
     public void save() {
         if (storageFile == null) return;
-        // During server shutdown Skript disables after SkGame (depend chain) and calls unload() on
-        // sections, which triggers unregisterMiniGame() → save(). At that point SkGame is already
-        // disabled and has already saved correctly in onDisable() — skip to avoid overwriting.
+        // Paper 1.21 calls onDisable() before setting enabled=false, so isEnabled() is unreliable
+        // as a shutdown guard. Use an explicit flag set at the top of onDisable() instead.
+        if (shuttingDown) return;
         SkGame plugin = SkGame.getInstance();
         if (plugin == null || !plugin.isEnabled()) return;
         saveToFile(storageFile);
