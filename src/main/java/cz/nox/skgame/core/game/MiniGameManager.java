@@ -85,18 +85,36 @@ public class MiniGameManager {
         }
     }
     public void saveToFile(File file) {
-        YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
-        config.set("minigames",null);
-        java.util.List<String> savedDisabled = new java.util.ArrayList<>();
+        // Load existing file first: needed to preserve data for disabled-but-unloaded minigames
+        // (e.g. during shutdown Skript may unload a section before onDisable() runs, removing
+        // the MiniGame from miniGames. Without this, its disabled flag would be silently lost.)
+        YamlConfiguration existing = YamlConfiguration.loadConfiguration(file);
+        YamlConfiguration config = new YamlConfiguration();
+
+        // Write all currently-registered minigames
         for (MiniGame gm : miniGames.values()) {
             Map<String, Object> data = new java.util.LinkedHashMap<>(gm.serialize());
-            if (disabledMinigames.contains(gm.getId().toLowerCase())) {
-                data.put("disabled", true);
-                savedDisabled.add(gm.getId());
-            }
+            if (disabledMinigames.contains(gm.getId().toLowerCase())) data.put("disabled", true);
             config.createSection("minigames." + gm.getId().toLowerCase(), data);
         }
-        SkGame.getInstance().getLogger().info("[DEBUG] saveToFile: writing " + miniGames.size() + " minigame(s); disabled=" + savedDisabled + " disabledSet=" + disabledMinigames);
+
+        // For disabled minigames that are temporarily absent from miniGames (unloaded but not
+        // yet re-registered), copy their full section from the existing file so they survive.
+        for (String disabledId : disabledMinigames) {
+            if (miniGames.containsKey(disabledId)) continue; // already written above
+            ConfigurationSection src = existing.getConfigurationSection("minigames." + disabledId);
+            if (src != null) {
+                for (String key : src.getKeys(true)) {
+                    Object val = src.get(key);
+                    if (!(val instanceof org.bukkit.configuration.ConfigurationSection)) {
+                        config.set("minigames." + disabledId + "." + key, val);
+                    }
+                }
+            }
+            config.set("minigames." + disabledId + ".disabled", true);
+        }
+
+        SkGame.getInstance().getLogger().info("[DEBUG] saveToFile: miniGames=" + miniGames.keySet() + " disabledSet=" + disabledMinigames);
         try {
             config.save(file);
         } catch (IOException e) {
