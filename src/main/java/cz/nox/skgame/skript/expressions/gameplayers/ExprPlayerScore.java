@@ -95,7 +95,7 @@ public class ExprPlayerScore extends SimpleExpression<Number> {
         int old = scoreOf(gp);
 
         if (mode == ChangeMode.DELETE || mode == ChangeMode.RESET) {
-            gp.removeValue(SCORE_KEY, true);
+            gp.removeValue(SCORE_KEY);
             if (session != null)
                 Bukkit.getPluginManager().callEvent(new PlayerScoreChangeEvent(session, p, old, 0));
             return;
@@ -109,13 +109,13 @@ public class ExprPlayerScore extends SimpleExpression<Number> {
             case REMOVE -> old - amount;
             default     -> old;
         };
-        gp.setValue(SCORE_KEY, newVal, true);
+        gp.setValue(SCORE_KEY, newVal);
         if (session != null)
             Bukkit.getPluginManager().callEvent(new PlayerScoreChangeEvent(session, p, old, newVal));
     }
 
     private static int scoreOf(GamePlayer gp) {
-        Object v = gp.getValue(SCORE_KEY, true);
+        Object v = gp.getValue(SCORE_KEY);
         return v instanceof Number n ? n.intValue() : 0;
     }
 

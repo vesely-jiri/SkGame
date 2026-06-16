@@ -25,22 +25,21 @@ import org.jetbrains.annotations.Nullable;
 
 @Name("GamePlayer - Value")
 @Description({
-        "Represents a custom value stored for a specific player.",
-        "Supports temporary values if 'temporary' tag is used. When game ends, temporary tagged values are deleted.",
+        "Represents a custom value stored for a specific player. Values are always temporary — reset when the game ends.",
         "",
         "Also supports retrieving all keys or all values of a player.",
         "",
         "Supports: GET / SET / ADD / REMOVE / RESET / DELETE."
 })
 @Examples({
-        "set temporary value \"score\" of player to 10",
-        "broadcast value \"score\" of player",
+        "set player value \"score\" of player to 10",
+        "broadcast player value \"score\" of player",
         "",
-        "loop keys of player:",
+        "loop player values of player:",
         "    broadcast \"Key: %loop-value%\"",
         "",
-        "delete value \"score\" of player",
-        "reset values of player"
+        "delete player value \"score\" of player",
+        "reset player values of player"
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")
@@ -51,14 +50,13 @@ public class ExprGamePlayerValue extends SimpleExpression<Object> implements Key
 
     private int pattern;
     private int mark;
-    private boolean isTemporary;
     private boolean isList;
 
     static {
-        // COMBINED: key %string% param + optional temp tag prevent pure property classification
+        // COMBINED: key %string% param prevents pure property classification
         Skript.registerExpression(ExprGamePlayerValue.class, Object.class, ExpressionType.COMBINED,
-                "[temp:temp[orary]] [player] value[list:s] %string% of %object%",
-                "[all] [temp:temp[orary]] [player] values of %object%"
+                "[player] value[list:s] %string% of %object%",
+                "[all] [player] values of %object%"
         );
     }
 
@@ -72,7 +70,6 @@ public class ExprGamePlayerValue extends SimpleExpression<Object> implements Key
         } else {
             player = (Expression<Object>) exprs[0];
         }
-        isTemporary = parseResult.hasTag("temp");
         isList = parseResult.hasTag("list");
         return true;
     }
@@ -88,14 +85,14 @@ public class ExprGamePlayerValue extends SimpleExpression<Object> implements Key
             case 0:
                 String k = key.getSingle(e);
                 if (k == null) return null;
-                Object o = gamePlayer.getValue(k,isTemporary);
+                Object o = gamePlayer.getValue(k);
                 if (o == null) return null;
                 if (o.getClass().isArray()) {
                     return (Object[]) o;
                 } else {
                     return CollectionUtils.array(o);
                 }
-            case 1: return gamePlayer.getValues(isTemporary);
+            case 1: return gamePlayer.getValues();
             default: return null;
             }
     }
@@ -125,46 +122,46 @@ public class ExprGamePlayerValue extends SimpleExpression<Object> implements Key
                 String k = key.getSingle(e);
                 if (delta == null || delta[0] == null || k == null) return;
                 if (isList) {
-                    gamePlayer.setValue(k, delta, isTemporary);
+                    gamePlayer.setValue(k, delta);
                 } else {
-                    gamePlayer.setValue(k, delta[0], isTemporary);
+                    gamePlayer.setValue(k, delta[0]);
                 }
             }
             case ADD -> {
                 String k = key.getSingle(e);
                 if (delta == null || delta[0] == null || k == null) return;
-                Object current = gamePlayer.getValue(k, isTemporary);
+                Object current = gamePlayer.getValue(k);
                 if (delta[0] instanceof Number dn) {
                     double cur = (current instanceof Number cn) ? cn.doubleValue() : 0.0;
-                    gamePlayer.setValue(k, cur + dn.doubleValue(), isTemporary);
+                    gamePlayer.setValue(k, cur + dn.doubleValue());
                 } else {
                     Object[] arr = current instanceof Object[] a ? a : (current != null ? new Object[]{current} : new Object[0]);
                     Object[] merged = Arrays.copyOf(arr, arr.length + 1);
                     merged[arr.length] = delta[0];
-                    gamePlayer.setValue(k, merged, isTemporary);
+                    gamePlayer.setValue(k, merged);
                 }
             }
             case REMOVE -> {
                 String k = key.getSingle(e);
                 if (delta == null || delta[0] == null || k == null) return;
-                Object current = gamePlayer.getValue(k, isTemporary);
+                Object current = gamePlayer.getValue(k);
                 if (delta[0] instanceof Number dn) {
                     double cur = (current instanceof Number cn) ? cn.doubleValue() : 0.0;
-                    gamePlayer.setValue(k, cur - dn.doubleValue(), isTemporary);
+                    gamePlayer.setValue(k, cur - dn.doubleValue());
                 } else {
                     Object[] arr = current instanceof Object[] a ? a : (current != null ? new Object[]{current} : new Object[0]);
                     List<Object> list = new ArrayList<>(Arrays.asList(arr));
                     list.remove(delta[0]);
-                    gamePlayer.setValue(k, list.toArray(), isTemporary);
+                    gamePlayer.setValue(k, list.toArray());
                 }
             }
             case DELETE, RESET -> {
                 if (pattern == 0) {
                     String k = key.getSingle(e);
                     if (k == null) return;
-                    gamePlayer.removeValue(k,isTemporary);
+                    gamePlayer.removeValue(k);
                 } else {
-                    gamePlayer.removeValues(isTemporary);
+                    gamePlayer.removeValues();
                 }
             }
         }
@@ -175,7 +172,7 @@ public class ExprGamePlayerValue extends SimpleExpression<Object> implements Key
         Object raw = player.getSingle(e);
         if (!(raw instanceof Player p)) return new String[0];
         GamePlayer gp = playerManager.getPlayer(p);
-        return gp != null ? gp.getKeys(isTemporary) : new String[0];
+        return gp != null ? gp.getKeys() : new String[0];
     }
 
     @Override

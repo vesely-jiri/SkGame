@@ -185,7 +185,7 @@ local function Bomberman_EliminatePlayer(victim: player, attacker: player):
     set invulnerability time of {_victim} to 2 ticks
     if chestplate of {_victim} is air:
         set (gamemode of {_victim}) to spectator
-        add 1 to temporary player value "deaths" of {_victim}
+        add 1 to player value "deaths" of {_victim}
         play sound "minecraft:entity.player.hurt" at {_victim}
         send {@player_eliminated} to (session players of {_session}) and (session spectators of {_session})
         if {_victim} is not {_attacker}:

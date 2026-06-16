@@ -294,7 +294,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         }
         rejoinSnapshots.remove(player.getUniqueId());
         if (joinAsSpectator(player, session)) {
-            playerManager.getPlayer(player).setValue(GamePlayerKeys.JOIN_PARTY_AFTER_GAME, true, true);
+            playerManager.getPlayer(player).setValue(GamePlayerKeys.JOIN_PARTY_AFTER_GAME, true);
             Messages.send(player, "session.rejoin.success");
         }
     }
@@ -336,7 +336,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             if (lobbySpawn != null) player.teleport(lobbySpawn);
         }
 
-        playerManager.getPlayer(player).removeValues(true);
+        playerManager.getPlayer(player).removeValues();
 
         if (session.getMiniGame() != null) {
             final MiniGame _mg = session.getMiniGame();
@@ -451,7 +451,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         // Reset per-round scores so each game starts from zero
         for (Player p : lobbySnapshot) {
             GamePlayer gp = playerManager.getPlayer(p);
-            if (gp != null) gp.removeValue(GamePlayerKeys.SCORE, true);
+            if (gp != null) gp.removeValue(GamePlayerKeys.SCORE);
         }
         session.removeValuesByPrefix(SessionKeys.TEAM_SCORE_PREFIX, true);
 
@@ -914,7 +914,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             for (Player p : session.getPlayers()) {
                 GamePlayer gp = playerManager.getPlayer(p);
                 if (gp != null) {
-                    Object v = gp.getValue(GamePlayerKeys.SCORE, true);
+                    Object v = gp.getValue(GamePlayerKeys.SCORE);
                     scores.put(p.getUniqueId(), v instanceof Number n ? n.intValue() : 0);
                 }
             }
@@ -1007,7 +1007,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
 
         // Clear temp values after handlers have run
         for (Player p : activePlayers) {
-            playerManager.getPlayer(p).removeValues(true);
+            playerManager.getPlayer(p).removeValues();
         }
         session.removeValues(true);
 
@@ -1022,8 +1022,8 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         // SPECTATOR → opt-in (join_party_after_game flag set) becomes LOBBY; otherwise evicted
         for (Player p : activeSpectators) {
             boolean wantsJoin = Boolean.TRUE.equals(
-                    playerManager.getPlayer(p).getValue(GamePlayerKeys.JOIN_PARTY_AFTER_GAME, true));
-            playerManager.getPlayer(p).removeValues(true);
+                    playerManager.getPlayer(p).getValue(GamePlayerKeys.JOIN_PARTY_AFTER_GAME));
+            playerManager.getPlayer(p).removeValues();
             if (wantsJoin) {
                 session.setRole(p, SessionRole.LOBBY); // fires PlayerRoleChangeEvent
                 Bukkit.getPluginManager().callEvent(new LobbyEnterEvent(p, session));
@@ -1088,7 +1088,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         for (Session session : sessionManager.getAllSessions()) {
             if (session.getState() == SessionState.LOBBY) {
                 for (Player member : session.getLobbyMembers()) {
-                    playerManager.getPlayer(member).setValue(GamePlayerKeys.READY, false, true);
+                    playerManager.getPlayer(member).setValue(GamePlayerKeys.READY, false);
                 }
             }
         }

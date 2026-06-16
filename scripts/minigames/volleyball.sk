@@ -85,7 +85,7 @@ on "volleyball" game start:
         set {_t} to 1 if mod(loop-iteration,2) is 0 else 2
         teleport loop-value to {_spawn::%{_t}%}
         apply infinite speed 1 to loop-value
-        set temporary player value "team" of loop-value to {_teams::%{_t}%}
+        set player value "team" of loop-value to {_teams::%{_t}%}
         set chestplate of loop-value to {_chestplates::%{_t}%}
     set temporary session value "score::yellow" of event-session to 0
     set temporary session value "score::green" of event-session to 0
@@ -99,16 +99,16 @@ on "volleyball" game stop:
     if {_reason::1} is "WIN":
         set {_team} to {_reason::2}
         send "&eTeam %{_team}% won!" to (session players of event-session) and (session spectators of event-session)
-        set {_winners::*} to (session players of event-session) where [temporary player value "team" of input is {_team}]
+        set {_winners::*} to (session players of event-session) where [player value "team" of input is {_team}]
         set winners of event-session to {_winners::*}
 
 #----------------------------------------------------------------------
 
 local function Volleyball_GetTeamOfPlayer(p: player) :: string:
-    return temporary player value "team" of {_p}
+    return player value "team" of {_p}
 
 local function Volleyball_GiveBallToTeam(session: session, team: string):
-    set {_p::*} to (session players of {_session}) where [temporary player value "team" of input is {_team}]
+    set {_p::*} to (session players of {_session}) where [player value "team" of input is {_team}]
     set {_player} to random player of {_p::*}
     give {_player} 1 of {@ball_item}
 
@@ -262,7 +262,7 @@ on rightclick with dragon egg:
     player is playing (minigame with id "volleyball")
     cancel event
     set {_teams::*} to {@teams}
-    set {_team} to temporary player value "team" of player
+    set {_team} to player value "team" of player
     set {_t} to 1 if {_team} is {_teams::1} else 2
     set {_session} to session of player
     set {_playout-block} to (gamemap value "team_%{_t}%_starting_block" of {_session}) ? "yellow terracotta"

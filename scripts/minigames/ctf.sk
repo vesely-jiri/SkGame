@@ -95,23 +95,23 @@ local function Ctf_StartFlagCheck(session: session):
         loop session players of {_session}:
             set {_p} to loop-player
             set {_team} to skgame team of {_p}
-            set {_carrying} to temporary player value "carries_flag" of {_p}
+            set {_carrying} to player value "carries_flag" of {_p}
             if {_carrying} is not set:
                 if {_team} is "red":
                     if {_blue_flag} is set:
                         if distance between location of {_p} and {_blue_flag} < {@capture_radius}:
-                            set temporary player value "carries_flag" of {_p} to "blue"
+                            set player value "carries_flag" of {_p} to "blue"
                             send "&e%{_p}% &7picked up &9blue flag&7!" to session players of {_session}
                 else if {_team} is "blue":
                     if {_red_flag} is set:
                         if distance between location of {_p} and {_red_flag} < {@capture_radius}:
-                            set temporary player value "carries_flag" of {_p} to "red"
+                            set player value "carries_flag" of {_p} to "red"
                             send "&e%{_p}% &7picked up &cred flag&7!" to session players of {_session}
             else:
                 if {_team} is "red":
                     if {_red_base} is set:
                         if distance between location of {_p} and {_red_base} < {@capture_radius}:
-                            delete temporary player value "carries_flag" of {_p}
+                            delete player value "carries_flag" of {_p}
                             add 1 to team score of "red" in {_session}
                             set {_score} to team score of "red" in {_session}
                             send "&c&lRed scored! (%{_score}%/%{_limit}%)" to session players of {_session}
@@ -121,7 +121,7 @@ local function Ctf_StartFlagCheck(session: session):
                 else if {_team} is "blue":
                     if {_blue_base} is set:
                         if distance between location of {_p} and {_blue_base} < {@capture_radius}:
-                            delete temporary player value "carries_flag" of {_p}
+                            delete player value "carries_flag" of {_p}
                             add 1 to team score of "blue" in {_session}
                             set {_score} to team score of "blue" in {_session}
                             send "&9&lBlue scored! (%{_score}%/%{_limit}%)" to session players of {_session}
@@ -135,7 +135,7 @@ local function Ctf_StartScoreBar(session: session):
         set {_red} to team score of "red" in {_session}
         set {_blue} to team score of "blue" in {_session}
         loop session players of {_session}:
-            set {_carrying} to temporary player value "carries_flag" of loop-player
+            set {_carrying} to player value "carries_flag" of loop-player
             if {_carrying} is set:
                 send action bar "&eCarrying &c%{_carrying}% flag&e! Go to your base!" to loop-player
             else:
