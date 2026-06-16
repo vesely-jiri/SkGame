@@ -462,9 +462,6 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
 
         autoAssignTeams(session);
 
-        session.setState(SessionState.STARTED);
-        session.setStartedAt(System.currentTimeMillis());
-
         // Claim arena slot if applicable
         GameMap gameMap = session.getGameMap();
         if (gameMap != null && gameMap.hasArenaSlots()) {
@@ -475,10 +472,17 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             }
         }
 
-        // Reset all players before game starts — clears lobby inventory, effects, state
+        // Reset all players BEFORE state is set to STARTED — PlayerResetter fires Bukkit events
+        // (gamemode change, health restore, etc.) that Skript handlers may observe. If those handlers
+        // checked session state and called stop-game, state would be ENDED before GameStartEvent fired,
+        // making event-session's state appear as ENDED on the very first line of `on game start:`.
         for (Player p : session.getPlayers()) {
             PlayerResetter.reset(p, plugin.getDefaultGameMode());
         }
+
+        // Set STARTED immediately before the event so scripts always see STARTED inside on game start:
+        session.setState(SessionState.STARTED);
+        session.setStartedAt(System.currentTimeMillis());
         Bukkit.getPluginManager().callEvent(new GameStartEvent(session, session.getMiniGame(), gameMap));
         if (session.getMiniGame() != null) {
             final MiniGame _mg = session.getMiniGame();
