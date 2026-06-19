@@ -3,6 +3,33 @@ options:
     capture_radius: 3
     score_limit: 3
 
+#------------------------------------------------------------------------------
+
+locale "ctf":
+    game.start:
+        cs: "&cZachyť vlajku! Ukradni soupeřovu vlajku a přines ji na základnu!"
+        en: "&cCapture the Flag! Steal the enemy flag and return it to your base!"
+    game.over.win:
+        cs: "vyhrál zápas!"
+        en: "won the match!"
+    flag.picked.red:
+        cs: "sebral &cčervenou vlajku&7!"
+        en: "picked up the &cred flag&7!"
+    flag.picked.blue:
+        cs: "sebral &9modrou vlajku&7!"
+        en: "picked up the &9blue flag&7!"
+    red.scored:
+        cs: "&c&lČervení skórovali!"
+        en: "&c&lRed scored!"
+    blue.scored:
+        cs: "&9&lModří skórovali!"
+        en: "&9&lBlue scored!"
+    carrying.flag:
+        cs: "&eNeseš vlajku! Jdi na základnu!"
+        en: "&eCarrying flag! Go to your base!"
+
+#------------------------------------------------------------------------------
+
 register minigame with id "ctf":
     name: "&cCapture &fthe &9Flag"
     description: "&7- Steal the enemy flag and return it to your base"
@@ -10,6 +37,8 @@ register minigame with id "ctf":
     icon: white banner
     min players: 4
     tags: team, pvp
+    time: 6000
+    weather: "clear"
     teams:
         red:
             name: "Red Team"
@@ -64,6 +93,7 @@ on "ctf" game start:
             teleport loop-player to (gamemap value "blue_spawnpoint" of event-session)
             set chestplate of loop-player to {_blue_chestplate}
         set gamemode of loop-player to survival
+    send locale "ctf:game.start" to session players of event-session
     Ctf_StartFlagCheck(event-session)
     Ctf_StartScoreBar(event-session)
 
@@ -72,7 +102,8 @@ on "ctf" game stop:
         set {_winner} to temporary session value "winning_team" of event-session
         set {_winners::*} to (session players of event-session) where [skgame team of input is {_winner}]
         set winners of event-session to {_winners::*}
-        send "&e&lTeam %{_winner}% wins the match!" to (session players of event-session) and (session spectators of event-session)
+        loop (session players of event-session) and (session spectators of event-session):
+            send "&e&lTeam %{_winner}% %locale ""ctf:game.over.win"" for loop-player%" to loop-player
     loop (session players of event-session) and (session spectators of event-session):
         set gamemode of loop-player to adventure
         clear loop-player's inventory
@@ -101,12 +132,14 @@ local function Ctf_StartFlagCheck(session: session):
                     if {_blue_flag} is set:
                         if distance between location of {_p} and {_blue_flag} < {@capture_radius}:
                             set player value "carries_flag" of {_p} to "blue"
-                            send "&e%{_p}% &7picked up &9blue flag&7!" to session players of {_session}
+                            loop session players of {_session}:
+                                send "&e%{_p}% &7%locale ""ctf:flag.picked.blue"" for loop-player%" to loop-player
                 else if {_team} is "blue":
                     if {_red_flag} is set:
                         if distance between location of {_p} and {_red_flag} < {@capture_radius}:
                             set player value "carries_flag" of {_p} to "red"
-                            send "&e%{_p}% &7picked up &cred flag&7!" to session players of {_session}
+                            loop session players of {_session}:
+                                send "&e%{_p}% &7%locale ""ctf:flag.picked.red"" for loop-player%" to loop-player
             else:
                 if {_team} is "red":
                     if {_red_base} is set:
@@ -114,7 +147,8 @@ local function Ctf_StartFlagCheck(session: session):
                             delete player value "carries_flag" of {_p}
                             add 1 to team score of "red" in {_session}
                             set {_score} to team score of "red" in {_session}
-                            send "&c&lRed scored! (%{_score}%/%{_limit}%)" to session players of {_session}
+                            loop session players of {_session}:
+                                send "%locale ""ctf:red.scored"" for loop-player% (%{_score}%/%{_limit}%)" to loop-player
                             if {_score} >= {_limit}:
                                 set temporary session value "winning_team" of {_session} to "red"
                                 stop game of {_session} with reason "WIN"
@@ -124,7 +158,8 @@ local function Ctf_StartFlagCheck(session: session):
                             delete player value "carries_flag" of {_p}
                             add 1 to team score of "blue" in {_session}
                             set {_score} to team score of "blue" in {_session}
-                            send "&9&lBlue scored! (%{_score}%/%{_limit}%)" to session players of {_session}
+                            loop session players of {_session}:
+                                send "%locale ""ctf:blue.scored"" for loop-player% (%{_score}%/%{_limit}%)" to loop-player
                             if {_score} >= {_limit}:
                                 set temporary session value "winning_team" of {_session} to "blue"
                                 stop game of {_session} with reason "WIN"
@@ -137,7 +172,7 @@ local function Ctf_StartScoreBar(session: session):
         loop session players of {_session}:
             set {_carrying} to player value "carries_flag" of loop-player
             if {_carrying} is set:
-                send action bar "&eCarrying &c%{_carrying}% flag&e! Go to your base!" to loop-player
+                send action bar "%locale ""ctf:carrying.flag"" for loop-player%" to loop-player
             else:
                 send action bar "&cRed: %{_red}% &f| &9Blue: %{_blue}%" to loop-player
         wait 1 second

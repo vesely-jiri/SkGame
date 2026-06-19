@@ -1,6 +1,24 @@
 options:
     var_prefix: game::spleef
 
+#------------------------------------------------------------------------------
+
+locale "spleef":
+    game.start:
+        cs: "&bSpleef začal! Vyraž soupeřům bloky pod nohama!"
+        en: "&bSpleef started! Break blocks under your opponents!"
+    fell.out:
+        cs: "&cVypadl jsi z arény!"
+        en: "&cYou fell out of the arena!"
+    game.tie:
+        cs: "&7Remíza!"
+        en: "&7It's a tie!"
+    won:
+        cs: "vyhrál hru!"
+        en: "won the game!"
+
+#------------------------------------------------------------------------------
+
 register minigame with id "spleef":
     name: "&bSpleef"
     description: "&7- Break blocks under opponents to eliminate them"
@@ -8,6 +26,8 @@ register minigame with id "spleef":
     icon: iron shovel
     min players: 2
     tags: ffa, pvp
+    time: 0
+    weather: "clear"
     cancel events: hunger, block-place, item-drop, item-pickup
     values:
         gamemap value "spawnpoints":
@@ -31,18 +51,25 @@ register minigame with id "spleef":
 
 on "spleef" game start:
     set {_spawns::*} to gamemap values "spawnpoints" of event-session
-    loop shuffled session players of event-session:
-        add 1 to {_n}
-        teleport loop-player to {_spawns::%{_n}%}
+    spread shuffled (session players of event-session) across shuffled {_spawns::*}
+    loop session players of event-session:
         set gamemode of loop-player to survival
         give loop-player 1 of iron shovel named "&bSpleef Shovel"
-        reset {_n} if {_n} is size of {_spawns::*}
+    send locale "spleef:game.start" to session players of event-session
     Spleef_StartFallCheck(event-session)
 
 on "spleef" game stop:
     loop (session players of event-session) and (session spectators of event-session):
         set gamemode of loop-player to adventure
         clear loop-player's inventory
+    if event-string is "WIN":
+        set {_winner} to temporary session value "winner" of event-session
+        if {_winner} is set:
+            loop (session players of event-session) and (session spectators of event-session):
+                send "&6%{_winner}% &a%locale ""spleef:won"" for loop-player%" to loop-player
+    else if event-string is "TIE":
+        loop (session players of event-session) and (session spectators of event-session):
+            send locale "spleef:game.tie" to loop-player
 
 on break:
     player is playing (minigame with id "spleef")
@@ -60,7 +87,7 @@ local function Spleef_StartFallCheck(session: session):
         loop session players of {_session}:
             if (y-coordinate of loop-player) < {_minY}:
                 make loop-player a spectator in {_session}
-                send "&cYou fell out!" to loop-player
+                send locale "spleef:fell.out" to loop-player
                 set {_alive::*} to session players of {_session}
                 if size of {_alive::*} is 1:
                     set temporary session value "winner" of {_session} to {_alive::1}

@@ -2,6 +2,27 @@ options:
     var_prefix: game::parkour
     checkpoint_radius: 3
 
+#------------------------------------------------------------------------------
+
+locale "parkour":
+    game.start:
+        cs: "&bParkour začal! Dotkni se všech checkpointů co nejrychleji!"
+        en: "&bParkour started! Reach all checkpoints as fast as possible!"
+    checkpoint.passed:
+        cs: "Checkpoint prošel!"
+        en: "Checkpoint passed!"
+    game.timeout:
+        cs: "&cČasový limit vypršel!"
+        en: "&cTime limit reached!"
+    won:
+        cs: "dokončil parkour jako první!"
+        en: "finished the parkour first!"
+    no.checkpoints:
+        cs: "&cŽádné checkpointy nejsou nastaveny pro tuto mapu!"
+        en: "&cNo checkpoints are configured for this map!"
+
+#------------------------------------------------------------------------------
+
 register minigame with id "parkour":
     name: "&bParkour"
     description: "&7- Race through checkpoints to the finish line"
@@ -9,6 +30,8 @@ register minigame with id "parkour":
     icon: light blue stained glass pane
     min players: 1
     tags: ffa, race
+    time: 6000
+    weather: "clear"
     cancel events: hunger, pvp, item-drop, item-pickup, block-break, block-place
     values:
         gamemap value "spawnpoint":
@@ -25,13 +48,15 @@ on "parkour" game start:
     set {_spawn} to gamemap value "spawnpoint" of event-session
     set {_checkpoints::*} to gamemap values "checkpoints" of event-session
     if size of {_checkpoints::*} is 0:
+        send locale "parkour:no.checkpoints" to session players of event-session
         stop game of event-session with reason "NO_CHECKPOINTS"
         stop
     loop session players of event-session:
         teleport loop-player to {_spawn}
         set gamemode of loop-player to adventure
         set player value "checkpoint" of loop-player to 1
-        send "&bParkour started! Reach all &e%size of {_checkpoints::*}%&b checkpoints!" to loop-player
+    loop session players of event-session:
+        send "&b%locale ""parkour:game.start"" for loop-player% &7(&e%size of {_checkpoints::*}% checkpoints&7)" to loop-player
     Parkour_CheckLoop(event-session)
 
 on "parkour" game stop:
@@ -41,11 +66,18 @@ on "parkour" game stop:
         set {_winner} to temporary session value "winner" of event-session
         if {_winner} is set:
             set winners of event-session to {_winner}
+            loop (session players of event-session) and (session spectators of event-session):
+                send "&6%{_winner}% &a%locale ""parkour:won"" for loop-player%" to loop-player
+    else if event-string is "TIMEOUT":
+        loop (session players of event-session) and (session spectators of event-session):
+            send locale "parkour:game.timeout" to loop-player
 
 local function Parkour_CheckLoop(session: session):
     set {_checkpoints::*} to gamemap values "checkpoints" of {_session}
     set {_total} to size of {_checkpoints::*}
     while (session state of {_session}) is STARTED:
+        if session duration of {_session} > 10 minutes:
+            stop game of {_session} with reason "TIMEOUT"
         loop session players of {_session}:
             set {_cur} to (player value "checkpoint" of loop-player) ? 1
             if {_cur} > {_total}:
@@ -57,7 +89,7 @@ local function Parkour_CheckLoop(session: session):
                         set temporary session value "winner" of {_session} to loop-player
                         stop game of {_session} with reason "WIN"
                     else:
-                        send action bar "&aCheckpoint &e%{_cur}% &a/ &e%{_total}% &apassed!" to loop-player
+                        send action bar "&a%locale ""parkour:checkpoint.passed"" for loop-player% &e(%{_cur}%/%{_total}%)" to loop-player
                         add 1 to {_cur}
                         set player value "checkpoint" of loop-player to {_cur}
         wait 5 ticks

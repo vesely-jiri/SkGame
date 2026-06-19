@@ -12,17 +12,35 @@ options:
     ball_size: 2
     ball_item: dragon egg named "&eBall" with lore "&7- Hit ball and land it on opponent's ground"
     double_touch: true
-#messages
-    cant_double_touch: "&cYou can't double touch!"
-    not_on_playout_block: "&cYou must be on the play out block to start playing"
 
-#----------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+
+locale "volleyball":
+    game.start:
+        cs: "&eVolleyball začal! Pošli míč na hřiště soupeře!"
+        en: "&eVolleyball started! Send the ball onto the opponent's court!"
+    game.over:
+        cs: "vyhrál zápas!"
+        en: "won the match!"
+    scored:
+        cs: "skóroval!"
+        en: "scored!"
+    no.double.touch:
+        cs: "&cNemůžeš se dotknout míče dvakrát za sebou!"
+        en: "&cYou can't double touch!"
+    not.on.playout.block:
+        cs: "&cMusíš stát na výchozím bloku pro zahájení!"
+        en: "&cYou must be on the play out block to start playing!"
+
+#------------------------------------------------------------------------------
 
 register minigame with id "volleyball":
     name: "&eVolleyball"
     icon: magma cream
     author: "JuraJ_Player"
     min players: 2
+    time: 6000
+    weather: "clear"
     cancel events: hunger, item-drop, item-pickup
     values:
         gamemap value "net_block":
@@ -89,6 +107,7 @@ on "volleyball" game start:
         set chestplate of loop-value to {_chestplates::%{_t}%}
     set temporary session value "score::yellow" of event-session to 0
     set temporary session value "score::green" of event-session to 0
+    send locale "volleyball:game.start" to session players of event-session
     wait 3 seconds
     Volleyball_GiveBallToTeam(event-session, (random element out of {_teams::*}))
     Volleyball_ScoreActionBar(event-session)
@@ -98,11 +117,12 @@ on "volleyball" game stop:
     set {_reason::*} to event-string split at ";"
     if {_reason::1} is "WIN":
         set {_team} to {_reason::2}
-        send "&eTeam %{_team}% won!" to (session players of event-session) and (session spectators of event-session)
         set {_winners::*} to (session players of event-session) where [player value "team" of input is {_team}]
         set winners of event-session to {_winners::*}
+        loop (session players of event-session) and (session spectators of event-session):
+            send "&eTeam %{_team}% %locale ""volleyball:game.over"" for loop-player%" to loop-player
 
-#----------------------------------------------------------------------
+#------------------------------------------------------------------------------
 
 local function Volleyball_GetTeamOfPlayer(p: player) :: string:
     return player value "team" of {_p}
@@ -123,7 +143,8 @@ local function Volleyball_TeamPointAdd(team: string, p: player, reason: string =
     set {_session} to session of {_p}
     set {_score} to (temporary session value "score::%{_team}%" of {_session}) ? 0
     set {_score} to {_score} + 1
-    send "&a%{_p}% scored!" to (session players of {_session}) and (session spectators of {_session})
+    loop (session players of {_session}) and (session spectators of {_session}):
+        send "&a%{_p}% %locale ""volleyball:scored"" for loop-player%" to loop-player
     set {_teams::*} to {@teams}
     set {_color} to "&e" if {_team} is "yellow" else "&a"
     set {_players::*} to (session players of {_session}) and (session spectators of {_session})
@@ -197,7 +218,7 @@ on rightclick on magma cube:
         set {_session} to session of player
         (size of (session players of {_session})) >= 4
         (metadata tag "{@var_prefix}.attacker" of event-entity) is player
-        send {@cant_double_touch} to player
+        send locale "volleyball:no.double.touch" to player
         stop
     set {_t} to metadata tag "{@var_prefix}.antispam" of event-entity
     if difference between {_t} and now < 10 ticks:
@@ -217,7 +238,7 @@ on damage of magma cube:
         if (size of (session players of {_session})) >= 4:
             set {_a} to metadata tag "{@var_prefix}.attacker" of victim
             if attacker is {_a}:
-                send {@cant_double_touch} to attacker
+                send locale "volleyball:no.double.touch" to attacker
                 stop
     set metadata tag "{@var_prefix}.attacker" of victim to attacker
     set (invulnerability time of victim) to 20 ticks
@@ -270,4 +291,4 @@ on rightclick with dragon egg:
         remove (1 of dragon egg) from player
         Volleyball_SpawnBall(player)
     else:
-        send {@not_on_playout_block} to player
+        send locale "volleyball:not.on.playout.block" to player

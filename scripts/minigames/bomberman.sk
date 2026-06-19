@@ -7,9 +7,28 @@ options:
     uncommon_range: 10
     legendary_range: 15
     startup_time: 5
-#messages
-    player_eliminated: "&cPlayer %{_victim}% has been eliminated by %{_attacker}%"
-    shield_destroyed: "&cYour shield has been destroyed!"
+
+#----------------------------------------------------------------------
+
+locale "bomberman":
+    game.start:
+        cs: "&cBomberMan začal! Sbírej TNT a eliminuj soupeře!"
+        en: "&cBomberMan started! Collect TNT and eliminate opponents!"
+    player.eliminated:
+        cs: "byl vyřazen hráčem"
+        en: "was eliminated by"
+    shield.destroyed:
+        cs: "&cTvůj štít byl zničen!"
+        en: "&cYour shield has been destroyed!"
+    kills:
+        cs: "zabití"
+        en: "kills"
+    deathmatch.start:
+        cs: "&cDeathmatch začal! Kdo má nejvíce zabití, vyhraje!"
+        en: "&cDeathmatch started! Most kills wins!"
+    timeout.winner:
+        cs: "vyhrál s"
+        en: "won with"
 
 #----------------------------------------------------------------------
 
@@ -19,6 +38,8 @@ register new minigame with id "bomberman":
     description: "&7- Pickup your &cTNT &7and fight"
     author: "JuraJ_Player"
     min players: 2
+    time: 18000
+    weather: "clear"
     cancel events: hunger, item-drop, pvp
     values:
         gamemap value "booster_spawnpoints":
@@ -59,12 +80,10 @@ on "bomberman" game start:
     set {_loc::*} to gamemap values "booster_spawnpoints" of event-session
     set {_mode} to (session value "gamemode" of event-session) ? "elimination"
     set {_rate} to (session value "spawn_rate" of event-session) ? 5 ticks
-    set {_cd} to (session value "respawn_cooldown" of event-session) ? 5 seconds
-    loop shuffled session players of event-session:
-        add 1 to {_n}
-        teleport loop-value to {_loc::%{_n}%}
-        set gamemode of loop-value to survival
-        reset {_n} if {_n} is size of {_loc::*}
+    spread shuffled (session players of event-session) across shuffled {_loc::*}
+    loop session players of event-session:
+        set gamemode of loop-player to survival
+    send locale "bomberman:game.start" to session players of event-session
     loop reversed {@startup_time} times:
         set level of (session players of event-session) to loop-value - 1
         if loop-value <= 3:
@@ -72,6 +91,7 @@ on "bomberman" game start:
         wait 1 second
     Bomberman_StartSpawningDrops(event-session, {_rate}, {_loc::*})
     if {_mode} is "deathmatch":
+        send locale "bomberman:deathmatch.start" to session players of event-session
         Bomberman_StartTimer(event-session)
 
 on "bomberman" game stop:
@@ -89,7 +109,8 @@ on "bomberman" game stop:
         sort {_player-list::*} in descending order based on {_players::%input%}
         set {_kills} to {_players::%{_player-list::1}%}
         set winners of event-session to {_player-list::1}
-        send "&e%{_player-list::1}% &7- &e%{_kills}% kills" to (session players of event-session) and (session spectators of event-session)
+        loop (session players of event-session) and (session spectators of event-session):
+            send "&e%{_player-list::1}% &7%locale ""bomberman:timeout.winner"" for loop-player% &e%{_kills}% %locale ""bomberman:kills"" for loop-player%" to loop-player
 
 #----------------------------------------------------------------------
 
@@ -187,7 +208,8 @@ local function Bomberman_EliminatePlayer(victim: player, attacker: player):
         set (gamemode of {_victim}) to spectator
         add 1 to player value "deaths" of {_victim}
         play sound "minecraft:entity.player.hurt" at {_victim}
-        send {@player_eliminated} to (session players of {_session}) and (session spectators of {_session})
+        loop (session players of {_session}) and (session spectators of {_session}):
+            send "&c%{_victim}% &7%locale ""bomberman:player.eliminated"" for loop-player% &c%{_attacker}%" to loop-player
         if {_victim} is not {_attacker}:
             Bomberman_AddPoint({_session}, {_attacker})
         if Bomberman_GetGamemode({_session}) is "elimination":
@@ -198,7 +220,7 @@ local function Bomberman_EliminatePlayer(victim: player, attacker: player):
         else if Bomberman_GetGamemode({_session}) is "deathmatch":
             Bomberman_RespawnPlayer({_session}, {_victim})
     else:
-        send action bar {@shield_destroyed} to {_victim}
+        send actionbar locale "bomberman:shield.destroyed" to {_victim}
         play sound "minecraft:item.shield.break" with pitch 1 at {_victim}
         set chestplate of {_victim} to air
 
