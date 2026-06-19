@@ -283,20 +283,62 @@ public class Types {
                 .since("1.0.0")
         );
 
-        Classes.registerClass(new EnumClassInfo<>(TeamAssignmentMode.class, "teamassignmentmode", "team assignment modes",
-                        new SimpleLiteral<>(TeamAssignmentMode.AUTO, true))
+        // ClassInfo (not EnumClassInfo) so we can call .parser() without hitting
+        // EnumClassInfo's pre-set parser and the "assert this.parser == null" in Skript 2.13.0.
+        Classes.registerClass(new ClassInfo<>(TeamAssignmentMode.class, "teamassignmentmode")
                 .user("team ?assignment ?modes?")
                 .name("Team Assignment Mode")
                 .description("How players are assigned to teams: auto (framework assigns), self-select (players choose), both (players choose + unpicked auto-balanced).")
                 .since("1.0.0")
+                .serializer(new EnumSerializer<>(TeamAssignmentMode.class))
+                .parser(new Parser<>() {
+                    @Override
+                    public @Nullable TeamAssignmentMode parse(String input, ParseContext context) {
+                        return switch (input.trim().toLowerCase()) {
+                            case "auto"        -> TeamAssignmentMode.AUTO;
+                            case "self-select" -> TeamAssignmentMode.SELF_SELECT;
+                            case "both"        -> TeamAssignmentMode.BOTH;
+                            default -> {
+                                try { yield TeamAssignmentMode.valueOf(input.trim().toUpperCase()); }
+                                catch (IllegalArgumentException e) { yield null; }
+                            }
+                        };
+                    }
+                    @Override
+                    public String toString(TeamAssignmentMode mode, int flags) {
+                        return mode.name().toLowerCase().replace('_', '-');
+                    }
+                    @Override
+                    public String toVariableNameString(TeamAssignmentMode mode) {
+                        return "teamAssignmentMode:" + mode.name();
+                    }
+                })
         );
 
-        Classes.registerClass(new EnumClassInfo<>(CancellableEventType.class, "cancellableeventtype", "cancellable event types",
-                        new SimpleLiteral<>(CancellableEventType.DAMAGE, true))
+        Classes.registerClass(new ClassInfo<>(CancellableEventType.class, "cancellableeventtype")
                 .user("cancellable ?event ?types?")
                 .name("Cancellable Event Type")
                 .description("Represents a game event type that can be automatically cancelled for all players in a session. Used with the 'cancel events:' entry in register minigame blocks.")
                 .since("1.0.0")
+                .serializer(new EnumSerializer<>(CancellableEventType.class))
+                .parser(new Parser<>() {
+                    @Override
+                    public @Nullable CancellableEventType parse(String input, ParseContext context) {
+                        try {
+                            return CancellableEventType.valueOf(input.trim().toUpperCase().replace('-', '_'));
+                        } catch (IllegalArgumentException e) {
+                            return null;
+                        }
+                    }
+                    @Override
+                    public String toString(CancellableEventType type, int flags) {
+                        return type.skriptName();
+                    }
+                    @Override
+                    public String toVariableNameString(CancellableEventType type) {
+                        return "cancellableEventType:" + type.name();
+                    }
+                })
         );
 
         Classes.registerClass(new ClassInfo<>(Region.class, "skarena")
