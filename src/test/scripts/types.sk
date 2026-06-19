@@ -1,0 +1,29 @@
+register minigame with id "ci_types_mg":
+    name: "Types CI"
+
+test "minigame value stores string":
+    set {_mg} to minigame with id "ci_types_mg"
+    set value "ci_str" of {_mg} to "hello"
+    assert value "ci_str" of {_mg} is "hello" with "string value should round-trip via minigame values"
+    delete value "ci_str" of {_mg}
+    assert value "ci_str" of {_mg} is not set with "deleted minigame value should be absent"
+
+test "minigame value stores integer":
+    set {_mg} to minigame with id "ci_types_mg"
+    set value "ci_int" of {_mg} to 42
+    assert value "ci_int" of {_mg} is 42 with "integer value should round-trip via minigame values"
+    delete value "ci_int" of {_mg}
+
+test "minigame value stores decimal":
+    set {_mg} to minigame with id "ci_types_mg"
+    set value "ci_dec" of {_mg} to 3.14
+    set {_v} to value "ci_dec" of {_mg}
+    assert {_v} is set with "decimal value should round-trip via minigame values"
+    delete value "ci_dec" of {_mg}
+
+test "minigame value overwrite":
+    set {_mg} to minigame with id "ci_types_mg"
+    set value "ci_ow" of {_mg} to "first"
+    set value "ci_ow" of {_mg} to "second"
+    assert value "ci_ow" of {_mg} is "second" with "overwritten value should reflect new value"
+    delete value "ci_ow" of {_mg}

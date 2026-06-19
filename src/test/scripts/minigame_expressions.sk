@@ -1,0 +1,37 @@
+register minigame with id "ci_test_mg":
+    name: "CI Test Minigame"
+    min players: 2
+
+test "minigame registers and is retrievable":
+    set {_mg} to minigame with id "ci_test_mg"
+    assert {_mg} is set with "minigame should be registered after register block"
+
+test "minigame id expression":
+    set {_mg} to minigame with id "ci_test_mg"
+    assert minigame id of {_mg} is "ci_test_mg" with "minigame id should match registration id"
+
+test "minigame name expression":
+    set {_mg} to minigame with id "ci_test_mg"
+    assert minigame name of {_mg} is "CI Test Minigame" with "minigame name should match name entry"
+
+test "minigame min players expression":
+    set {_mg} to minigame with id "ci_test_mg"
+    assert minimum minigame players of {_mg} is 2 with "min players should be 2"
+
+test "all minigames contains registered minigame":
+    set {_found} to false
+    loop all minigames:
+        if minigame id of loop-minigame is "ci_test_mg":
+            set {_found} to true
+    assert {_found} is true with "all minigames should contain ci_test_mg"
+
+test "minigame with unknown id returns null":
+    set {_mg} to minigame with id "ci_skgame_nonexistent_xyz"
+    assert {_mg} is not set with "nonexistent minigame should not be found"
+
+test "minigame value set and get":
+    set {_mg} to minigame with id "ci_test_mg"
+    set value "ci_score_cap" of {_mg} to 10
+    assert value "ci_score_cap" of {_mg} is 10 with "minigame value should round-trip"
+    delete value "ci_score_cap" of {_mg}
+    assert value "ci_score_cap" of {_mg} is not set with "deleted minigame value should be absent"
