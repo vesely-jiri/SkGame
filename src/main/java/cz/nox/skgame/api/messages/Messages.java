@@ -198,7 +198,12 @@ public final class Messages {
 
     // ─── Locale resolution ───────────────────────────────────────────────────
 
-    static String resolveLocale(@Nullable Player player) {
+    /** Returns the currently configured forced locale, or null if not set. */
+    public static @Nullable String getForcedLocale() {
+        return forcedLocale;
+    }
+
+    public static String resolveLocale(@Nullable Player player) {
         if (forcedLocale != null && locales.containsKey(forcedLocale)) return forcedLocale;
         if (player == null) return fallbackLocale;
         String normalized = normalize(player.getLocale());
@@ -209,7 +214,7 @@ public final class Messages {
      * Normalize Bukkit's lowercase locale string to ISO convention.
      * Examples: "cs_cz" → "cs_CZ", "en_us" → "en_US", "de" → "de".
      */
-    static String normalize(String locale) {
+    public static String normalize(String locale) {
         if (locale == null || locale.isEmpty()) return "en_US";
         int idx = locale.indexOf('_');
         if (idx < 0) return locale.toLowerCase(Locale.ROOT);
