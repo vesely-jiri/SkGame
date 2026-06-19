@@ -1,6 +1,8 @@
 # SkGame
 
-**SkGame** is a Skript addon for building multi-instance minigame frameworks on Paper servers. Game logic lives entirely in `.sk` scripts — the plugin provides the session lifecycle, GUI, player management, and region API so you don't have to.
+[![CI](https://github.com/vesely-jiri/SkGame/actions/workflows/ci.yml/badge.svg)](https://github.com/vesely-jiri/SkGame/actions/workflows/ci.yml)
+
+**SkGame** is a Skript addon for building multi-instance minigame frameworks on Paper servers. Game logic lives entirely in `.sk` scripts — the plugin provides the session lifecycle, GUI, player management, region API, and locale system so you don't have to.
 
 ## Requirements
 
@@ -8,8 +10,6 @@
 |---|---|---|
 | Paper | 1.21+ | Spigot not supported |
 | Skript | 2.13+ | |
-| SkBee | any | Optional — enables SkBee region support |
-| WorldGuard | any | Optional — enables WorldGuard region support |
 
 ## Installation
 
@@ -20,39 +20,51 @@
 
 ## Quickstart
 
-Minimal minigame — register it, teleport players on start, declare a winner on stop:
+Minimal minigame — declare it, spread players to spawns, announce via locale:
 
 ```skript
-on load:
-    register minigame with id "example":
-        set minigame name of event-minigame to "Example Game"
-        set min players of event-minigame to 2
-        set gamemap value "spawnpoints" of event-minigame to a custom value:
-            set value name to "Spawn points"
-            set value type to a location
-            set plurality to plural
+locale "mygame":
+    start:
+        en: "&aGame started! Reach the goal to win."
+        cs: "&aHra začala! Dosáhni cíle a vyhraj."
 
-on "example" game start:
-    set {_spawns::*} to gamemap values "spawnpoints" of event-session
-    loop session players of event-session:
-        teleport loop-player to {_spawns::1}
+register minigame with id "mygame":
+    name: "My Game"
+    icon: diamond sword
+    min players: 2
+    time: 6000
+    weather: "clear"
+    cancel events: hunger, item-drop
+    values:
+        gamemap value "spawnpoints":
+            name: "Spawn locations"
+            type: a location
+            plurality: plural
 
-on "example" game stop:
-    if event-string is "WIN":
-        set winners of event-session to (temporary session value "winner" of event-session)
+on "mygame" game start:
+    spread shuffled (session players of event-session) across shuffled (gamemap values "spawnpoints" of event-session)
+    send locale "mygame:start" to session players of event-session
+
+on "mygame" game stop:
+    teleport players of event-session to lobby
 ```
 
 ## Features
 
 - **Multi-instance sessions** — unlimited concurrent games, each isolated
+- **Declarative registration** — `register minigame with id "x":` top-level block with name, icon, min players, tags, time/weather, values, teams, cancel events
 - **Teams** — built-in team assignment (auto, self-select, or both), per-team scores
+- **Spread effect** — `spread %players% across %locations%` distributes players to spawns with automatic wrap-around
+- **Zone API** — `%player% is in zone %string% of %session%` checks if a player is inside a named sub-region of the arena
+- **Script locale system** — `locale "ns": key: en: "text"` block + `send locale / send title locale / send actionbar locale` effects; per-player language resolution
+- **Session duration** — `session duration of %session%` returns elapsed time for timeout logic
 - **Map voting** — players vote from a hotbar item during the preparation window
 - **Spectator mode** — join mid-game, role switching, configurable gamemode
 - **GUI system** — main menu, session lobby, minigame/map pickers, admin panel — all interceptable via Skript events
 - **Stats & leaderboard** — win/play counts, top-player queries, per-player game history (SQLite)
-- **Locale** — per-player locale (en/cs built-in), hot-reloadable YAML message files
+- **System locale** — per-player locale (en/cs built-in), hot-reloadable YAML message files
 - **Admin tools** — in-game map setup wand, gamemap value editor, session control panel
-- **Region API** — CuboidRegion built-in; optional SkBee and WorldGuard adapters
+- **Region API** — CuboidRegion built-in
 
 ## Links
 
