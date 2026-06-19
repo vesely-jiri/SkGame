@@ -22,9 +22,19 @@ import org.jetbrains.annotations.Nullable;
         "Resets to zero on each new round.",
 })
 @Examples({
-        "if session duration of event-session > 5 minutes:",
-        "    stop game of event-session with reason \"timeout\"",
-        "broadcast \"Running for %session duration of event-session%\"",
+        "# Timeout check — stop game after 10 minutes",
+        "every 30 seconds:",
+        "    loop all sessions:",
+        "        if state of loop-session is started:",
+        "            if session duration of loop-session > 10 minutes:",
+        "                stop game of loop-session with reason \"timeout\"",
+        "",
+        "# Broadcast elapsed time",
+        "broadcast \"Session running for %session duration of event-session%\"",
+        "",
+        "# Use in condition with different units",
+        "if duration of event-session >= 5 minutes:",
+        "    send actionbar locale \"koth:overtime\" to session players of event-session"
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")

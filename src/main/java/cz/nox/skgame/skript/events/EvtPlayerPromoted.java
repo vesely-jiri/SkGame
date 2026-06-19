@@ -30,11 +30,18 @@ import org.jetbrains.annotations.Nullable;
         "Provides: event-player, event-session, event-minigame, event-gamemap."
 })
 @Examples({
+        "# event-player, event-session, event-minigame, event-gamemap available",
         "on player promoted:",
-        "    send \"You joined the game!\" to event-player",
+        "    send \"You are now playing!\" to event-player",
         "",
-        "on \"koth\" player promoted in event-session:",
-        "    give event-player a diamond sword"
+        "# Filter by minigame — give equipment on promotion",
+        "on \"koth\" player promoted:",
+        "    give event-player an iron sword",
+        "    set gamemode of event-player to survival",
+        "",
+        "# With session filter",
+        "on \"bomberman\" player promoted of {_specific_session}:",
+        "    teleport event-player to gamemap value \"spawn_point\" of event-session"
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")

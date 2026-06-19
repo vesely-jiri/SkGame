@@ -36,11 +36,18 @@ import java.util.UUID;
         "Supports: SECTION (code block). event-session is available inside the block."
 })
 @Examples({
+        "# Create a session — auto-generated id",
         "create game session",
+        "",
+        "# Create with explicit id",
         "create game session with id \"arena_1\"",
-        "create game session with uuid \"my-session\":",
-        "\tset session map of event-session to gamemap with id \"arena\"",
-        "\tset session players of event-session to {_players::*}"
+        "",
+        "# Create with callback block — event-session is the newly created session",
+        "create new game session with id \"lobby_room\":",
+        "    set minigame of event-session to minigame with id \"koth\"",
+        "    set map of event-session to gamemap with id \"arena_main\"",
+        "    set shuffle of event-session to true",
+        "    set session rounds of event-session to 3"
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")

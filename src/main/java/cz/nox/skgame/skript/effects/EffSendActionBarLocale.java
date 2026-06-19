@@ -22,8 +22,17 @@ import org.jetbrains.annotations.Nullable;
         "The key format is \"namespace:message.key\".",
 })
 @Examples({
-        "send actionbar locale \"bomberman:score\" to player",
-        "send actionbar locale \"koth:time.left\" to session players of event-session",
+        "# Action bar to a single player",
+        "send actionbar locale \"koth:time.left\" to event-player",
+        "",
+        "# Action bar to all session players — useful for countdowns",
+        "send actionbar locale \"bomberman:countdown\" to session players of event-session",
+        "",
+        "# Periodically update action bar in a repeating task",
+        "every 5 seconds:",
+        "    loop all sessions:",
+        "        if state of loop-session is started:",
+        "            send actionbar locale \"koth:score.update\" to session players of loop-session"
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")

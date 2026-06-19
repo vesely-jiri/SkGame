@@ -37,10 +37,19 @@ import org.jetbrains.annotations.Nullable;
         "Supports: GET / SET / ADD / REMOVE / DELETE."
 })
 @Examples({
-        "set score of event-player to 0",
-        "add 1 to score of event-player",
-        "remove 2 from score of event-player",
-        "broadcast \"Score: %score of event-player%\"",
+        "# Score is a shorthand for player value \"__score\" — reset at game start",
+        "on game start:",
+        "    loop session players of event-session:",
+        "        set score of loop-player to 0",
+        "",
+        "# Award point on kill",
+        "on game stop:", // placeholder — real usage in minigame scripts
+        "    add 1 to score of event-player",
+        "    if score of event-player >= 10:",
+        "        stop game of event-session with reason \"win\"",
+        "",
+        "# Read and delete",
+        "broadcast \"Final score: %score of event-player%\"",
         "delete score of event-player"
 })
 @Since("1.0.0")

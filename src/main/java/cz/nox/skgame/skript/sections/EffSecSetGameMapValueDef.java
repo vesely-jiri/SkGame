@@ -31,11 +31,29 @@ import java.util.List;
         "Supports: SECTION."
 })
 @Examples({
-        "set gamemap value \"spawn_radius\" of event-minigame to a custom value:",
+        "# Declare per-map value schema — admin fills values via /game admin GUI",
+        "# Typically called inside a register block or on load:",
+        "",
+        "# Simple number value with default",
+        "set gamemap value \"spawn_radius\" of minigame with id \"koth\" to a custom value:",
         "    set name of event-value to \"Spawn radius\"",
         "    set value type of event-value to a number",
         "    set default value of event-value to 5",
-        "    set description of event-value to \"Radius around spawn\""
+        "    set description of event-value to \"Radius around each spawn point\"",
+        "",
+        "# Location list (plural)",
+        "set gamemap value \"spawn_points\" of minigame with id \"koth\" to a custom value:",
+        "    set name of event-value to \"Spawn points\"",
+        "    set value type of event-value to a location",
+        "    set value plurality of event-value to plural",
+        "",
+        "# Number with min/max constraint",
+        "set gamemap value \"round_time\" of event-minigame to a custom value:",
+        "    set name of event-value to \"Round time (seconds)\"",
+        "    set value type of event-value to a number",
+        "    set default value of event-value to 120",
+        "    set min value of event-value to 30",
+        "    set max value of event-value to 600"
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")

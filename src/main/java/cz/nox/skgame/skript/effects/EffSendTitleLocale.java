@@ -25,8 +25,14 @@ import org.jetbrains.annotations.Nullable;
         "The resolved text is shown as the main title. Subtitle is empty.",
 })
 @Examples({
-        "send title locale \"bomberman:round.start\" to player",
-        "send title locale \"bomberman:game.over\" to session players of event-session",
+        "# Title to a single player",
+        "send title locale \"koth:game.start\" to event-player",
+        "",
+        "# Title to all session players",
+        "send title locale \"bomberman:round.start\" to session players of event-session",
+        "",
+        "# Combine with regular Skript title for subtitle",
+        "send title locale \"koth:game.over\" to event-player"
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")

@@ -26,10 +26,18 @@ import org.jetbrains.annotations.Nullable;
         "Supports: Event trigger only (GET session, GET minigame, GET reason)."
 })
 @Examples({
+        "# Any minigame — event-session, event-minigame, event-string (stop reason) available",
         "on game stop:",
-        "    broadcast \"%id of event-minigame% in session %id of event-session% has ended\"",
-        "on \"Bomberman\" game stop:",
-        "    broadcast \"Bomberman minigame stopped in session %id of event-session%\""
+        "    broadcast \"%event-minigame% ended. Reason: %event-string%\"",
+        "    loop session players of event-session:",
+        "        teleport loop-player to lobby spawn",
+        "",
+        "# Filter by minigame id",
+        "on \"koth\" game stop:",
+        "    send locale \"koth:game.over\" to session players of event-session",
+        "    loop session players of event-session:",
+        "        clear inventory of loop-player",
+        "        delete player value \"score\" of loop-player"
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")

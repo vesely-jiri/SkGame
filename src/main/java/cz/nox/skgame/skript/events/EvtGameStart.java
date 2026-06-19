@@ -27,10 +27,17 @@ import org.jetbrains.annotations.Nullable;
         "Supports: Event trigger only (GET session, GET minigame, GET map)."
 })
 @Examples({
+        "# Any minigame — event-session, event-minigame, event-gamemap all available",
         "on game start:",
-        "    broadcast \"%id of event-minigame% in session %id of event-session% has started\"",
-        "on \"Bomberman\" game start:",
-        "    broadcast \"Bomberman minigame started on map %id of event-gamemap%\""
+        "    broadcast \"%event-minigame% started on %event-gamemap%\"",
+        "    set {_spawns::*} to gamemap values \"spawn_points\" of event-session",
+        "    spread session players of event-session across shuffled {_spawns::*}",
+        "",
+        "# Filter by minigame id (case-insensitive)",
+        "on \"koth\" game start:",
+        "    send locale \"koth:game.start\" to session players of event-session",
+        "    loop session players of event-session:",
+        "        set player value \"score\" of loop-player to 0"
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")

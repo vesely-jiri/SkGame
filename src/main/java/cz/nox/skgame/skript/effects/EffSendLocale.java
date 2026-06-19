@@ -24,8 +24,14 @@ import org.jetbrains.annotations.Nullable;
         "No-op if the key is not found; logs a warning once per missing key.",
 })
 @Examples({
-        "send locale \"bomberman:game.start\" to player",
-        "send locale \"bomberman:game.start\" to players of event-session",
+        "# Send to a single player — message in their locale",
+        "send locale \"koth:game.start\" to event-player",
+        "",
+        "# Send to all players in session — each gets their own locale",
+        "send locale \"bomberman:game.start\" to session players of event-session",
+        "",
+        "# Send to all members (players + spectators)",
+        "send locale \"koth:game.over\" to session members of event-session"
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")

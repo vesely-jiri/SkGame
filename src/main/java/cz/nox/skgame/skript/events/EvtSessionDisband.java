@@ -25,9 +25,14 @@ import org.jetbrains.annotations.Nullable;
         "Provides the session that was disbanded.",
 })
 @Examples({
+        "# event-session, event-string (DisbandReason name) available",
         "on session disband:",
-        "    broadcast \"Session %id of event-session% has ended.\"",
-        "    clear players of event-session"
+        "    broadcast \"Session %id of event-session% disbanded. Reason: %event-string%\"",
+        "",
+        "# Reason values: EXPLICIT_DISBAND, HOST_LEFT, IDLE_TIMEOUT, SERVER_SHUTDOWN",
+        "on party disband:",
+        "    if event-string is \"IDLE_TIMEOUT\":",
+        "        broadcast \"Session disbanded due to inactivity.\""
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")

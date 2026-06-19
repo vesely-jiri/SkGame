@@ -23,8 +23,15 @@ import org.jetbrains.annotations.Nullable;
         "Returns the raw key as fallback if the key is not found (and logs a warning).",
 })
 @Examples({
-        "set {_text} to locale \"bomberman:game.start\" for player",
-        "send title (locale \"bomberman:round.start\" for player) to player",
+        "# Resolve a locale string into a variable",
+        "set {_msg} to locale \"bomberman:game.start\" for event-player",
+        "",
+        "# Inline in format string — each player gets their own locale",
+        "loop session players of event-session:",
+        "    send \"&a%locale \"bomberman:game.start\" for loop-player%\" to loop-player",
+        "",
+        "# Use as title/subtitle string",
+        "send title (locale \"koth:game.over\" for event-player) with subtitle (locale \"koth:final.score\" for event-player) to event-player"
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")

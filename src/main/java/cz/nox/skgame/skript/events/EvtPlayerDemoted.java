@@ -30,11 +30,15 @@ import org.jetbrains.annotations.Nullable;
         "Provides: event-player, event-session, event-minigame, event-gamemap."
 })
 @Examples({
+        "# event-player, event-session, event-minigame, event-gamemap available",
         "on player demoted:",
-        "    send \"You are now spectating\" to event-player",
+        "    send \"You are now spectating.\" to event-player",
+        "    clear inventory of event-player",
         "",
+        "# Filter by minigame",
         "on \"bomberman\" player demoted:",
-        "    clear inventory of event-player"
+        "    send actionbar locale \"bomberman:now.spectator\" to event-player",
+        "    set gamemode of event-player to spectator"
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")

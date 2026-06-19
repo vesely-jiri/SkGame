@@ -29,11 +29,22 @@ import org.jetbrains.annotations.Nullable;
         "Supports: GET / SET / ADD / REMOVE / DELETE."
 })
 @Examples({
-        "set team score of \"red\" in event-session to 0",
-        "add 1 to team score of \"yellow\" in event-session",
-        "remove 1 from team score of \"green\" in event-session",
-        "broadcast \"Red team: %team score of \"red\" in event-session%\"",
-        "delete team score of \"red\" in event-session"
+        "# Reset team scores at game start",
+        "on \"koth\" game start:",
+        "    set team score of \"red\" in event-session to 0",
+        "    set team score of \"blue\" in event-session to 0",
+        "",
+        "# Increment team score and check win condition",
+        "add 1 to team score of \"red\" in event-session",
+        "if team score of \"red\" in event-session >= 100:",
+        "    stop game of event-session with reason \"red_win\"",
+        "",
+        "# Broadcast scores",
+        "broadcast \"Red: %team score of \"red\" in event-session% | Blue: %team score of \"blue\" in event-session%\"",
+        "",
+        "# Clean up",
+        "delete team score of \"red\" in event-session",
+        "delete team score of \"blue\" in event-session"
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")

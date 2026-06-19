@@ -21,8 +21,15 @@ import org.jetbrains.annotations.Nullable;
         "Shuffling must be done by the caller — this effect does not shuffle.",
 })
 @Examples({
-        "spread shuffled {_players::*} across shuffled {_spawns::*}",
-        "spread {_entities::*} across {_locations::*}",
+        "# Teleport players to shuffled spawn points (one per player)",
+        "set {_spawns::*} to gamemap values \"spawn_points\" of event-session",
+        "spread shuffled (session players of event-session) across shuffled {_spawns::*}",
+        "",
+        "# Fewer spawns than players — locations wrap around (players share spawns)",
+        "spread session players of event-session across {_two_spawns::*}",
+        "",
+        "# Works on any LivingEntity — mobs, animals, etc.",
+        "spread {_mobs::*} across {_arena_positions::*}"
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")

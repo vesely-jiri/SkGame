@@ -28,13 +28,16 @@ import org.jetbrains.annotations.Nullable;
         "Provides: event-player, event-session, event-minigame, event-gamemap."
 })
 @Examples({
+        "# event-player, event-session, event-minigame, event-gamemap available",
         "on spectator join:",
-        "    broadcast \"%name of event-player% is now spectating %id of event-session%\"",
+        "    broadcast \"%name of event-player% is now spectating %event-minigame% on %event-gamemap%\"",
+        "    set gamemode of event-player to spectator",
         "",
+        "# Filter by minigame — block spectators when game not running",
         "on \"bomberman\" spectator join:",
-        "    # allow only when game is running",
         "    if state of event-session is not started:",
-        "        cancel event"
+        "        cancel event",
+        "        send \"Can only spectate a running game!\" to event-player"
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")

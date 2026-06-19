@@ -32,14 +32,21 @@ import org.jetbrains.annotations.Nullable;
         "Supports: GET / SET / ADD / REMOVE / RESET / DELETE."
 })
 @Examples({
-        "set player value \"score\" of player to 10",
-        "broadcast player value \"score\" of player",
+        "# GET / SET / ADD / DELETE",
+        "set player value \"kills\" of event-player to 0",
+        "add 1 to player value \"kills\" of event-player",
+        "remove 1 from player value \"kills\" of event-player",
+        "broadcast \"%name of event-player% kills: %player value \"kills\" of event-player%\"",
+        "delete player value \"kills\" of event-player",
         "",
-        "loop player values of player:",
-        "    broadcast \"Key: %loop-value%\"",
+        "# Loop all values",
+        "loop player values of event-player:",
+        "    broadcast \"%loop-key%: %loop-value%\"",
         "",
-        "delete player value \"score\" of player",
-        "reset player values of player"
+        "# Reset all values at game end",
+        "on game stop:",
+        "    loop session players of event-session:",
+        "        reset player values of loop-player"
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")

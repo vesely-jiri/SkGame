@@ -37,9 +37,19 @@ import org.jetbrains.annotations.Nullable;
         "Supports: GET / SET / ADD / REMOVE / DELETE / RESET."
 })
 @Examples({
-        "set {_r} to gamemap value \"spawn_radius\" of gamemap of event-session for minigame of event-session",
-        "set {_r} to gamemap value \"spawn_radius\" of event-session",
-        "set gamemap value \"spawn_radius\" of event-session to 10"
+        "# Read a single gamemap value from session (implicit map+minigame)",
+        "set {_radius} to gamemap value \"spawn_radius\" of event-session",
+        "",
+        "# Read using explicit gamemap + minigame",
+        "set {_radius} to gamemap value \"spawn_radius\" of gamemap of event-session for minigame of event-session",
+        "",
+        "# Read a list value (plural — defined with plurality: plural)",
+        "set {_spawns::*} to gamemap values \"spawn_points\" of event-session",
+        "spread session players of event-session across shuffled {_spawns::*}",
+        "",
+        "# Use in condition",
+        "if gamemap value \"pvp_enabled\" of event-session is true:",
+        "    broadcast \"PVP is on!\""
 })
 @Since("1.0.0")
 public class ExprGameMapConfigValue extends SimpleExpression<Object> {

@@ -30,11 +30,18 @@ import org.jetbrains.annotations.Nullable;
         "Supports: Event trigger only (GET session, GET minigame, GET player, GET score via event-number)."
 })
 @Examples({
+        "# event-player, event-session, event-number (new score), past event-number (old score)",
         "on game score change:",
-        "    broadcast \"%event-player% score: %event-number% (was %past event-number%)\"",
-        "on \"Bomberman\" game score change:",
-        "    if event-number >= 10:",
-        "        stop game of event-session with reason \"win\""
+        "    broadcast \"%name of event-player%: %past event-number% -> %event-number%\"",
+        "",
+        "# Filter by minigame and check win condition",
+        "on \"koth\" game score changed:",
+        "    if event-number >= 100:",
+        "        stop game of event-session with reason \"win\"",
+        "",
+        "# Update scoreboard on score change",
+        "on game score change:",
+        "    set score scoreboard line 1 of event-player to \"Score: %event-number%\""
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")

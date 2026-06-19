@@ -31,13 +31,26 @@ import java.util.Map;
         "Use 'send locale \"ns:key\" to player' to send a localized message.",
 })
 @Examples({
+        "# Define locale strings for a namespace — used via send locale / locale expression",
         "locale \"bomberman\":",
-        "    \"game.start\":",
+        "    game.start:",
         "        cs: \"Hra začala!\"",
         "        en: \"Game started!\"",
-        "    \"bomb.placed\":",
+        "    bomb.placed:",
         "        cs: \"Umístil jsi bombu!\"",
-        "        en: \"You placed a bomb!\""
+        "        en: \"You placed a bomb!\"",
+        "    winner:",
+        "        cs: \"Vyhrál hráč %s!\"",
+        "        en: \"Player %s won!\"",
+        "",
+        "# Then in event handlers:",
+        "on \"bomberman\" game start:",
+        "    send locale \"bomberman:game.start\" to session players of event-session",
+        "    send title locale \"bomberman:game.start\" to session players of event-session",
+        "    send actionbar locale \"bomberman:game.start\" to session players of event-session",
+        "",
+        "# Or use as expression in format strings:",
+        "    broadcast locale \"bomberman:game.start\" for event-player"
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")
