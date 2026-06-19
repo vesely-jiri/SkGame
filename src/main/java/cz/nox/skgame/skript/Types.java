@@ -254,33 +254,76 @@ public class Types {
                 })
         );
 
-        Classes.registerClass(new EnumClassInfo<>(SessionState.class,"sessionstate","session states", new SimpleLiteral<>(SessionState.LOBBY, true))
+        Classes.registerClass(new ClassInfo<>(SessionState.class, "sessionstate")
                 .user("session ?states?")
                 .name("Session State")
                 .description("Represents states of session")
                 .since("1.0.0")
+                .defaultExpression(new SimpleLiteral<>(SessionState.LOBBY, true))
+                .serializer(new EnumSerializer<>(SessionState.class))
+                .parser(new Parser<>() {
+                    @Override
+                    public @Nullable SessionState parse(String input, ParseContext context) {
+                        try { return SessionState.valueOf(input.trim().toUpperCase()); }
+                        catch (IllegalArgumentException e) { return null; }
+                    }
+                    @Override public String toString(SessionState s, int flags) { return s.name().toLowerCase(); }
+                    @Override public String toVariableNameString(SessionState s) { return "sessionState:" + s.name(); }
+                })
         );
 
-        Classes.registerClass(new EnumClassInfo<>(SessionVisibility.class, "sessionvisibility", "session visibilities", new SimpleLiteral<>(SessionVisibility.PUBLIC, true))
+        Classes.registerClass(new ClassInfo<>(SessionVisibility.class, "sessionvisibility")
                 .user("session ?visibilit(y|ies)")
                 .name("Session Visibility")
                 .description("Represents the visibility of a session. PUBLIC (default) or PRIVATE.")
                 .since("1.0.0")
+                .defaultExpression(new SimpleLiteral<>(SessionVisibility.PUBLIC, true))
+                .serializer(new EnumSerializer<>(SessionVisibility.class))
+                .parser(new Parser<>() {
+                    @Override
+                    public @Nullable SessionVisibility parse(String input, ParseContext context) {
+                        try { return SessionVisibility.valueOf(input.trim().toUpperCase().replace('-', '_').replace(' ', '_')); }
+                        catch (IllegalArgumentException e) { return null; }
+                    }
+                    @Override public String toString(SessionVisibility v, int flags) { return v.name().toLowerCase().replace('_', '-'); }
+                    @Override public String toVariableNameString(SessionVisibility v) { return "sessionVisibility:" + v.name(); }
+                })
         );
 
-        Classes.registerClass(new EnumClassInfo<>(CustomValuePlurality.class, "customvalueplurality", "value plurality", new SimpleLiteral<>(CustomValuePlurality.SINGLE, true))
+        Classes.registerClass(new ClassInfo<>(CustomValuePlurality.class, "customvalueplurality")
                 .user("value ?plurality?")
                 .name("Custom value plurality")
                 .description("Represents plurality of custom value. Defaults to single/singular")
                 .since("1.0.0")
+                .defaultExpression(new SimpleLiteral<>(CustomValuePlurality.SINGLE, true))
+                .serializer(new EnumSerializer<>(CustomValuePlurality.class))
+                .parser(new Parser<>() {
+                    @Override
+                    public @Nullable CustomValuePlurality parse(String input, ParseContext context) {
+                        try { return CustomValuePlurality.valueOf(input.trim().toUpperCase()); }
+                        catch (IllegalArgumentException e) { return null; }
+                    }
+                    @Override public String toString(CustomValuePlurality p, int flags) { return p.name().toLowerCase(); }
+                    @Override public String toVariableNameString(CustomValuePlurality p) { return "customValuePlurality:" + p.name(); }
+                })
         );
 
-        Classes.registerClass(new EnumClassInfo<>(MinigameTag.class, "minigametag", "minigame tags",
-                new SimpleLiteral<>(MinigameTag.PVP, true))
+        Classes.registerClass(new ClassInfo<>(MinigameTag.class, "minigametag")
                 .user("minigame ?tags?")
                 .name("Minigame Tag")
                 .description("Represents a category tag for a minigame (pvp, pve, ffa, team, building, puzzle, race).")
                 .since("1.0.0")
+                .defaultExpression(new SimpleLiteral<>(MinigameTag.PVP, true))
+                .serializer(new EnumSerializer<>(MinigameTag.class))
+                .parser(new Parser<>() {
+                    @Override
+                    public @Nullable MinigameTag parse(String input, ParseContext context) {
+                        try { return MinigameTag.valueOf(input.trim().toUpperCase()); }
+                        catch (IllegalArgumentException e) { return null; }
+                    }
+                    @Override public String toString(MinigameTag t, int flags) { return t.name().toLowerCase(); }
+                    @Override public String toVariableNameString(MinigameTag t) { return "minigameTag:" + t.name(); }
+                })
         );
 
         // ClassInfo (not EnumClassInfo) so we can call .parser() without hitting
