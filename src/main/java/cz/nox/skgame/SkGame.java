@@ -71,6 +71,8 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             "cz.nox.skgame.skript.effects.EffSessionGameStop",
             "cz.nox.skgame.skript.effects.EffSpreadAcross",
             "cz.nox.skgame.skript.effects.EffSendLocale",
+            "cz.nox.skgame.skript.effects.EffSendTitleLocale",
+            "cz.nox.skgame.skript.effects.EffSendActionBarLocale",
             "cz.nox.skgame.skript.effects.EffSetScoreboardContent",
             "cz.nox.skgame.skript.effects.EffClearScoreboard",
             "cz.nox.skgame.skript.effects.EffConfigureArenaSlots",
@@ -106,6 +108,8 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             "cz.nox.skgame.skript.sections.EffSecRegisterGameMap",
             "cz.nox.skgame.skript.sections.StrucRegisterMiniGame",
             "cz.nox.skgame.skript.sections.StrucLocale",
+            // Expressions — locale
+            "cz.nox.skgame.skript.expressions.ExprLocale",
             "cz.nox.skgame.skript.sections.EffSecRegisterMiniGame",
             "cz.nox.skgame.skript.sections.ExprSecCustomValue",
             "cz.nox.skgame.skript.sections.EffSecSetGameMapValueDef",
@@ -132,6 +136,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             "cz.nox.skgame.skript.expressions.sessions.property.ExprSessionPersistent",
             "cz.nox.skgame.skript.expressions.sessions.property.ExprSessionVisibility",
             "cz.nox.skgame.skript.expressions.sessions.ExprShuffledSessionPlayers",
+            "cz.nox.skgame.skript.expressions.sessions.ExprSessionDuration",
             "cz.nox.skgame.skript.expressions.sessions.ExprTeamScore",
             // Expressions — minigames
             "cz.nox.skgame.skript.expressions.minigames.ExprMiniGameFromId",
