@@ -4,6 +4,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.config.EntryNode;
 import ch.njol.skript.config.Node;
 import ch.njol.skript.config.SectionNode;
+import ch.njol.skript.config.SimpleNode;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -69,11 +70,23 @@ public class StrucLocale extends Structure {
 
             Map<String, String> localeMap = new LinkedHashMap<>();
             for (Node localeNode : localeSection) {
-                if (!(localeNode instanceof EntryNode entryNode)) continue;
-                // Locale code written by author — normalize to ISO form
-                String localeCode = Messages.normalize(entryNode.getKey());
-                String text = stripQuotes(entryNode.getValue());
-                if (text != null) localeMap.put(localeCode, text);
+                String localeCode, rawText;
+                if (localeNode instanceof EntryNode entryNode) {
+                    localeCode = Messages.normalize(entryNode.getKey());
+                    rawText = entryNode.getValue();
+                } else if (localeNode instanceof SimpleNode) {
+                    // Skript script configs use simple=true/separator=":" so "cs: text" becomes
+                    // SimpleNode (line doesn't end with ":"), not EntryNode — split manually.
+                    String raw = localeNode.getKey();
+                    int sep = raw.indexOf(':');
+                    if (sep < 0) continue;
+                    localeCode = Messages.normalize(raw.substring(0, sep).trim());
+                    rawText = raw.substring(sep + 1).trim();
+                } else {
+                    continue;
+                }
+                String text = stripQuotes(rawText);
+                if (text != null && !text.isEmpty()) localeMap.put(localeCode, text);
             }
             parsedEntries.put(messageKey, localeMap);
         }
