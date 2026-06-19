@@ -24,6 +24,7 @@ import cz.nox.skgame.core.game.GameMapManager;
 import cz.nox.skgame.core.game.MiniGameManager;
 import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.region.CuboidRegion;
+import cz.nox.skgame.core.region.Zone;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -515,6 +516,33 @@ public class Types {
                     @Override
                     protected boolean canBeInstantiated() {
                         return false;
+                    }
+                })
+        );
+
+        Classes.registerClass(new ClassInfo<>(Zone.class, "skzone")
+                .user("zones?")
+                .name("Zone")
+                .description(
+                        "A named sub-region within a game arena for zone-based checks (e.g. flag zones, spawn pads).",
+                        "Geometrically identical to arena — set via the admin wand.",
+                        "Use 'type: a zone' in gamemap value definitions."
+                )
+                .since("1.0.0")
+                .parser(new Parser<Zone>() {
+                    @Override
+                    public boolean canParse(ParseContext context) {
+                        return false;
+                    }
+                    @Override
+                    public String toString(Zone z, int flags) {
+                        return "zone in " + (z.getWorld() != null ? z.getWorld().getName() : "?");
+                    }
+                    @Override
+                    public String toVariableNameString(Zone z) {
+                        String w = z.getWorld() != null ? z.getWorld().getName() : "?";
+                        return "zone:cuboid:" + w + ":" + z.getMinX() + "," + z.getMinY() + "," + z.getMinZ()
+                                + "-" + z.getMaxX() + "," + z.getMaxY() + "," + z.getMaxZ();
                     }
                 })
         );

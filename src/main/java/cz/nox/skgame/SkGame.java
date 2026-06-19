@@ -51,6 +51,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             "cz.nox.skgame.skript.conditions.CondIsInSession",
             "cz.nox.skgame.skript.conditions.CondIsMapTaken",
             "cz.nox.skgame.skript.conditions.CondIsCustomValue",
+            "cz.nox.skgame.skript.conditions.CondPlayerInZone",
             "cz.nox.skgame.skript.conditions.CondIsSpectator",
             "cz.nox.skgame.skript.conditions.CondIsPlayer",
             // Effects
