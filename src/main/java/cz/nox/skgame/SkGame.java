@@ -68,6 +68,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             "cz.nox.skgame.skript.effects.EffJoinAsSpectator",
             "cz.nox.skgame.skript.effects.EffSessionGameStart",
             "cz.nox.skgame.skript.effects.EffSessionGameStop",
+            "cz.nox.skgame.skript.effects.EffSpreadAcross",
             "cz.nox.skgame.skript.effects.EffSetScoreboardContent",
             "cz.nox.skgame.skript.effects.EffClearScoreboard",
             "cz.nox.skgame.skript.effects.EffConfigureArenaSlots",
