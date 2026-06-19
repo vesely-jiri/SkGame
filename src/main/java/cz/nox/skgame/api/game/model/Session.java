@@ -21,6 +21,7 @@ public class Session {
     private String id;
     private final long createdAt = System.currentTimeMillis();
     private long startedAt = 0L;
+    private long gameStartTime = 0L;
     private Player host;
     private final LinkedHashSet<Player> lobbyMembers = new LinkedHashSet<>();
     private HashSet<Player> players;
@@ -79,6 +80,15 @@ public class Session {
 
     public long getStartedAt() { return startedAt; }
     public void setStartedAt(long startedAt) { this.startedAt = startedAt; }
+
+    public void setGameStartTime(long time) { this.gameStartTime = time; }
+
+    /** Returns elapsed game time since game start, or null if the game is not running (STARTED state). */
+    public @org.jetbrains.annotations.Nullable ch.njol.skript.util.Timespan getGameDuration() {
+        if (gameStartTime == 0L) return null;
+        long elapsed = System.currentTimeMillis() - gameStartTime;
+        return new ch.njol.skript.util.Timespan(ch.njol.skript.util.Timespan.TimePeriod.MILLISECOND, elapsed);
+    }
 
     public String getId() {
         return id;

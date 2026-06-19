@@ -483,6 +483,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         // Set STARTED immediately before the event so scripts always see STARTED inside on game start:
         session.setState(SessionState.STARTED);
         session.setStartedAt(System.currentTimeMillis());
+        session.setGameStartTime(System.currentTimeMillis());
         Bukkit.getPluginManager().callEvent(new GameStartEvent(session, session.getMiniGame(), gameMap));
         if (session.getMiniGame() != null) {
             final MiniGame _mg = session.getMiniGame();
@@ -878,6 +879,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         }
 
         session.setState(SessionState.ENDED);
+        session.setGameStartTime(0L);
 
         // Fire GameStopEvent while players are still in PLAYER role, state=ENDED (semantically correct)
         MiniGame miniGame = session.getMiniGame();
