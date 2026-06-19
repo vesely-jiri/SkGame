@@ -14,6 +14,7 @@ import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
 import cz.nox.skgame.api.game.model.MiniGame;
+import cz.nox.skgame.core.game.MiniGameManager;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +74,7 @@ public class ExprMiniGameValue extends SimpleExpression<Object> implements KeyPr
 
     @Override
     protected @Nullable Object[] get(Event e) {
-        MiniGame mg = miniGame.getSingle(e);
+        MiniGame mg = canonical(miniGame.getSingle(e));
         if (mg == null) return null;
         switch (pattern) {
             case 0:
@@ -105,7 +106,7 @@ public class ExprMiniGameValue extends SimpleExpression<Object> implements KeyPr
 
     @Override
     public void change(Event event, @Nullable Object[] delta, Changer.ChangeMode mode) {
-        MiniGame mg = miniGame.getSingle(event);
+        MiniGame mg = canonical(miniGame.getSingle(event));
         if (mg == null) return;
         switch (mode) {
             case SET -> {
@@ -129,9 +130,15 @@ public class ExprMiniGameValue extends SimpleExpression<Object> implements KeyPr
         }
     }
 
+    private @Nullable MiniGame canonical(@Nullable MiniGame mg) {
+        if (mg == null) return null;
+        MiniGame real = MiniGameManager.getInstance().getMiniGameById(mg.getId());
+        return real != null ? real : mg;
+    }
+
     @Override
     public @NotNull String[] getArrayKeys(Event e) throws IllegalStateException {
-        MiniGame mg = miniGame.getSingle(e);
+        MiniGame mg = canonical(miniGame.getSingle(e));
         assert mg != null;
         return mg.getKeys();
     }
