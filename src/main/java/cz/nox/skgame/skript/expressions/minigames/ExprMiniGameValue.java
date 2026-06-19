@@ -75,14 +75,14 @@ public class ExprMiniGameValue extends SimpleExpression<Object> implements KeyPr
     @Override
     protected @Nullable Object[] get(Event e) {
         MiniGame mg = canonical(miniGame.getSingle(e));
-        java.util.logging.Logger.getLogger("SkGame").info("[DEBUG-ExprMGValue] get called: mg=" + mg + " pattern=" + pattern);
+        System.err.println("[DEBUG-ExprMGValue] get: mg=" + mg + " pattern=" + pattern);
         if (mg == null) return null;
         switch (pattern) {
             case 0:
                 String k = key.getSingle(e);
                 if (k == null) return null;
                 Object o = mg.getValue(k);
-                java.util.logging.Logger.getLogger("SkGame").info("[DEBUG-ExprMGValue] get result: key=" + k + " val=" + o + " allKeys=" + java.util.Arrays.toString(mg.getKeys()));
+                System.err.println("[DEBUG-ExprMGValue] get result: k=" + k + " val=" + o);
                 if (o == null) return null;
                 if (o.getClass().isArray()) {
                     return (Object[]) o;
@@ -96,6 +96,7 @@ public class ExprMiniGameValue extends SimpleExpression<Object> implements KeyPr
 
     @Override
     public @Nullable Class<?>[] acceptChange(Changer.ChangeMode mode) {
+        System.err.println("[DEBUG-ExprMGValue] acceptChange called: mode=" + mode + " isList=" + isList);
         return switch (mode) {
             case SET           -> {
                 if (isList) yield CollectionUtils.array(Object[].class);
@@ -110,16 +111,14 @@ public class ExprMiniGameValue extends SimpleExpression<Object> implements KeyPr
     public void change(Event event, @Nullable Object[] delta, Changer.ChangeMode mode) {
         MiniGame raw = miniGame.getSingle(event);
         MiniGame mg = canonical(raw);
-        java.util.logging.Logger log = java.util.logging.Logger.getLogger("SkGame");
-        log.info("[DEBUG-ExprMGValue] change called: mode=" + mode + " raw=" + raw + " canonical=" + mg
-                + " delta=" + (delta == null ? "null" : (delta.length == 0 ? "[]" : delta[0]))
-                + " key=" + (key != null ? key.getSingle(event) : "N/A"));
-        if (mg == null) { log.info("[DEBUG-ExprMGValue] mg is null, returning"); return; }
+        System.err.println("[DEBUG-ExprMGValue] change: mode=" + mode + " raw=" + raw + " mg=" + mg
+                + " delta=" + (delta == null ? "null" : (delta.length == 0 ? "[]" : String.valueOf(delta[0]))));
+        if (mg == null) return;
         switch (mode) {
             case SET -> {
                 String k = key.getSingle(event);
                 if (delta == null || delta[0] == null || k == null) {
-                    log.info("[DEBUG-ExprMGValue] SET guard hit: delta=" + delta + " k=" + k);
+                    System.err.println("[DEBUG-ExprMGValue] SET guard: delta=" + delta + " k=" + k);
                     return;
                 }
                 if (isList) {
@@ -127,7 +126,7 @@ public class ExprMiniGameValue extends SimpleExpression<Object> implements KeyPr
                 } else {
                     mg.setValue(k,delta[0]);
                 }
-                log.info("[DEBUG-ExprMGValue] SET done: key=" + k + " val=" + delta[0] + " mg.getValue(k)=" + mg.getValue(k));
+                System.err.println("[DEBUG-ExprMGValue] SET done: k=" + k + " stored=" + mg.getValue(k));
             }
             case DELETE, RESET -> {
                 if (pattern == 0) {
@@ -144,7 +143,7 @@ public class ExprMiniGameValue extends SimpleExpression<Object> implements KeyPr
     private @Nullable MiniGame canonical(@Nullable MiniGame mg) {
         if (mg == null) return null;
         MiniGame real = MiniGameManager.getInstance().getMiniGameById(mg.getId());
-        java.util.logging.Logger.getLogger("SkGame").info("[DEBUG-ExprMGValue] canonical: input=" + mg.getId() + " real=" + real);
+        System.err.println("[DEBUG-ExprMGValue] canonical: id=" + mg.getId() + " real=" + real);
         return real != null ? real : mg;
     }
 

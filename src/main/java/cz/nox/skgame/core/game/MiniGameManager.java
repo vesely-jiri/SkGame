@@ -115,6 +115,7 @@ public class MiniGameManager {
         }
 
         SkGame.getInstance().getLogger().info("[DEBUG] saveToFile: miniGames=" + miniGames.keySet() + " disabledSet=" + disabledMinigames);
+        if (miniGames.isEmpty()) new RuntimeException("[DEBUG] saveToFile called with EMPTY miniGames").printStackTrace();
         try {
             config.save(file);
         } catch (IOException e) {
