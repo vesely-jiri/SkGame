@@ -75,14 +75,12 @@ public class ExprMiniGameValue extends SimpleExpression<Object> implements KeyPr
     @Override
     protected @Nullable Object[] get(Event e) {
         MiniGame mg = canonical(miniGame.getSingle(e));
-        System.err.println("[DEBUG-ExprMGValue] get: mg=" + mg + " pattern=" + pattern);
         if (mg == null) return null;
         switch (pattern) {
             case 0:
                 String k = key.getSingle(e);
                 if (k == null) return null;
                 Object o = mg.getValue(k);
-                System.err.println("[DEBUG-ExprMGValue] get result: k=" + k + " val=" + o);
                 if (o == null) return null;
                 if (o.getClass().isArray()) {
                     return (Object[]) o;
@@ -96,7 +94,6 @@ public class ExprMiniGameValue extends SimpleExpression<Object> implements KeyPr
 
     @Override
     public @Nullable Class<?>[] acceptChange(Changer.ChangeMode mode) {
-        System.err.println("[DEBUG-ExprMGValue] acceptChange called: mode=" + mode + " isList=" + isList);
         return switch (mode) {
             case SET           -> {
                 if (isList) yield CollectionUtils.array(Object[].class);
@@ -109,24 +106,17 @@ public class ExprMiniGameValue extends SimpleExpression<Object> implements KeyPr
 
     @Override
     public void change(Event event, @Nullable Object[] delta, Changer.ChangeMode mode) {
-        MiniGame raw = miniGame.getSingle(event);
-        MiniGame mg = canonical(raw);
-        System.err.println("[DEBUG-ExprMGValue] change: mode=" + mode + " raw=" + raw + " mg=" + mg
-                + " delta=" + (delta == null ? "null" : (delta.length == 0 ? "[]" : String.valueOf(delta[0]))));
+        MiniGame mg = canonical(miniGame.getSingle(event));
         if (mg == null) return;
         switch (mode) {
             case SET -> {
                 String k = key.getSingle(event);
-                if (delta == null || delta[0] == null || k == null) {
-                    System.err.println("[DEBUG-ExprMGValue] SET guard: delta=" + delta + " k=" + k);
-                    return;
-                }
+                if (delta == null || delta[0] == null || k == null) return;
                 if (isList) {
                     mg.setValue(k, delta);
                 } else {
                     mg.setValue(k,delta[0]);
                 }
-                System.err.println("[DEBUG-ExprMGValue] SET done: k=" + k + " stored=" + mg.getValue(k));
             }
             case DELETE, RESET -> {
                 if (pattern == 0) {
@@ -143,7 +133,6 @@ public class ExprMiniGameValue extends SimpleExpression<Object> implements KeyPr
     private @Nullable MiniGame canonical(@Nullable MiniGame mg) {
         if (mg == null) return null;
         MiniGame real = MiniGameManager.getInstance().getMiniGameById(mg.getId());
-        System.err.println("[DEBUG-ExprMGValue] canonical: id=" + mg.getId() + " real=" + real);
         return real != null ? real : mg;
     }
 

@@ -31,7 +31,7 @@ test "minigame with unknown id returns null":
 
 test "minigame value set and get":
     set {_mg} to minigame with id "ci_test_mg"
-    set value "ci_score_cap" of {_mg} to 10
-    assert value "ci_score_cap" of {_mg} is 10 with "minigame value should round-trip"
-    delete value "ci_score_cap" of {_mg}
-    assert value "ci_score_cap" of {_mg} is not set with "deleted minigame value should be absent"
+    set minigame value "ci_score_cap" of {_mg} to 10
+    assert minigame value "ci_score_cap" of {_mg} is 10 with "minigame value should round-trip"
+    delete minigame value "ci_score_cap" of {_mg}
+    assert minigame value "ci_score_cap" of {_mg} is not set with "deleted minigame value should be absent"
