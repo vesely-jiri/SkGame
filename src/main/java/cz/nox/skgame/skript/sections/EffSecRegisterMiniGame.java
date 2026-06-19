@@ -66,6 +66,8 @@ public class EffSecRegisterMiniGame extends EffectSection {
     private @Nullable Expression<TeamAssignmentMode>            teamAssignmentExpr;
     private @Nullable List<MiniGameEntryHelper.ValueDefEntry>   parsedValues;
     private @Nullable Expression<CancellableEventType>          cancelEventsExpr;
+    private @Nullable Expression<Number>                        timeExpr;
+    private @Nullable Expression<String>                        weatherExpr;
 
     static {
         Skript.registerSection(EffSecRegisterMiniGame.class,
@@ -107,6 +109,10 @@ public class EffSecRegisterMiniGame extends EffectSection {
                     if (valsSectionNode != null) parsedValues = MiniGameEntryHelper.parseValues(valsSectionNode);
                 } else if (MiniGameEntryHelper.CANCEL_EVENTS_ENTRY.canCreateWith(node)) {
                     cancelEventsExpr = (Expression<CancellableEventType>) MiniGameEntryHelper.CANCEL_EVENTS_ENTRY.getValue(node);
+                } else if (MiniGameEntryHelper.TIME_ENTRY.canCreateWith(node)) {
+                    timeExpr = (Expression<Number>) MiniGameEntryHelper.TIME_ENTRY.getValue(node);
+                } else if (MiniGameEntryHelper.WEATHER_ENTRY.canCreateWith(node)) {
+                    weatherExpr = (Expression<String>) MiniGameEntryHelper.WEATHER_ENTRY.getValue(node);
                 } else {
                     freeForm.add(node);
                 }
@@ -131,7 +137,7 @@ public class EffSecRegisterMiniGame extends EffectSection {
 
         MiniGame mg = miniGameManager.registerMiniGame(minigameId);
 
-        MiniGameEntryHelper.apply(mg, nameExpr, iconExpr, descriptionExpr, authorExpr, minPlayersExpr, tagsExpr, parsedTeams, teamAssignmentExpr, parsedValues, cancelEventsExpr);
+        MiniGameEntryHelper.apply(mg, nameExpr, iconExpr, descriptionExpr, authorExpr, minPlayersExpr, tagsExpr, parsedTeams, teamAssignmentExpr, parsedValues, cancelEventsExpr, timeExpr, weatherExpr);
 
         if (trigger != null) {
             MiniGameRegisterEvent registerEvent = new MiniGameRegisterEvent(mg);

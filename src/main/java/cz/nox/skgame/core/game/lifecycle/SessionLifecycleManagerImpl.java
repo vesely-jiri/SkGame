@@ -46,6 +46,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TNTPrimed;
+import org.bukkit.WeatherType;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -213,6 +214,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         player.setGameMode(resolveSpectatorGameMode());
         Location spawn = resolveSpectatorSpawn(session);
         if (spawn != null) player.teleport(spawn);
+        if (session.getState() == SessionState.STARTED) applyEnvironment(player, session.getMiniGame());
         partyManager.registerActivity(session);
         return true;
     }
@@ -331,6 +333,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         }
 
         if (role == SessionRole.PLAYER || role == SessionRole.SPECTATOR) {
+            resetEnvironment(player);
             PlayerResetter.reset(player, plugin.getDefaultGameMode());
             Location lobbySpawn = plugin.getLobbySpawn();
             if (lobbySpawn != null) player.teleport(lobbySpawn);
@@ -493,6 +496,11 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
                 "session=" + session.getId() + " map=" + (_map != null ? _map.getId() : "none") + " players=" + _cnt);
             Debug.logMiniGame(_mg.getId(), "event-dispatch", () ->
                 "GameStartEvent fired session=" + session.getId());
+        }
+
+        MiniGame envMg = session.getMiniGame();
+        if (envMg != null && (envMg.getPlayerTime() != null || envMg.getPlayerWeather() != null)) {
+            for (Player p : session.getMembers()) applyEnvironment(p, envMg);
         }
     }
 
@@ -1030,6 +1038,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             boolean wantsJoin = Boolean.TRUE.equals(
                     playerManager.getPlayer(p).getValue(GamePlayerKeys.JOIN_PARTY_AFTER_GAME));
             playerManager.getPlayer(p).removeValues();
+            resetEnvironment(p);
             if (wantsJoin) {
                 session.setRole(p, SessionRole.LOBBY); // fires PlayerRoleChangeEvent
                 Bukkit.getPluginManager().callEvent(new LobbyEnterEvent(p, session));
@@ -1046,6 +1055,7 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
 
         // Reset and teleport active players (now in LOBBY role)
         for (Player p : activePlayers) {
+            resetEnvironment(p);
             PlayerResetter.reset(p, plugin.getDefaultGameMode());
             if (lobbySpawn != null) p.teleport(lobbySpawn);
         }
@@ -1228,5 +1238,23 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             if (center != null) return center;
         }
         return SkGame.getInstance().getLobbySpawn();
+    }
+
+    private void applyEnvironment(Player p, @Nullable MiniGame mg) {
+        if (mg == null) return;
+        Long time = mg.getPlayerTime();
+        String weather = mg.getPlayerWeather();
+        if (time != null) p.setPlayerTime(time, false);
+        if (weather != null) {
+            switch (weather) {
+                case "clear"             -> p.setPlayerWeather(WeatherType.CLEAR);
+                case "rain", "thunder"   -> p.setPlayerWeather(WeatherType.DOWNFALL);
+            }
+        }
+    }
+
+    private void resetEnvironment(Player p) {
+        p.resetPlayerTime();
+        p.resetPlayerWeather();
     }
 }

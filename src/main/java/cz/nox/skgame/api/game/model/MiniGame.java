@@ -32,6 +32,8 @@ public class MiniGame implements ConfigurationSerializable {
     private Set<CancellableEventType> cancelledEvents = EnumSet.noneOf(CancellableEventType.class);
     private List<TeamEntry> teams = new ArrayList<>();
     private TeamAssignmentMode teamAssignment = TeamAssignmentMode.AUTO;
+    private @Nullable Long playerTime;
+    private @Nullable String playerWeather;
 
     public MiniGame(String id,Map<String, Object> values) {
         this.id = id;
@@ -140,6 +142,12 @@ public class MiniGame implements ConfigurationSerializable {
         this.teamAssignment = mode != null ? mode : TeamAssignmentMode.AUTO;
     }
 
+    public @Nullable Long getPlayerTime() { return playerTime; }
+    public void setPlayerTime(@Nullable Long ticks) { this.playerTime = ticks; }
+
+    public @Nullable String getPlayerWeather() { return playerWeather; }
+    public void setPlayerWeather(@Nullable String weather) { this.playerWeather = weather; }
+
     @Override
     public @NotNull Map<String, Object> serialize() {
         Map<String, Object> gm = new HashMap<>();
@@ -199,6 +207,8 @@ public class MiniGame implements ConfigurationSerializable {
         if (teamAssignment != TeamAssignmentMode.AUTO) {
             gm.put("team-assignment", teamAssignment.name());
         }
+        if (playerTime != null) gm.put("player-time", playerTime);
+        if (playerWeather != null) gm.put("player-weather", playerWeather);
 
         return gm;
     }
@@ -360,6 +370,11 @@ public class MiniGame implements ConfigurationSerializable {
             try { newGm.setTeamAssignment(TeamAssignmentMode.valueOf(s)); }
             catch (IllegalArgumentException ignored) {}
         }
+
+        Object rawTime = gm.get("player-time");
+        if (rawTime instanceof Number n) newGm.setPlayerTime(n.longValue());
+        Object rawWeather = gm.get("player-weather");
+        if (rawWeather instanceof String s) newGm.setPlayerWeather(s);
 
         return newGm;
     }

@@ -59,6 +59,8 @@ final class MiniGameEntryHelper {
     static final ExpressionEntryData<TeamAssignmentMode> TEAM_ASSIGNMENT_ENTRY    = new ExpressionEntryData<>("team assignment", null, true, TeamAssignmentMode.class);
     static final SectionEntryData                        VALUES_SECTION_ENTRY     = new SectionEntryData("values", null, true);
     static final ExpressionEntryData<CancellableEventType> CANCEL_EVENTS_ENTRY   = new ExpressionEntryData<>("cancel events", null, true, CancellableEventType.class);
+    static final ExpressionEntryData<Number>              TIME_ENTRY             = new ExpressionEntryData<>("time",            null, true, Number.class);
+    static final ExpressionEntryData<String>              WEATHER_ENTRY          = new ExpressionEntryData<>("weather",         null, true, String.class);
 
     /** Validator for an individual team body (name: / icon:). */
     static final EntryValidator TEAM_BODY_VALIDATOR = EntryValidator.builder()
@@ -96,6 +98,8 @@ final class MiniGameEntryHelper {
             .addEntryData(TEAM_ASSIGNMENT_ENTRY)
             .addEntryData(VALUES_SECTION_ENTRY)
             .addEntryData(CANCEL_EVENTS_ENTRY)
+            .addEntryData(TIME_ENTRY)
+            .addEntryData(WEATHER_ENTRY)
             .unexpectedNodeTester(node -> false)
             .build();
 
@@ -151,6 +155,16 @@ final class MiniGameEntryHelper {
     @SuppressWarnings("unchecked")
     static @Nullable Expression<CancellableEventType> readCancelEvents(EntryContainer c) {
         return (Expression<CancellableEventType>) c.getOptional("cancel events", false);
+    }
+
+    @SuppressWarnings("unchecked")
+    static @Nullable Expression<Number> readTime(EntryContainer c) {
+        return (Expression<Number>) c.getOptional("time", false);
+    }
+
+    @SuppressWarnings("unchecked")
+    static @Nullable Expression<String> readWeather(EntryContainer c) {
+        return (Expression<String>) c.getOptional("weather", false);
     }
 
     /**
@@ -309,7 +323,9 @@ final class MiniGameEntryHelper {
                       @Nullable List<TeamEntry>                  parsedTeams,
                       @Nullable Expression<TeamAssignmentMode>   teamAssignmentExpr,
                       @Nullable List<ValueDefEntry>              parsedValues,
-                      @Nullable Expression<CancellableEventType> cancelEventsExpr) {
+                      @Nullable Expression<CancellableEventType> cancelEventsExpr,
+                      @Nullable Expression<Number>               timeExpr,
+                      @Nullable Expression<String>               weatherExpr) {
         if (nameExpr != null) {
             String v = nameExpr.getSingle(null);
             if (v != null) mg.setValue("name", v);
@@ -354,6 +370,14 @@ final class MiniGameEntryHelper {
                 Set<CancellableEventType> set = EnumSet.copyOf(Arrays.asList(types));
                 mg.setCancelledEvents(set);
             }
+        }
+        if (timeExpr != null) {
+            Number v = timeExpr.getSingle(null);
+            if (v != null) mg.setPlayerTime(v.longValue());
+        }
+        if (weatherExpr != null) {
+            String v = weatherExpr.getSingle(null);
+            if (v != null) mg.setPlayerWeather(v.toLowerCase());
         }
     }
 
