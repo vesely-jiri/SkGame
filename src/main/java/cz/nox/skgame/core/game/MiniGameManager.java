@@ -77,9 +77,6 @@ public class MiniGameManager {
                 miniGames.put(gm.getId().toLowerCase(), gm);
                 if (Boolean.TRUE.equals(section.get("disabled"))) {
                     disabledMinigames.add(gm.getId().toLowerCase());
-                    SkGame.getInstance().getLogger().info("[DEBUG] loadFromFile: loaded '" + gm.getId() + "' as DISABLED");
-                } else {
-                    SkGame.getInstance().getLogger().info("[DEBUG] loadFromFile: loaded '" + gm.getId() + "' (enabled)");
                 }
             }
         }
@@ -114,7 +111,6 @@ public class MiniGameManager {
             config.set("minigames." + disabledId + ".disabled", true);
         }
 
-        SkGame.getInstance().getLogger().info("[DEBUG] saveToFile: miniGames=" + miniGames.keySet() + " disabledSet=" + disabledMinigames);
         try {
             config.save(file);
         } catch (IOException e) {

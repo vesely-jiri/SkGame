@@ -55,8 +55,8 @@ public class ExprGamePlayerValue extends SimpleExpression<Object> implements Key
     static {
         // COMBINED: key %string% param prevents pure property classification
         Skript.registerExpression(ExprGamePlayerValue.class, Object.class, ExpressionType.COMBINED,
-                "[player] value[list:s] %string% of %object%",
-                "[all] [player] values of %object%"
+                "player value[list:s] %string% of %object%",
+                "[all] player values of %object%"
         );
     }
 

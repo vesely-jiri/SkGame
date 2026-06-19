@@ -41,17 +41,17 @@ import org.jetbrains.annotations.Nullable;
 @Examples({
         "set {_session} to session with id \"my_custom_session_uuid\"",
         "",
-        "set value \"max_rounds\" of {_session} to 5",
-        "broadcast value \"max_rounds\" of {_session}",
+        "set session value \"max_rounds\" of {_session} to 5",
+        "broadcast session value \"max_rounds\" of {_session}",
         "",
-        "set temporary value \"deaths\" of {_session} to 0",
+        "set temp session value \"deaths\" of {_session} to 0",
         "",
-        "loop values of {_session}:",
+        "loop session values of {_session}:",
         "    broadcast \"value: %loop-value%\"",
         "    broadcast \"key: %loop-key% or index: %loop-index%\" ",
         "",
-        "delete value \"deaths\" of {_session}",
-        "reset all temporary values of {_session}"
+        "delete session value \"deaths\" of {_session}",
+        "reset all temporary session values of {_session}"
 })
 @Since("1.0.0")
 
@@ -67,8 +67,8 @@ public class ExprSessionValue extends SimpleExpression<Object> implements KeyPro
     static {
         // COMBINED: key %string% param + optional temp tag prevent pure property classification
         Skript.registerExpression(ExprSessionValue.class, Object.class, ExpressionType.COMBINED,
-                "[temp:temp[orary]] [session] value[list:s] %string% of %object%",
-                "[all] [temp:temp[orary]] [session] values of %object%"
+                "[temp:temp[orary]] session value[list:s] %string% of %object%",
+                "[all] [temp:temp[orary]] session values of %object%"
         );
     }
 

@@ -30,15 +30,15 @@ import org.jetbrains.annotations.Nullable;
 })
 @Examples({
         "set {_minigame} to minigame with id \"bomberman\"",
-        "set value \"max_players\" of {_minigame} to 10",
-        "broadcast value \"max_players\" of {_minigame}",
+        "set minigame value \"max_players\" of {_minigame} to 10",
+        "broadcast minigame value \"max_players\" of {_minigame}",
         "",
-        "loop values of {_minigame}:",
+        "loop minigame values of {_minigame}:",
         "    broadcast \"Key: %loop-key% or index: %loop-index%\"",
         "    broadcast \"Value: %loop-value%\"",
         "",
-        "delete value \"maxPlayers\" of {_minigame}",
-        "delete values of {_minigame}"
+        "delete minigame value \"maxPlayers\" of {_minigame}",
+        "delete minigame values of {_minigame}"
 })
 @Since("1.0.0")
 @SuppressWarnings("unused")
@@ -53,8 +53,8 @@ public class ExprMiniGameValue extends SimpleExpression<Object> implements KeyPr
     static {
         // COMBINED: key %string% param + two pattern shapes prevent pure property classification
         Skript.registerExpression(ExprMiniGameValue.class, Object.class, ExpressionType.COMBINED,
-                "[[mini]game] value[list:s] %string% of %minigame%",
-                "[all] [[mini]game] values of %minigame%"
+                "[mini]game value[list:s] %string% of %minigame%",
+                "[all] [mini]game values of %minigame%"
         );
     }
 
