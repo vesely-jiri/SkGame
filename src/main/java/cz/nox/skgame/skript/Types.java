@@ -259,27 +259,6 @@ public class Types {
                 .name("Session State")
                 .description("Represents states of session")
                 .since("1.0.0")
-                .parser(new Parser<>() {
-
-                    @Override
-                    public SessionState parse(String input, ParseContext context) {
-                        try {
-                            return SessionState.valueOf(input.trim().toUpperCase());
-                        } catch (IllegalArgumentException e) {
-                            return null;
-                        }
-                    }
-
-                    @Override
-                    public String toString(SessionState sessionState, int i) {
-                        return sessionState.name();
-                    }
-
-                    @Override
-                    public String toVariableNameString(SessionState sessionState) {
-                        return "sessionState:" + sessionState.toString();
-                    }
-                })
         );
 
         Classes.registerClass(new EnumClassInfo<>(SessionVisibility.class, "sessionvisibility", "session visibilities", new SimpleLiteral<>(SessionVisibility.PUBLIC, true))
@@ -287,27 +266,6 @@ public class Types {
                 .name("Session Visibility")
                 .description("Represents the visibility of a session. PUBLIC (default) or PRIVATE.")
                 .since("1.0.0")
-                .parser(new Parser<>() {
-
-                    @Override
-                    public SessionVisibility parse(String input, ParseContext context) {
-                        try {
-                            return SessionVisibility.valueOf(input.trim().toUpperCase());
-                        } catch (IllegalArgumentException e) {
-                            return null;
-                        }
-                    }
-
-                    @Override
-                    public String toString(SessionVisibility v, int i) {
-                        return v.name().toLowerCase();
-                    }
-
-                    @Override
-                    public String toVariableNameString(SessionVisibility v) {
-                        return "sessionVisibility:" + v.name();
-                    }
-                })
         );
 
         Classes.registerClass(new EnumClassInfo<>(CustomValuePlurality.class, "customvalueplurality", "value plurality", new SimpleLiteral<>(CustomValuePlurality.SINGLE, true))
@@ -315,27 +273,6 @@ public class Types {
                 .name("Custom value plurality")
                 .description("Represents plurality of custom value. Defaults to single/singular")
                 .since("1.0.0")
-                .parser(new Parser<>() {
-
-                    @Override
-                    public @Nullable CustomValuePlurality parse(String s, ParseContext context) {
-                        try {
-                            return CustomValuePlurality.valueOf(s.trim().toUpperCase());
-                        } catch (IllegalArgumentException e) {
-                            return null;
-                        }
-                    }
-
-                    @Override
-                    public String toString(CustomValuePlurality plur, int flags) {
-                        return plur.name();
-                    }
-
-                    @Override
-                    public String toVariableNameString(CustomValuePlurality plur) {
-                        return "valuePlurality:" + plur.toString();
-                    }
-                })
         );
 
         Classes.registerClass(new EnumClassInfo<>(MinigameTag.class, "minigametag", "minigame tags",
@@ -344,24 +281,6 @@ public class Types {
                 .name("Minigame Tag")
                 .description("Represents a category tag for a minigame (pvp, pve, ffa, team, building, puzzle, race).")
                 .since("1.0.0")
-                .parser(new Parser<>() {
-                    @Override
-                    public MinigameTag parse(String input, ParseContext context) {
-                        try {
-                            return MinigameTag.valueOf(input.trim().toUpperCase());
-                        } catch (IllegalArgumentException e) {
-                            return null;
-                        }
-                    }
-                    @Override
-                    public String toString(MinigameTag tag, int i) {
-                        return tag.name().toLowerCase();
-                    }
-                    @Override
-                    public String toVariableNameString(MinigameTag tag) {
-                        return "minigameTag:" + tag.name();
-                    }
-                })
         );
 
         Classes.registerClass(new EnumClassInfo<>(TeamAssignmentMode.class, "teamassignmentmode", "team assignment modes",
@@ -370,28 +289,6 @@ public class Types {
                 .name("Team Assignment Mode")
                 .description("How players are assigned to teams: auto (framework assigns), self-select (players choose), both (players choose + unpicked auto-balanced).")
                 .since("1.0.0")
-                .parser(new Parser<>() {
-                    @Override
-                    public @Nullable TeamAssignmentMode parse(String input, ParseContext context) {
-                        return switch (input.trim().toLowerCase()) {
-                            case "auto"        -> TeamAssignmentMode.AUTO;
-                            case "self-select" -> TeamAssignmentMode.SELF_SELECT;
-                            case "both"        -> TeamAssignmentMode.BOTH;
-                            default -> {
-                                try { yield TeamAssignmentMode.valueOf(input.trim().toUpperCase()); }
-                                catch (IllegalArgumentException e) { yield null; }
-                            }
-                        };
-                    }
-                    @Override
-                    public String toString(TeamAssignmentMode mode, int flags) {
-                        return mode.name().toLowerCase().replace('_', '-');
-                    }
-                    @Override
-                    public String toVariableNameString(TeamAssignmentMode mode) {
-                        return "teamAssignmentMode:" + mode.name();
-                    }
-                })
         );
 
         Classes.registerClass(new EnumClassInfo<>(CancellableEventType.class, "cancellableeventtype", "cancellable event types",
@@ -400,24 +297,6 @@ public class Types {
                 .name("Cancellable Event Type")
                 .description("Represents a game event type that can be automatically cancelled for all players in a session. Used with the 'cancel events:' entry in register minigame blocks.")
                 .since("1.0.0")
-                .parser(new Parser<>() {
-                    @Override
-                    public @Nullable CancellableEventType parse(String input, ParseContext context) {
-                        try {
-                            return CancellableEventType.valueOf(input.trim().toUpperCase().replace('-', '_'));
-                        } catch (IllegalArgumentException e) {
-                            return null;
-                        }
-                    }
-                    @Override
-                    public String toString(CancellableEventType type, int flags) {
-                        return type.skriptName();
-                    }
-                    @Override
-                    public String toVariableNameString(CancellableEventType type) {
-                        return "cancellableEventType:" + type.name();
-                    }
-                })
         );
 
         Classes.registerClass(new ClassInfo<>(Region.class, "skarena")
