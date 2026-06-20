@@ -571,7 +571,11 @@ public class AdminGuiService implements Listener {
     public void onDrop(PlayerDropItemEvent e) {
         if (!wand.isWand(e.getItemDrop().getItemStack())) return;
         e.setCancelled(true);
-        stopSetupMode(e.getPlayer());
+        e.getItemDrop().remove(); // belt-and-suspenders: remove entity in case cancel is ignored
+        // In Paper 1.21 the item is already gone from inventory when the event fires;
+        // cancel restores it after the handler returns, so remove it on the next tick.
+        Player player = e.getPlayer();
+        Bukkit.getScheduler().runTask(SkGame.getInstance(), () -> stopSetupMode(player));
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
