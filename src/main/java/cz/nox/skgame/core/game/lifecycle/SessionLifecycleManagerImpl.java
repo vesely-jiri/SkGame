@@ -32,6 +32,7 @@ import cz.nox.skgame.core.game.MiniGameManager;
 import cz.nox.skgame.core.game.SessionManager;
 import cz.nox.skgame.core.region.ArenaSlot;
 import cz.nox.skgame.api.messages.Messages;
+import cz.nox.skgame.core.locale.ScriptLocaleRegistry;
 import cz.nox.skgame.core.team.MapVoteItem;
 import cz.nox.skgame.core.team.MiniGameVoteItem;
 import cz.nox.skgame.core.team.TeamPickerItem;
@@ -487,6 +488,18 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         session.setState(SessionState.STARTED);
         session.setStartedAt(System.currentTimeMillis());
         session.setGameStartTime(System.currentTimeMillis());
+
+        // Send instructions (if any) to all members before on game start: fires
+        MiniGame instrMg = session.getMiniGame();
+        if (instrMg != null && !instrMg.getInstructions().isEmpty()) {
+            for (Player p : session.getMembers()) {
+                for (String line : instrMg.getInstructions()) {
+                    String resolved = resolveInstructionLine(line, p);
+                    p.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(resolved));
+                }
+            }
+        }
+
         Bukkit.getPluginManager().callEvent(new GameStartEvent(session, session.getMiniGame(), gameMap));
         if (session.getMiniGame() != null) {
             final MiniGame _mg = session.getMiniGame();
@@ -502,6 +515,21 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         if (envMg != null && (envMg.getPlayerTime() != null || envMg.getPlayerWeather() != null)) {
             for (Player p : session.getMembers()) applyEnvironment(p, envMg);
         }
+    }
+
+    /** Resolves a single instruction line: "locale:ns:key" → per-player locale lookup; otherwise raw string. */
+    private String resolveInstructionLine(String line, Player player) {
+        if (line.startsWith("locale:")) {
+            String fullKey = line.substring("locale:".length());
+            int colon = fullKey.indexOf(':');
+            if (colon > 0) {
+                String ns = fullKey.substring(0, colon);
+                String key = fullKey.substring(colon + 1);
+                String text = ScriptLocaleRegistry.getInstance().get(ns, key, player);
+                if (text != null) return text;
+            }
+        }
+        return line;
     }
 
     private void startWithCountdown(Session session, long ticks) {

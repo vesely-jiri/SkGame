@@ -34,6 +34,7 @@ public class MiniGame implements ConfigurationSerializable {
     private TeamAssignmentMode teamAssignment = TeamAssignmentMode.AUTO;
     private @Nullable Long playerTime;
     private @Nullable String playerWeather;
+    private List<String> instructions = new ArrayList<>();
 
     public MiniGame(String id,Map<String, Object> values) {
         this.id = id;
@@ -148,6 +149,9 @@ public class MiniGame implements ConfigurationSerializable {
     public @Nullable String getPlayerWeather() { return playerWeather; }
     public void setPlayerWeather(@Nullable String weather) { this.playerWeather = weather; }
 
+    public List<String> getInstructions() { return instructions; }
+    public void setInstructions(List<String> list) { this.instructions = list != null ? new ArrayList<>(list) : new ArrayList<>(); }
+
     @Override
     public @NotNull Map<String, Object> serialize() {
         Map<String, Object> gm = new HashMap<>();
@@ -209,6 +213,7 @@ public class MiniGame implements ConfigurationSerializable {
         }
         if (playerTime != null) gm.put("player-time", playerTime);
         if (playerWeather != null) gm.put("player-weather", playerWeather);
+        if (!instructions.isEmpty()) gm.put("instructions", new ArrayList<>(instructions));
 
         return gm;
     }
@@ -375,6 +380,13 @@ public class MiniGame implements ConfigurationSerializable {
         if (rawTime instanceof Number n) newGm.setPlayerTime(n.longValue());
         Object rawWeather = gm.get("player-weather");
         if (rawWeather instanceof String s) newGm.setPlayerWeather(s);
+
+        Object rawInstructions = gm.get("instructions");
+        if (rawInstructions instanceof List<?> list) {
+            List<String> instrList = new ArrayList<>();
+            for (Object item : list) if (item instanceof String str) instrList.add(str);
+            newGm.setInstructions(instrList);
+        }
 
         return newGm;
     }

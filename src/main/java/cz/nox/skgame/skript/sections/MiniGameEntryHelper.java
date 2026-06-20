@@ -61,6 +61,7 @@ final class MiniGameEntryHelper {
     static final ExpressionEntryData<CancellableEventType> CANCEL_EVENTS_ENTRY   = new ExpressionEntryData<>("cancel events", null, true, CancellableEventType.class);
     static final ExpressionEntryData<Number>              TIME_ENTRY             = new ExpressionEntryData<>("time",            null, true, Number.class);
     static final ExpressionEntryData<String>              WEATHER_ENTRY          = new ExpressionEntryData<>("weather",         null, true, String.class);
+    static final ExpressionEntryData<String>              INSTRUCTIONS_ENTRY     = new ExpressionEntryData<>("instructions",    null, true, String.class);
 
     /** Validator for an individual team body (name: / icon:). */
     static final EntryValidator TEAM_BODY_VALIDATOR = EntryValidator.builder()
@@ -100,6 +101,7 @@ final class MiniGameEntryHelper {
             .addEntryData(CANCEL_EVENTS_ENTRY)
             .addEntryData(TIME_ENTRY)
             .addEntryData(WEATHER_ENTRY)
+            .addEntryData(INSTRUCTIONS_ENTRY)
             .unexpectedNodeTester(node -> false)
             .build();
 
@@ -165,6 +167,11 @@ final class MiniGameEntryHelper {
     @SuppressWarnings("unchecked")
     static @Nullable Expression<String> readWeather(EntryContainer c) {
         return (Expression<String>) c.getOptional("weather", false);
+    }
+
+    @SuppressWarnings("unchecked")
+    static @Nullable Expression<String> readInstructions(EntryContainer c) {
+        return (Expression<String>) c.getOptional("instructions", false);
     }
 
     /**
@@ -325,7 +332,8 @@ final class MiniGameEntryHelper {
                       @Nullable List<ValueDefEntry>              parsedValues,
                       @Nullable Expression<CancellableEventType> cancelEventsExpr,
                       @Nullable Expression<Number>               timeExpr,
-                      @Nullable Expression<String>               weatherExpr) {
+                      @Nullable Expression<String>               weatherExpr,
+                      @Nullable Expression<String>               instructionsExpr) {
         if (nameExpr != null) {
             String v = nameExpr.getSingle(null);
             if (v != null) mg.setValue("name", v);
@@ -378,6 +386,10 @@ final class MiniGameEntryHelper {
         if (weatherExpr != null) {
             String v = weatherExpr.getSingle(null);
             if (v != null) mg.setPlayerWeather(v.toLowerCase());
+        }
+        if (instructionsExpr != null) {
+            String[] lines = instructionsExpr.getArray(null);
+            if (lines != null && lines.length > 0) mg.setInstructions(Arrays.asList(lines));
         }
     }
 

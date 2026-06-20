@@ -113,6 +113,7 @@ public class StrucRegisterMiniGame extends Structure {
     private @Nullable Expression<CancellableEventType>           cancelEventsExpr;
     private @Nullable Expression<Number>                         timeExpr;
     private @Nullable Expression<String>                         weatherExpr;
+    private @Nullable Expression<String>                         instructionsExpr;
 
     static {
         Skript.registerStructure(StrucRegisterMiniGame.class, MiniGameEntryHelper.MIXED, NodeType.BOTH,
@@ -139,9 +140,10 @@ public class StrucRegisterMiniGame extends Structure {
             teamAssignmentExpr = MiniGameEntryHelper.readTeamAssignment(entryContainer);
             ch.njol.skript.config.SectionNode valuesSectionNode = MiniGameEntryHelper.readValuesSectionNode(entryContainer);
             if (valuesSectionNode != null) parsedValues = MiniGameEntryHelper.parseValues(valuesSectionNode);
-            cancelEventsExpr = MiniGameEntryHelper.readCancelEvents(entryContainer);
-            timeExpr         = MiniGameEntryHelper.readTime(entryContainer);
-            weatherExpr      = MiniGameEntryHelper.readWeather(entryContainer);
+            cancelEventsExpr  = MiniGameEntryHelper.readCancelEvents(entryContainer);
+            timeExpr          = MiniGameEntryHelper.readTime(entryContainer);
+            weatherExpr       = MiniGameEntryHelper.readWeather(entryContainer);
+            instructionsExpr  = MiniGameEntryHelper.readInstructions(entryContainer);
 
             List<Node> unhandled = entryContainer.getUnhandledNodes();
             if (!unhandled.isEmpty()) {
@@ -175,7 +177,7 @@ public class StrucRegisterMiniGame extends Structure {
         String minigameId = id.getSingle(null);
         if (minigameId == null) return false;
         MiniGame mg = miniGameManager.registerMiniGame(minigameId);
-        MiniGameEntryHelper.apply(mg, nameExpr, iconExpr, descriptionExpr, authorExpr, minPlayersExpr, tagsExpr, parsedTeams, teamAssignmentExpr, parsedValues, cancelEventsExpr, timeExpr, weatherExpr);
+        MiniGameEntryHelper.apply(mg, nameExpr, iconExpr, descriptionExpr, authorExpr, minPlayersExpr, tagsExpr, parsedTeams, teamAssignmentExpr, parsedValues, cancelEventsExpr, timeExpr, weatherExpr, instructionsExpr);
         // Always save after postLoad so that after a /sk reload the file contains this minigame
         // (unload() removes it via unregisterMiniGame; without this, a no-values minigame would never
         // be re-written to file, causing disabled-state loss on next server restart).

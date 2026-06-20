@@ -68,6 +68,7 @@ public class EffSecRegisterMiniGame extends EffectSection {
     private @Nullable Expression<CancellableEventType>          cancelEventsExpr;
     private @Nullable Expression<Number>                        timeExpr;
     private @Nullable Expression<String>                        weatherExpr;
+    private @Nullable Expression<String>                        instructionsExpr;
 
     static {
         Skript.registerSection(EffSecRegisterMiniGame.class,
@@ -113,6 +114,8 @@ public class EffSecRegisterMiniGame extends EffectSection {
                     timeExpr = (Expression<Number>) MiniGameEntryHelper.TIME_ENTRY.getValue(node);
                 } else if (MiniGameEntryHelper.WEATHER_ENTRY.canCreateWith(node)) {
                     weatherExpr = (Expression<String>) MiniGameEntryHelper.WEATHER_ENTRY.getValue(node);
+                } else if (MiniGameEntryHelper.INSTRUCTIONS_ENTRY.canCreateWith(node)) {
+                    instructionsExpr = (Expression<String>) MiniGameEntryHelper.INSTRUCTIONS_ENTRY.getValue(node);
                 } else {
                     freeForm.add(node);
                 }
@@ -137,7 +140,7 @@ public class EffSecRegisterMiniGame extends EffectSection {
 
         MiniGame mg = miniGameManager.registerMiniGame(minigameId);
 
-        MiniGameEntryHelper.apply(mg, nameExpr, iconExpr, descriptionExpr, authorExpr, minPlayersExpr, tagsExpr, parsedTeams, teamAssignmentExpr, parsedValues, cancelEventsExpr, timeExpr, weatherExpr);
+        MiniGameEntryHelper.apply(mg, nameExpr, iconExpr, descriptionExpr, authorExpr, minPlayersExpr, tagsExpr, parsedTeams, teamAssignmentExpr, parsedValues, cancelEventsExpr, timeExpr, weatherExpr, instructionsExpr);
 
         if (trigger != null) {
             MiniGameRegisterEvent registerEvent = new MiniGameRegisterEvent(mg);
