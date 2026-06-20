@@ -43,7 +43,7 @@ public class EffSendLocale extends Effect {
 
     static {
         Skript.registerEffect(EffSendLocale.class,
-                "send locale %string% to %players% [with [arguments] %objects%]"
+                "send locale %string% to %players% [with [arguments] %-objects%]"
         );
     }
 

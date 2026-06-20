@@ -43,7 +43,7 @@ public class ExprLocale extends SimpleExpression<String> {
 
     static {
         Skript.registerExpression(ExprLocale.class, String.class, ExpressionType.COMBINED,
-                "locale %string% for %player% [with [arguments] %objects%]"
+                "locale %string% for %player% [with [arguments] %-objects%]"
         );
     }
 

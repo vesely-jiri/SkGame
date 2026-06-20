@@ -44,7 +44,7 @@ public class EffSendActionBarLocale extends Effect {
 
     static {
         Skript.registerEffect(EffSendActionBarLocale.class,
-                "send actionbar locale %string% to %players% [with [arguments] %objects%]"
+                "send actionbar locale %string% to %players% [with [arguments] %-objects%]"
         );
     }
 

@@ -44,7 +44,7 @@ public class EffSendTitleLocale extends Effect {
 
     static {
         Skript.registerEffect(EffSendTitleLocale.class,
-                "send title locale %string% to %players% [with [arguments] %objects%]"
+                "send title locale %string% to %players% [with [arguments] %-objects%]"
         );
     }
 
