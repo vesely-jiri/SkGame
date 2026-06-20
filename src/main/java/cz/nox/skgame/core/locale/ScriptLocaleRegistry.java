@@ -6,6 +6,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Registry for script-defined locale entries registered via the {@code locale "ns":} structure.
@@ -14,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class ScriptLocaleRegistry {
 
     private static final ScriptLocaleRegistry INSTANCE = new ScriptLocaleRegistry();
+    private static final Pattern PLACEHOLDER = Pattern.compile("\\{(\\d+)\\}");
 
     // namespace → key → localeCode → text
     private final Map<String, Map<String, Map<String, String>>> data = new ConcurrentHashMap<>();
@@ -66,5 +69,25 @@ public final class ScriptLocaleRegistry {
         text = keyMap.get("en_US");
         if (text != null) return text;
         return keyMap.get("en");
+    }
+
+    /**
+     * Like {@link #get(String, String, Player)} but applies positional {0},{1},… substitution.
+     * Out-of-range indices are left as literal text. Null args stringify to "null".
+     */
+    public @Nullable String get(String namespace, String key, @Nullable Player player, Object... args) {
+        String text = get(namespace, key, player);
+        if (text == null || args == null || args.length == 0) return text;
+        Matcher m = PLACEHOLDER.matcher(text);
+        StringBuilder sb = new StringBuilder();
+        while (m.find()) {
+            int idx = Integer.parseInt(m.group(1));
+            String repl = idx < args.length
+                    ? Matcher.quoteReplacement(String.valueOf(args[idx]))
+                    : m.group(0);
+            m.appendReplacement(sb, repl);
+        }
+        m.appendTail(sb);
+        return sb.toString();
     }
 }

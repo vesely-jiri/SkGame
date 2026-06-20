@@ -39,10 +39,11 @@ public class ExprLocale extends SimpleExpression<String> {
 
     private Expression<String> key;
     private Expression<Player> player;
+    @Nullable private Expression<Object> args;
 
     static {
         Skript.registerExpression(ExprLocale.class, String.class, ExpressionType.COMBINED,
-                "locale %string% for %player%"
+                "locale %string% for %player% [with [arguments] %objects%]"
         );
     }
 
@@ -51,6 +52,7 @@ public class ExprLocale extends SimpleExpression<String> {
     public boolean init(Expression<?>[] exprs, int i, Kleenean kleenean, SkriptParser.ParseResult parseResult) {
         this.key = (Expression<String>) exprs[0];
         this.player = (Expression<Player>) exprs[1];
+        this.args = (Expression<Object>) exprs[2];
         return true;
     }
 
@@ -67,8 +69,9 @@ public class ExprLocale extends SimpleExpression<String> {
         }
         String namespace = fullKey.substring(0, colon);
         String messageKey = fullKey.substring(colon + 1);
+        Object[] argsArray = this.args != null ? this.args.getAll(event) : new Object[0];
 
-        String text = ScriptLocaleRegistry.getInstance().get(namespace, messageKey, p);
+        String text = ScriptLocaleRegistry.getInstance().get(namespace, messageKey, p, argsArray);
         if (text == null) {
             SkGame.getInstance().getLogger().warning("[SkGame/ScriptLocale] missing key: " + fullKey);
             return new String[]{fullKey};

@@ -39,10 +39,11 @@ public class EffSendLocale extends Effect {
 
     private Expression<String> key;
     private Expression<Player> players;
+    @Nullable private Expression<Object> args;
 
     static {
         Skript.registerEffect(EffSendLocale.class,
-                "send locale %string% to %players%"
+                "send locale %string% to %players% [with [arguments] %objects%]"
         );
     }
 
@@ -51,6 +52,7 @@ public class EffSendLocale extends Effect {
     public boolean init(Expression<?>[] exprs, int i, Kleenean kleenean, SkriptParser.ParseResult parseResult) {
         this.key = (Expression<String>) exprs[0];
         this.players = (Expression<Player>) exprs[1];
+        this.args = (Expression<Object>) exprs[2];
         return true;
     }
 
@@ -66,10 +68,11 @@ public class EffSendLocale extends Effect {
         }
         String namespace = fullKey.substring(0, colon);
         String messageKey = fullKey.substring(colon + 1);
+        Object[] argsArray = this.args != null ? this.args.getAll(event) : new Object[0];
 
         ScriptLocaleRegistry registry = ScriptLocaleRegistry.getInstance();
         for (Player player : players.getArray(event)) {
-            String text = registry.get(namespace, messageKey, player);
+            String text = registry.get(namespace, messageKey, player, argsArray);
             if (text == null) {
                 SkGame.getInstance().getLogger().warning("[SkGame/ScriptLocale] missing key: " + fullKey);
                 continue;
