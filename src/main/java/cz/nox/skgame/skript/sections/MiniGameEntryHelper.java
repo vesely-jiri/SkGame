@@ -70,8 +70,9 @@ final class MiniGameEntryHelper {
 
     /** Validator for the global rules: section inside teams: */
     static final EntryValidator TEAM_RULES_VALIDATOR = EntryValidator.builder()
-            .addEntryData(new ExpressionEntryData<>("friendly-fire",      null, true, String.class))
-            .addEntryData(new ExpressionEntryData<>("collision",           null, true, String.class))
+            // addEntry reads raw string — accepts bare `true`/`false` without quotes
+            .addEntry("friendly-fire",      null, true)
+            .addEntry("collision",           null, true)
             .addEntryData(new ExpressionEntryData<>("nametag-visibility",  null, true, String.class))
             .build();
 
@@ -79,8 +80,9 @@ final class MiniGameEntryHelper {
     static final EntryValidator TEAM_BODY_VALIDATOR = EntryValidator.builder()
             .addEntryData(new ExpressionEntryData<>("name",               null, true, String.class))
             .addEntryData(new ExpressionEntryData<>("icon",               null, true, ItemStack.class))
-            .addEntryData(new ExpressionEntryData<>("friendly-fire",      null, true, String.class))
-            .addEntryData(new ExpressionEntryData<>("collision",          null, true, String.class))
+            // addEntry reads raw string — accepts bare `true`/`false` without quotes
+            .addEntry("friendly-fire",      null, true)
+            .addEntry("collision",          null, true)
             .addEntryData(new ExpressionEntryData<>("nametag-visibility", null, true, String.class))
             .build();
 
@@ -248,13 +250,11 @@ final class MiniGameEntryHelper {
      */
     @SuppressWarnings("unchecked")
     private static @Nullable TeamRules parseRulesFromBody(EntryContainer body, @Nullable TeamRules fallback) {
-        Expression<String> ffExpr  = (Expression<String>) body.getOptional("friendly-fire",      false);
-        Expression<String> colExpr = (Expression<String>) body.getOptional("collision",           false);
-        Expression<String> ntExpr  = (Expression<String>) body.getOptional("nametag-visibility",  false);
-
-        String ffStr  = ffExpr  != null ? ffExpr.getSingle(null)  : null;
-        String colStr = colExpr != null ? colExpr.getSingle(null) : null;
-        String ntStr  = ntExpr  != null ? ntExpr.getSingle(null)  : null;
+        // friendly-fire and collision are raw-string entries (addEntry) — no expression parsing
+        String ffStr  = body.getOptional("friendly-fire",  String.class, false);
+        String colStr = body.getOptional("collision",       String.class, false);
+        Expression<String> ntExpr = (Expression<String>) body.getOptional("nametag-visibility", false);
+        String ntStr = ntExpr != null ? ntExpr.getSingle(null) : null;
 
         if (ffStr == null && colStr == null && ntStr == null && fallback == null) return null;
 
