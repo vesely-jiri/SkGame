@@ -137,5 +137,5 @@ messages:
 admin:
   wand:
     # Particles per block along each boundary edge (unit cubes + bounding box).
-    # Higher = denser outline. Default 6 ≈ one particle every ~0.17 blocks.
-    particle-density: 6
+    # Higher = denser outline. Default 3 ≈ one particle every ~0.33 blocks.
+    particle-density: 3
