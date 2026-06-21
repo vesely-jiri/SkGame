@@ -107,6 +107,7 @@ public class StrucRegisterMiniGame extends Structure {
     private @Nullable Expression<String>             descriptionExpr;
     private @Nullable Expression<String>             authorExpr;
     private @Nullable Expression<Number>             minPlayersExpr;
+    private @Nullable Expression<Number>             maxPlayersExpr;
     private @Nullable Expression<MinigameTag>        tagsExpr;
     private @Nullable List<TeamEntry>                parsedTeams;
     private @Nullable TeamRules                                   defaultTeamRules;
@@ -136,6 +137,7 @@ public class StrucRegisterMiniGame extends Structure {
             descriptionExpr = MiniGameEntryHelper.readDescription(entryContainer);
             authorExpr      = MiniGameEntryHelper.readAuthor(entryContainer);
             minPlayersExpr     = MiniGameEntryHelper.readMinPlayers(entryContainer);
+            maxPlayersExpr     = MiniGameEntryHelper.readMaxPlayers(entryContainer);
             tagsExpr           = MiniGameEntryHelper.readTags(entryContainer);
             ch.njol.skript.config.SectionNode teamsSectionNode = MiniGameEntryHelper.readTeamsSectionNode(entryContainer);
             if (teamsSectionNode != null) {
@@ -185,7 +187,7 @@ public class StrucRegisterMiniGame extends Structure {
         String minigameId = id.getSingle(null);
         if (minigameId == null) return false;
         MiniGame mg = miniGameManager.registerMiniGame(minigameId);
-        MiniGameEntryHelper.apply(mg, nameExpr, iconExpr, descriptionExpr, authorExpr, minPlayersExpr, tagsExpr, parsedTeams, defaultTeamRules, teamAssignmentExpr, parsedValues, cancelEventsExpr, timeExpr, weatherExpr, instructionsExpr);
+        MiniGameEntryHelper.apply(mg, nameExpr, iconExpr, descriptionExpr, authorExpr, minPlayersExpr, maxPlayersExpr, tagsExpr, parsedTeams, defaultTeamRules, teamAssignmentExpr, parsedValues, cancelEventsExpr, timeExpr, weatherExpr, instructionsExpr);
         // Always save after postLoad so that after a /sk reload the file contains this minigame
         // (unload() removes it via unregisterMiniGame; without this, a no-values minigame would never
         // be re-written to file, causing disabled-state loss on next server restart).

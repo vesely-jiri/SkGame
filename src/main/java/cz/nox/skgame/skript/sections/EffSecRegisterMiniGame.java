@@ -62,6 +62,7 @@ public class EffSecRegisterMiniGame extends EffectSection {
     private @Nullable Expression<String>             descriptionExpr;
     private @Nullable Expression<String>             authorExpr;
     private @Nullable Expression<Number>             minPlayersExpr;
+    private @Nullable Expression<Number>             maxPlayersExpr;
     private @Nullable Expression<MinigameTag>        tagsExpr;
     private @Nullable List<TeamEntry>                           parsedTeams;
     private @Nullable Expression<TeamAssignmentMode>            teamAssignmentExpr;
@@ -97,6 +98,12 @@ public class EffSecRegisterMiniGame extends EffectSection {
                     authorExpr = (Expression<String>) MiniGameEntryHelper.AUTHOR_ENTRY.getValue(node);
                 else if (MiniGameEntryHelper.MIN_PLAYERS_ENTRY.canCreateWith(node))
                     minPlayersExpr = (Expression<Number>) MiniGameEntryHelper.MIN_PLAYERS_ENTRY.getValue(node);
+                else if (MiniGameEntryHelper.MIN_PLAYERS_ENTRY_ALT.canCreateWith(node))
+                    minPlayersExpr = (Expression<Number>) MiniGameEntryHelper.MIN_PLAYERS_ENTRY_ALT.getValue(node);
+                else if (MiniGameEntryHelper.MAX_PLAYERS_ENTRY.canCreateWith(node))
+                    maxPlayersExpr = (Expression<Number>) MiniGameEntryHelper.MAX_PLAYERS_ENTRY.getValue(node);
+                else if (MiniGameEntryHelper.MAX_PLAYERS_ENTRY_ALT.canCreateWith(node))
+                    maxPlayersExpr = (Expression<Number>) MiniGameEntryHelper.MAX_PLAYERS_ENTRY_ALT.getValue(node);
                 else if (MiniGameEntryHelper.TAGS_ENTRY.canCreateWith(node))
                     tagsExpr = (Expression<MinigameTag>) MiniGameEntryHelper.TAGS_ENTRY.getValue(node);
                 else if (MiniGameEntryHelper.MINIGAME_TAGS_ENTRY.canCreateWith(node)) {
@@ -148,7 +155,7 @@ public class EffSecRegisterMiniGame extends EffectSection {
 
         MiniGame mg = miniGameManager.registerMiniGame(minigameId);
 
-        MiniGameEntryHelper.apply(mg, nameExpr, iconExpr, descriptionExpr, authorExpr, minPlayersExpr, tagsExpr, parsedTeams, defaultTeamRules, teamAssignmentExpr, parsedValues, cancelEventsExpr, timeExpr, weatherExpr, instructionsExpr);
+        MiniGameEntryHelper.apply(mg, nameExpr, iconExpr, descriptionExpr, authorExpr, minPlayersExpr, maxPlayersExpr, tagsExpr, parsedTeams, defaultTeamRules, teamAssignmentExpr, parsedValues, cancelEventsExpr, timeExpr, weatherExpr, instructionsExpr);
 
         if (trigger != null) {
             MiniGameRegisterEvent registerEvent = new MiniGameRegisterEvent(mg);

@@ -32,8 +32,10 @@ session:
     game-in-progress: "&cThis game is already in progress"
     no-maps-for-minigame: "&cNo maps support this minigame — cannot start"
     minigame-disabled: "&cThis minigame is currently disabled."
+    not-enough-players: "&cNot enough players — need at least {0}"
   join-denied:
     banned: "&cYou are banned from this session."
+    full: "&cThis session is full ({0} players max)"
   kick:
     kicked: "&cYou were kicked from the session."
     confirmed: "&aKicked {0} from the session."

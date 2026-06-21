@@ -26,8 +26,10 @@ session:
     game-in-progress: "&cTato hra již probíhá"
     no-maps-for-minigame: "&cŽádná mapa nepodporuje tuto minihru — nelze spustit"
     minigame-disabled: "&cTato minihra je momentálně zakázána."
+    not-enough-players: "&cNedostatek hráčů — potřeba alespoň {0}"
   join-denied:
     banned: "&cJsi zabanován v této session."
+    full: "&cTato session je plná (max {0} hráčů)"
   kick:
     kicked: "&cByl jsi vyhozen ze session."
     confirmed: "&aVyhozen {0} ze session."

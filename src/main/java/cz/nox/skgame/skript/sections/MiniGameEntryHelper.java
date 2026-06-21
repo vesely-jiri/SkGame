@@ -58,6 +58,9 @@ final class MiniGameEntryHelper {
     static final ExpressionEntryData<String>             DESCRIPTION_ENTRY     = new ExpressionEntryData<>("description",     null, true, String.class);
     static final ExpressionEntryData<String>             AUTHOR_ENTRY          = new ExpressionEntryData<>("author",          null, true, String.class);
     static final ExpressionEntryData<Number>             MIN_PLAYERS_ENTRY     = new ExpressionEntryData<>("min players",     null, true, Number.class);
+    static final ExpressionEntryData<Number>             MIN_PLAYERS_ENTRY_ALT = new ExpressionEntryData<>("min_players",     null, true, Number.class);
+    static final ExpressionEntryData<Number>             MAX_PLAYERS_ENTRY     = new ExpressionEntryData<>("max players",     null, true, Number.class);
+    static final ExpressionEntryData<Number>             MAX_PLAYERS_ENTRY_ALT = new ExpressionEntryData<>("max_players",     null, true, Number.class);
     static final ExpressionEntryData<MinigameTag>        MINIGAME_TAGS_ENTRY   = new ExpressionEntryData<>("minigame tags",   null, true, MinigameTag.class);
     static final ExpressionEntryData<MinigameTag>        TAGS_ENTRY            = new ExpressionEntryData<>("tags",            null, true, MinigameTag.class);
     static final SectionEntryData                        TEAMS_SECTION_ENTRY      = new SectionEntryData("teams", null, true);
@@ -110,6 +113,9 @@ final class MiniGameEntryHelper {
             .addEntryData(DESCRIPTION_ENTRY)
             .addEntryData(AUTHOR_ENTRY)
             .addEntryData(MIN_PLAYERS_ENTRY)
+            .addEntryData(MIN_PLAYERS_ENTRY_ALT)
+            .addEntryData(MAX_PLAYERS_ENTRY)
+            .addEntryData(MAX_PLAYERS_ENTRY_ALT)
             .addEntryData(MINIGAME_TAGS_ENTRY)
             .addEntryData(TAGS_ENTRY)
             .addEntryData(TEAMS_SECTION_ENTRY)
@@ -144,7 +150,16 @@ final class MiniGameEntryHelper {
 
     @SuppressWarnings("unchecked")
     static @Nullable Expression<Number> readMinPlayers(EntryContainer c) {
-        return (Expression<Number>) c.getOptional("min players", false);
+        Expression<Number> v = (Expression<Number>) c.getOptional("min players", false);
+        if (v == null) v = (Expression<Number>) c.getOptional("min_players", false);
+        return v;
+    }
+
+    @SuppressWarnings("unchecked")
+    static @Nullable Expression<Number> readMaxPlayers(EntryContainer c) {
+        Expression<Number> v = (Expression<Number>) c.getOptional("max players", false);
+        if (v == null) v = (Expression<Number>) c.getOptional("max_players", false);
+        return v;
     }
 
     @SuppressWarnings("unchecked")
@@ -389,6 +404,7 @@ final class MiniGameEntryHelper {
                       @Nullable Expression<String>               descriptionExpr,
                       @Nullable Expression<String>               authorExpr,
                       @Nullable Expression<Number>               minPlayersExpr,
+                      @Nullable Expression<Number>               maxPlayersExpr,
                       @Nullable Expression<MinigameTag>          tagsExpr,
                       @Nullable List<TeamEntry>                  parsedTeams,
                       @Nullable TeamRules                        defaultTeamRules,
@@ -417,6 +433,10 @@ final class MiniGameEntryHelper {
         if (minPlayersExpr != null) {
             Number v = minPlayersExpr.getSingle(null);
             if (v != null) mg.setValue("min_players", v.longValue());
+        }
+        if (maxPlayersExpr != null) {
+            Number v = maxPlayersExpr.getSingle(null);
+            if (v != null) mg.setValue("max_players", v.longValue());
         }
         if (tagsExpr != null) {
             MinigameTag[] tags = tagsExpr.getArray(null);

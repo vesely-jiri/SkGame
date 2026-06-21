@@ -179,6 +179,14 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             Messages.send(player, "session.error.game-in-progress");
             return false;
         }
+        // max players check
+        if (session.getMiniGame() != null) {
+            Object maxP = session.getMiniGame().getValue("max_players");
+            if (maxP instanceof Number n && session.getLobbyMembers().size() >= n.intValue()) {
+                Messages.send(player, "session.join-denied.full", n.intValue());
+                return false;
+            }
+        }
         session.addLobbyMember(player); // fires GamePlayerSessionJoin
         LobbyEnterEvent event = new LobbyEnterEvent(player, session);
         Bukkit.getPluginManager().callEvent(event);
@@ -411,6 +419,16 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
                 Messages.send(p, "session.start.maintenance");
             }
             return false;
+        }
+
+        // min players check
+        if (miniGame != null) {
+            Object minP = miniGame.getValue("min_players");
+            if (minP instanceof Number n && session.getLobbyMembers().size() < n.intValue()) {
+                for (Player p : session.getLobbyMembers())
+                    Messages.send(p, "session.error.not-enough-players", n.intValue());
+                return false;
+            }
         }
 
         if (needsPreparation(session)) {
