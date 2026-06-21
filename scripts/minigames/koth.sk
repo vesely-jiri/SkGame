@@ -3,32 +3,17 @@ options:
 
 #------------------------------------------------------------------------------
 
-locale "koth":
-    game.start:
-        cs: "&aKing of the Hill začal! Drž kopec a získávej body!"
-        en: "&aKing of the Hill started! Hold the hill to score points!"
-    game.over:
-        cs: "&7Hra skončila."
-        en: "&7Game over."
-    game.timeout:
-        cs: "&cČasový limit vypršel!"
-        en: "&cTime limit reached!"
-
-#------------------------------------------------------------------------------
-
 register minigame with id "koth":
     name: "King of the Hill"
     icon: red banner
     author: "JuraJ_Player"
     min players: 2
-    time: 6000
-    weather: "clear"
     cancel events: item-drop, hunger
     values:
-        gamemap value "hill_region":
+        gamemap value "hill_zone":
             name: "Hill region"
             description: "The region that counts as the hill"
-            type: an arena
+            type: a zone
         gamemap value "spawnpoints":
             name: "Spawn points"
             description: "Spawn locations for players at game start"
@@ -42,18 +27,20 @@ register minigame with id "koth":
             min: 5
             max: 60
 
+#------------------------------------------------------------------------------
+
 on "koth" game start:
     set {_spawnpoints::*} to gamemap values "spawnpoints" of event-session
     set {_limit} to (session value "points_limit" of event-session) ? 30
-    spread shuffled (session players of event-session) across shuffled {_spawnpoints::*}
-    loop session players of event-session:
+    loop shuffled session players of event-session:
+        add 1 to {_n}
+        teleport loop-player to {_spawnpoints::%{_n}%}
         set slot 0 of loop-player to stick
-    send locale "koth:game.start" to session players of event-session
+        reset {_n} if {_n} is size of {_spawnpoints::*}
     Koth_StartHillTicking(event-session, {_limit})
     Koth_StartShowPoints(event-session)
 
 on "koth" game stop:
-    send locale "koth:game.over" to session members of event-session
     if event-string is "WIN":
         set {_winner} to temporary session value "winner" of event-session
         set winners of event-session to {_winner}
@@ -68,11 +55,9 @@ local function Koth_StartShowPoints(session: session):
         wait 1 second
 
 local function Koth_StartHillTicking(session: session, limit: number):
+    set {_hill} to gamemap value "hill_zone" of {_session}
     while (session state of {_session}) is STARTED:
-        if session duration of {_session} > 10 minutes:
-            send locale "koth:game.timeout" to session members of {_session}
-            stop game of {_session} with reason "TIMEOUT"
-        set {_p::*} to (session players of {_session}) where [input is in zone "hill_region" of {_session}]
+        set {_p::*} to (players in {_hill}) where [(gamemode of input) is not spectator]
         if size of {_p::*} is 1:
             add 1 to score of {_p::1}
             if (score of {_p::1}) >= {_limit}:
