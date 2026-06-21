@@ -5,6 +5,7 @@ import ch.njol.skript.classes.Serializer;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.variables.SerializedVariable;
 import cz.nox.skgame.api.game.model.type.CancellableEventType;
+import cz.nox.skgame.api.game.model.type.NametagVisibility;
 import cz.nox.skgame.api.game.model.type.TeamAssignmentMode;
 import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
@@ -32,6 +33,7 @@ public class MiniGame implements ConfigurationSerializable {
     private Set<CancellableEventType> cancelledEvents = EnumSet.noneOf(CancellableEventType.class);
     private List<TeamEntry> teams = new ArrayList<>();
     private TeamAssignmentMode teamAssignment = TeamAssignmentMode.AUTO;
+    private @Nullable TeamRules defaultTeamRules;
     private @Nullable Long playerTime;
     private @Nullable String playerWeather;
     private List<String> instructions = new ArrayList<>();
@@ -143,6 +145,20 @@ public class MiniGame implements ConfigurationSerializable {
         this.teamAssignment = mode != null ? mode : TeamAssignmentMode.AUTO;
     }
 
+    public @Nullable TeamRules getDefaultTeamRules() { return defaultTeamRules; }
+    public void setDefaultTeamRules(@Nullable TeamRules rules) { this.defaultTeamRules = rules; }
+
+    /**
+     * Returns the resolved TeamRules for the given team id.
+     * Resolution order: per-team rules (already merged with defaults during parse) → defaultTeamRules → TeamRules.DEFAULT.
+     */
+    public TeamRules getEffectiveRules(String teamId) {
+        TeamEntry entry = getTeamEntry(teamId);
+        if (entry != null && entry.getRules() != null) return entry.getRules();
+        if (defaultTeamRules != null) return defaultTeamRules;
+        return TeamRules.DEFAULT;
+    }
+
     public @Nullable Long getPlayerTime() { return playerTime; }
     public void setPlayerTime(@Nullable Long ticks) { this.playerTime = ticks; }
 
@@ -151,6 +167,28 @@ public class MiniGame implements ConfigurationSerializable {
 
     public List<String> getInstructions() { return instructions; }
     public void setInstructions(List<String> list) { this.instructions = list != null ? new ArrayList<>(list) : new ArrayList<>(); }
+
+    private static Map<String, Object> serializeTeamRules(TeamRules r) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("friendly-fire", r.friendlyFire());
+        m.put("collision", r.collision());
+        m.put("nametag", r.nametag().name());
+        return m;
+    }
+
+    private static @Nullable TeamRules deserializeTeamRules(Object raw) {
+        Map<String, Object> map = null;
+        if (raw instanceof org.bukkit.configuration.MemorySection sec) map = sec.getValues(false);
+        else if (raw instanceof Map<?, ?> m) //noinspection unchecked
+            map = (Map<String, Object>) m;
+        if (map == null) return null;
+        boolean ff = Boolean.TRUE.equals(map.getOrDefault("friendly-fire", true));
+        boolean col = Boolean.TRUE.equals(map.getOrDefault("collision", true));
+        String ntStr = map.get("nametag") instanceof String s ? s : "ALWAYS";
+        NametagVisibility nt = NametagVisibility.fromString(ntStr);
+        if (nt == null) nt = NametagVisibility.ALWAYS;
+        return new TeamRules(ff, col, nt);
+    }
 
     @Override
     public @NotNull Map<String, Object> serialize() {
@@ -204,10 +242,12 @@ public class MiniGame implements ConfigurationSerializable {
                 Map<String, Object> td = new LinkedHashMap<>();
                 if (te.getRawDisplayName() != null) td.put("name", te.getRawDisplayName());
                 if (te.getIcon() != null) td.put("icon", te.getIcon().serialize());
+                if (te.getRules() != null) td.put("rules", serializeTeamRules(te.getRules()));
                 teamsMap.put(te.getId(), td);
             }
             gm.put("teams", teamsMap);
         }
+        if (defaultTeamRules != null) gm.put("default-team-rules", serializeTeamRules(defaultTeamRules));
         if (teamAssignment != TeamAssignmentMode.AUTO) {
             gm.put("team-assignment", teamAssignment.name());
         }
@@ -347,12 +387,14 @@ public class MiniGame implements ConfigurationSerializable {
                     String displayName = null;
                     ItemStack icon = null;
                     Object v = e.getValue();
+                    TeamRules teamRules = null;
                     if (v instanceof MemorySection sec) {
                         displayName = sec.getString("name");
                         Object iconRaw = sec.get("icon");
                         if (iconRaw instanceof MemorySection iconSec) {
                             try { icon = ItemStack.deserialize(iconSec.getValues(false)); } catch (Exception ignored) {}
                         }
+                        teamRules = deserializeTeamRules(sec.get("rules"));
                     } else if (v instanceof Map<?, ?> td) {
                         Object nameObj = td.get("name");
                         if (nameObj instanceof String) displayName = (String) nameObj;
@@ -363,12 +405,16 @@ public class MiniGame implements ConfigurationSerializable {
                                 icon = ItemStack.deserialize((Map<String, Object>) iconObj);
                             } catch (Exception ignored) {}
                         }
+                        teamRules = deserializeTeamRules(td.get("rules"));
                     }
-                    entries.add(new TeamEntry(teamId, displayName, icon));
+                    entries.add(new TeamEntry(teamId, displayName, icon, teamRules));
                 }
                 newGm.setTeamEntries(entries);
             }
         }
+
+        TeamRules defaultRules = deserializeTeamRules(gm.get("default-team-rules"));
+        if (defaultRules != null) newGm.setDefaultTeamRules(defaultRules);
 
         Object rawMode = gm.get("team-assignment");
         if (rawMode instanceof String s) {

@@ -9,11 +9,18 @@ public class TeamEntry {
     private final String id;
     @Nullable private final String displayName;
     @Nullable private final ItemStack icon;
+    /** Fully-resolved rules for this team (per-team override already merged with defaults). Null = use defaultTeamRules on MiniGame. */
+    @Nullable private final TeamRules rules;
 
     public TeamEntry(String id, @Nullable String displayName, @Nullable ItemStack icon) {
+        this(id, displayName, icon, null);
+    }
+
+    public TeamEntry(String id, @Nullable String displayName, @Nullable ItemStack icon, @Nullable TeamRules rules) {
         this.id = id;
         this.displayName = displayName;
         this.icon = icon != null ? icon.clone() : null;
+        this.rules = rules;
     }
 
     public String getId() { return id; }
@@ -26,4 +33,7 @@ public class TeamEntry {
 
     /** Returns a clone of the icon ItemStack, or null if none was declared. */
     public @Nullable ItemStack getIcon() { return icon != null ? icon.clone() : null; }
+
+    /** Per-team rules (already merged with defaultTeamRules during parse). Null if no per-team or global rules set. */
+    public @Nullable TeamRules getRules() { return rules; }
 }

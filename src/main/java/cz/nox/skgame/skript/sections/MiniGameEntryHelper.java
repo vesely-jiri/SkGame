@@ -12,8 +12,10 @@ import cz.nox.skgame.api.game.model.CustomValue;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.MinigameTag;
 import cz.nox.skgame.api.game.model.TeamEntry;
+import cz.nox.skgame.api.game.model.TeamRules;
 import cz.nox.skgame.api.game.model.type.CancellableEventType;
 import cz.nox.skgame.api.game.model.type.CustomValuePlurality;
+import cz.nox.skgame.api.game.model.type.NametagVisibility;
 import cz.nox.skgame.api.game.model.type.TeamAssignmentMode;
 import cz.nox.skgame.core.game.MiniGameManager;
 import org.bukkit.inventory.ItemStack;
@@ -43,6 +45,9 @@ final class MiniGameEntryHelper {
     /** One entry from the values: section — gamemap or session scope value definition. */
     record ValueDefEntry(boolean isGamemap, String key, CustomValue cv) {}
 
+    /** Result of parseTeams — both the team list and the optional global default rules. */
+    record ParsedTeamsResult(java.util.List<TeamEntry> teams, @Nullable TeamRules defaultTeamRules) {}
+
     // key pattern: (gamemap|session) value "id"
     private static final Pattern VALUE_KEY_PATTERN =
             Pattern.compile("^(gamemap|session) value \"([^\"]+)\"$");
@@ -63,10 +68,20 @@ final class MiniGameEntryHelper {
     static final ExpressionEntryData<String>              WEATHER_ENTRY          = new ExpressionEntryData<>("weather",         null, true, String.class);
     static final ExpressionEntryData<String>              INSTRUCTIONS_ENTRY     = new ExpressionEntryData<>("instructions",    null, true, String.class);
 
-    /** Validator for an individual team body (name: / icon:). */
+    /** Validator for the global rules: section inside teams: */
+    static final EntryValidator TEAM_RULES_VALIDATOR = EntryValidator.builder()
+            .addEntryData(new ExpressionEntryData<>("friendly-fire",      null, true, String.class))
+            .addEntryData(new ExpressionEntryData<>("collision",           null, true, String.class))
+            .addEntryData(new ExpressionEntryData<>("nametag-visibility",  null, true, String.class))
+            .build();
+
+    /** Validator for an individual team body (name: / icon: / optional rule overrides). */
     static final EntryValidator TEAM_BODY_VALIDATOR = EntryValidator.builder()
-            .addEntryData(new ExpressionEntryData<>("name", null, true, String.class))
-            .addEntryData(new ExpressionEntryData<>("icon", null, true, ItemStack.class))
+            .addEntryData(new ExpressionEntryData<>("name",               null, true, String.class))
+            .addEntryData(new ExpressionEntryData<>("icon",               null, true, ItemStack.class))
+            .addEntryData(new ExpressionEntryData<>("friendly-fire",      null, true, String.class))
+            .addEntryData(new ExpressionEntryData<>("collision",          null, true, String.class))
+            .addEntryData(new ExpressionEntryData<>("nametag-visibility", null, true, String.class))
             .build();
 
     /** Validator for an individual value-def body (inside gamemap/session value "id":). */
@@ -175,24 +190,39 @@ final class MiniGameEntryHelper {
     }
 
     /**
-     * Parse a "teams:" SectionNode into a list of TeamEntry.
-     * Each child node's key is the team id; if the child is a SectionNode its body
-     * may contain "name:" and "icon:" entries. Returns null (and logs an error) on
-     * duplicate team ids. Returns empty list for an empty section.
+     * Parse a "teams:" SectionNode.
+     * A child named "rules" sets global defaults; all other children are team ids.
+     * Returns null (and logs an error) on duplicate team ids. Never returns null for empty section.
      */
     @SuppressWarnings("unchecked")
-    static @Nullable List<TeamEntry> parseTeams(SectionNode teamsSection) {
+    static @Nullable ParsedTeamsResult parseTeams(SectionNode teamsSection) {
+        // First pass: find global rules: node
+        @Nullable TeamRules defaultRules = null;
+        for (Node child : teamsSection) {
+            if (child.getKey() == null) continue;
+            if ("rules".equals(ScriptLoader.replaceOptions(child.getKey())) && child instanceof SectionNode rulesSection) {
+                EntryContainer rulesBody = TEAM_RULES_VALIDATOR.validate(rulesSection);
+                if (rulesBody != null) {
+                    defaultRules = parseRulesFromBody(rulesBody, null);
+                }
+                break;
+            }
+        }
+
+        // Second pass: parse team entries
         List<TeamEntry> entries = new ArrayList<>();
         LinkedHashSet<String> seenIds = new LinkedHashSet<>();
         for (Node child : teamsSection) {
             if (child.getKey() == null) continue;
             String teamId = ScriptLoader.replaceOptions(child.getKey());
+            if ("rules".equals(teamId)) continue; // already handled
             if (!seenIds.add(teamId)) {
                 Skript.error("Duplicate team id in register block: \"" + teamId + "\"");
                 return null;
             }
             String displayName = null;
             ItemStack icon = null;
+            @Nullable TeamRules teamRules = null;
             if (child instanceof SectionNode teamSection) {
                 EntryContainer teamBody = TEAM_BODY_VALIDATOR.validate(teamSection);
                 if (teamBody != null) {
@@ -203,12 +233,45 @@ final class MiniGameEntryHelper {
                         ItemStack v = iconExpr.getSingle(null);
                         if (v != null) icon = v;
                     }
+                    teamRules = parseRulesFromBody(teamBody, defaultRules);
                 }
             }
-            // non-section child = id-only (name/icon default)
-            entries.add(new TeamEntry(teamId, displayName, icon));
+            // If teamRules is null (no per-team rules and no default rules) — keep null (use MiniGame.defaultTeamRules at runtime)
+            entries.add(new TeamEntry(teamId, displayName, icon, teamRules));
         }
-        return entries;
+        return new ParsedTeamsResult(entries, defaultRules);
+    }
+
+    /**
+     * Parse friendly-fire / collision / nametag-visibility from an EntryContainer.
+     * Missing fields inherit from fallback. Returns null only when ALL fields are absent and fallback is null.
+     */
+    @SuppressWarnings("unchecked")
+    private static @Nullable TeamRules parseRulesFromBody(EntryContainer body, @Nullable TeamRules fallback) {
+        Expression<String> ffExpr  = (Expression<String>) body.getOptional("friendly-fire",      false);
+        Expression<String> colExpr = (Expression<String>) body.getOptional("collision",           false);
+        Expression<String> ntExpr  = (Expression<String>) body.getOptional("nametag-visibility",  false);
+
+        String ffStr  = ffExpr  != null ? ffExpr.getSingle(null)  : null;
+        String colStr = colExpr != null ? colExpr.getSingle(null) : null;
+        String ntStr  = ntExpr  != null ? ntExpr.getSingle(null)  : null;
+
+        if (ffStr == null && colStr == null && ntStr == null && fallback == null) return null;
+
+        boolean ff  = ffStr  != null ? parseBooleanStr(ffStr)  : (fallback != null ? fallback.friendlyFire() : true);
+        boolean col = colStr != null ? parseBooleanStr(colStr) : (fallback != null ? fallback.collision()    : true);
+        NametagVisibility nt;
+        if (ntStr != null) {
+            nt = NametagVisibility.fromString(ntStr);
+            if (nt == null) { Skript.warning("Unknown nametag-visibility value: '" + ntStr + "'; defaulting to always"); nt = NametagVisibility.ALWAYS; }
+        } else {
+            nt = fallback != null ? fallback.nametag() : NametagVisibility.ALWAYS;
+        }
+        return new TeamRules(ff, col, nt);
+    }
+
+    private static boolean parseBooleanStr(String s) {
+        return "true".equalsIgnoreCase(s) || "yes".equalsIgnoreCase(s) || "on".equalsIgnoreCase(s);
     }
 
     /**
@@ -328,6 +391,7 @@ final class MiniGameEntryHelper {
                       @Nullable Expression<Number>               minPlayersExpr,
                       @Nullable Expression<MinigameTag>          tagsExpr,
                       @Nullable List<TeamEntry>                  parsedTeams,
+                      @Nullable TeamRules                        defaultTeamRules,
                       @Nullable Expression<TeamAssignmentMode>   teamAssignmentExpr,
                       @Nullable List<ValueDefEntry>              parsedValues,
                       @Nullable Expression<CancellableEventType> cancelEventsExpr,
@@ -361,6 +425,7 @@ final class MiniGameEntryHelper {
         if (parsedTeams != null) {
             mg.setTeamEntries(parsedTeams);
         }
+        mg.setDefaultTeamRules(defaultTeamRules); // may be null (clears previous)
         if (teamAssignmentExpr != null) {
             TeamAssignmentMode mode = teamAssignmentExpr.getSingle(null);
             if (mode != null) mg.setTeamAssignment(mode);

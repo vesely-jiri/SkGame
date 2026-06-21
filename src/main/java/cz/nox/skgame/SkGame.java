@@ -296,6 +296,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
         Bukkit.getPluginManager().registerEvents(new cz.nox.skgame.core.game.GameEventCancelListener(), instance);
         Bukkit.getPluginManager().registerEvents(new cz.nox.skgame.core.listener.ChatIsolationListener(), instance);
         Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.tab.TabManager.getInstance(), instance);
+        Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.game.TeamRulesManager.getInstance(), instance);
 
         for (SkGameModule module : enabledModules) {
             module.onEnable(this);

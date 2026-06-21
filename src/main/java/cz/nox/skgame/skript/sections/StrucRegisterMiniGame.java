@@ -22,6 +22,7 @@ import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.MinigameTag;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.TeamEntry;
+import cz.nox.skgame.api.game.model.TeamRules;
 import cz.nox.skgame.api.game.model.type.CancellableEventType;
 import cz.nox.skgame.api.game.model.type.DisbandReason;
 import cz.nox.skgame.api.game.model.type.TeamAssignmentMode;
@@ -108,6 +109,7 @@ public class StrucRegisterMiniGame extends Structure {
     private @Nullable Expression<Number>             minPlayersExpr;
     private @Nullable Expression<MinigameTag>        tagsExpr;
     private @Nullable List<TeamEntry>                parsedTeams;
+    private @Nullable TeamRules                                   defaultTeamRules;
     private @Nullable Expression<TeamAssignmentMode>             teamAssignmentExpr;
     private @Nullable List<MiniGameEntryHelper.ValueDefEntry>    parsedValues;
     private @Nullable Expression<CancellableEventType>           cancelEventsExpr;
@@ -136,7 +138,13 @@ public class StrucRegisterMiniGame extends Structure {
             minPlayersExpr     = MiniGameEntryHelper.readMinPlayers(entryContainer);
             tagsExpr           = MiniGameEntryHelper.readTags(entryContainer);
             ch.njol.skript.config.SectionNode teamsSectionNode = MiniGameEntryHelper.readTeamsSectionNode(entryContainer);
-            if (teamsSectionNode != null) parsedTeams = MiniGameEntryHelper.parseTeams(teamsSectionNode);
+            if (teamsSectionNode != null) {
+                MiniGameEntryHelper.ParsedTeamsResult teamsResult = MiniGameEntryHelper.parseTeams(teamsSectionNode);
+                if (teamsResult != null) {
+                    parsedTeams = teamsResult.teams();
+                    defaultTeamRules = teamsResult.defaultTeamRules();
+                }
+            }
             teamAssignmentExpr = MiniGameEntryHelper.readTeamAssignment(entryContainer);
             ch.njol.skript.config.SectionNode valuesSectionNode = MiniGameEntryHelper.readValuesSectionNode(entryContainer);
             if (valuesSectionNode != null) parsedValues = MiniGameEntryHelper.parseValues(valuesSectionNode);
@@ -177,7 +185,7 @@ public class StrucRegisterMiniGame extends Structure {
         String minigameId = id.getSingle(null);
         if (minigameId == null) return false;
         MiniGame mg = miniGameManager.registerMiniGame(minigameId);
-        MiniGameEntryHelper.apply(mg, nameExpr, iconExpr, descriptionExpr, authorExpr, minPlayersExpr, tagsExpr, parsedTeams, teamAssignmentExpr, parsedValues, cancelEventsExpr, timeExpr, weatherExpr, instructionsExpr);
+        MiniGameEntryHelper.apply(mg, nameExpr, iconExpr, descriptionExpr, authorExpr, minPlayersExpr, tagsExpr, parsedTeams, defaultTeamRules, teamAssignmentExpr, parsedValues, cancelEventsExpr, timeExpr, weatherExpr, instructionsExpr);
         // Always save after postLoad so that after a /sk reload the file contains this minigame
         // (unload() removes it via unregisterMiniGame; without this, a no-values minigame would never
         // be re-written to file, causing disabled-state loss on next server restart).
