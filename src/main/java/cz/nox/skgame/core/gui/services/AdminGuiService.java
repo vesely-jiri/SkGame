@@ -494,8 +494,9 @@ public class AdminGuiService implements Listener {
         }
         // Refresh preview after every corner change (starts as soon as pos1 is set)
         if (state.getPos1() != null) {
+            int density = SkGame.getInstance().getConfig().getInt("admin.wand.particle-density", 6);
             BoundaryPreview preview = new BoundaryPreview(
-                    player, state.getPos1(), state.getPos2(), SkGame.getInstance());
+                    player, state.getPos1(), state.getPos2(), SkGame.getInstance(), density);
             state.setBoundaryPreview(preview);
             preview.start();
         }

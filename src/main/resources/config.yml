@@ -132,3 +132,10 @@ messages:
   fallback-locale: en_US
   hot-reload: true
   auto-merge: true        # append missing keys from bundled defaults to user YAML files on startup
+
+# --- Admin ---
+admin:
+  wand:
+    # Particles per block along each boundary edge (unit cubes + bounding box).
+    # Higher = denser outline. Default 6 ≈ one particle every ~0.17 blocks.
+    particle-density: 6
