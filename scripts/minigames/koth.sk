@@ -5,7 +5,7 @@ options:
 
 register minigame with id "koth":
     name: "King of the Hill"
-    icon: red banner
+    icon: red standing banner
     author: "JuraJ_Player"
     min players: 2
     cancel events: item-drop, hunger
@@ -55,9 +55,8 @@ local function Koth_StartShowPoints(session: session):
         wait 1 second
 
 local function Koth_StartHillTicking(session: session, limit: number):
-    set {_hill} to gamemap value "hill_zone" of {_session}
     while (session state of {_session}) is STARTED:
-        set {_p::*} to (players in {_hill}) where [(gamemode of input) is not spectator]
+        set {_p::*} to players in zone "hill_zone" of {_session} where [(gamemode of input) is not spectator]
         if size of {_p::*} is 1:
             add 1 to score of {_p::1}
             if (score of {_p::1}) >= {_limit}:
