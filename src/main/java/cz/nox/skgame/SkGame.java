@@ -112,6 +112,8 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             "cz.nox.skgame.skript.expressions.ExprLocale",
             // Expressions — zone
             "cz.nox.skgame.skript.expressions.ExprBlocksInZone",
+            "cz.nox.skgame.skript.expressions.ExprPlayersInZone",
+            "cz.nox.skgame.skript.expressions.ExprEntitiesInZone",
             "cz.nox.skgame.skript.sections.EffSecRegisterMiniGame",
             "cz.nox.skgame.skript.sections.ExprSecCustomValue",
             "cz.nox.skgame.skript.sections.EffSecSetGameMapValueDef",
