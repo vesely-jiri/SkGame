@@ -935,6 +935,11 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         session.setState(SessionState.ENDED);
         session.setGameStartTime(0L);
 
+        // Pre-reset players before GameStopEvent so scripts can override level/inventory
+        GameMode defaultGm = plugin.getDefaultGameMode();
+        for (Player p : session.getPlayers())
+            PlayerResetter.reset(p, defaultGm);
+
         // Fire GameStopEvent while players are still in PLAYER role, state=ENDED (semantically correct)
         MiniGame miniGame = session.getMiniGame();
         if (miniGame != null) {
@@ -1099,10 +1104,9 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
             }
         }
 
-        // Reset and teleport active players (now in LOBBY role)
+        // Teleport active players (already reset in endGame() before GameStopEvent)
         for (Player p : activePlayers) {
             resetEnvironment(p);
-            PlayerResetter.reset(p, plugin.getDefaultGameMode());
             if (lobbySpawn != null) p.teleport(lobbySpawn);
         }
 
