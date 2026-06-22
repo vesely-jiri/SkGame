@@ -62,9 +62,8 @@ public class ExprPlayerScore extends SimpleExpression<Number> {
     private Expression<Player> playerExpr;
 
     static {
-        // PROPERTY: single type param, qualifies as PROPERTY classification
         Skript.registerExpression(ExprPlayerScore.class, Number.class, ExpressionType.PROPERTY,
-                "[skgame] score of %player%");
+                "[skgame] score of %players%");
     }
 
     @SuppressWarnings("unchecked")
@@ -77,11 +76,14 @@ public class ExprPlayerScore extends SimpleExpression<Number> {
 
     @Override
     protected @Nullable Number[] get(Event e) {
-        Player p = playerExpr.getSingle(e);
-        if (p == null) return null;
-        GamePlayer gp = playerManager.getPlayer(p);
-        if (gp == null) return null;
-        return new Number[]{scoreOf(gp)};
+        Player[] players = playerExpr.getAll(e);
+        if (players.length == 0) return null;
+        java.util.List<Number> results = new java.util.ArrayList<>();
+        for (Player p : players) {
+            GamePlayer gp = playerManager.getPlayer(p);
+            if (gp != null) results.add(scoreOf(gp));
+        }
+        return results.isEmpty() ? null : results.toArray(new Number[0]);
     }
 
     @Override
@@ -95,32 +97,35 @@ public class ExprPlayerScore extends SimpleExpression<Number> {
 
     @Override
     public void change(Event e, @Nullable Object[] delta, ChangeMode mode) {
-        Player p = playerExpr.getSingle(e);
-        if (p == null) return;
-        GamePlayer gp = playerManager.getPlayer(p);
-        if (gp == null) return;
+        Player[] players = playerExpr.getAll(e);
+        if (players.length == 0) return;
 
-        Session session = SessionManager.getInstance().getSession(p);
-        int old = scoreOf(gp);
+        for (Player p : players) {
+            GamePlayer gp = playerManager.getPlayer(p);
+            if (gp == null) continue;
 
-        if (mode == ChangeMode.DELETE || mode == ChangeMode.RESET) {
-            gp.removeValue(SCORE_KEY);
+            Session session = SessionManager.getInstance().getSession(p);
+            int old = scoreOf(gp);
+
+            if (mode == ChangeMode.DELETE || mode == ChangeMode.RESET) {
+                gp.removeValue(SCORE_KEY);
+                if (session != null)
+                    Bukkit.getPluginManager().callEvent(new PlayerScoreChangeEvent(session, p, old, 0));
+                continue;
+            }
+
+            if (delta == null || delta[0] == null) continue;
+            int amount = ((Number) delta[0]).intValue();
+            int newVal = switch (mode) {
+                case SET    -> amount;
+                case ADD    -> old + amount;
+                case REMOVE -> old - amount;
+                default     -> old;
+            };
+            gp.setValue(SCORE_KEY, newVal);
             if (session != null)
-                Bukkit.getPluginManager().callEvent(new PlayerScoreChangeEvent(session, p, old, 0));
-            return;
+                Bukkit.getPluginManager().callEvent(new PlayerScoreChangeEvent(session, p, old, newVal));
         }
-
-        if (delta == null || delta[0] == null) return;
-        int amount = ((Number) delta[0]).intValue();
-        int newVal = switch (mode) {
-            case SET    -> amount;
-            case ADD    -> old + amount;
-            case REMOVE -> old - amount;
-            default     -> old;
-        };
-        gp.setValue(SCORE_KEY, newVal);
-        if (session != null)
-            Bukkit.getPluginManager().callEvent(new PlayerScoreChangeEvent(session, p, old, newVal));
     }
 
     private static int scoreOf(GamePlayer gp) {
@@ -129,7 +134,7 @@ public class ExprPlayerScore extends SimpleExpression<Number> {
     }
 
     @Override
-    public boolean isSingle() { return true; }
+    public boolean isSingle() { return playerExpr.isSingle(); }
 
     @Override
     public Class<? extends Number> getReturnType() { return Number.class; }
