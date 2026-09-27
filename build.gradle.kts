@@ -1,6 +1,6 @@
 plugins {
     java
-    id("com.gradleup.shadow") version "8.3.5"
+    id("com.gradleup.shadow") version "9.6.1"
 }
 
 group = "cz.nox.skgame"
@@ -8,12 +8,13 @@ version = "1.0.0"
 description = "Skript addon for creating, managing and handling minigames"
 
 java {
-    toolchain.languageVersion.set(JavaLanguageVersion.of(21))
+    toolchain.languageVersion.set(JavaLanguageVersion.of(25))
 }
 
 repositories {
     mavenCentral()
     maven("https://repo.papermc.io/repository/maven-public/")
+    maven("https://repo.skriptlang.org/releases")
     maven("https://jitpack.io")
 }
 
@@ -24,8 +25,8 @@ configurations.all {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT")
-    compileOnly("com.github.SkriptLang:Skript:2.13.0")
+    compileOnly("io.papermc.paper:paper-api:26.2.build.124-stable")
+    compileOnly("com.github.SkriptLang:Skript:2.16.2")
     implementation("com.zaxxer:HikariCP:5.1.0")
     implementation("org.xerial:sqlite-jdbc:3.45.3.0")
     implementation("dev.dejvokep:boosted-yaml:1.3.7")
