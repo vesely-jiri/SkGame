@@ -286,7 +286,8 @@ public class GameMap implements ConfigurationSerializable {
                             Map<String, Object> lm = serializeLocation(loc);
                             if (!lm.isEmpty()) serializedArr.add(lm);
                         } else {
-                            serializedArr.add(el);
+                            // YAML-safe encode (block-data/enum would otherwise emit a corrupting global tag)
+                            serializedArr.add(ValueSerialization.encode(el));
                         }
                     }
                     plural.put("values", serializedArr);
@@ -302,8 +303,9 @@ public class GameMap implements ConfigurationSerializable {
                     if (!lm.isEmpty()) result.put(innerKey, lm);
                 } else {
                     // Native (Phase 2): numbers/strings/booleans + Bukkit ConfigurationSerializable
-                    // round-trip through YamlConfiguration as-is. No Skript dependency.
-                    result.put(innerKey, innerValue);
+                    // round-trip as-is; block-data/enum/other objects are encoded YAML-safe so a raw
+                    // object can never emit a global tag that corrupts maps.yml. No Skript dependency.
+                    result.put(innerKey, ValueSerialization.encode(innerValue));
                 }
             });
             rawMiniGameValues.put(miniGame, result);
@@ -450,6 +452,10 @@ public class GameMap implements ConfigurationSerializable {
                     data = cast;
                 }
                 if (data != null) {
+                    if (data.containsKey(ValueSerialization.TYPE_KEY)) {
+                        gameMap.setMiniGameValue(miniGameId, key, ValueSerialization.decode(data));
+                        continue;
+                    }
                     if (Boolean.TRUE.equals(data.get("__region"))) {
                         Region r = deserializeRegion(raw);
                         if (r != null) {
@@ -479,7 +485,7 @@ public class GameMap implements ConfigurationSerializable {
                                     if (loc != null) elements.add(loc);
                                     continue;
                                 }
-                                elements.add(el);
+                                elements.add(ValueSerialization.decode(el));
                             }
                         }
                         gameMap.setMiniGameValue(miniGameId, key, elements.toArray());
@@ -508,7 +514,7 @@ public class GameMap implements ConfigurationSerializable {
                         continue;
                     }
                 }
-                gameMap.setMiniGameValue(miniGameId, key, raw);
+                gameMap.setMiniGameValue(miniGameId, key, ValueSerialization.decode(raw));
             }
         }
         Object rawRegion = map.get("region");

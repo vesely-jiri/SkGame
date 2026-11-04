@@ -174,17 +174,18 @@ public class CustomValue implements ConfigurationSerializable {
     }
 
     /**
-     * Native default serialization: primitives and Bukkit {@link ConfigurationSerializable}
-     * (ItemStack/Location) round-trip through YamlConfiguration as-is. The one non-YAML type a def
-     * default can hold is a Skript {@code Timespan}, stored as ticks (addon only — guarded so no
-     * {@code ch.njol.skript.*} symbol is linked in standalone).
+     * Native default serialization. A Skript {@code Timespan} is stored as ticks (addon only —
+     * guarded so no {@code ch.njol.skript.*} symbol is linked in standalone); everything else goes
+     * through {@link ValueSerialization#encode(Object)}, which guarantees a YAML-safe result.
+     * Crucially a block-data / enum default is encoded, never stored raw — a raw one emits a global
+     * tag ({@code !!...CraftBlockData}) that corrupts minigames.yml on the next read.
      */
     private Object serializeDefault(Object def) {
         if (valueType == ValueType.TIMESPAN && skriptPresent()
                 && def instanceof ch.njol.skript.util.Timespan ts) {
             return ts.getAs(ch.njol.skript.util.Timespan.TimePeriod.TICK);
         }
-        return def;
+        return ValueSerialization.encode(def);
     }
 
     public static CustomValue deserialize(Map<String, Object> map) {
@@ -219,12 +220,12 @@ public class CustomValue implements ConfigurationSerializable {
         return cv;
     }
 
-    /** Inverse of {@link #serializeDefault(Object)}. TIMESPAN ticks → Timespan (addon only). */
+    /** Inverse of {@link #serializeDefault(Object)}. TIMESPAN ticks → Timespan (addon only); else decode. */
     private static Object deserializeDefault(Object def, ValueType vt) {
         if (def == null) return null;
         if (vt == ValueType.TIMESPAN && skriptPresent() && def instanceof Number n) {
             return new ch.njol.skript.util.Timespan(ch.njol.skript.util.Timespan.TimePeriod.TICK, n.longValue());
         }
-        return def;
+        return ValueSerialization.decode(def);
     }
 }

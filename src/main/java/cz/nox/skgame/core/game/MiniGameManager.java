@@ -85,30 +85,64 @@ public class MiniGameManager {
         // Load existing file first: needed to preserve data for disabled-but-unloaded minigames
         // (e.g. during shutdown Skript may unload a section before onDisable() runs, removing
         // the MiniGame from miniGames. Without this, its disabled flag would be silently lost.)
-        YamlConfiguration existing = YamlConfiguration.loadConfiguration(file);
+        // A corrupt existing file must never abort the save — degrade to empty.
+        YamlConfiguration existing;
+        try {
+            existing = YamlConfiguration.loadConfiguration(file);
+        } catch (Throwable t) {
+            SkGame.getInstance().getLogger().warning(
+                    "Could not read existing minigames.yml (" + t + "); continuing without it.");
+            existing = new YamlConfiguration();
+        }
         YamlConfiguration config = new YamlConfiguration();
 
-        // Write all currently-registered minigames
+        // Write all currently-registered minigames. Guard per-minigame so one bad entry can never
+        // drop the rest of the file.
         for (MiniGame gm : miniGames.values()) {
-            Map<String, Object> data = new java.util.LinkedHashMap<>(gm.serialize());
-            if (disabledMinigames.contains(gm.getId().toLowerCase())) data.put("disabled", true);
-            config.createSection("minigames." + gm.getId().toLowerCase(), data);
+            String id = gm.getId().toLowerCase();
+            try {
+                Map<String, Object> data = new java.util.LinkedHashMap<>(gm.serialize());
+                if (disabledMinigames.contains(id)) data.put("disabled", true);
+                config.createSection("minigames." + id, data);
+            } catch (Throwable t) {
+                SkGame.getInstance().getLogger().severe(
+                        "Skipping minigame '" + id + "' in save — serialize failed: " + t);
+            }
         }
 
         // For disabled minigames that are temporarily absent from miniGames (unloaded but not
         // yet re-registered), copy their full section from the existing file so they survive.
         for (String disabledId : disabledMinigames) {
             if (miniGames.containsKey(disabledId)) continue; // already written above
-            ConfigurationSection src = existing.getConfigurationSection("minigames." + disabledId);
-            if (src != null) {
-                for (String key : src.getKeys(true)) {
-                    Object val = src.get(key);
-                    if (!(val instanceof org.bukkit.configuration.ConfigurationSection)) {
-                        config.set("minigames." + disabledId + "." + key, val);
+            try {
+                ConfigurationSection src = existing.getConfigurationSection("minigames." + disabledId);
+                if (src != null) {
+                    for (String key : src.getKeys(true)) {
+                        Object val = src.get(key);
+                        if (!(val instanceof org.bukkit.configuration.ConfigurationSection)) {
+                            config.set("minigames." + disabledId + "." + key, val);
+                        }
                     }
                 }
+                config.set("minigames." + disabledId + ".disabled", true);
+            } catch (Throwable t) {
+                SkGame.getInstance().getLogger().warning(
+                        "Could not preserve disabled minigame '" + disabledId + "': " + t);
             }
-            config.set("minigames." + disabledId + ".disabled", true);
+        }
+
+        // Round-trip guard: a save must NEVER produce a file it cannot read back. If the serialized
+        // form is not reloadable (e.g. an unexpected global YAML tag), refuse to write so the existing
+        // good file is preserved rather than overwritten with unreadable (or 0-byte) content.
+        String out;
+        try {
+            out = config.saveToString();
+            new YamlConfiguration().loadFromString(out);
+        } catch (Throwable t) {
+            SkGame.getInstance().getLogger().severe(
+                    "Refusing to save minigames.yml — serialized form is not reloadable (" + t
+                            + "). Existing file left untouched.");
+            return;
         }
 
         try {

@@ -193,9 +193,12 @@ public class MiniGame implements ConfigurationSerializable {
 
         // Native serialization (Phase 2): primitives + Bukkit ConfigurationSerializable (e.g. the
         // icon ItemStack) round-trip through YamlConfiguration as-is — no Skript dependency, works in
-        // both modes. These top-level values (name/icon/min_players/…) are re-registered on every
-        // boot by the script/extension, so any pre-Phase-2 {type,data} entries get rewritten natively.
-        Map<String, Object> serializedValues = new LinkedHashMap<>(this.values);
+        // both modes. Each value is passed through ValueSerialization.encode so an awkward object
+        // (block-data/enum set via Skript) can never emit a global tag that corrupts minigames.yml.
+        Map<String, Object> serializedValues = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> entry : this.values.entrySet()) {
+            serializedValues.put(entry.getKey(), ValueSerialization.encode(entry.getValue()));
+        }
         gm.put("values", serializedValues);
 
         if (!gameMapValueDefs.isEmpty()) {
@@ -260,10 +263,10 @@ public class MiniGame implements ConfigurationSerializable {
 
         Map<String, Object> values = new HashMap<>();
         for (Map.Entry<String, Object> entry : rawMap.entrySet()) {
-            // Native (Phase 2): values stored raw; YamlConfiguration already deserialized any
-            // ConfigurationSerializable (icon ItemStack). A pre-Phase-2 {type,data} blob would load
-            // as a section here and is harmlessly overwritten when the minigame re-registers on boot.
-            values.put(entry.getKey(), entry.getValue());
+            // Native (Phase 2): decode reverses ValueSerialization.encode (tagged block-data/enum →
+            // object; primitives + ConfigurationSerializable pass through). A pre-Phase-2 {type,data}
+            // blob loads as a section and is harmlessly overwritten when the minigame re-registers.
+            values.put(entry.getKey(), ValueSerialization.decode(entry.getValue()));
         }
 
         MiniGame newGm = new MiniGame(id);
