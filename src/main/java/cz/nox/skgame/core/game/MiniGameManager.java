@@ -96,17 +96,25 @@ public class MiniGameManager {
         }
         YamlConfiguration config = new YamlConfiguration();
 
-        // Write all currently-registered minigames. Guard per-minigame so one bad entry can never
-        // drop the rest of the file.
+        // Write all currently-registered minigames. Each is verified to round-trip ON ITS OWN before
+        // being added, so a single unserializable field is skipped WITH ITS NAME logged while every
+        // clean minigame still persists — one bad entry can never drop the rest or zero the file.
         for (MiniGame gm : miniGames.values()) {
             String id = gm.getId().toLowerCase();
             try {
                 Map<String, Object> data = new java.util.LinkedHashMap<>(gm.serialize());
                 if (disabledMinigames.contains(id)) data.put("disabled", true);
+
+                // Probe: serialize+reload just this minigame. Throws on a global tag or a bad field.
+                YamlConfiguration probe = new YamlConfiguration();
+                probe.createSection("minigames." + id, data);
+                new YamlConfiguration().loadFromString(probe.saveToString());
+
                 config.createSection("minigames." + id, data);
             } catch (Throwable t) {
                 SkGame.getInstance().getLogger().severe(
-                        "Skipping minigame '" + id + "' in save — serialize failed: " + t);
+                        "Skipping minigame '" + id + "' in save — not safely serializable: " + t
+                                + ". Other minigames are unaffected.");
             }
         }
 

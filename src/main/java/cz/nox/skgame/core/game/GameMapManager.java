@@ -105,9 +105,34 @@ public class GameMapManager {
 
     public void saveToFile(File file) {
         YamlConfiguration config = new YamlConfiguration();
-        config.set("maps",null);
+        config.set("maps", null);
+        // Verify each map round-trips on its own: a single unserializable per-map value is skipped
+        // (named in the log) while every clean map still persists — never zero the file. Region
+        // values are plain maps and round-trip losslessly.
         for (GameMap gameMap : maps.values()) {
-            config.createSection("maps." + gameMap.getId(), gameMap.serialize());
+            String id = gameMap.getId();
+            try {
+                Map<String, Object> data = gameMap.serialize();
+                YamlConfiguration probe = new YamlConfiguration();
+                probe.createSection("maps." + id, data);
+                new YamlConfiguration().loadFromString(probe.saveToString());
+                config.createSection("maps." + id, data);
+            } catch (Throwable t) {
+                SkGame.getInstance().getLogger().severe(
+                        "Skipping map '" + id + "' in save — not safely serializable: " + t
+                                + ". Other maps are unaffected.");
+            }
+        }
+        // Backstop: never write a file we cannot read back.
+        String out;
+        try {
+            out = config.saveToString();
+            new YamlConfiguration().loadFromString(out);
+        } catch (Throwable t) {
+            SkGame.getInstance().getLogger().severe(
+                    "Refusing to save maps.yml — serialized form is not reloadable (" + t
+                            + "). Existing file left untouched.");
+            return;
         }
         try {
             config.save(file);
