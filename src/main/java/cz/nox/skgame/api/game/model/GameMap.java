@@ -256,6 +256,16 @@ public class GameMap implements ConfigurationSerializable {
         return this.miniGameValues.containsKey(minigame.getId());
     }
 
+    /**
+     * Phase-1 standalone guard: per-map value (de)serialization routes through Skript's
+     * {@link Classes}. Without Skript those symbols can't be linked; in standalone, Location/
+     * Region/plural values still round-trip via their own serializers, other typed values degrade.
+     * Detected via Bukkit so no {@code ch.njol.skript.*} symbol is referenced. Fixed in Phase 2.
+     */
+    private static boolean skriptPresent() {
+        return org.bukkit.Bukkit.getPluginManager().getPlugin("Skript") != null;
+    }
+
     @Override
     public @NotNull Map<String, Object> serialize() {
         Map<String, Object> map = new HashMap<>();
@@ -288,7 +298,7 @@ public class GameMap implements ConfigurationSerializable {
                         result.put(innerKey, ser);
                     }
                 } else {
-                    SerializedVariable.Value serialized = Classes.serialize(innerValue);
+                    SerializedVariable.Value serialized = skriptPresent() ? Classes.serialize(innerValue) : null;
                     if (serialized != null) {
                         Map<String, Object> ser = new HashMap<>();
                         ser.put("type", serialized.type);
@@ -484,7 +494,7 @@ public class GameMap implements ConfigurationSerializable {
                     String typeObj = (String) data.get("type");
                     Object rawBytes = data.get("data");
                     byte[] bytes = rawBytes instanceof byte[] b ? b : null;
-                    if (typeObj != null && bytes != null) {
+                    if (typeObj != null && bytes != null && skriptPresent()) {
                         ClassInfo<?> classInfo = Classes.getClassInfoNoError(typeObj);
                         if (classInfo != null) {
                             Serializer<?> ser = classInfo.getSerializer();

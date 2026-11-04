@@ -190,15 +190,27 @@ public class MiniGame implements ConfigurationSerializable {
         return new TeamRules(ff, col, nt);
     }
 
+    /**
+     * Phase-1 standalone guard: value (de)serialization routes through Skript's {@link Classes}.
+     * Without Skript those symbols can't be linked, so in standalone values are persisted raw
+     * (YAML-native types — String/Number/Boolean/ItemStack — round-trip; others degrade with a
+     * warning). Detected via Bukkit so no {@code ch.njol.skript.*} symbol is referenced.
+     * Phase 2 replaces Skript serialization with a native scheme.
+     */
+    private static boolean skriptPresent() {
+        return org.bukkit.Bukkit.getPluginManager().getPlugin("Skript") != null;
+    }
+
     @Override
     public @NotNull Map<String, Object> serialize() {
         Map<String, Object> gm = new HashMap<>();
         gm.put("id", this.id);
+        boolean skript = skriptPresent();
 
         Map<String, Object> serializedValues = new LinkedHashMap<>();
         for (Map.Entry<String, Object> entry : this.values.entrySet()) {
             Object v = entry.getValue();
-            SerializedVariable.Value serialized = Classes.serialize(v);
+            SerializedVariable.Value serialized = skript ? Classes.serialize(v) : null;
             if (serialized != null) {
                 Map<String, Object> ser = new HashMap<>();
                 ser.put("type", serialized.type);
@@ -274,7 +286,7 @@ public class MiniGame implements ConfigurationSerializable {
         for (Map.Entry<String, Object> entry : rawMap.entrySet()) {
             Object raw = entry.getValue();
             boolean decoded = false;
-            if (raw instanceof MemorySection rawSection) {
+            if (raw instanceof MemorySection rawSection && skriptPresent()) {
                 Map<String, Object> data = rawSection.getValues(false);
                 String typeObj = (String) data.get("type");
                 Object rawBytes = data.get("data");

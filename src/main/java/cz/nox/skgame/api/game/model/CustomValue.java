@@ -4,6 +4,7 @@ import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.variables.SerializedVariable;
 import cz.nox.skgame.api.game.model.type.CustomValuePlurality;
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.jetbrains.annotations.NotNull;
@@ -124,18 +125,37 @@ public class CustomValue implements ConfigurationSerializable {
         return map;
     }
 
+    /**
+     * Phase-1 standalone guard: a {@code type}/{@code defaultValue} resolve through Skript's
+     * {@link Classes} registry. Without Skript on the classpath those symbols cannot be linked,
+     * so in standalone mode such value defs are loaded typeless. Detected via Bukkit so no
+     * {@code ch.njol.skript.*} symbol is referenced. (Phase 2 removes the Skript type entirely.)
+     */
+    private static boolean skriptPresent() {
+        return Bukkit.getPluginManager().getPlugin("Skript") != null;
+    }
+
+    private static boolean warnedTypeless = false;
+
     public static CustomValue deserialize(Map<String, Object> map) {
         CustomValue cv = new CustomValue();
         cv.name = (String) map.get("name");
+        boolean skript = skriptPresent();
         Object typeObj = map.get("type");
         if (typeObj instanceof String code) {
-            cv.type = getClassInfoNoError(code);
+            if (skript) {
+                cv.type = getClassInfoNoError(code);
+            } else if (!warnedTypeless) {
+                warnedTypeless = true;
+                Bukkit.getLogger().warning("[SkGame] Loading custom value defs typeless "
+                        + "(standalone mode, Skript absent). Typed value defs require Skript until Phase 2.");
+            }
         }
         Object def = map.get("defaultValue");
         Map<String, Object> defMap = null;
-        if (def instanceof MemorySection defSec) {
+        if (skript && def instanceof MemorySection defSec) {
             defMap = defSec.getValues(false);
-        } else if (def instanceof Map<?, ?> m) {
+        } else if (skript && def instanceof Map<?, ?> m) {
             //noinspection unchecked
             defMap = (Map<String, Object>) m;
         }

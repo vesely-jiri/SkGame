@@ -27,23 +27,35 @@ public class ResourceInstaller {
      * (or the built-in scripts-folder logic for core paths). Files that already exist are skipped.
      * Returns the count of newly installed files.
      */
-    public int installAll(List<String> corePaths, Collection<SkGameModule> enabledModules) {
+    public int installAll(List<String> corePaths, Collection<SkGameModule> enabledModules, boolean addonMode) {
         // Build ordered work list: path → target (deduplicated, first-wins).
         LinkedHashMap<String, ResourceTarget> workList = new LinkedHashMap<>();
 
-        for (String path : corePaths) {
-            try {
-                ResourceTarget target = resolveScriptsTarget(path);
-                if (workList.put(path, target) != null) {
-                    plugin.getLogUtil().warning("Duplicate core resource path: " + path);
+        // Core paths are all "scripts/" (Skript syntax resources) — addon-mode only.
+        // Resolving them touches Skript.getInstance(); skip entirely in standalone.
+        if (addonMode) {
+            for (String path : corePaths) {
+                try {
+                    ResourceTarget target = resolveScriptsTarget(path);
+                    if (workList.put(path, target) != null) {
+                        plugin.getLogUtil().warning("Duplicate core resource path: " + path);
+                    }
+                } catch (IllegalStateException e) {
+                    plugin.getLogUtil().error("Invalid core resource path '" + path + "': " + e.getMessage());
                 }
-            } catch (IllegalStateException e) {
-                plugin.getLogUtil().error("Invalid core resource path '" + path + "': " + e.getMessage());
             }
         }
 
         for (SkGameModule module : enabledModules) {
             for (String path : module.getResourcePaths()) {
+                // "scripts/" resources only make sense with Skript present. Skipping in standalone
+                // also keeps the default resolveResourceTarget() (which calls Skript.getInstance())
+                // off the standalone code path.
+                if (!addonMode && path.startsWith("scripts/")) {
+                    plugin.getLogUtil().info("Skipping script resource '" + path
+                            + "' from module '" + module.getId() + "' (standalone mode, no Skript)");
+                    continue;
+                }
                 try {
                     ResourceTarget target = module.resolveResourceTarget(path, plugin);
                     if (workList.put(path, target) != null) {

@@ -191,10 +191,19 @@ public class SkGame extends JavaPlugin implements TabCompleter {
 
     private static final List<String> CORE_RESOURCE_PATHS = List.of();
 
+    /**
+     * Runtime state, decided at enable time from Skript's presence.
+     * ADDON: Skript present — Skript syntax + {@code .sk} scripts + native extensions.
+     * STANDALONE: no Skript — native extensions only, no Skript symbol is linked.
+     */
+    public enum Mode { ADDON, STANDALONE }
+
     private static SkGame instance;
     private SkriptAddon addon;
     private LogUtil logUtil;
+    private Mode mode = Mode.STANDALONE;
     private List<SkGameModule> enabledModules;
+    private cz.nox.skgame.core.module.ExternalModuleLoader externalModuleLoader;
 
     private final File dataFolder = new File(getDataFolder(), "storage");
     private final File miniGamesDataFile = new File(dataFolder, "minigames.yml");
@@ -243,6 +252,16 @@ public class SkGame extends JavaPlugin implements TabCompleter {
         return enabledModules != null ? enabledModules : List.of();
     }
 
+    /** Runtime mode (ADDON when Skript is present, else STANDALONE). */
+    public Mode getMode() {
+        return mode;
+    }
+
+    /** True when Skript is present and the Skript syntax layer is active. */
+    public boolean isAddonMode() {
+        return mode == Mode.ADDON;
+    }
+
     public void onEnable() {
         long s = System.currentTimeMillis();
         this.pluginStartTime = s;
@@ -264,16 +283,32 @@ public class SkGame extends JavaPlugin implements TabCompleter {
         // Defer world resolution to first tick — Bukkit.getWorld() returns null during onEnable on Paper.
         Bukkit.getScheduler().runTask(this, this::loadLobbySpawn);
 
-        this.addon = Skript.registerAddon(instance);
+        // Decide runtime mode from Skript's presence. This gates every Skript touch below;
+        // in STANDALONE no ch.njol.skript.* symbol is ever linked.
+        this.mode = getServer().getPluginManager().getPlugin("Skript") != null
+                ? Mode.ADDON : Mode.STANDALONE;
+        logUtil.info("Runtime mode: " + mode + (isAddonMode()
+                ? " (Skript syntax + scripts + native extensions)"
+                : " (native extensions only — no Skript)"));
 
-        // Resolve which modules are enabled based on config and soft-dep availability.
+        if (isAddonMode()) {
+            this.addon = Skript.registerAddon(instance);
+        }
+
+        // Resolve which modules are enabled based on config and soft-dep availability
+        // (built-in modules + external extension jars in plugins/SkGame/modules/).
         this.enabledModules = resolveModules();
 
-        cleanupLegacyScripts();
-        new ResourceInstaller(this).installAll(CORE_RESOURCE_PATHS, enabledModules);
+        if (isAddonMode()) {
+            cleanupLegacyScripts();
+        }
+        // scripts/ resources are only meaningful in addon mode; ResourceInstaller skips them otherwise.
+        new ResourceInstaller(this).installAll(CORE_RESOURCE_PATHS, enabledModules, isAddonMode());
 
-        // Load core Skript classes then each enabled module's declared classes.
-        loadAllSkriptClasses(enabledModules);
+        // Load core Skript classes then each enabled module's declared classes — addon mode only.
+        if (isAddonMode()) {
+            loadAllSkriptClasses(enabledModules);
+        }
 
         Bukkit.getPluginManager().registerEvents(SessionManager.getInstance(), instance);
         // Initialize lifecycle manager singleton after SessionManager is ready
@@ -363,6 +398,11 @@ public class SkGame extends JavaPlugin implements TabCompleter {
             for (SkGameModule module : reversed) {
                 module.onDisable(this);
             }
+        }
+
+        // Close external extension classloaders after their modules have been disabled.
+        if (externalModuleLoader != null) {
+            externalModuleLoader.closeAll();
         }
 
         logUtil.info("SkGame disabled in " + (System.currentTimeMillis() - s) + "ms");
@@ -924,6 +964,10 @@ public class SkGame extends JavaPlugin implements TabCompleter {
 
     @SuppressWarnings("deprecation")
     private void doReloadScripts(CommandSender sender) {
+        if (!isAddonMode()) {
+            sender.sendMessage(ChatColor.RED + "Scripts are unavailable in standalone mode (Skript not installed).");
+            return;
+        }
         Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), "skript reload skgame");
         sender.sendMessage(ChatColor.GREEN + "Dispatched: skript reload skgame");
     }
@@ -932,7 +976,12 @@ public class SkGame extends JavaPlugin implements TabCompleter {
         List<SkGameModule> enabled = new ArrayList<>();
         Set<String> enabledIds = new HashSet<>();
 
-        for (SkGameModule module : ModuleRegistry.BUILTIN_MODULES) {
+        // Built-in modules first, then external extension jars — both go through the same gate.
+        List<SkGameModule> candidates = new ArrayList<>(ModuleRegistry.BUILTIN_MODULES);
+        this.externalModuleLoader = new cz.nox.skgame.core.module.ExternalModuleLoader(this);
+        candidates.addAll(externalModuleLoader.loadModules());
+
+        for (SkGameModule module : candidates) {
             String key = "modules." + module.getId() + ".enabled";
             boolean configEnabled = getConfig().getBoolean(key, module.isEnabledByDefault());
 
@@ -960,6 +1009,8 @@ public class SkGame extends JavaPlugin implements TabCompleter {
 
         return enabled;
     }
+
+    /** Fully-qualified names referenced here are resolved lazily; never called in STANDALONE. */
 
     private void loadAllSkriptClasses(List<SkGameModule> modules) {
         for (String fqn : CORE_SKRIPT_CLASSES) {

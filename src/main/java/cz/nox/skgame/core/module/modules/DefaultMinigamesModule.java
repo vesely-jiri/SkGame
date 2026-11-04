@@ -11,7 +11,19 @@ public class DefaultMinigamesModule implements SkGameModule {
 
     @Override public String getId() { return "default-minigames"; }
     @Override public Set<String> getDependencies() { return Set.of(); }
-    @Override public boolean canEnable(SkGame plugin) { return true; }
+
+    @Override
+    public boolean canEnable(SkGame plugin) {
+        // Ships .sk minigames — only meaningful with Skript present. In standalone the bundled
+        // minigames come from native extensions instead. Guarding here also keeps the
+        // Skript.testing() call in getResourcePaths() off the standalone code path.
+        if (!plugin.isAddonMode()) {
+            plugin.getLogUtil().info("Module default-minigames skipped (standalone mode — no Skript)");
+            return false;
+        }
+        return true;
+    }
+
     @Override public void onEnable(SkGame plugin) {}
 
     @Override
