@@ -337,14 +337,19 @@ public class SkGame extends JavaPlugin implements TabCompleter {
         Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.tab.TabManager.getInstance(), instance);
         Bukkit.getPluginManager().registerEvents(cz.nox.skgame.core.game.TeamRulesManager.getInstance(), instance);
 
+        // Load minigame storage BEFORE modules enable. This sets MiniGameManager.storageFile and
+        // loads existing minigames + disabled flags, so any minigame a native extension module (or a
+        // .sk script) registers — and the save() that registration triggers — actually persists.
+        // Previously this ran AFTER the module onEnable loop, so a native module's
+        // registerMiniGame()+save() inside onEnable hit storageFile==null and no-op'd, leaving
+        // minigames.yml empty (0 bytes). It is still synchronous and before Skript's tick-1 postLoad,
+        // and populates disabledMinigames before any save, preserving disabled flags on restart.
+        MiniGameManager.getInstance().loadFromFile(miniGamesDataFile);
+
         for (SkGameModule module : enabledModules) {
             module.onEnable(this);
         }
 
-        // Load synchronously before Skript scripts fire postLoad() on tick 1.
-        // Deferring to tick 1 caused a race: scripts saved minigames.yml before
-        // disabledMinigames was populated, silently erasing disabled flags on restart.
-        MiniGameManager.getInstance().loadFromFile(miniGamesDataFile);
         // GameMapManager must load AFTER world-management plugins (Multiverse etc.) have loaded
         // their worlds — onEnable() is too early, custom worlds return null from Bukkit.getWorld().
         // ServerLoadEvent fires after all plugins are fully enabled and worlds are available.
