@@ -66,7 +66,7 @@ public class ExprCustomValueType extends SimplePropertyExpression<CustomValue, O
                 if (delta == null || delta[0] == null) return;
                 v.setType((ClassInfo<?>) delta[0]);
             }
-            case RESET, DELETE -> v.setType(null);
+            case RESET, DELETE -> v.setType((ClassInfo<?>) null);
         }
     }
 

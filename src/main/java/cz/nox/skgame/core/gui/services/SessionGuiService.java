@@ -8,10 +8,10 @@ import cz.nox.skgame.api.game.event.PlayerRoleChangeEvent;
 import cz.nox.skgame.api.game.event.SessionDisbandEvent;
 import cz.nox.skgame.api.game.event.SessionSettingsChangedEvent;
 import cz.nox.skgame.api.gui.event.SessionGuiOpenEvent;
-import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.util.Timespan;
 import ch.njol.skript.util.Timespan.TimePeriod;
 import cz.nox.skgame.api.game.model.CustomValue;
+import cz.nox.skgame.api.game.model.type.ValueType;
 import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
@@ -654,21 +654,19 @@ public class SessionGuiService implements Listener {
         String displayName = cv.getName() != null && !cv.getName().isEmpty() ? cv.getName() : key;
         String currentStr = current != null ? current.toString() : "—";
 
-        ClassInfo<?> type = cv.getType();
+        ValueType type = cv.getValueType();
         Material mat = Material.PAPER;
-        if (type != null) {
-            if (Boolean.class.isAssignableFrom(type.getC())) {
-                mat = Boolean.TRUE.equals(current) ? Material.LIME_DYE : Material.GRAY_DYE;
-            } else if (Number.class.isAssignableFrom(type.getC()) || type.getC() == Timespan.class) {
-                mat = Material.CLOCK;
-            }
+        if (type == ValueType.BOOLEAN) {
+            mat = Boolean.TRUE.equals(current) ? Material.LIME_DYE : Material.GRAY_DYE;
+        } else if (type == ValueType.NUMBER || type == ValueType.TIMESPAN) {
+            mat = Material.CLOCK;
         }
 
         List<Component> lore = new ArrayList<>();
         lore.add(legacy("&7Current: &f" + currentStr));
         if (cv.hasAllowedValues()) {
             lore.add(legacy("&8Left: next  |  Right: prev"));
-        } else if (type != null && Number.class.isAssignableFrom(type.getC())) {
+        } else if (type == ValueType.NUMBER || type == ValueType.TIMESPAN) {
             String bounds = (cv.getMinValue() != null || cv.getMaxValue() != null)
                     ? " (" + (cv.getMinValue() != null ? cv.getMinValue() : "∞")
                     + "–" + (cv.getMaxValue() != null ? cv.getMaxValue() : "∞") + ")" : "";
@@ -687,10 +685,10 @@ public class SessionGuiService implements Listener {
         Object current = session.getValue(key, false);
         if (current == null) current = cv.getDefaultValue();
 
-        ClassInfo<?> type = cv.getType();
+        ValueType type = cv.getValueType();
         if (type == null) return;
 
-        if (cv.hasAllowedValues() && String.class.isAssignableFrom(type.getC())) {
+        if (cv.hasAllowedValues() && type == ValueType.TEXT) {
             List<String> allowed = cv.getAllowedValues();
             if (allowed.isEmpty()) return;
             String curr = current != null ? current.toString() : allowed.get(0);
@@ -698,15 +696,16 @@ public class SessionGuiService implements Listener {
             if (i < 0) i = 0;
             int next = forward ? (i + 1) % allowed.size() : (i - 1 + allowed.size()) % allowed.size();
             session.setValue(key, allowed.get(next), false);
-        } else if (Number.class.isAssignableFrom(type.getC())) {
+        } else if (type == ValueType.NUMBER) {
             double curr = current instanceof Number n ? n.doubleValue() : 0;
             double next = forward ? curr + 1 : curr - 1;
             if (cv.getMinValue() != null) next = Math.max(next, cv.getMinValue().doubleValue());
             if (cv.getMaxValue() != null) next = Math.min(next, cv.getMaxValue().doubleValue());
             session.setValue(key, (next == Math.floor(next)) ? (long) next : next, false);
-        } else if (Boolean.class.isAssignableFrom(type.getC())) {
+        } else if (type == ValueType.BOOLEAN) {
             session.setValue(key, !Boolean.TRUE.equals(current), false);
-        } else if (type.getC() == Timespan.class) {
+        } else if (type == ValueType.TIMESPAN && SkGame.getInstance().isAddonMode()) {
+            // Timespan session values are Skript objects — addon mode only.
             long currTicks = current instanceof Timespan ts ? ts.getAs(TimePeriod.TICK) : 0L;
             long nextTicks = forward ? currTicks + 1 : Math.max(0L, currTicks - 1);
             if (cv.getMinValue() != null) nextTicks = Math.max(nextTicks, cv.getMinValue().longValue());

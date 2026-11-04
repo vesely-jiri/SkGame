@@ -1,11 +1,9 @@
 package cz.nox.skgame.api.game.model;
 
 import ch.njol.skript.classes.ClassInfo;
-import ch.njol.skript.registrations.Classes;
-import ch.njol.skript.variables.SerializedVariable;
 import cz.nox.skgame.api.game.model.type.CustomValuePlurality;
+import cz.nox.skgame.api.game.model.type.ValueType;
 import org.bukkit.Bukkit;
-import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,12 +11,24 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
-import static ch.njol.skript.registrations.Classes.getClassInfoNoError;
-
+/**
+ * Definition of a configurable value on a minigame (gamemap- or session-scoped).
+ *
+ * <p>Phase 2: the authoritative type is the native {@link ValueType}. (De)serialization and GUI
+ * editing use {@code ValueType} only — no {@code ch.njol.skript.*} symbol is linked on that path,
+ * so typed value defs work in standalone mode. The legacy Skript {@link ClassInfo} is still exposed
+ * via {@link #getType()}/{@link #setType(ClassInfo)} for the Skript syntax layer; it is derived
+ * lazily from the {@code ValueType} through a bridge installed only in addon mode
+ * ({@code SkriptTypeAdapter.install()}), so it is never touched in standalone.
+ */
 public class CustomValue implements ConfigurationSerializable {
     String name;
+    /** Legacy Skript type — addon-only, derived lazily from {@link #valueType}. Never used standalone. */
     ClassInfo<?> type;
+    /** Native, Skript-independent authoritative type. */
+    ValueType valueType;
     Object defaultValue;
     String description;
     CustomValuePlurality plurality;
@@ -26,16 +36,28 @@ public class CustomValue implements ConfigurationSerializable {
     private Number minValue;
     private Number maxValue;
 
+    // --- Skript bridge (installed only in addon mode by SkriptTypeAdapter.install()) -------------
+    // Held as java.util.function references so this api class never calls into the skript/ layer.
+    private static Function<ValueType, ClassInfo<?>> toClassInfo;
+    private static Function<ClassInfo<?>, ValueType> toValueType;
+
+    /** Installed by the addon-only SkriptTypeAdapter to bridge ValueType ↔ Skript ClassInfo. */
+    public static void installSkriptTypeBridge(Function<ValueType, ClassInfo<?>> toClassInfo,
+                                               Function<ClassInfo<?>, ValueType> toValueType) {
+        CustomValue.toClassInfo = toClassInfo;
+        CustomValue.toValueType = toValueType;
+    }
+
     public CustomValue() {}
     public CustomValue(String name) {
         this.name = name;
     }
     public CustomValue(String name, ClassInfo<?> type, Object defaultValue, String description, CustomValuePlurality plur) {
         this.name = name;
-        this.type = type;
         this.defaultValue = defaultValue;
         this.description = description;
         this.plurality = plur;
+        setType(type);
     }
 
     public String getName() {
@@ -45,11 +67,36 @@ public class CustomValue implements ConfigurationSerializable {
         this.name = name;
     }
 
+    /** Native type token — authoritative, Skript-independent. */
+    public ValueType getValueType() {
+        return valueType;
+    }
+
+    /** Set the native type. Clears the lazily-derived Skript {@link ClassInfo}. */
+    public void setType(ValueType valueType) {
+        this.valueType = valueType;
+        this.type = null; // re-derived lazily on getType() in addon mode
+    }
+
+    /**
+     * Legacy Skript type. Derived lazily from {@link #valueType} via the addon bridge.
+     * Returns null in standalone mode (no bridge installed) — callers must use {@link #getValueType()}.
+     */
     public ClassInfo<?> getType() {
+        if (type == null && valueType != null && toClassInfo != null) {
+            type = toClassInfo.apply(valueType);
+        }
         return type;
     }
+
+    /** Addon-only setter (Skript syntax). Also derives the native {@link ValueType} via the bridge. */
     public void setType(ClassInfo<?> type) {
         this.type = type;
+        if (type != null && toValueType != null) {
+            this.valueType = toValueType.apply(type);
+        } else if (type == null) {
+            this.valueType = null;
+        }
     }
 
     public Object getDefaultValue() {
@@ -101,21 +148,21 @@ public class CustomValue implements ConfigurationSerializable {
         return (value instanceof Long || value instanceof Integer) ? (long) v : v;
     }
 
+    /** True when Skript is present. Used only to guard the TIMESPAN default conversion. */
+    private static boolean skriptPresent() {
+        return Bukkit.getPluginManager().getPlugin("Skript") != null;
+    }
+
     @Override
     public @NotNull Map<String, Object> serialize() {
         Map<String, Object> map = new HashMap<>();
-        map.put("type", type != null ? type.getCodeName() : null);
+        map.put("value-type", valueType != null ? valueType.getCode() : null);
         map.put("name", name);
         map.put("description", description);
         map.put("plurality", plurality != null ? plurality.name() : null);
-        if (defaultValue != null && type != null) {
-            SerializedVariable.Value val = Classes.serialize(defaultValue);
-            if (val != null) {
-                Map<String, Object> ser = new HashMap<>();
-                ser.put("type", val.type);
-                ser.put("data", val.data);
-                map.put("defaultValue", ser);
-            }
+        if (defaultValue != null) {
+            Object serDef = serializeDefault(defaultValue);
+            if (serDef != null) map.put("defaultValue", serDef);
         }
         if (allowedValues != null && !allowedValues.isEmpty()) {
             map.put("allowed-values", new ArrayList<>(allowedValues));
@@ -126,55 +173,31 @@ public class CustomValue implements ConfigurationSerializable {
     }
 
     /**
-     * Phase-1 standalone guard: a {@code type}/{@code defaultValue} resolve through Skript's
-     * {@link Classes} registry. Without Skript on the classpath those symbols cannot be linked,
-     * so in standalone mode such value defs are loaded typeless. Detected via Bukkit so no
-     * {@code ch.njol.skript.*} symbol is referenced. (Phase 2 removes the Skript type entirely.)
+     * Native default serialization: primitives and Bukkit {@link ConfigurationSerializable}
+     * (ItemStack/Location) round-trip through YamlConfiguration as-is. The one non-YAML type a def
+     * default can hold is a Skript {@code Timespan}, stored as ticks (addon only — guarded so no
+     * {@code ch.njol.skript.*} symbol is linked in standalone).
      */
-    private static boolean skriptPresent() {
-        return Bukkit.getPluginManager().getPlugin("Skript") != null;
+    private Object serializeDefault(Object def) {
+        if (valueType == ValueType.TIMESPAN && skriptPresent()
+                && def instanceof ch.njol.skript.util.Timespan ts) {
+            return ts.getAs(ch.njol.skript.util.Timespan.TimePeriod.TICK);
+        }
+        return def;
     }
-
-    private static boolean warnedTypeless = false;
 
     public static CustomValue deserialize(Map<String, Object> map) {
         CustomValue cv = new CustomValue();
         cv.name = (String) map.get("name");
-        boolean skript = skriptPresent();
-        Object typeObj = map.get("type");
-        if (typeObj instanceof String code) {
-            if (skript) {
-                cv.type = getClassInfoNoError(code);
-            } else if (!warnedTypeless) {
-                warnedTypeless = true;
-                Bukkit.getLogger().warning("[SkGame] Loading custom value defs typeless "
-                        + "(standalone mode, Skript absent). Typed value defs require Skript until Phase 2.");
-            }
+
+        Object vt = map.get("value-type");
+        if (vt instanceof String s) {
+            cv.valueType = ValueType.fromCode(s);
         }
+
         Object def = map.get("defaultValue");
-        Map<String, Object> defMap = null;
-        if (skript && def instanceof MemorySection defSec) {
-            defMap = defSec.getValues(false);
-        } else if (skript && def instanceof Map<?, ?> m) {
-            //noinspection unchecked
-            defMap = (Map<String, Object>) m;
-        }
-        if (defMap != null) {
-            String typeCode = (String) defMap.get("type");
-            Object rawData = defMap.get("data");
-            byte[] data = null;
-            if (rawData instanceof byte[] b) {
-                data = b;
-            } else if (rawData instanceof java.util.List<?> list) {
-                data = new byte[list.size()];
-                for (int i = 0; i < list.size(); i++) {
-                    data[i] = ((Number) list.get(i)).byteValue();
-                }
-            }
-            if (typeCode != null && data != null) {
-                cv.defaultValue = Classes.deserialize(typeCode, data);
-            }
-        }
+        cv.defaultValue = deserializeDefault(def, cv.valueType);
+
         cv.description = (String) map.get("description");
         Object pl = map.get("plurality");
         if (pl != null) {
@@ -193,5 +216,14 @@ public class CustomValue implements ConfigurationSerializable {
         Object maxRaw = map.get("max");
         if (maxRaw instanceof Number n) cv.maxValue = n;
         return cv;
+    }
+
+    /** Inverse of {@link #serializeDefault(Object)}. TIMESPAN ticks → Timespan (addon only). */
+    private static Object deserializeDefault(Object def, ValueType vt) {
+        if (def == null) return null;
+        if (vt == ValueType.TIMESPAN && skriptPresent() && def instanceof Number n) {
+            return new ch.njol.skript.util.Timespan(ch.njol.skript.util.Timespan.TimePeriod.TICK, n.longValue());
+        }
+        return def;
     }
 }

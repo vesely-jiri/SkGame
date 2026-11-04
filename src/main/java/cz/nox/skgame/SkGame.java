@@ -293,6 +293,8 @@ public class SkGame extends JavaPlugin implements TabCompleter {
 
         if (isAddonMode()) {
             this.addon = Skript.registerAddon(instance);
+            // Wire ValueType <-> Skript ClassInfo so typed value defs bridge both ways in addon mode.
+            cz.nox.skgame.skript.SkriptTypeAdapter.install();
         }
 
         // Resolve which modules are enabled based on config and soft-dep availability

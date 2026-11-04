@@ -1,9 +1,5 @@
 package cz.nox.skgame.api.game.model;
 
-import ch.njol.skript.classes.ClassInfo;
-import ch.njol.skript.classes.Serializer;
-import ch.njol.skript.registrations.Classes;
-import ch.njol.skript.variables.SerializedVariable;
 import cz.nox.skgame.api.game.model.type.CancellableEventType;
 import cz.nox.skgame.api.game.model.type.NametagVisibility;
 import cz.nox.skgame.api.game.model.type.TeamAssignmentMode;
@@ -190,36 +186,16 @@ public class MiniGame implements ConfigurationSerializable {
         return new TeamRules(ff, col, nt);
     }
 
-    /**
-     * Phase-1 standalone guard: value (de)serialization routes through Skript's {@link Classes}.
-     * Without Skript those symbols can't be linked, so in standalone values are persisted raw
-     * (YAML-native types — String/Number/Boolean/ItemStack — round-trip; others degrade with a
-     * warning). Detected via Bukkit so no {@code ch.njol.skript.*} symbol is referenced.
-     * Phase 2 replaces Skript serialization with a native scheme.
-     */
-    private static boolean skriptPresent() {
-        return org.bukkit.Bukkit.getPluginManager().getPlugin("Skript") != null;
-    }
-
     @Override
     public @NotNull Map<String, Object> serialize() {
         Map<String, Object> gm = new HashMap<>();
         gm.put("id", this.id);
-        boolean skript = skriptPresent();
 
-        Map<String, Object> serializedValues = new LinkedHashMap<>();
-        for (Map.Entry<String, Object> entry : this.values.entrySet()) {
-            Object v = entry.getValue();
-            SerializedVariable.Value serialized = skript ? Classes.serialize(v) : null;
-            if (serialized != null) {
-                Map<String, Object> ser = new HashMap<>();
-                ser.put("type", serialized.type);
-                ser.put("data", serialized.data);
-                serializedValues.put(entry.getKey(), ser);
-            } else {
-                serializedValues.put(entry.getKey(), v);
-            }
-        }
+        // Native serialization (Phase 2): primitives + Bukkit ConfigurationSerializable (e.g. the
+        // icon ItemStack) round-trip through YamlConfiguration as-is — no Skript dependency, works in
+        // both modes. These top-level values (name/icon/min_players/…) are re-registered on every
+        // boot by the script/extension, so any pre-Phase-2 {type,data} entries get rewritten natively.
+        Map<String, Object> serializedValues = new LinkedHashMap<>(this.values);
         gm.put("values", serializedValues);
 
         if (!gameMapValueDefs.isEmpty()) {
@@ -284,29 +260,10 @@ public class MiniGame implements ConfigurationSerializable {
 
         Map<String, Object> values = new HashMap<>();
         for (Map.Entry<String, Object> entry : rawMap.entrySet()) {
-            Object raw = entry.getValue();
-            boolean decoded = false;
-            if (raw instanceof MemorySection rawSection && skriptPresent()) {
-                Map<String, Object> data = rawSection.getValues(false);
-                String typeObj = (String) data.get("type");
-                Object rawBytes = data.get("data");
-                if (typeObj != null && rawBytes instanceof byte[] bytes) {
-                    ClassInfo<?> classInfo = Classes.getClassInfoNoError(typeObj);
-                    if (classInfo != null) {
-                        Serializer<?> ser = classInfo.getSerializer();
-                        if (ser != null) {
-                            Object obj = Classes.deserialize(classInfo, bytes);
-                            if (obj != null) {
-                                values.put(entry.getKey(), obj);
-                                decoded = true;
-                            }
-                        }
-                    }
-                }
-            }
-            if (!decoded) {
-                values.put(entry.getKey(), raw);
-            }
+            // Native (Phase 2): values stored raw; YamlConfiguration already deserialized any
+            // ConfigurationSerializable (icon ItemStack). A pre-Phase-2 {type,data} blob would load
+            // as a section here and is harmlessly overwritten when the minigame re-registers on boot.
+            values.put(entry.getKey(), entry.getValue());
         }
 
         MiniGame newGm = new MiniGame(id);

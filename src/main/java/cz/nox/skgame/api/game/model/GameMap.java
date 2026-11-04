@@ -3,7 +3,6 @@ package cz.nox.skgame.api.game.model;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Serializer;
 import ch.njol.skript.registrations.Classes;
-import ch.njol.skript.variables.SerializedVariable;
 import cz.nox.skgame.api.region.Region;
 import cz.nox.skgame.core.region.ArenaSlot;
 import cz.nox.skgame.core.region.CuboidRegion;
@@ -257,13 +256,14 @@ public class GameMap implements ConfigurationSerializable {
     }
 
     /**
-     * Phase-1 standalone guard: per-map value (de)serialization routes through Skript's
-     * {@link Classes}. Without Skript those symbols can't be linked; in standalone, Location/
-     * Region/plural values still round-trip via their own serializers, other typed values degrade.
-     * Detected via Bukkit so no {@code ch.njol.skript.*} symbol is referenced. Fixed in Phase 2.
+     * Legacy-migration guard (Phase 2): writes are native (Location/Region/plural/primitives — no
+     * Skript). Only {@code deserialize} still reads a pre-Phase-2 {@code {type,data}} blob, which
+     * requires Skript's {@link Classes} to decode — guarded here so a standalone server (which can
+     * never hold such addon-written data) links no {@code ch.njol.skript.*} symbol. Addon servers
+     * migrate old per-map values on load and rewrite them natively on the next save.
      */
     private static boolean skriptPresent() {
-        return org.bukkit.Bukkit.getPluginManager().getPlugin("Skript") != null;
+        return Bukkit.getPluginManager().getPlugin("Skript") != null;
     }
 
     @Override
@@ -297,19 +297,13 @@ public class GameMap implements ConfigurationSerializable {
                         ser.put("__region", true);
                         result.put(innerKey, ser);
                     }
+                } else if (innerValue instanceof Location loc) {
+                    Map<String, Object> lm = serializeLocation(loc);
+                    if (!lm.isEmpty()) result.put(innerKey, lm);
                 } else {
-                    SerializedVariable.Value serialized = skriptPresent() ? Classes.serialize(innerValue) : null;
-                    if (serialized != null) {
-                        Map<String, Object> ser = new HashMap<>();
-                        ser.put("type", serialized.type);
-                        ser.put("data", serialized.data);
-                        result.put(innerKey, ser);
-                    } else if (innerValue instanceof Location loc) {
-                        Map<String, Object> lm = serializeLocation(loc);
-                        if (!lm.isEmpty()) result.put(innerKey, lm);
-                    } else {
-                        result.put(innerKey, innerValue);
-                    }
+                    // Native (Phase 2): numbers/strings/booleans + Bukkit ConfigurationSerializable
+                    // round-trip through YamlConfiguration as-is. No Skript dependency.
+                    result.put(innerKey, innerValue);
                 }
             });
             rawMiniGameValues.put(miniGame, result);
