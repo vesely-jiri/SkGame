@@ -19,9 +19,13 @@ import java.util.function.Function;
  * <p>Phase 2: the authoritative type is the native {@link ValueType}. (De)serialization and GUI
  * editing use {@code ValueType} only — no {@code ch.njol.skript.*} symbol is linked on that path,
  * so typed value defs work in standalone mode. The legacy Skript {@link ClassInfo} is still exposed
- * via {@link #getType()}/{@link #setType(ClassInfo)} for the Skript syntax layer; it is derived
+ * via {@link #getType()}/{@link #setSkriptType(ClassInfo)} for the Skript syntax layer; it is derived
  * lazily from the {@code ValueType} through a bridge installed only in addon mode
  * ({@code SkriptTypeAdapter.install()}), so it is never touched in standalone.
+ *
+ * <p>Note the native and Skript setters have <b>distinct names</b> on purpose: a single overloaded
+ * {@code setType} would force javac to load {@code ClassInfo} to resolve any call, breaking
+ * compilation of Skript-free extensions. Native extensions call {@link #setValueType(ValueType)}.
  */
 public class CustomValue implements ConfigurationSerializable {
     String name;
@@ -52,13 +56,6 @@ public class CustomValue implements ConfigurationSerializable {
     public CustomValue(String name) {
         this.name = name;
     }
-    public CustomValue(String name, ClassInfo<?> type, Object defaultValue, String description, CustomValuePlurality plur) {
-        this.name = name;
-        this.defaultValue = defaultValue;
-        this.description = description;
-        this.plurality = plur;
-        setType(type);
-    }
 
     public String getName() {
         return name;
@@ -72,8 +69,12 @@ public class CustomValue implements ConfigurationSerializable {
         return valueType;
     }
 
-    /** Set the native type. Clears the lazily-derived Skript {@link ClassInfo}. */
-    public void setType(ValueType valueType) {
+    /**
+     * Set the native type (the Skript-free entry point extensions use). Clears the lazily-derived
+     * Skript {@link ClassInfo}. Named distinctly from {@link #setSkriptType(ClassInfo)} so calling it
+     * never forces javac to load {@code ClassInfo}.
+     */
+    public void setValueType(ValueType valueType) {
         this.valueType = valueType;
         this.type = null; // re-derived lazily on getType() in addon mode
     }
@@ -90,7 +91,7 @@ public class CustomValue implements ConfigurationSerializable {
     }
 
     /** Addon-only setter (Skript syntax). Also derives the native {@link ValueType} via the bridge. */
-    public void setType(ClassInfo<?> type) {
+    public void setSkriptType(ClassInfo<?> type) {
         this.type = type;
         if (type != null && toValueType != null) {
             this.valueType = toValueType.apply(type);

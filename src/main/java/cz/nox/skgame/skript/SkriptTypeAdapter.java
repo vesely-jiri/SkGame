@@ -17,10 +17,10 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>{@link #install()} is called once in addon mode (never in standalone), wiring the mappings into
  * {@link CustomValue} so: Skript syntax ({@code type: a location}) that calls
- * {@link CustomValue#setType(ClassInfo)} auto-derives the native {@code ValueType}; and native defs
- * created by extensions ({@code setType(ValueType.LOCATION)}) expose the right {@code ClassInfo} to
- * Skript value expressions. This class references {@code ch.njol.skript.*} and must therefore only
- * ever be loaded in addon mode.
+ * {@link CustomValue#setSkriptType(ClassInfo)} auto-derives the native {@code ValueType}; and native
+ * defs created by extensions ({@code setValueType(ValueType.LOCATION)}) expose the right
+ * {@code ClassInfo} to Skript value expressions. This class references {@code ch.njol.skript.*} and
+ * must therefore only ever be loaded in addon mode.
  */
 public final class SkriptTypeAdapter {
 

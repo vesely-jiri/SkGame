@@ -64,9 +64,9 @@ public class ExprCustomValueType extends SimplePropertyExpression<CustomValue, O
         switch (mode) {
             case SET -> {
                 if (delta == null || delta[0] == null) return;
-                v.setType((ClassInfo<?>) delta[0]);
+                v.setSkriptType((ClassInfo<?>) delta[0]);
             }
-            case RESET, DELETE -> v.setType((ClassInfo<?>) null);
+            case RESET, DELETE -> v.setSkriptType(null);
         }
     }
 

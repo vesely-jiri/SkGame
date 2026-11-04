@@ -324,7 +324,7 @@ final class MiniGameEntryHelper {
                 @SuppressWarnings("unchecked")
                 Expression<? extends ClassInfo<?>> typeExpr = (Expression<? extends ClassInfo<?>>) body.getOptional("type", false);
                 if (typeExpr != null) {
-                    cv.setType(typeExpr.getSingle(null));
+                    cv.setSkriptType(typeExpr.getSingle(null));
                 }
 
                 Expression<?> defExpr = (Expression<?>) body.getOptional("default", false);

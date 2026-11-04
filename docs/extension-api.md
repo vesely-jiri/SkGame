@@ -122,29 +122,49 @@ mg.setTeamAssignment(TeamAssignmentMode./* pick */ …);
 mg.setTeamEntries(List.of(
     new TeamEntry("red",  "&cRed",  new ItemStack(Material.RED_WOOL)),
     new TeamEntry("blue", "&9Blue", new ItemStack(Material.BLUE_WOOL))));
-mg.setGameMapValueDef("red_spawn",  loc("Red spawn",  SINGLE));
-mg.setGameMapValueDef("blue_spawn", loc("Blue spawn", SINGLE));
-mg.setGameMapValueDef("red_goal",   region("Red goal region"));
-mg.setGameMapValueDef("blue_goal",  region("Blue goal region"));
-mg.setGameMapValueDef("build_area", region("Buildable area"));
+mg.setGameMapValueDef("red_spawn",  locDef("Red spawn"));
+mg.setGameMapValueDef("blue_spawn", locDef("Blue spawn"));
+mg.setGameMapValueDef("red_goal",   regionDef("Red goal region"));
+mg.setGameMapValueDef("blue_goal",  regionDef("Blue goal region"));
+mg.setGameMapValueDef("build_area", regionDef("Buildable area"));
 MiniGameManager.getInstance().save();
+
+// Helper — native, Skript-free typing (see §3):
+static CustomValue locDef(String name) {
+    CustomValue cv = new CustomValue(name);
+    cv.setValueType(ValueType.LOCATION);
+    return cv;
+}
+static CustomValue regionDef(String name) {
+    CustomValue cv = new CustomValue(name);
+    cv.setValueType(ValueType.REGION);
+    return cv;
+}
 ```
 
-### 3. `CustomValue` types — the dual-mode catch
+### 3. `CustomValue` types — native `ValueType` (Phase 2, done)
 
-Today `CustomValue.setType(ClassInfo<?>)` needs a **Skript** `ClassInfo`
-(`Classes.getExactClassInfo(Location.class)`). That ties typed value defs to Skript.
+Type value defs with the native, Skript-free token:
 
-- **Until Phase 2 of the migration lands**, a native extension that wants typed
-  gamemap values is effectively addon-mode-typed. For standalone, declare value defs
-  with a name/description but leave `type` null (typeless) until `ValueType` exists.
-- **After Phase 2**, use the native `ValueType` token (`ValueType.LOCATION`,
-  `ValueType.REGION`, …) — no Skript dependency. Bridge Builders should be written
-  against `ValueType` and is a driver for getting Phase 2 done.
+```java
+CustomValue cv = new CustomValue("Red spawn");
+cv.setValueType(ValueType.LOCATION);   // import cz.nox.skgame.api.game.model.type.ValueType
+```
 
-> Bridge Builders must not import `ch.njol.skript.*`. If a capability is only
-> reachable through Skript types, raise it as a Phase 2 API gap instead of importing
-> Skript — that would break standalone mode.
+`ValueType` constants: `TEXT, NUMBER, BOOLEAN, LOCATION, BLOCK, ITEM, REGION, PLAYER, TIMESPAN`.
+
+- Native setter is **`setValueType(ValueType)`** and getter **`getValueType()`**. These are the
+  only type methods an extension calls.
+- The legacy Skript getter/setter is **`getType()` / `setSkriptType(ClassInfo<?>)`** — addon-only,
+  wired through a bridge, **never call these from an extension**. They are deliberately named
+  differently from `setValueType` so a Skript-free extension compiles: a single overloaded
+  `setType(…)` would force `javac` to load `ch.njol.skript.classes.ClassInfo` to resolve the call.
+- Plurality, default, bounds, allowed-values are all native: `setPlurality(CustomValuePlurality.PLURAL)`,
+  `setDefaultValue(5L)`, `setMinValue/ setMaxValue`, `setAllowedValues(List.of(...))`.
+
+> Bridge Builders must not import `ch.njol.skript.*`. If a capability is only reachable through
+> Skript types, raise it as an API gap instead of importing Skript — that would break standalone mode.
+> (`TIMESPAN` is the one type still backed by a Skript object at runtime; avoid it in standalone.)
 
 ### 4. Game behaviour — read gamemap values at runtime
 

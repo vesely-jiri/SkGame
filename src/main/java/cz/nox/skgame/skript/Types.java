@@ -552,7 +552,7 @@ public class Types {
                     public CustomValue deserialize(Fields fields) throws StreamCorruptedException, NotSerializableException {
                         CustomValue v = new CustomValue();
                         v.setName(fields.getObject("name", String.class));
-                        v.setType(fields.getObject("type", ClassInfo.class));
+                        v.setSkriptType(fields.getObject("type", ClassInfo.class));
                         v.setDefaultValue(fields.getObject("defaultValue", Object.class));
                         v.setDescription(fields.getObject("description", String.class));
                         v.setPlurality(fields.getObject("plurality", CustomValuePlurality.class));
