@@ -223,6 +223,46 @@ them when you want reload to take effect.)
 **Packaging:** put `config.yml` at your jar root (e.g. `src/main/resources/config.yml`, bundled by
 `processResources`) with comments and every default key.
 
+### 6. Kits & match settings (lobby GUIs)
+
+A minigame can declare selectable **kits** and host-toggleable **match settings**; SkGame surfaces
+both in its existing lobby GUIs. Both models are Skript-free and serialize with the minigame.
+
+**Models** (`api/game/model/`):
+```java
+KitOption(String id, @Nullable String displayName, @Nullable ItemStack icon)    // displayName: legacy & codes ok
+SessionSetting(String key, @Nullable String displayName, boolean defaultValue)  // boolean-only
+```
+**MiniGame setters:** `mg.setKits(List<KitOption>)`, `mg.setSettings(List<SessionSetting>)`
+(getters `getKits()` / `getSettings()`; empty by default).
+
+```java
+mg.setKits(List.of(
+    new KitOption("miner",   "&eMiner",   new ItemStack(Material.IRON_PICKAXE)),
+    new KitOption("axe",     "&cAxe",     new ItemStack(Material.IRON_AXE)),
+    new KitOption("furnace", "&6Furnace", new ItemStack(Material.FURNACE))));
+mg.setSettings(List.of(new SessionSetting("bb_pvp", "PvP", false)));
+```
+
+**Kits — team picker:** when `getKits()` is non-empty, the team-picker GUI gains **one extra row
+below the teams** with a button per kit (icon + name, ✔ on the selected one). Clicking (only in
+`PREPARATION`, like team pick) stores the choice as a **temporary** session value:
+- key **`"kit." + player.getUniqueId()`** → the chosen **kit id** (String), `isTemporary = true`.
+- Read it on game start: `session.getValue("kit." + uuid, true)`. **Null = never picked → default to
+  the first kit** (`getKits().get(0)`), which is also what the GUI shows pre-selected.
+
+**Settings — session GUI:** when `getSettings()` is non-empty, the session GUI shows a host-only
+**"Match Settings"** button at **slot 18** that opens a sub-GUI (the main GUI's control slots around
+the minigame slot were full; this sits in the host-config cluster). Each setting is a toggle
+(LIME = on / GRAY = off, state in the lore). Host toggles write a **persistent** session value:
+- `session.setValue(key, boolean, false)` (`isTemporary = false`); fires
+  `SessionSettingsChangedEvent(session, "setting:" + key)`.
+- Read it on game start: `session.getValue(key, false)` → a `Boolean`, or **null if never toggled →
+  treat as the declared `defaultValue`**. The GUI shows `defaultValue` until first toggled.
+
+Both lists persist in minigames.yml via the YAML-safe `ValueSerialization` path (kit icons stored as
+their `ItemStack` `==` form).
+
 ---
 
 ## Build setup for an extension

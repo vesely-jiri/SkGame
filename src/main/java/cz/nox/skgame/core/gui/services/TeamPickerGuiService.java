@@ -1,5 +1,6 @@
 package cz.nox.skgame.core.gui.services;
 
+import cz.nox.skgame.api.game.model.KitOption;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
 import cz.nox.skgame.api.game.model.TeamEntry;
@@ -60,11 +61,16 @@ public class TeamPickerGuiService implements Listener {
 
         String currentTeam = session.getTeam(player);
         // 1 row fits up to 8 team buttons + 1 random at slot 8; overflow to 2 rows
-        int rows = teams.size() >= 9 ? 2 : 1;
-        int randomSlot = rows == 1 ? 8 : 17;
+        int teamRows = teams.size() >= 9 ? 2 : 1;
+        int randomSlot = teamRows == 1 ? 8 : 17;
+
+        // When the minigame declares kits, append one extra row of kit buttons below the teams.
+        List<KitOption> kits = mg.getKits();
+        boolean hasKits = !kits.isEmpty();
+        int totalRows = teamRows + (hasKits ? 1 : 0);
 
         GuiBuilder builder = new GuiBuilder()
-                .size(rows)
+                .size(totalRows)
                 .title(legacy("&6Choose your team"));
 
         for (int i = 0; i < teams.size() && i < randomSlot; i++) {
@@ -111,7 +117,37 @@ public class TeamPickerGuiService implements Listener {
                     openFor(p, s);
                 }));
 
+        if (hasKits) {
+            int base = teamRows * 9;
+            String currentKit = currentKitId(session, player, kits);
+            for (int i = 0; i < kits.size() && i < 9; i++) {
+                KitOption kit = kits.get(i);
+                boolean selected = kit.id() != null && kit.id().equals(currentKit);
+                ItemStack icon = kit.icon() != null ? kit.icon() : new ItemStack(Material.CHEST);
+                builder.slot(base + i, GuiItem.of(icon)
+                        .name((selected ? "&a✔ " : "&f") + kit.resolvedName())
+                        .lore(legacy(selected ? "&7Selected kit" : "&8Click to select this kit"))
+                        .onClick(e -> {
+                            Player p = (Player) e.getWhoClicked();
+                            Session s = SessionManager.getInstance().getSession(p);
+                            if (s == null || s.getState() != SessionState.PREPARATION) {
+                                p.closeInventory(); return;
+                            }
+                            // Per-player chosen kit → TEMPORARY session value "kit.<uuid>" = kit id.
+                            s.setValue("kit." + p.getUniqueId(), kit.id(), true);
+                            openFor(p, s);
+                        }));
+            }
+        }
+
         player.openInventory(builder.build());
+    }
+
+    /** The player's chosen kit id (temporary session value), defaulting to the first declared kit. */
+    private static String currentKitId(Session session, Player player, List<KitOption> kits) {
+        Object kv = session.getValue("kit." + player.getUniqueId(), true);
+        if (kv instanceof String s) return s;
+        return kits.isEmpty() ? null : kits.get(0).id();
     }
 
     // ─── Listeners ────────────────────────────────────────────────────────────

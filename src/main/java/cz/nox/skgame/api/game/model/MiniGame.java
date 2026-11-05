@@ -33,6 +33,8 @@ public class MiniGame implements ConfigurationSerializable {
     private @Nullable Long playerTime;
     private @Nullable String playerWeather;
     private List<String> instructions = new ArrayList<>();
+    private List<KitOption> kits = new ArrayList<>();
+    private List<SessionSetting> settings = new ArrayList<>();
 
     public MiniGame(String id,Map<String, Object> values) {
         this.id = id;
@@ -164,6 +166,14 @@ public class MiniGame implements ConfigurationSerializable {
     public List<String> getInstructions() { return instructions; }
     public void setInstructions(List<String> list) { this.instructions = list != null ? new ArrayList<>(list) : new ArrayList<>(); }
 
+    /** Selectable kits offered in the team-picker GUI (empty = none). */
+    public List<KitOption> getKits() { return kits; }
+    public void setKits(List<KitOption> list) { this.kits = list != null ? new ArrayList<>(list) : new ArrayList<>(); }
+
+    /** Host-toggleable boolean settings shown in the session settings GUI (empty = none). */
+    public List<SessionSetting> getSettings() { return settings; }
+    public void setSettings(List<SessionSetting> list) { this.settings = list != null ? new ArrayList<>(list) : new ArrayList<>(); }
+
     private static Map<String, Object> serializeTeamRules(TeamRules r) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("friendly-fire", r.friendlyFire());
@@ -245,6 +255,18 @@ public class MiniGame implements ConfigurationSerializable {
         if (playerTime != null) gm.put("player-time", playerTime);
         if (playerWeather != null) gm.put("player-weather", playerWeather);
         if (!instructions.isEmpty()) gm.put("instructions", new ArrayList<>(instructions));
+
+        if (!kits.isEmpty()) {
+            List<Object> list = new ArrayList<>(kits.size());
+            // encode keeps it YAML-safe (the kit icon is a ConfigurationSerializable ItemStack).
+            for (KitOption k : kits) list.add(ValueSerialization.encode(k.serialize()));
+            gm.put("kits", list);
+        }
+        if (!settings.isEmpty()) {
+            List<Object> list = new ArrayList<>(settings.size());
+            for (SessionSetting s : settings) list.add(s.serialize());
+            gm.put("settings", list);
+        }
 
         return gm;
     }
@@ -406,6 +428,33 @@ public class MiniGame implements ConfigurationSerializable {
             newGm.setInstructions(instrList);
         }
 
+        Object rawKits = gm.get("kits");
+        if (rawKits instanceof List<?> kl) {
+            List<KitOption> kitList = new ArrayList<>();
+            for (Object o : kl) {
+                Map<String, Object> km = toMap(o);
+                if (km != null && km.get("id") != null) kitList.add(KitOption.deserialize(km));
+            }
+            newGm.setKits(kitList);
+        }
+
+        Object rawSettings = gm.get("settings");
+        if (rawSettings instanceof List<?> sl) {
+            List<SessionSetting> setList = new ArrayList<>();
+            for (Object o : sl) {
+                Map<String, Object> sm = toMap(o);
+                if (sm != null && sm.get("key") != null) setList.add(SessionSetting.deserialize(sm));
+            }
+            newGm.setSettings(setList);
+        }
+
         return newGm;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> toMap(Object o) {
+        if (o instanceof MemorySection sec) return sec.getValues(false);
+        if (o instanceof Map<?, ?> m) return (Map<String, Object>) m;
+        return null;
     }
 }

@@ -15,6 +15,7 @@ import cz.nox.skgame.api.game.model.type.ValueType;
 import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.Session;
+import cz.nox.skgame.api.game.model.SessionSetting;
 import cz.nox.skgame.api.game.model.SessionVisibility;
 import cz.nox.skgame.api.game.model.type.DisbandReason;
 import cz.nox.skgame.api.game.model.type.GameStartReason;
@@ -156,6 +157,9 @@ public class SessionGuiService implements Listener {
 
         // Slots 34 / 18 / 27 — session value defs (slot 34 is separator when no values)
         buildSessionValueSlots(builder, session, viewer);
+
+        // Slot 18 — host match settings (the minigame's declared boolean toggles), if any
+        buildSessionSettingsSlot(builder, session, viewer);
 
         // Slot 7 — Spectators count + toggle
         builder.slot(7, buildSpectatorsSlot(session, viewer));
@@ -636,6 +640,68 @@ public class SessionGuiService implements Listener {
                 }).onRightClick(e -> {
                     advanceSessionValue(session, key, cv, false);
                     openSessionValuesGui((Player) e.getWhoClicked(), session, canEdit, backAction);
+                });
+            }
+            builder.slot(slot++, item);
+        }
+
+        builder.slot(22, GuiItem.of(Material.ARROW)
+            .name(legacy("&7Back"))
+            .onClick(e -> { if (backAction != null) backAction.run(); }));
+
+        player.openInventory(builder.build());
+    }
+
+    // ─── Host match settings (boolean toggles declared by the minigame) ─────────
+
+    /** Slot 18: entry button opening the match-settings sub-GUI; left empty when the minigame declares none. */
+    private void buildSessionSettingsSlot(GuiBuilder builder, Session session, Player viewer) {
+        MiniGame mg = session.getMiniGame();
+        if (mg == null || mg.getSettings().isEmpty()) return;
+        int count = mg.getSettings().size();
+        builder.slot(18, GuiItem.of(Material.LEVER)
+            .name(legacy("&b&lMatch Settings"))
+            .lore(legacy("&7Click to configure"),
+                  legacy("&8" + count + " toggle" + (count != 1 ? "s" : "")))
+            .onClick(e -> {
+                Player p = (Player) e.getWhoClicked();
+                if (isMidGameLocked(session, p)) return;
+                boolean canEdit = p.equals(session.getHost());
+                openSessionSettingsGui(p, session, canEdit, () -> openFor(p));
+            }));
+    }
+
+    /** Effective boolean for a declared setting: the stored session value, else the declared default. */
+    private static boolean settingState(Session session, SessionSetting setting) {
+        Object v = session.getValue(setting.key(), false);
+        return v instanceof Boolean b ? b : setting.defaultValue();
+    }
+
+    public static void openSessionSettingsGui(Player player, Session session, boolean canEdit, Runnable backAction) {
+        MiniGame mg = session.getMiniGame();
+        if (mg == null || mg.getSettings().isEmpty()) { if (backAction != null) backAction.run(); return; }
+
+        GuiBuilder builder = new GuiBuilder().size(3).title("&b&lMatch Settings");
+        GuiItem border = GuiItem.of(Material.GRAY_STAINED_GLASS_PANE).name(Component.space());
+        for (int i = 0; i < 9; i++) builder.slot(i, border);
+        for (int i = 18; i < 27; i++) builder.slot(i, border);
+
+        int slot = 9;
+        for (SessionSetting setting : mg.getSettings()) {
+            if (slot > 17) break;
+            boolean on = settingState(session, setting);
+            GuiItem item = GuiItem.of(on ? Material.LIME_DYE : Material.GRAY_DYE)
+                .name((on ? "&a" : "&7") + setting.resolvedName())
+                .lore(legacy(on ? "&aON" : "&7OFF"),
+                      legacy(canEdit ? "&8Click to toggle" : "&8Host only"));
+            if (canEdit) {
+                SessionSetting fs = setting;
+                item.onClick(e -> {
+                    boolean now = settingState(session, fs);
+                    // Host toggle → persistent (non-temporary) session value; read via getValue(key, false).
+                    session.setValue(fs.key(), !now, false);
+                    Bukkit.getPluginManager().callEvent(new SessionSettingsChangedEvent(session, "setting:" + fs.key()));
+                    openSessionSettingsGui((Player) e.getWhoClicked(), session, true, backAction);
                 });
             }
             builder.slot(slot++, item);
