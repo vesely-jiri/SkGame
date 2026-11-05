@@ -262,6 +262,17 @@ public class SkGame extends JavaPlugin implements TabCompleter {
         return mode == Mode.ADDON;
     }
 
+    /**
+     * The loaded, editable config for an external extension module, from
+     * {@code plugins/SkGame/modules/<moduleId>.yml} (generated from the jar's {@code config.yml} on
+     * first run). Call it from the module's {@code onEnable} as {@code plugin.getModuleConfig(getId())}.
+     * Returns {@code null} if {@code moduleId} is not a loaded external module (e.g. a built-in module,
+     * which uses SkGame's own {@code config.yml}). Read-only; edit the file and run {@code /skgame reload}.
+     */
+    public org.bukkit.configuration.file.YamlConfiguration getModuleConfig(String moduleId) {
+        return externalModuleLoader != null ? externalModuleLoader.getConfig(moduleId) : null;
+    }
+
     public void onEnable() {
         long s = System.currentTimeMillis();
         this.pluginStartTime = s;
@@ -940,7 +951,12 @@ public class SkGame extends JavaPlugin implements TabCompleter {
     private void doReloadConfig(CommandSender sender) {
         reloadConfig();
         cz.nox.skgame.core.scoreboard.ScoreboardService.getInstance().reload(this);
-        sender.sendMessage(ChatColor.GREEN + "config.yml reloaded.");
+        // Re-read external module configs (plugins/SkGame/modules/<id>.yml) into their existing
+        // objects, so modules that cached getModuleConfig(...) see edits without a restart.
+        if (externalModuleLoader != null) {
+            externalModuleLoader.reloadConfigs();
+        }
+        sender.sendMessage(ChatColor.GREEN + "config.yml + module configs reloaded.");
     }
 
     @SuppressWarnings("deprecation")

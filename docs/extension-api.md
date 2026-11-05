@@ -34,6 +34,7 @@ api-version: 1                                    # SkGame extension API major t
 dependencies: []                                 # other module ids required first
 authors: [ vesely-jiri ]
 version: 1.0.0
+config: config.yml                               # optional; jar-resource template for modules/<id>.yml (see "Module config")
 ```
 
 ### Classloading
@@ -179,6 +180,48 @@ Lifecycle events to listen for (`api/game/event/`):
 
 End a game: `SessionLifecycleManager.endGame(session, "WIN")` /
 make a player a spectator / `startGame(session, reason, delay)`.
+
+### 5. Module config
+
+Each external module gets an auto-generated, editable config file at
+**`plugins/SkGame/modules/<id>.yml`** — the **same folder as the jars**, where `<id>` is
+`SkGameModule.getId()`.
+
+**Template** (what the file is seeded with on first load):
+- Default: SkGame copies **`config.yml` from your jar root**.
+- Override: declare a different jar-resource path in `skgame-extension.yml`:
+  ```yaml
+  config: configs/bridge_builders.yml   # optional; defaults to "config.yml"
+  ```
+- If the jar has no such resource, SkGame writes a short generated header so the file still
+  appears and is editable.
+
+**Generation rules:** created only if `<id>.yml` is absent; an existing file is **never
+overwritten** (user edits + comments preserved). The loaded config is never written back, so
+on-disk comments survive.
+
+**Read it** from your module's `onEnable` (the `SkGame plugin` is passed in):
+```java
+@Override public void onEnable(SkGame plugin) {
+    YamlConfiguration cfg = plugin.getModuleConfig(getId());   // org.bukkit.configuration.file.YamlConfiguration
+    int teams     = cfg.getInt("teams", 4);
+    int perMap    = cfg.getInt("resources-per-map", 64);
+    int timerSecs = cfg.getInt("timer-seconds", 300);
+}
+```
+- **API:** `org.bukkit.configuration.file.YamlConfiguration SkGame.getModuleConfig(String moduleId)`.
+- Returns the loaded config for a loaded external module; **`null`** if `moduleId` isn't a loaded
+  external extension (built-in modules use SkGame's own `config.yml`). Always use `getX(key, default)`
+  so missing keys are safe (there is no automatic default-merge; ship every key in your template).
+
+**Reload:** `/skgame reload` (or `/skgame reload config`) re-reads every `<id>.yml` from disk
+**into the same `YamlConfiguration` object**, so a module that cached the reference from
+`getModuleConfig(...)` sees the new values — no restart, no server rejoin. It never regenerates or
+overwrites the file. (If your module caches individual values rather than the config object, re-read
+them when you want reload to take effect.)
+
+**Packaging:** put `config.yml` at your jar root (e.g. `src/main/resources/config.yml`, bundled by
+`processResources`) with comments and every default key.
 
 ---
 
