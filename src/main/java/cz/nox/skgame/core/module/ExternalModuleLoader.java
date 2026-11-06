@@ -52,6 +52,10 @@ public final class ExternalModuleLoader {
     private final LinkedHashMap<String, YamlConfiguration> configs = new LinkedHashMap<>();
     /** lowercased id → the <id>.yml file, kept for reloadConfigs(). */
     private final LinkedHashMap<String, File> configFiles = new LinkedHashMap<>();
+    /** id → the jar it was loaded from, for change-detection and hot-reload. */
+    private final LinkedHashMap<String, File> jarFiles = new LinkedHashMap<>();
+    /** id → jar mtime at load time, to detect a rebuilt jar on {@code /skgame reload modules}. */
+    private final LinkedHashMap<String, Long> jarMtimes = new LinkedHashMap<>();
 
     public ExternalModuleLoader(SkGame plugin) {
         this.plugin = plugin;
@@ -128,6 +132,8 @@ public final class ExternalModuleLoader {
                         + "'. Using module id for the enable pipeline.");
             }
             loaders.put(desc.id, cl);
+            jarFiles.put(desc.id, jar);
+            jarMtimes.put(desc.id, jar.lastModified());
             // Generate (first run) + load the module's editable config, next to the jar.
             setupModuleConfig(module, jar, desc);
             plugin.getLogUtil().info("Loaded extension '" + desc.id + "' ("
@@ -223,6 +229,110 @@ public final class ExternalModuleLoader {
         }
     }
 
+    /** Peek only the descriptor {@code id} from a jar (for rescans), or {@code null} if unreadable/absent. */
+    private String peekId(File jar) {
+        try (JarFile jf = new JarFile(jar)) {
+            JarEntry e = jf.getJarEntry(DESCRIPTOR);
+            if (e == null) return null;
+            try (InputStream in = jf.getInputStream(e);
+                 Reader r = new InputStreamReader(in, StandardCharsets.UTF_8)) {
+                return YamlConfiguration.loadConfiguration(r).getString("id");
+            }
+        } catch (IOException ex) {
+            return null;
+        }
+    }
+
+    /**
+     * Instantiate every jar in the folder whose id is NOT currently loaded — the modules added
+     * since boot (or since the last reload). Returned modules are NOT yet enabled; the caller runs
+     * the enable gate (config/deps/canEnable) + onEnable. Unchanged jars are left untouched (no
+     * duplicate-id noise). Never throws.
+     */
+    public List<SkGameModule> loadNewModules() {
+        List<SkGameModule> fresh = new ArrayList<>();
+        File[] jars = modulesDir.listFiles((d, name) -> name.toLowerCase().endsWith(".jar"));
+        if (jars == null) return fresh;
+        for (File jar : jars) {
+            String id = peekId(jar);
+            if (id == null || loaders.containsKey(id)) continue;
+            SkGameModule m = loadOne(jar);
+            if (m != null) fresh.add(m);
+        }
+        return fresh;
+    }
+
+    /** Snapshot of currently-loaded external module ids (bookkeeping keys, descriptor-case). */
+    public List<String> loadedIds() {
+        return new ArrayList<>(jarFiles.keySet());
+    }
+
+    /** The stored (canonical) id matching {@code id} case-insensitively, or {@code null} if not loaded. */
+    public String canonicalId(String id) {
+        if (id == null) return null;
+        for (String k : jarFiles.keySet()) {
+            if (k.equalsIgnoreCase(id)) return k;
+        }
+        return null;
+    }
+
+    /** The jar a loaded id came from (case-insensitive), or {@code null}. */
+    public File getLoadedJar(String id) {
+        String k = canonicalId(id);
+        return k == null ? null : jarFiles.get(k);
+    }
+
+    /** Loaded ids whose jar file was rebuilt on disk (mtime differs) — candidates for hot-swap. */
+    public List<String> changedModuleIds() {
+        List<String> out = new ArrayList<>();
+        for (Map.Entry<String, File> e : jarFiles.entrySet()) {
+            File jar = e.getValue();
+            Long seen = jarMtimes.get(e.getKey());
+            if (jar != null && jar.exists() && seen != null && jar.lastModified() != seen) {
+                out.add(e.getKey());
+            }
+        }
+        return out;
+    }
+
+    /** Loaded ids whose jar file has been deleted from the folder. */
+    public List<String> removedModuleIds() {
+        List<String> out = new ArrayList<>();
+        for (Map.Entry<String, File> e : jarFiles.entrySet()) {
+            File jar = e.getValue();
+            if (jar == null || !jar.exists()) out.add(e.getKey());
+        }
+        return out;
+    }
+
+    /**
+     * Detach a loaded module so it can be re-loaded or dropped: close its classloader and forget the
+     * loader/jar bookkeeping. The module's config entry is KEPT (so a module's onDisable can still read
+     * {@code getModuleConfig}, and a subsequent {@link #reload(File)} re-reads it from disk). Call the
+     * module's {@code onDisable} BEFORE this (its code runs fine after the loader closes — already-loaded
+     * classes stay resident until GC — but closing first is cleaner).
+     *
+     * @return the jar the module was loaded from, or {@code null} if {@code id} was not loaded.
+     */
+    public File detach(String id) {
+        URLClassLoader cl = loaders.remove(id);
+        jarMtimes.remove(id);
+        File jar = jarFiles.remove(id);
+        if (cl != null) {
+            try { cl.close(); } catch (IOException ignored) {}
+        }
+        return jar;
+    }
+
+    /**
+     * Re-instantiate a module from a jar after {@link #detach(String)} — same path as the initial load
+     * (fresh classloader, re-read config). Caller runs the enable gate + onEnable. Returns {@code null}
+     * on failure.
+     */
+    public SkGameModule reload(File jar) {
+        return loadOne(jar);
+    }
+
     /** Close every open extension classloader, in reverse load order. */
     public void closeAll() {
         List<Map.Entry<String, URLClassLoader>> entries = new ArrayList<>(loaders.entrySet());
@@ -237,6 +347,8 @@ public final class ExternalModuleLoader {
         loaders.clear();
         configs.clear();
         configFiles.clear();
+        jarFiles.clear();
+        jarMtimes.clear();
     }
 
     /** Parsed {@code skgame-extension.yml}. */

@@ -553,7 +553,7 @@ public class SkGame extends JavaPlugin implements TabCompleter {
         }
     }
 
-    private static final List<String> RELOAD_COMPONENTS = List.of("all", "config", "messages", "storage", "scripts");
+    private static final List<String> RELOAD_COMPONENTS = List.of("all", "config", "messages", "storage", "scripts", "modules");
 
     @Override
     @SuppressWarnings("deprecation")
@@ -570,12 +570,13 @@ public class SkGame extends JavaPlugin implements TabCompleter {
                 }
                 String component = args.length >= 2 ? args[1].toLowerCase() : "all";
                 switch (component) {
-                    case "all" -> { doReloadConfig(sender); doReloadMessages(sender); doReloadStorage(sender); }
+                    case "all" -> { doReloadConfig(sender); doReloadMessages(sender); doReloadStorage(sender); doReloadModules(sender, null, false); }
                     case "config"   -> doReloadConfig(sender);
                     case "messages" -> doReloadMessages(sender);
                     case "storage"  -> doReloadStorage(sender);
                     case "scripts"  -> doReloadScripts(sender);
-                    default -> sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame reload [all|config|messages|storage|scripts]");
+                    case "modules"  -> doReloadModules(sender, args.length >= 3 ? args[2] : null, true);
+                    default -> sender.sendMessage(ChatColor.YELLOW + "Usage: /skgame reload [all|config|messages|storage|scripts|modules [<id>]]");
                 }
             }
             case "info" -> new cz.nox.skgame.core.command.subcommands.InfoSubcommand().execute(sender);
@@ -799,6 +800,10 @@ public class SkGame extends JavaPlugin implements TabCompleter {
                 default -> Collections.emptyList();
             };
         }
+        if (args.length == 3 && args[0].equalsIgnoreCase("reload") && args[1].equalsIgnoreCase("modules")
+                && sender.hasPermission("skgame.admin.reload") && externalModuleLoader != null) {
+            return StringUtil.copyPartialMatches(args[2], externalModuleLoader.loadedIds(), new ArrayList<>());
+        }
         if (args.length == 3 && args[0].equalsIgnoreCase("minigame") && sender.hasPermission("skgame.admin")) {
             String[] ids = java.util.Arrays.stream(cz.nox.skgame.core.game.MiniGameManager.getInstance().getAllMiniGames())
                     .map(cz.nox.skgame.api.game.model.MiniGame::getId).toArray(String[]::new);
@@ -993,6 +998,170 @@ public class SkGame extends JavaPlugin implements TabCompleter {
         }
         Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), "skript reload skgame");
         sender.sendMessage(ChatColor.GREEN + "Dispatched: skript reload skgame");
+    }
+
+    /**
+     * Hot-reload external extension modules without a restart: enable jars added since boot, hot-swap
+     * jars that were rebuilt (same id, newer file), and unload jars that were deleted. Built-in modules
+     * are untouched.
+     *
+     * <p>Guards (safety over convenience):
+     * <ul>
+     *   <li>A jar rebuilt or removed while a game is STARTING/STARTED is skipped — stop the game first.
+     *       Hot-swapping code under a live game would strand entities/tasks from the old classloader.</li>
+     *   <li>In addon mode, a module that declares Skript syntax classes cannot have that syntax
+     *       (re)registered after Skript's boot-time postLoad, so a changed one needs a real restart;
+     *       a brand-new one is enabled but its syntax is announced as restart-pending.</li>
+     * </ul>
+     * Resources/scripts a runtime-added module declares are installed on the next restart, not here.
+     *
+     * @param target   a single module id to (re)load, or {@code null} for every module.
+     * @param forceAll when {@code target == null}: {@code true} force-reloads every loaded module
+     *                 ({@code /skgame reload modules}); {@code false} only hot-swaps jars whose file
+     *                 changed on disk ({@code /skgame reload all}, the gentle routine path).
+     */
+    private void doReloadModules(CommandSender sender, String target, boolean forceAll) {
+        if (externalModuleLoader == null) {
+            sender.sendMessage(ChatColor.RED + "Module loader unavailable.");
+            return;
+        }
+        boolean gameRunning = anyGameRunning();
+
+        // Single-module target: /skgame reload modules <id>
+        if (target != null) {
+            String id = externalModuleLoader.canonicalId(target);
+            if (id == null) {
+                sender.sendMessage(ChatColor.YELLOW + "No loaded module '" + target
+                        + "'. For a newly added jar run /skgame reload modules (no id).");
+                return;
+            }
+            reloadLoadedModule(id, sender, gameRunning);
+            return;
+        }
+
+        // All modules: enable new jars, (force or changed) reload loaded, unload deleted.
+        List<String> removed = externalModuleLoader.removedModuleIds();
+        List<String> toReload = forceAll ? externalModuleLoader.loadedIds()
+                                         : externalModuleLoader.changedModuleIds();
+        int enabledNew = 0, reloaded = 0, unloaded = 0, skipped = 0;
+
+        for (SkGameModule m : externalModuleLoader.loadNewModules()) {
+            if (enableModuleAtRuntime(m, sender, false)) enabledNew++; else skipped++;
+        }
+        for (String id : toReload) {
+            if (removed.contains(id)) continue; // handled by the unload pass below
+            switch (reloadLoadedModule(id, sender, gameRunning)) {
+                case RELOADED -> reloaded++;
+                default -> skipped++;
+            }
+        }
+        for (String id : removed) {
+            if (gameRunning) {
+                sender.sendMessage(ChatColor.YELLOW + "Module '" + id
+                        + "' jar removed but a game is running — restart to fully unload it.");
+                continue;
+            }
+            SkGameModule old = findEnabledModule(id);
+            if (old != null) {
+                try { old.onDisable(this); }
+                catch (Throwable t) { logUtil.error("Module '" + id + "' onDisable (unload) failed: " + t); }
+                enabledModules.remove(old);
+            }
+            externalModuleLoader.detach(id);
+            sender.sendMessage(ChatColor.YELLOW + "Module '" + id + "' unloaded (jar removed).");
+            unloaded++;
+        }
+
+        sender.sendMessage(ChatColor.GREEN + "Modules: " + enabledNew + " new, " + reloaded
+                + " reloaded, " + unloaded + " unloaded"
+                + (skipped > 0 ? ChatColor.YELLOW + " (" + skipped + " skipped)" : "") + ChatColor.GREEN + ".");
+    }
+
+    private enum ModOp { RELOADED, SKIPPED, FAILED }
+
+    /** onDisable → close loader → fresh loader → onEnable for one already-loaded module, with guards. */
+    private ModOp reloadLoadedModule(String id, CommandSender sender, boolean gameRunning) {
+        SkGameModule old = findEnabledModule(id);
+        if (isAddonMode() && old != null && !old.getSkriptClasses().isEmpty()) {
+            sender.sendMessage(ChatColor.YELLOW + "Module '" + id
+                    + "' declares Skript syntax — restart required to re-register it.");
+            return ModOp.SKIPPED;
+        }
+        if (gameRunning) {
+            sender.sendMessage(ChatColor.YELLOW + "Module '" + id
+                    + "' not reloaded — a game is running. Stop it first.");
+            return ModOp.SKIPPED;
+        }
+        File jar = externalModuleLoader.getLoadedJar(id);
+        if (jar == null) {
+            sender.sendMessage(ChatColor.YELLOW + "Module '" + id + "' is not a loaded external module.");
+            return ModOp.SKIPPED;
+        }
+        if (old != null) {
+            try { old.onDisable(this); }
+            catch (Throwable t) { logUtil.error("Module '" + id + "' onDisable (reload) failed: " + t); }
+            enabledModules.remove(old);
+        }
+        externalModuleLoader.detach(id);
+        SkGameModule fresh = externalModuleLoader.reload(jar);
+        if (fresh != null && enableModuleAtRuntime(fresh, sender, true)) return ModOp.RELOADED;
+        return ModOp.FAILED;
+    }
+
+    /** Run the same enable gate as {@link #resolveModules()} then onEnable, for a single runtime module. */
+    private boolean enableModuleAtRuntime(SkGameModule m, CommandSender sender, boolean isReload) {
+        String id = m.getId();
+        boolean cfgEnabled = getConfig().getBoolean("modules." + id + ".enabled", m.isEnabledByDefault());
+        if (!cfgEnabled) {
+            sender.sendMessage(ChatColor.YELLOW + "Module '" + id + "' disabled in config — not enabled.");
+            return false;
+        }
+        for (String dep : m.getDependencies()) {
+            boolean depOk = enabledModules.stream().anyMatch(e -> e.getId().equalsIgnoreCase(dep));
+            if (!depOk) {
+                sender.sendMessage(ChatColor.YELLOW + "Module '" + id + "' requires '" + dep
+                        + "' which is not enabled — skipping.");
+                return false;
+            }
+        }
+        if (!m.canEnable(this)) {
+            sender.sendMessage(ChatColor.YELLOW + "Module '" + id + "' canEnable() returned false — skipping.");
+            return false;
+        }
+        if (!isReload && isAddonMode() && !m.getSkriptClasses().isEmpty()) {
+            sender.sendMessage(ChatColor.YELLOW + "Module '" + id
+                    + "' declares Skript syntax — native parts enabled, but its syntax needs a restart.");
+        }
+        try {
+            m.onEnable(this);
+        } catch (Throwable t) {
+            logUtil.error("Module '" + id + "' onEnable (runtime) failed: " + t);
+            sender.sendMessage(ChatColor.RED + "Module '" + id + "' failed to enable — see console.");
+            // Drop the dead classloader so a later reload can retry cleanly.
+            externalModuleLoader.detach(id);
+            return false;
+        }
+        enabledModules.add(m);
+        sender.sendMessage(ChatColor.GREEN + (isReload ? "Reloaded" : "Enabled") + " module '" + id + "'.");
+        return true;
+    }
+
+    private SkGameModule findEnabledModule(String id) {
+        for (SkGameModule m : enabledModules) {
+            if (m.getId().equalsIgnoreCase(id)) return m;
+        }
+        return null;
+    }
+
+    private boolean anyGameRunning() {
+        for (cz.nox.skgame.api.game.model.Session s : SessionManager.getInstance().getAllSessions()) {
+            cz.nox.skgame.api.game.model.type.SessionState st = s.getState();
+            if (st == cz.nox.skgame.api.game.model.type.SessionState.STARTING
+                    || st == cz.nox.skgame.api.game.model.type.SessionState.STARTED) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private List<SkGameModule> resolveModules() {

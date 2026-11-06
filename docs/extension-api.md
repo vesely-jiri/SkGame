@@ -64,6 +64,37 @@ onEnable(plugin)                       -> register minigame + listeners
 onDisable(plugin)  (reverse order)     -> unregister, then close classloader
 ```
 
+**`onDisable` is also the hot-reload teardown — make it complete.** Besides server shutdown, it
+runs when an admin hot-reloads your module (see below). Unregister **everything** `onEnable` set up,
+or a reloaded copy will run alongside the old one:
+- `HandlerList.unregisterAll(yourListener)` for every Bukkit listener you registered, **before** any
+  other cleanup. (Closing the classloader does NOT unregister listeners — the old instance keeps
+  firing.)
+- Cancel every `BukkitTask`/scheduler you started; remove spawned entities (Displays, NPCs, armor
+  stands); close open inventories/GUIs you own.
+- You do **not** unregister your minigame — it persists in `minigames.yml` and your `onEnable`
+  re-`registerMiniGame(id)` returns the same instance and re-applies its defs.
+
+### Hot-reload (`/skgame reload modules`)
+
+`/skgame reload modules` (also folded into `/skgame reload` / `reload all`) re-scans
+`plugins/SkGame/modules/` without a restart:
+- **New jar** (id not loaded) → instantiated + enabled through the normal gate (config/deps/canEnable
+  → onEnable). This is how a freshly uploaded module goes live — drop the jar, run the command.
+- **Rebuilt jar** (same id, newer file) → hot-swapped: `onDisable` on the old instance → close its
+  classloader → fresh classloader + `onEnable`. Your dev loop: `gradlew build` (copies to
+  `modules/`) → `/skgame reload modules`.
+- **Deleted jar** → `onDisable` + classloader closed (module unloaded).
+
+Guards (safety first):
+- A jar rebuilt/removed **while a game is STARTING/STARTED is skipped** — stop the game first (code
+  can't be swapped under live entities/tasks).
+- In **addon mode**, a module that declares `getSkriptClasses()` can't have that syntax re-registered
+  after Skript's boot-time postLoad: a changed one needs a real restart; a new one is enabled but its
+  syntax is announced as restart-pending. **Skript-free (native) modules hot-reload fully** — this is
+  one more reason to keep a minigame module Skript-free.
+- Resources/scripts a runtime-added module declares install on the next restart, not at reload.
+
 Config gate: `modules.<id>.enabled` in SkGame `config.yml` (`isEnabledByDefault()`
 decides the default when the key is absent) — same as built-ins.
 
