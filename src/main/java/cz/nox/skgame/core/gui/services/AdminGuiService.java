@@ -5,6 +5,7 @@ import cz.nox.skgame.api.game.model.CustomValue;
 import cz.nox.skgame.api.game.model.GameMap;
 import cz.nox.skgame.api.game.model.MiniGame;
 import cz.nox.skgame.api.game.model.type.CustomValuePlurality;
+import cz.nox.skgame.api.game.model.type.ValueType;
 import cz.nox.skgame.api.gui.GuiBuilder;
 import cz.nox.skgame.api.gui.GuiItem;
 import cz.nox.skgame.core.admin.AdminSetupState;
@@ -25,6 +26,7 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -237,11 +239,17 @@ public class AdminGuiService implements Listener {
             CustomValue cvDef = entry.getValue();
 
             Object rawMapVal = map.getMiniGameValue(mgId, key);
-            String typeStr = (cvDef.getType() != null) ? cvDef.getType().getCodeName() : "unknown";
+            ValueType vt = cvDef.getValueType();
+            String typeStr = (cvDef.getType() != null) ? cvDef.getType().getCodeName()
+                    : (vt != null ? vt.getCode() : "unknown");
             String plurStr = cvDef.getPlurality().name();
             boolean valueIsPlural = cvDef.getPlurality() == CustomValuePlurality.PLURAL;
             boolean isRegion = "skarena".equals(typeStr) || "skzone".equals(typeStr);
             boolean isLocation = "location".equals(typeStr);
+            // Native type is authoritative (works in both addon and standalone); scalar editor can't
+            // handle BLOCK/ITEM, so they get the held-item editor instead.
+            boolean isBlock = vt == ValueType.BLOCK;
+            boolean isItem = vt == ValueType.ITEM;
 
             String valueDisplay;
             if (rawMapVal == null) {
@@ -258,6 +266,8 @@ public class AdminGuiService implements Listener {
             if (isRegion) action = "&aSet region (wand)";
             else if (valueIsPlural) action = "&aOpen value list";
             else if (isLocation) action = "&aSet location (picker)";
+            else if (isBlock) action = "&aSet to held block";
+            else if (isItem) action = "&aSet to held item";
             else if (cvDef.hasAllowedValues()) action = "&aChoose from options";
             else action = "&aSet value";
 
@@ -295,6 +305,8 @@ public class AdminGuiService implements Listener {
                         } else if (isLocation) {
                             p.closeInventory();
                             sendLocationPicker(p, mapId, mgId, key, true);
+                        } else if (isBlock || isItem) {
+                            openHeldItemEditorGui(p, mapId, mgId, key, isBlock);
                         } else if (cvDef.hasAllowedValues()) {
                             openEnumPickerGui(p, mapId, mgId, key, cvDef.getAllowedValues());
                         } else {
@@ -443,6 +455,80 @@ public class AdminGuiService implements Listener {
                         openValuesGui(p, mapId, mgId);
                     }));
         }
+
+        player.openInventory(builder.build());
+    }
+
+    /**
+     * Editor for a singular {@code BLOCK} / {@code ITEM} gamemap value. The scalar (chat) editor can't
+     * represent a block state or item stack, so this reads the admin's main hand instead: for a BLOCK
+     * it stores the held material's {@link BlockData}; for an ITEM it stores a clone of the held stack.
+     * Persistence is handled natively by {@code ValueSerialization} (tagged string / ConfigurationSerializable).
+     */
+    public void openHeldItemEditorGui(Player player, String mapId, String mgId, String key, boolean isBlock) {
+        GameMap map = GameMapManager.getInstance().getGameMapById(mapId);
+        MiniGame mg = MiniGameManager.getInstance().getMiniGameById(mgId);
+        if (map == null || mg == null) return;
+
+        GuiBuilder builder = new GuiBuilder()
+                .size(6)
+                .title(legacy("&9Edit " + (isBlock ? "Block" : "Item") + " &7(&e" + key + "&7)"));
+
+        GuiItem blackGlass = GuiItem.of(Material.BLACK_STAINED_GLASS_PANE).name(Component.text(" "));
+        for (int s : BLACK_BORDER) builder.slot(s, blackGlass);
+
+        Object current = map.getMiniGameValue(mgId, key);
+        String currentDisplay = current != null ? formatValue(current) : "&cNot set";
+
+        builder.slot(20, GuiItem.of(isBlock ? Material.GRASS_BLOCK : Material.ITEM_FRAME)
+                .name(isBlock ? "&aSet to held block" : "&aSet to held item")
+                .lore(
+                        legacy("&7Current: &f" + currentDisplay),
+                        legacy("&7---------"),
+                        legacy(isBlock
+                                ? "&7Hold a block in your main hand, then click."
+                                : "&7Hold an item in your main hand, then click.")
+                )
+                .onClick(e -> {
+                    Player p = (Player) e.getWhoClicked();
+                    ItemStack hand = p.getInventory().getItemInMainHand();
+                    if (hand == null || hand.getType() == Material.AIR) {
+                        p.sendMessage(ADMIN_PREFIX + "§cHold " + (isBlock ? "a block" : "an item") + " in your main hand first.");
+                        return;
+                    }
+                    GameMap freshMap = GameMapManager.getInstance().getGameMapById(mapId);
+                    if (freshMap == null) return;
+                    if (isBlock) {
+                        if (!hand.getType().isBlock()) {
+                            p.sendMessage(ADMIN_PREFIX + "§c" + hand.getType() + " is not a placeable block.");
+                            return;
+                        }
+                        freshMap.setMiniGameValue(mgId, key, hand.getType().createBlockData());
+                        p.sendMessage(ADMIN_PREFIX + "Block value '" + key + "' set to §e" + hand.getType() + "§r.");
+                    } else {
+                        freshMap.setMiniGameValue(mgId, key, hand.clone());
+                        p.sendMessage(ADMIN_PREFIX + "Item value '" + key + "' set to §e" + hand.getType() + " x" + hand.getAmount() + "§r.");
+                    }
+                    GameMapManager.getInstance().save();
+                    openValuesGui(p, mapId, mgId);
+                }));
+
+        builder.slot(24, GuiItem.of(Material.BARRIER)
+                .name("&cClear value")
+                .lore(legacy("&7Remove this value (set to not configured)."))
+                .onClick(e -> {
+                    Player p = (Player) e.getWhoClicked();
+                    GameMap freshMap = GameMapManager.getInstance().getGameMapById(mapId);
+                    if (freshMap != null) {
+                        freshMap.setMiniGameValue(mgId, key, null);
+                        GameMapManager.getInstance().save();
+                    }
+                    openValuesGui(p, mapId, mgId);
+                }));
+
+        builder.slot(53, GuiItem.of(Material.SPRUCE_DOOR)
+                .name("&c&lBack to minigame values")
+                .onClick(e -> openValuesGui((Player) e.getWhoClicked(), mapId, mgId)));
 
         player.openInventory(builder.build());
     }
@@ -778,6 +864,12 @@ public class AdminGuiService implements Listener {
         if (o instanceof Location loc) {
             String world = loc.getWorld() != null ? loc.getWorld().getName() : "?";
             return "(" + loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ() + ") in " + world;
+        }
+        if (o instanceof BlockData bd) {
+            return bd.getMaterial().name();
+        }
+        if (o instanceof ItemStack item) {
+            return item.getType().name() + " x" + item.getAmount();
         }
         return o.toString();
     }
