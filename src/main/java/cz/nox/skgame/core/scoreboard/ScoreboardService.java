@@ -18,6 +18,10 @@ public class ScoreboardService implements Listener {
     private static ScoreboardService instance;
 
     private final ConcurrentHashMap<String, SessionScoreboard> boards = new ConcurrentHashMap<>();
+    /** Transient pre-game (PREPARATION/STARTING) countdown boards, keyed by session id. */
+    private final ConcurrentHashMap<String, PreparationScoreboard> prepBoards = new ConcurrentHashMap<>();
+    private static final List<String> PREP_HEADER = List.of("&8&m                    ");
+    private static final List<String> PREP_FOOTER = List.of("&8&m                    ");
     private volatile ScoreboardConfig config = ScoreboardConfig.defaultConfig();
 
     private ScoreboardService() {}
@@ -72,6 +76,33 @@ public class ScoreboardService implements Listener {
     public void disposeIfPresent(Session session) {
         SessionScoreboard board = boards.remove(session.getId());
         if (board != null) board.dispose();
+    }
+
+    // ─── Pre-game countdown board (PREPARATION / STARTING) ─────────────────────
+
+    /** Start (or restart) a per-player pre-game countdown board for the session. */
+    public PreparationScoreboard startPreparationBoard(Session session, String titleLegacy) {
+        disposePreparationBoard(session);
+        PreparationScoreboard board = new PreparationScoreboard(session.getId(), titleLegacy, PREP_HEADER, PREP_FOOTER);
+        prepBoards.put(session.getId(), board);
+        return board;
+    }
+
+    /** The session's active pre-game board, or null if none. */
+    public PreparationScoreboard getPreparationBoard(Session session) {
+        return prepBoards.get(session.getId());
+    }
+
+    /** Dispose the session's pre-game board and restore all players. No-op if absent. Idempotent. */
+    public void disposePreparationBoard(Session session) {
+        PreparationScoreboard board = prepBoards.remove(session.getId());
+        if (board != null) board.dispose();
+    }
+
+    /** Restore a single player's board from the session's pre-game board. No-op if absent. */
+    public void hidePreparationFrom(Player player, Session session) {
+        PreparationScoreboard board = prepBoards.get(session.getId());
+        if (board != null) board.removePlayer(player);
     }
 
     // ─── Listener ────────────────────────────────────────────────────────────

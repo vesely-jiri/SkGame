@@ -42,6 +42,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
@@ -56,6 +57,7 @@ import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.Nullable;
 
 import cz.nox.skgame.core.game.RejoinSnapshot;
+import cz.nox.skgame.core.scoreboard.PreparationScoreboard;
 import cz.nox.skgame.core.scoreboard.ScoreboardService;
 import cz.nox.skgame.core.storage.GameResultsRepository;
 import net.kyori.adventure.text.Component;
@@ -332,6 +334,8 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         // Restore player's scoreboard if they had a session board shown
         if (stateBeforeLeave == SessionState.STARTED || stateBeforeLeave == SessionState.ENDED) {
             ScoreboardService.getInstance().hideFromIfPresent(player, session);
+        } else if (stateBeforeLeave == SessionState.PREPARATION || stateBeforeLeave == SessionState.STARTING) {
+            ScoreboardService.getInstance().hidePreparationFrom(player, session);
         }
 
         if (stateBeforeLeave == SessionState.PREPARATION && role == SessionRole.LOBBY) {
@@ -466,6 +470,8 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
     }
 
     private void startImmediately(Session session) {
+        // Tear down the pre-game countdown sidebar before the game's own board (if any) takes over at GameStart.
+        ScoreboardService.getInstance().disposePreparationBoard(session);
         session.clearWinners(); // fresh winners list for each game / round
         // Snapshot before mutation
         Set<Player> lobbySnapshot = session.getLobbyMembers();
@@ -533,6 +539,11 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         if (envMg != null && (envMg.getPlayerTime() != null || envMg.getPlayerWeather() != null)) {
             for (Player p : session.getMembers()) applyEnvironment(p, envMg);
         }
+
+        // Clear "game start" sound cue to the active players.
+        for (Player p : session.getPlayers()) {
+            p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
+        }
     }
 
     /** Resolves a single instruction line: "locale:ns:key" → per-player locale lookup; otherwise raw string. */
@@ -559,10 +570,32 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
                 sessionManager.cancelCountdownTask(sessionId);
                 Session current = sessionManager.getSessionById(sessionId);
                 if (current == null || current.getState() != SessionState.STARTING) return;
-                startImmediately(current);
+                startImmediately(current); // disposes the countdown sidebar at its top
             }
         }.runTaskLater(plugin, ticks);
         sessionManager.setCountdownTask(sessionId, task);
+
+        // Per-second sidebar + sound cue during STARTING. Runs independently of the single-shot
+        // start task above so EffSessionCancelCountdown (which cancels that tracked task) keeps
+        // working; this display self-disposes once the session leaves STARTING or disappears.
+        ScoreboardService.getInstance().startPreparationBoard(session, prepBoardTitle(session));
+        final long[] remaining = {Math.max(1L, (ticks + 19L) / 20L)};
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                Session current = sessionManager.getSessionById(sessionId);
+                if (current == null || current.getState() != SessionState.STARTING) {
+                    ScoreboardService.getInstance().disposePreparationBoard(session);
+                    cancel();
+                    return;
+                }
+                long secs = remaining[0];
+                if (secs <= 0) { cancel(); return; } // start handled by the tracked task
+                pushPrepBoard(current, secs);
+                playCountdownTick(current, secs);
+                remaining[0]--;
+            }
+        }.runTaskTimer(plugin, 0L, 20L);
     }
 
     private boolean needsPreparation(Session session) {
@@ -679,33 +712,75 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
         String sessionId = session.getId();
         final long[] remaining = {windowSeconds};
 
+        // Per-player sidebar countdown ("Starts in: Xs" + map/team) replaces the old action-bar countdown.
+        ScoreboardService.getInstance().startPreparationBoard(session, prepBoardTitle(session));
+
         BukkitTask task = new BukkitRunnable() {
             @Override
             public void run() {
                 Session current = sessionManager.getSessionById(sessionId);
                 if (current == null || current.getState() != SessionState.PREPARATION) {
+                    ScoreboardService.getInstance().disposePreparationBoard(session);
                     cancel(); return;
                 }
                 if (remaining[0] <= 0) {
                     cancel();
-                    finishPreparation(current);
+                    finishPreparation(current); // disposes the countdown sidebar via startImmediately
                     return;
                 }
                 long secs = remaining[0];
-                if (secs <= 5 || secs % 10 == 0) {
-                    Component bar = LegacyComponentSerializer.legacyAmpersand()
-                            .deserialize("&ePreparation: &a" + secs + "s &eremaining");
-                    for (Player p : current.getLobbyMembers()) p.sendActionBar(bar);
-                }
+                pushPrepBoard(current, secs);
+                playCountdownTick(current, secs);
                 remaining[0]--;
             }
         }.runTaskTimer(plugin, 0L, 20L);
         sessionManager.setCountdownTask(sessionId, task);
     }
 
+    /** Title for the pre-game sidebar: the minigame's display name, or a fallback while it's unresolved (vote). */
+    private String prepBoardTitle(Session session) {
+        MiniGame mg = session.getMiniGame();
+        if (mg != null) {
+            Object name = mg.getValue("name");
+            return name != null ? name.toString() : "&e&l" + mg.getId();
+        }
+        return "&e&lStarting Soon";
+    }
+
+    /** Render the pre-game countdown board for each lobby member (per-player so team lines can differ). */
+    private void pushPrepBoard(Session session, long secs) {
+        PreparationScoreboard board = ScoreboardService.getInstance().getPreparationBoard(session);
+        if (board == null) return;
+        GameMap map = session.getGameMap();
+        String mapLine = null;
+        if (map != null) {
+            Object name = map.getValue("name");
+            mapLine = "&fMap: &b" + (name != null ? name.toString() : map.getId());
+        }
+        for (Player p : session.getLobbyMembers()) {
+            List<String> lines = new ArrayList<>();
+            lines.add(" ");
+            lines.add("&fStarts in: &a&l" + secs + "s");
+            if (mapLine != null) lines.add(mapLine);
+            String team = session.getTeam(p);
+            if (team != null) lines.add("&fTeam: &e" + team);
+            lines.add("  ");
+            board.setPlayerContent(p, lines);
+        }
+    }
+
+    /** Soft tick on each of the last 3 seconds of a pre-game countdown. */
+    private void playCountdownTick(Session session, long secs) {
+        if (secs > 3 || secs < 1) return;
+        for (Player p : session.getLobbyMembers()) {
+            p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1.0f, 1.0f);
+        }
+    }
+
     // PREPARATION → LOBBY (cancel / all-leave / under-min)
     private void cancelPreparation(Session session) {
         sessionManager.cancelCountdownTask(session.getId());
+        ScoreboardService.getInstance().disposePreparationBoard(session);
         Set<Player> members = new HashSet<>(session.getLobbyMembers());
         for (Player p : members) { removePicker(p); removeVoteItem(p); removeMgVoteItem(p); }
         session.clearTeams();
@@ -916,6 +991,8 @@ public class SessionLifecycleManagerImpl implements SessionLifecycleManager, Lis
     @Override
     public void endGame(Session session, String reason) {
         sessionManager.cancelCountdownTask(session.getId());
+        // Clear any lingering pre-game countdown sidebar (e.g. disband during STARTING / shutdown during PREPARATION).
+        ScoreboardService.getInstance().disposePreparationBoard(session);
 
         // Re-entry guard: ENDED means window is active. Task already cancelled above; run deferred cleanup only.
         if (session.getState() == SessionState.ENDED) {
